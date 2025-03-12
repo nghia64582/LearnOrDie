@@ -1,0 +1,120 @@
+- What is MySQL? (Relational Database, Client-Server Model):
+    + Relational Database
+    + Installing MySQL (MySQL Workbench, MySQL CLI)
+    + Understanding Databases vs. Tables
+    + Basic SQL Syntax (Case Sensitivity, Comments, Semicolon ;)
+
+- Core SQL Commands
+    + Creating & Managing Databases :
+        CREATE DATABASE my_database;
+        SHOW DATABASES;
+        DROP DATABASE my_database;
+
+    + Creating Tables & Defining Data Types:
+        CREATE TABLE users (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            name VARCHAR(100),
+            email VARCHAR(255) UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+    + Inserting Data into Tables : 
+        INSERT INTO users (name, email) VALUES ('John Doe', 'john@example.com');
+
+    + Updating & Deleting Data :
+        UPDATE users SET name = 'Jane Doe' WHERE id = 1;
+        DELETE FROM users WHERE id = 1;
+
+    + Selecting Data (Basic Queries) : 
+        SELECT * FROM users;
+        SELECT name, email FROM users WHERE id = 1;
+
+    + Advanced SQL Queries & Functions
+    + Filtering Data (WHERE, LIKE, IN, BETWEEN)
+        SELECT * FROM users WHERE name LIKE 'J%';
+        SELECT * FROM users WHERE id IN (1, 3, 5);
+    + Sorting & Limiting Results (ORDER BY, LIMIT)
+        SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
+    + Aggregate Functions (COUNT(), SUM(), AVG(), MAX(), MIN())
+        SELECT COUNT(*) FROM users;
+        SELECT AVG(salary) FROM employees;
+    + Grouping Data (GROUP BY, HAVING)
+        SELECT department, COUNT(*) FROM employees GROUP BY department;
+Example : Get the total number of users who registered today.
+
+4️⃣ Table Relationships & Joins
+    + Types of Relationships (One-to-One, One-to-Many, Many-to-Many)
+    + Primary & Foreign Keys
+    + JOINs (INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN)
+        SELECT users.name, orders.amount
+        FROM users
+        INNER JOIN orders ON users.id = orders.user_id;
+    + Subqueries & Nested Queries
+        SELECT name FROM users WHERE id IN (SELECT user_id FROM orders);
+Example: Get all orders with user names from two tables using JOIN.
+
+5️⃣ Indexing & Performance Optimization
+    + Why Indexing Matters?
+    + Creating Indexes
+        CREATE INDEX idx_email ON users(email);
+
+    + Optimizing Queries (EXPLAIN, ANALYZE)
+        EXPLAIN SELECT * FROM users WHERE email = 'john@example.com';
+
+    + Understanding Transactions (COMMIT, ROLLBACK)
+        START TRANSACTION;
+        UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+        UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+        COMMIT;
+
+Example : Identify slow queries and optimize them with indexes.
+
+6️⃣ Stored Procedures & Triggers
+    + Stored Procedures
+        DELIMITER //
+        CREATE PROCEDURE GetUsers()
+        BEGIN
+            SELECT * FROM users;
+        END //
+        DELIMITER ;
+
+    + Triggers (Executing Actions Automatically)
+        CREATE TRIGGER before_insert_user
+        BEFORE INSERT ON users
+        FOR EACH ROW SET NEW.created_at = NOW();
+
+    + Views (Virtual Tables for Simplified Queries)
+        CREATE VIEW user_orders AS
+        SELECT users.name, orders.amount FROM users JOIN orders ON users.id = orders.user_id;
+Example : Create a trigger that automatically logs changes in a table.
+
+7️⃣ Database Security & Best Practices
+    + User Privileges & Access Control
+        CREATE USER 'dev_user'@'localhost' IDENTIFIED BY 'securepassword';
+        GRANT SELECT, INSERT ON my_database.* TO 'dev_user'@'localhost';
+
+    + Data Encryption & Hashing (SHA2(), AES_ENCRYPT())
+        SELECT SHA2('password', 256);
+
+    + Preventing SQL Injection (Use Prepared Statements)
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+
+    + Backups & Restores (mysqldump)
+        mysqldump -u root -p my_database > backup.sql
+        mysql -u root -p my_database < backup.sql
+Example : Create a new user with restricted database permissions.
+
+- Scaling & High Availability
+    + Replication (Master-Slave, Master-Master) : 
+        + Technique to handle large amount of request
+        + 
+    + Partitioning & Sharding
+        + Partitioning
+        + Sharding
+    + Load Balancing with MySQL Cluster
+        +
+    + NoSQL Alternatives (When to Use MongoDB, Redis, etc.)
+    + Caching:
+        + The technique is used to store memory to in-memory database  
+            to increase speed 
+        + 
