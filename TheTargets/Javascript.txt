@@ -1,28 +1,37 @@
-✅ Variables & Data Types → let, const, var, number, string, boolean, null, undefined, object, symbol.
-✅ Operators → Arithmetic (+, -, *, /), Comparison (==, ===, !=, !==, <, >), Logical (&&, ||, !).
-✅ Functions → Regular functions, arrow functions (()=>{}), anonymous functions.
-✅ Control Flow → if, else, switch, for, while, do...while.
+- Functions :
+    + Regular functions - 100
+    + Arrow functions ((arg1, arg2) => { // do something  }) - 90
+    + Anonymous functions. -
+    + Immediately invoked function expression - 100
+    + Control Flow → if, else, switch, for, while, do...while.
 - Variables, Data Type:
-    + let
-    + const
-    + var
+    + let   : declare variable in block scope
+    + const : declare constant
+    + var   : declare variable in method scope
     + number
-    + string
-    + boolean
-    + null
-    + undefined
-    + object
-    + symbol
+    + string    : "Hello World"
+    + boolean   : true, false
+    + null      : null
+    + undefined :
+    + object    : {"name": "Nghia", "age": 25}
+    + symbol    :
 
 - Advanced concepts:
-    + Closures
-    + Hoisting
-    + Scope
-    + Prototypes & Inheritance
-    + Promise & async/await
+    + Closures : 100
+        + Define a function inside another function
+        + Inner function can access var of outer scope
+        + JavaScript auto split "var a = 2" into "var a" and "a = 2", "var a" will be move
+            to top of file
+        +
+    + Hoisting :
+        + Auto move declaration of "var" into top of file (const and let are not affected)
+        + The same technique is applied to types of function (...)
+    + Scope :
+    + Prototypes & Inheritance :
+    + Promise & async/await :
 
 - ES6 Features
-    + Arrow function -> const sum = (a, b) => a + b;
+    + Arrow function -> const sum = (a, b) => a + b; 100
     + Destructuring -> const {name, age} = person;
     + Spread & Rest Operators ->  [...array] (spread)
     + Template Literals -> console.log(Hello ${name});
