@@ -1,0 +1,15 @@
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\bin\Debug\net9.0\MyFirstCSharpApp.exe
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\bin\Debug\net9.0\MyFirstCSharpApp.deps.json
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\bin\Debug\net9.0\MyFirstCSharpApp.runtimeconfig.json
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\bin\Debug\net9.0\MyFirstCSharpApp.dll
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\bin\Debug\net9.0\MyFirstCSharpApp.pdb
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.AssemblyInfoInputs.cache
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.AssemblyInfo.cs
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.csproj.CoreCompileInputs.cache
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.sourcelink.json
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.dll
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\refint\MyFirstCSharpApp.dll
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.pdb
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\MyFirstCSharpApp.genruntimeconfig.cache
+C:\Users\LaptopKhanhTran\Desktop\Workspace\ToLearn\Code\MyFirstCSharpApp\obj\Debug\net9.0\ref\MyFirstCSharpApp.dll
