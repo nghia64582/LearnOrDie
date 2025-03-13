@@ -50,3 +50,7 @@
 - AOP :
     + The technique is used to add logic of a method to "other method" without 
         writing the code which is directly dependent to "other method"
+    + Perfect to handle some popular problems:
+        + Counting method calls times
+        + Handle redis, caching strategy
+        + 

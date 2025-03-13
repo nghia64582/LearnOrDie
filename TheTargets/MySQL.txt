@@ -107,6 +107,8 @@ Example : Create a new user with restricted database permissions.
 - Scaling & High Availability
     + Replication (Master-Slave, Master-Master) : 
         + Technique to handle large amount of request
+        + One main db server and several smaller servers
+        + The smaller server will update data from the main db
         + 
     + Partitioning & Sharding
         + Partitioning
@@ -116,5 +118,6 @@ Example : Create a new user with restricted database permissions.
     + NoSQL Alternatives (When to Use MongoDB, Redis, etc.)
     + Caching:
         + The technique is used to store memory to in-memory database  
-            to increase speed 
-        + 
+            to increase speed of request, especially get resources
+        + Some core features to compare:
+            + 
