@@ -35,11 +35,13 @@
     + Spread & Rest Operators ->  [...array] (spread)
     + Template Literals -> console.log(Hello ${name});
     + Modules (import/export) -> export default function(){} & import myFunc from './module'
+
 - OOP:
     + Objects & Classes -> class Car { constructor(model) { this.model = model;}}
     + Encapsulation -> private
     + Inheritance -> class ElectricCar extends Car {}
     + Polymorphism -> Override class from parent
+    
 - Async:
     + Callbacks
     + Promises
