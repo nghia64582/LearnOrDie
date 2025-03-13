@@ -1,23 +1,23 @@
-✅ Install Unity Hub & Unity Editor (Latest LTS version recommended)
-✅ Understand Unity Interface (Scene, Game, Hierarchy, Inspector, Project, Console)
-✅ GameObjects & Components (Everything in Unity is a GameObject with Components)
-✅ Navigating the Scene & Using the Gizmos
+- Install Unity Hub & Unity Editor (Latest LTS version recommended)
+- Understand Unity Interface (Scene, Game, Hierarchy, Inspector, Project, Console)
+- GameObjects & Components (Everything in Unity is a GameObject with Components)
+- Navigating the Scene & Using the Gizmos
 
 👉 Project Idea: Create a simple 2D or 3D scene with basic objects (Cubes, Spheres).
 
-2️⃣ C# Scripting in Unity
-✅ Basic C# Concepts (Variables, Methods, Loops, Conditions, Arrays, Lists)
-✅ Unity-Specific Methods:
+-⃣ C# Scripting in Unity
+    + Basic C# Concepts (Variables, Methods, Loops, Conditions, Arrays, Lists)
+    + Unity-Specific Methods:
+        Start() – Runs once at the beginning
+        Update() – Runs every frame
+        FixedUpdate() – Runs for physics updates
 
-Start() – Runs once at the beginning
-Update() – Runs every frame
-FixedUpdate() – Runs for physics updates
-✅ Understanding MonoBehaviour & GameObject Methods:
-gameObject.SetActive(true/false);
-Destroy(gameObject);
-Instantiate(prefab, position, rotation);
-✅ Input Handling (Keyboard, Mouse, Touch)
-✅ Coroutines (IEnumerator) – Used for delays & animations
+    + Understanding MonoBehaviour & GameObject Methods:
+        gameObject.SetActive(true/false);
+        Destroy(gameObject);
+        Instantiate(prefab, position, rotation);
+    + Input Handling (Keyboard, Mouse, Touch)
+    + Coroutines (IEnumerator) – Used for delays & animations
 👉 Mini Project: Create a basic player controller that moves using keyboard input.
 
 - Unity Physics & Collisions

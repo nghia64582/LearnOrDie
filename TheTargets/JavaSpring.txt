@@ -14,10 +14,10 @@
     + Inversion of Control: 
     + Bean: The objects are managed by Spring IoC
     + Spring Profiles – Manage different environments (dev, prod, test)
-    + How to start a new spring project - done
+    + How to start a new spring project - 100
     + Spring Boot Auto-Configuration – No need for complex XML configs
-    + Creating REST APIs with @RestController (setup endpoint, response data, ...) - done
-    + Handling HTTP Requests & Responses (@RequestMapping, @GetMapping) - done
+    + Creating REST APIs with @RestController (setup endpoint, response data, ...) - 100
+    + Handling HTTP Requests & Responses (@RequestMapping, @GetMapping) - 100
     + DTOs & Model Mapping (@RequestBody, @ResponseBody) - done
     + Exception Handling (@ControllerAdvice) - 80
     + Logging with SLF4J & Logback
