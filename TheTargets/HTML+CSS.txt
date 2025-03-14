@@ -1,0 +1,26 @@
+- HTML:
+    - Popular tag in html:
+        + <html>		The root of the HTML document specifies it as HTML.
+        + <head>		Contains head elements such as title, style, and meta tags in the HTML file.
+        + <title>		Defines the title of an HTML document.
+        + <body>		Defines the body of an HTML document.
+        + <div>		    Defines a division or section in an HTML document.
+        + <p>		    Defines a paragraph.
+        + <a>		    Defines a hyperlink.
+        + <img>		    Embeds an image.
+        + <ul>		    Defines an unordered list.
+        + <ol>		    Defines an ordered list.
+        + <li>		    Defines a list item.
+        + <table>	    Defines a table.
+        + <tr>	        Defines a table row.
+        + <th>	        Defines a table header cell.
+        + <td>	        Defines a table data cell.
+        + <form>	    Defines an HTML form for user input.
+        + <input>	    Defines an input control within a form.
+        + <button>	    Defines a clickable button.
+        + <h1>–<h6>	    Define headings of different levels.
+        + <span>	    Defines a generic inline container.
+        + <label>	    Defines a label for an input element.
+        + <iframe>	    Embeds an inline frame for external content.
+- CSS:
+    +
