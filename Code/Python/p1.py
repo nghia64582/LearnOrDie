@@ -1,51 +1,13 @@
-class Trie:
-
-    def __init__(self):
-        """
-        Initialize your data structure here.
-        """
-        self.trie = {}
-        self.end = -1
-
-    def insert(self, word: str) -> None:
-        """
-        Inserts a word into the trie.
-        """
-        node = self.trie
-        for c in word:
-            if c not in node:
-                node[c] = {}
-            node = node[c]
-        node[self.end] = True
-        
-
-    def search(self, word: str) -> bool:
-        """
-        Returns if the word is in the trie.
-        """
-        node = self.trie
-        for c in word:
-            if c not in node:
-                return False
-            node = node[c]
-        return self.end in node
-        
-
-    def startsWith(self, prefix: str) -> bool:
-        """
-        Returns if there is any word in the trie that starts with the given prefix.
-        """
-        node = self.trie
-        for c in prefix:
-            if c not in node:
-                return False
-            node = node[c]
-        return True
-        
-
-
-# Your Trie object will be instantiated and called as such:
-# obj = Trie()
-# obj.insert(word)
-# param_2 = obj.search(word)
-# param_3 = obj.startsWith(prefix)
+class Solution:
+    def combinationSum3(self, k: int, n: int) -> List[List[int]]:
+        def backtrack(start, path, target):
+            if target == 0 and len(path) == k:
+                res.append(path)
+                return
+            if target < 0 or len(path) == k:
+                return
+            for i in range(start, 10):
+                backtrack(i + 1, path + [i], target - i)
+        res = []
+        backtrack(1, [], n)
+        return res

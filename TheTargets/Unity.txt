@@ -1,11 +1,11 @@
-- Install Unity Hub & Unity Editor (Latest LTS version recommended)
-- Understand Unity Interface (Scene, Game, Hierarchy, Inspector, Project, Console)
+- Install Unity Hub & Unity Editor (Latest LTS version recommended) 100
+- Understand Unity Interface (Scene, Game, Hierarchy, Inspector, Project, Console) 100
 - GameObjects & Components (Everything in Unity is a GameObject with Components)
 - Navigating the Scene & Using the Gizmos
 
     👉 Project Idea: Create a simple 2D or 3D scene with basic objects (Cubes, Spheres).
 
--⃣ C# Scripting in Unity
+- C# Scripting in Unity
     + Basic C# Concepts (Variables, Methods, Loops, Conditions, Arrays, Lists)
     + Unity-Specific Methods:
         Start() – Runs once at the beginning
