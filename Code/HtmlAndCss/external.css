@@ -1,0 +1,71 @@
+/* apply to all h1 tag */
+h1 {
+    margin-left: 100px;
+}
+
+/* apply to all h2 tag */
+h2 {
+    color: blue;
+    margin-left: 50px;
+}
+
+/* apply to all tag with id="ab"  */
+#ab {
+    color: green;
+    margin-left: 150px;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-px {
+    margin-left: 100px;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-cm {
+    margin-left: 5cm;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-in {
+    margin-left: 2in;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-per {
+    margin-left: 20%;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-em {
+    margin-left: 10em;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-rem {
+    margin-left: 10rem;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-vh {
+    margin-left: 10vh;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+#h6-vw {
+    margin-left: 10vw;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+/* apply to all tag */
+* {
+    padding: 0;
+}

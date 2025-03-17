@@ -96,3 +96,9 @@
             + width, height – Dimensions.
             + frameborder (deprecated) – Border thickness.
             + allowfullscreen – Enables full-screen mode.
+
+    - Internal script:
+        + Write JS code in <script> tag
+    - External script:
+        + Write JS code in other .js files and import to .html file
+        + Import by <script src="path/to/file.js"> </script>

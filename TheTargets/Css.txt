@@ -1,24 +1,76 @@
 - Basics of CSS (Beginner)
     + Introduction to CSS
-        + What is CSS? Why use it?
-        + Inline, Internal, External CSS
+        + What is CSS? Why use it? 100
+            + Cascading style sheet
+            + specifying the presentation and styling a document
+        + Inline CSS   : 100
+            + Define in style attribute of each component
+            + Example : <h1 style="color:blue;text-align:center;"> This is a heading</h1>
+            + Not recommended
+        + Internal CSS : 100
+            + Define in <head> of of html file, inside <style></style>
+        + External CSS : 100
+            + Declare in <head> tag of .html file
+                + Declaration : <link rel="stylesheet" href="external.css">
+            + Define in .css file
+                + external.css
+            + Example : 
+                + body { background-color: lightblue;}
+                + h1 {color: navy;margin-left: 20px;}
 
     + Selectors & Specificity
+        + Selector: 
+            + Select all elements based on element-name, id, and class to apply css
         + Basic selectors: element, .class, #id
+            + element	
+                + p	          : Selects all <p> elements
+            + #id	
+                + #firstname  :	Selects all the elements with id="firstname"
+            + *	
+                + *           :	Selects all elements
+            + .class
+                + .intro      :	Selects all elements with class="intro"
+                + p.intro     : Selects all <p> elements with class="intro"
         + Grouping (div, p)
+
         + Combinators (div > p, div + p, div ~ p)
+
         + Pseudo-classes (:hover, :focus, :nth-child())
+
         + Pseudo-elements (::before, ::after)
+
         + Specificity rules
+
 
     + Box Model
         + Content, Padding, Border, Margin
         + box-sizing: border-box;
 
     + Units & Colors
-        + Absolute (px, cm, in)
-        + Relative (%, em, rem, vh, vw)
-        + Colors (HEX, RGB, HSL, opacity)
+        + Absolute : 100
+            + px : 
+                + pixel, best for precise layout.
+            + cm : 
+            + in :
+                + Print design.
+        + Relative : 100
+            + %   : 
+                + percentage, responsive layout
+            + em  :
+            + rem :
+                + 1 em = parent's font size
+                + Scalable typography.
+            + vh  :
+                + Viewport height, 1vh = 1% viewport height
+                + Full screen sections
+            + vw  :
+                + Viewport width
+                + Responsive layouts.
+        + Colors 
+            + HEX
+            + RGB
+            + HSL
+            + opacity
 
     + Typography
         + font-family, font-size, line-height
