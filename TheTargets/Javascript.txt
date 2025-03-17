@@ -28,7 +28,10 @@
     + Scope : 100
         + The place where variables are able to accessed
     + Prototypes & Inheritance :
+        + All object inheritant from Prototypes
+
     + Promise & async/await :
+        
 
 - ES6 Features
     + Destructuring -> const {name, age} = person; 100
