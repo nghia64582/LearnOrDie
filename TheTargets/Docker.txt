@@ -1,19 +1,92 @@
 *** STAGE 1: Docker Fundamentals (Beginner)
 
-- Understanding Containerization:
+- Understanding Containerization: 80
     + What is containerization?
     + Why use Docker?
     + Virtual machines vs. containers.
-- Docker Installation:
+- Docker Installation: 80
     + Install Docker Desktop (Windows/macOS) or Docker Engine (Linux).
     + Verify installation.
-- Basic Docker Commands:
-    + docker run: Run a container.
-    + docker ps: List running containers.
-    + docker images: List Docker images.
-    + docker pull: Download images from Docker Hub.
-    + docker stop/rm: Stop and remove containers.
-    + docker rmi: Remove Docker images.
+
+- Docker concept: 
+    + Docker Image:
+        + A blueprint of docker container
+        + Template to build docker container
+        + Created from Dockerfile
+        + Store in docker hub/ registry
+        + Command:
+            + docker pull <image>	            Download an image from Docker Hub.
+            + docker images	                    List all downloaded images.
+            + docker rmi <image>	            Remove an image.
+            + docker tag <image> <repo>:<tag>	Tag an image for pushing to a registry.
+            + docker push <repo>:<tag>	        Push an image to a registry.
+            + docker build -t myapp .	        Build an image from a Dockerfile.
+
+    + Docker Container:
+        + Isolated runtime enviroments created from image
+        + Run application across different enviroments
+        + Can be started, stopped, restarted and removed
+        + Command:
+            + docker ps	                                    List running containers.
+            + docker ps -a	                                List all containers (including stopped ones).
+            + docker run -d --name myapp -p 8080:80 nginx	Run a container in detached mode.
+            + docker start <container>	                    Start a stopped container.
+            + docker stop <container>	                    Stop a running container.
+            + docker restart <container>	                Restart a container.
+            + docker rm <container>	                        Remove a container.
+            + docker logs -f <container>	                View real-time logs of a container.
+
+    + Docker Hub/ Registry:
+        + A place to store and distribute docker image
+        + Public registry: hub.docker.com
+        + Command:
+            + docker push <repo>:<tag>	        Push an image to a registry.
+            + docker tag <image> <repo>:<tag>	Tag an image for pushing to a registry.
+            + docker pull <image>	            Download an image from Docker Hub.
+
+    + Dockerfile :
+        + Script to define how to build an image
+        + Example : 
+            # Use an official JDK as base image
+            FROM eclipse-temurin:17-jdk-alpine
+
+            # Set working directory
+            WORKDIR /app
+
+            # Copy the Maven wrapper files and POM to leverage caching
+            COPY mvnw pom.xml ./
+            COPY .mvn .mvn
+
+            # Download dependencies before copying source code for better caching
+            RUN ./mvnw dependency:go-offline
+
+            # Copy the entire project
+            COPY . .
+
+            # Build the application
+            RUN ./mvnw clean package -DskipTests
+
+            # Run the Spring Boot app
+            CMD ["java", "-jar", "target/your-app.jar"]
+
+    + Docker Compose :
+        + A tool for managing multi-container applications.
+        + Uses a docker-compose.yml file to define services.
+        + Command:
+            + docker-compose up -d	        Start all services in docker-compose.yml.
+            + docker-compose down	        Stop and remove all services.
+            + docker-compose ps	            List running services.
+            + docker-compose logs -f        View logs of all services.
+            + docker-compose build	        Build images for all services.
+
+    + Docker Volume:
+        + A persistent storage mechanism for containers.
+        + Prevents data loss when containers restart.
+        + Mounted into a container at a specific path.
+        + Command: 
+            + docker volume create my-data
+            + docker run -d -v my-data:/app/data my-app
+
 - Working with Docker Images:
     + Understanding Docker Hub.
     + Pulling and running pre-built images.
