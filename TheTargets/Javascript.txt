@@ -22,7 +22,7 @@
         + Inner function can access var of outer scope
         + JavaScript auto split "var a = 2" into "var a" and "a = 2", "var a" will be move
             to top of file
-    + Hoisting : 90
+    + Hoisting : 100
         + Auto move declaration of "var" into top of file (const and let are not affected)
         + The same technique is applied to types of function (...)
     + Scope : 100
@@ -33,6 +33,7 @@
 - ES6 Features
     + Destructuring -> const {name, age} = person; 100
     + Spread & Rest Operators ->  [...array] (spread) 100
+        + Convert 
     + Template Literals -> console.log(Hello ${name});
     + Modules (import/export) -> export default function(){} & import myFunc from './module'
 
@@ -43,10 +44,19 @@
     + Polymorphism -> Override class from parent
     
 - Async:
-    + Callbacks
-    + Promises
-    + Async/await
-    + Event loop, how JS handle async execution
+    + Callbacks: 90
+        + The function will be called asynchornously
+    + Promises:
+        + Present a value would be able now, in the future, or never
+    + Async/await: 90
+        + async: 
+            + Where : Put before definition of function
+            + To    : Declare an async function
+        + await:   
+            + Where : Put before a promise
+            + To    : Pauses execution until the promise resolves.
+    + Event loop, how JS handle async execution:
+        + 
 
 - JS in browser: 
     + JavaScript in the Browser

@@ -1,26 +1,73 @@
 - HTML:
-    - Popular tag in html:
+    - Popular tag (attributes) in html:
         + <html>		The root of the HTML document specifies it as HTML.
         + <head>		Contains head elements such as title, style, and meta tags in the HTML file.
         + <title>		Defines the title of an HTML document.
         + <body>		Defines the body of an HTML document.
+            + bgcolor (deprecated) – Background color.
+            + onload – Runs JavaScript when the page loads.
+            + class, id, style – Styling and scripting attributes.
         + <div>		    Defines a division or section in an HTML document.
+            + class – Assigns a class for CSS.
+            + id – Unique identifier.
+            + style – Inline CSS.
+            + data-* – Custom data attributes.
         + <p>		    Defines a paragraph.
+            + class, id, style – Common styling attributes.
+            + align (deprecated) – Aligns text.
         + <a>		    Defines a hyperlink.
+            + href – The hyperlink reference (URL).
+            + target – Specifies where to open the link (_blank, _self, _parent, _top).
+            + rel – Relationship between the current document and linked document (nofollow, noopener).
+            + download – Downloads the linked file instead of navigating.
         + <img>		    Embeds an image.
+            + src – Image source URL.
+            + alt – Alternative text for accessibility.
+            + width, height – Image dimensions.
+            + loading – lazy for deferred loading.
         + <ul>		    Defines an unordered list.
         + <ol>		    Defines an ordered list.
+            + type – Numbering style (1, A, a, I, i).
+            + start – Start numbering from a specific number.
         + <li>		    Defines a list item.
+            + value (only in <ol>) – Specifies a custom number for the list item.
         + <table>	    Defines a table.
+            + border – Defines border width (deprecated, use CSS).
+            + cellpadding, cellspacing (deprecated) – Spacing inside and between cells.
+            + width, height – Table dimensions.
         + <tr>	        Defines a table row.
         + <th>	        Defines a table header cell.
+            + colspan – Expands across multiple columns.
+            + rowspan – Expands across multiple rows.
+            + scope – Defines whether the header applies to a row or column.
         + <td>	        Defines a table data cell.
+            + colspan, rowspan – Similar to <th>
         + <form>	    Defines an HTML form for user input.
+            + action – URL where form data is sent.
+            + method – HTTP method (GET, POST).
+            + enctype – Encoding type (important for file uploads).
+            + target – Where to display the response (_self, _blank).
         + <input>	    Defines an input control within a form.
+            + type – Specifies input type (text, password, checkbox, radio, submit, file, etc.).
+            + name – Name of the input field.
+            + value – Default value.
+            + placeholder – Hint text.
+            + required – Makes the field mandatory.
+            + disabled – Disables input.
+            + readonly – Prevents modification.
         + <button>	    Defines a clickable button.
+            + type – submit, reset, button.
+            + disabled – Disables button.
         + <h1>–<h6>	    Define headings of different levels.
+            + class, id, style – Common styling attributes.
         + <span>	    Defines a generic inline container.
+            + class, id, style, data-*
         + <label>	    Defines a label for an input element.
+            + for – Links the label to an input field by its id.
         + <iframe>	    Embeds an inline frame for external content.
+            + src – URL of embedded page.
+            + width, height – Dimensions.
+            + frameborder (deprecated) – Border thickness.
+            + allowfullscreen – Enables full-screen mode.
 - CSS:
     +
