@@ -1,0 +1,99 @@
+- Basics of CSS (Beginner)
+    + Introduction to CSS
+        + What is CSS? Why use it?
+        + Inline, Internal, External CSS
+
+    + Selectors & Specificity
+        + Basic selectors: element, .class, #id
+        + Grouping (div, p)
+        + Combinators (div > p, div + p, div ~ p)
+        + Pseudo-classes (:hover, :focus, :nth-child())
+        + Pseudo-elements (::before, ::after)
+        + Specificity rules
+
+    + Box Model
+        + Content, Padding, Border, Margin
+        + box-sizing: border-box;
+
+    + Units & Colors
+        + Absolute (px, cm, in)
+        + Relative (%, em, rem, vh, vw)
+        + Colors (HEX, RGB, HSL, opacity)
+
+    + Typography
+        + font-family, font-size, line-height
+        + Google Fonts
+        + text-align, letter-spacing, word-spacing
+
+    =====> Project Idea: Create a basic personal portfolio webpage.
+
+- Layouts & Positioning (Intermediate)
+    + Positioning Elements
+        + static, relative, absolute, fixed, sticky
+        + z-index, overflow
+
+    + CSS Flexbox (Responsive Layouts)
+        + display: flex;, flex-direction, justify-content, align-items
+        + flex-wrap, align-self, gap
+        + Flexbox Grid System
+
+    + CSS Grid (Advanced Layouts)
+        + display: grid;, grid-template-columns, grid-template-rows
+        + grid-gap, grid-area
+        + CSS Grid vs Flexbox
+
+    + Media Queries (Responsive Design)
+        + @media (max-width: 768px) {}
+        + Mobile-first vs Desktop-first approach
+    =====> Project Idea: Build a responsive landing page using Flexbox & Grid.
+
+- Styling & Effects (Advanced CSS)
+    + CSS Transitions & Animations
+        + transition: all 0.3s ease-in-out;
+        + @keyframes animations
+        + CSS hover effects
+
+    + CSS Transform
+        + scale(), rotate(), translate(), skew()
+
+    + CSS Shadows & Gradients
+        + box-shadow, text-shadow
+        + linear-gradient(), radial-gradient()
+
+    + CSS Variables (--custom-color)
+        + Declaring & Using
+        + Dark Mode Theme Switching
+
+    + CSS Filters
+        + blur(), grayscale(), contrast()
+
+    =====> Project Idea: Create a modern animated website with CSS transitions.
+
+- Advanced Topics
+    + CSS Preprocessors
+        + SASS/SCSS: Variables, Nesting, Mixins
+        + PostCSS (for autoprefixing)
+
+    + CSS Frameworks & Libraries
+        + Bootstrap, Tailwind CSS
+        + Material UI, Chakra UI (for React)
+
+    + CSS Best Practices
+        + BEM (Block-Element-Modifier) Naming
+        + Writing Maintainable CSS
+
+    + CSS for Performance Optimization
+        + Minification & Compression
+        + Avoiding Repaints & Reflows
+
+    =====> Project Idea: Build a SaaS Dashboard UI with Tailwind CSS.
+
+- Beyond CSS (Next Steps)
+    + CSS in JavaScript
+        + Styled Components (React)
+        + Emotion, CSS Modules
+    + CSS for Accessibility (a11y)
+        + aria-label, Contrast, Keyboard Navigation
+    + 3D Effects & Advanced UI
+        + CSS 3D Transforms
+        + Scroll Animations

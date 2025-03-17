@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My First HTML</title>
+</head>
+<body>
+    <!-- Headings of other level -->
+    <h1>My First Heading</h1>
+    <h2>Second heading</h2>
+    <h3>Third heading</h3>
+    <h4>Fourth heading</h4>
+    <h5>Fifth heading</h5>
+    <h6>Sixth heading</h6>
+
+    <!-- Paragraph -->
+    <p>My first paragraph.</p>
+
+    <!-- Link -->
+    <a href="http://facebook.com/nghia.faker">This is my facebook</a>
+
+    <!-- Image -->
+    <img src="https://www.w3schools.com/images/w3schools_green.jpg" height = 100 alt="W3Schools.com">
+
+    <!-- Table -->
+    <table border="1">
+        <tr>
+            <th></th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thusday</th>
+            <th>Friday</th>
+            <th>Saturday</th>
+        </tr>
+        <tr>
+            <th>Subjects</th>
+            <td>Sub 1, Day 2</td>
+            <td>Sub 1, Day 3</td>
+            <td>Sub 1, Day 4</td>
+            <td>Sub 1, Day 5</td>
+            <td>Sub 1, Day 6</td>
+            <td>Sub 1, Day 7</td>
+        </tr>
+        <tr>
+            <th>Subjects</th>
+            <td>Sub 2, Day 2</td>
+            <td>Sub 2, Day 3</td>
+            <td>Sub 2, Day 4</td>
+            <td>Sub 2, Day 5</td>
+            <td>Sub 2, Day 6</td>
+            <td>Sub 2, Day 7</td>
+        </tr>
+        <tr>
+            <th>Subjects</th>
+            <td>Sub 3, Day 2</td>
+            <td>Sub 3, Day 3</td>
+            <td>Sub 3, Day 4</td>
+            <td>Sub 3, Day 5</td>
+            <td>Sub 3, Day 6</td>
+            <td>Sub 3, Day 7</td>
+        </tr>
+    </table>
+    <!-- List -->
+    <div>
+        <ul>
+            <li>Coffee</li>
+            <li>Tea</li>
+            <li>Milk</li>
+    </div>
+
+    <!-- Ordered list -->
+    <div>
+        <ol>
+            <li draggable="true">Javascript</li>
+            <li draggable="true">Java</li>
+            <li draggable="true">Python</li>
+    </div>
+
+    <form action=""></form>
+    <!-- Input -->
+     <div>
+        <input type="text" name="name" value="Nghia">
+     </div>
+     <div>
+        <input type="password" name="password" value="123456">
+     </div>
+    
+     <!-- element in one line -->
+     <input type="text" name="name" value="Nghia" required="required">
+
+     <input type="password" name="password" value="123456">
+     <span>
+        <input type="number" name="age" value="20">
+        <input type="text" name="address" value="Ha Noi">
+        <input type="radio" name="gender" value="">
+     </span>
+    <!-- Internal Frame -->
+    <iframe src="http://facebook.com" frameborder="1"></iframe>
+
+    <!-- Group of radio button, maximum of 1 choice -->
+    <div>
+        <label>
+            <input type="radio" name="option" value="1" /> 1
+        </label>
+        <label>
+            <input type="radio" name="option" value="2" /> 2
+        </label>
+        <label>
+            <input type="radio" name="option" value="3" /> 3
+        </label>
+    </div>
+
+    <!-- Group of checkbox, multiple choice are acceptable -->
+    <input type="checkbox" name="option" value="1" /> 1
+    <input type="checkbox" name="option" value="2" /> 2
+
+    <input type="submit" value="Submit" onclick="showValue(10)">
+    <input type="reset" value="Reset">
+    <input type="range" value="50" min="0" max="100" onclick=console.log(this.value)>
+
+    <!-- Label -->
+    <label for="">This is a label</label>
+    <div>
+        <button onclick="doLogin()">Login</button>
+        <button onclick="doCancel()">Cancel</button>
+    </div>
+
+    <script>
+        function showValue(value) {
+            console.log(value);
+        }
+        let doLogin = () => {
+            console.log('Login');
+        }
+        function doCancel() {
+            console.log('Cancel');
+        }
+    </script>
+
+
+</body>
+</html>
