@@ -9,6 +9,26 @@ h2 {
     margin-left: 50px;
 }
 
+h3 {
+    /* hex color */
+    color: #0004f4;
+    opacity: 1;
+
+}
+
+/* apply to all h3 tag first letter */
+h3::first-letter {
+    font-size: 150%;
+    color: rgb(0, 0, 255);
+}
+
+
+/* apply to all h4 tag first line */
+h4::first-line {
+    font-size: 150%;
+    color: rgb(0, 0, 255);
+}
+
 /* apply to all tag with id="ab"  */
 #ab {
     color: green;
@@ -17,6 +37,32 @@ h2 {
     font-family: "Times New Roman", Times, serif;
 }
 
+[id^="h6"] {
+    color: red;
+    margin-left: 150px;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
+input[type="text"] {
+    color: rgb(255, 0, 0);
+    font: 1rem sans-serif;
+}
+
+/* apply to all tag with id="ab" when hover */
+#ab:hover {
+    color: #ff0000;
+}
+
+h1 {
+    width: 300px;
+    border: 15px solid green;
+    padding: 50px;
+    margin: 20px;
+    border-radius: 10%;
+}
+
+/* apply to all tag with id="h6-px" */
 #h6-px {
     margin-left: 100px;
     font-size: medium;

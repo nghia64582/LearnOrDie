@@ -1,10 +1,10 @@
 *** STAGE 1: Docker Fundamentals (Beginner)
 
-- Understanding Containerization: 80
+- Understanding Containerization: 90
     + What is containerization?
     + Why use Docker?
     + Virtual machines vs. containers.
-- Docker Installation: 80
+- Docker Installation: 90
     + Install Docker Desktop (Windows/macOS) or Docker Engine (Linux).
     + Verify installation.
 

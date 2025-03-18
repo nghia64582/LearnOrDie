@@ -19,9 +19,9 @@
                 + h1 {color: navy;margin-left: 20px;}
 
     + Selectors & Specificity
-        + Selector: 
+        + Selector: 100
             + Select all elements based on element-name, id, and class to apply css
-        + Basic selectors: element, .class, #id
+        + Basic selectors: element, .class, #id 100
             + element	
                 + p	          : Selects all <p> elements
             + #id	
@@ -31,21 +31,47 @@
             + .class
                 + .intro      :	Selects all elements with class="intro"
                 + p.intro     : Selects all <p> elements with class="intro"
-        + Grouping (div, p)
-
-        + Combinators (div > p, div + p, div ~ p)
-
-        + Pseudo-classes (:hover, :focus, :nth-child())
-
-        + Pseudo-elements (::before, ::after)
-
+        + Grouping (div, p) 100
+            + Select all elements which shares the same attributes
+        + Attribute selectors 100
+            + Select all elements by its type and value
+            + input[type="checkbox"] => Select all <input> tag with type = "checkbox"
+            + input[type^="check"]   => Select all <input> tag with type start with "check"
+            + input[type$="box"]     => Select all <input> tag with type end with "box"
+            + input[type*="box"]     => Select all <input> tag with type contains "box"
+        + Combinators (div > p, div + p, div ~ p) 100
+            + Descendant combinator (space)
+                + div p {} : Select all <p> inside <div> 
+            + Child combinator (>)
+                + div > p {} : Select all <p> is a child of <div> (<div> is parent of <p>)
+            + Next sibling combinator (+)
+                + div + p {} : Select all <p> is right after <div> with a same parent
+            + Subsequent-sibling combinator (~)
+                + div ! p {} : Select all <p> is after <div> with a same parent
+        + Pseudo-classes (:hover, :focus, :nth-child()) 100
+            + Select some specific parts in a specific state (:hover - mouse move, ...)
+        + Pseudo-elements (::before, ::after) 100
+            + Select some specific parts of element like ::first_letter, ::first_line
         + Specificity rules
-
+            + The applied rule when several selectors determine a same tag
+            + Spectificity = (a, b, c, d) where
+                + a = Inline styles (highest specificity, as they are applied directly to an element).
+                + b = IDs (each ID is counted as 1).
+                + c = Classes, pseudo-classes, and attribute selectors (each of these is counted as 1).
+                + d = Elements and pseudo-elements (each of these is counted as 1).
+            + If 2 or more selectors have the same spectificity, the last one will be applied
 
     + Box Model
-        + Content, Padding, Border, Margin
+        + Content : 
+            + The inner part of Box, where image, text and other content appear
+        + Padding : 
+            + Tranparent, cover the content and inside the border
+        + Border  : 
+            + Cover padding and content
+        + Margin  : 
+            + Cover the border and tranparent
         + box-sizing: border-box;
-
+            
     + Units & Colors
         + Absolute : 100
             + px : 
@@ -57,8 +83,9 @@
             + %   : 
                 + percentage, responsive layout
             + em  :
-            + rem :
                 + 1 em = parent's font size
+            + rem :
+                + 1 rem = root's font size
                 + Scalable typography.
             + vh  :
                 + Viewport height, 1vh = 1% viewport height
@@ -66,11 +93,11 @@
             + vw  :
                 + Viewport width
                 + Responsive layouts.
-        + Colors 
-            + HEX
-            + RGB
-            + HSL
-            + opacity
+        + Colors : 100
+            + HEX : 100
+            + RGB : 100
+            + HSL : 100
+            + opacity : 100
 
     + Typography
         + font-family, font-size, line-height

@@ -97,8 +97,8 @@
             + frameborder (deprecated) – Border thickness.
             + allowfullscreen – Enables full-screen mode.
 
-    - Internal script:
+    - Internal script: 100
         + Write JS code in <script> tag
-    - External script:
+    - External script: 100
         + Write JS code in other .js files and import to .html file
         + Import by <script src="path/to/file.js"> </script>
