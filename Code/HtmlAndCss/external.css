@@ -37,6 +37,14 @@ h4::first-line {
     font-family: "Times New Roman", Times, serif;
 }
 
+#subject {
+    color: green;
+    margin-left: 150px;
+    margin-right: 150px;
+    font-size: medium;
+    font-family: "Times New Roman", Times, serif;
+}
+
 [id^="h6"] {
     color: red;
     margin-left: 150px;
@@ -114,4 +122,48 @@ h1 {
 /* apply to all tag */
 * {
     padding: 0;
+}
+
+h6[id="Serif-font"] {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: large;
+    line-height: 1mm;
+    text-align: right;
+}
+
+
+h6[id="San-Serif-font"] {
+    font-family: Verdana;
+    font-size: medium;
+}
+
+
+h6[id="Monospace-font"] {
+    font-family: "Courier New", Courier, monospace;
+    font-size: large;
+}
+
+
+h6[id="Cursive-font"] {
+    font-family: "Brush Script MT", cursive;
+    font-size: 1cm;
+}
+
+
+h6[id="Fantasy-font"] {
+    font-family: "Papyrus", fantasy;
+    font-size: large;
+}
+
+.flex-container {
+    display: flex;
+    flex-wrap: nowrap;
+    background-color: DodgerBlue;
+}
+
+.flex-container > div {
+    background-color: #f1f1f1;
+    margin: 10px;
+    padding: 20px;
+    font-size: 30px;
 }

@@ -99,10 +99,23 @@
             + HSL : 100
             + opacity : 100
 
-    + Typography
-        + font-family, font-size, line-height
-        + Google Fonts
-        + text-align, letter-spacing, word-spacing
+    + Typography: 100
+        + font-family: 100
+            + 5 main font-family: 
+                + Serif     : formal, elegant, best for important document like annoucement email, job application
+                + San-serif : modern, minimalistic look, best for wep app, content-centric
+                + Monospace : same width for all characters, best for coding, mechanisam text
+                + Cursive   : handwriting, best for handwriting mail
+                + Fantasy   : Decorative, best for game, 
+        + font-size: 100
+            + Size of characters
+        + line-height: 100
+            + Distance between lines
+        + Google Fonts: 100
+            + Font from google
+        + text-align     : Align the text
+        + letter-spacing : Distance between characters
+        + word-spacing   : Distance between words
 
     =====> Project Idea: Create a basic personal portfolio webpage.
 
