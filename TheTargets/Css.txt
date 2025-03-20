@@ -125,6 +125,7 @@
         + z-index, overflow
 
     + CSS Flexbox (Responsive Layouts)
+        + Stand for Flexible Box Layout module
         + display: flex;, flex-direction, justify-content, align-items
         + flex-wrap, align-self, gap
         + Flexbox Grid System
