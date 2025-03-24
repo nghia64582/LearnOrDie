@@ -27,7 +27,7 @@ function task2() {
         console.log('This is a message after the fetch call 2.');
 }
 
-
+task1();
 // myPromise
 //     .then(response => console.log(response))  // Executes when resolved
 //     .catch(error => console.log(error));      // Executes when rejected

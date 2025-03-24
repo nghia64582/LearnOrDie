@@ -3,11 +3,12 @@
 // }, 1000);
 
 async function sayHello() {
-    return new Promise(resolve => {
+    let result = new Promise(resolve => {
         setTimeout(() => {
             resolve("Returned after 1 second");
         }, 1000);
     });
+    return result;
 }
 
 sayHello().then(response => console.log(response));

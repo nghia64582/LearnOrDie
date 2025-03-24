@@ -9,44 +9,6 @@
     + Verify installation.
 
 - Docker concept: 
-    + Docker Image:
-        + A blueprint of docker container
-        + Template to build docker container
-        + Created from Dockerfile
-        + Store in docker hub/ registry
-        + Image layer:
-            + Each command in Dockerfile create a layer.
-            + Layers are cached
-        + Command:
-            + docker pull <image>	            Download an image from Docker Hub.
-            + docker images	                    List all downloaded images.
-            + docker rmi <image>	            Remove an image.
-            + docker tag <image> <repo>:<tag>	Tag an image for pushing to a registry.
-            + docker push <repo>:<tag>	        Push an image to a registry.
-            + docker build -t myapp .	        Build an image from a Dockerfile.
-
-    + Docker Container:
-        + Isolated runtime enviroments created from image
-        + Run application across different enviroments
-        + Can be started, stopped, restarted and removed
-        + Command:
-            + docker ps	                                    List running containers.
-            + docker ps -a	                                List all containers (including stopped ones).
-            + docker run -d --name myapp -p 8080:80 nginx	Run a container in detached mode.
-            + docker start <container>	                    Start a stopped container.
-            + docker stop <container>	                    Stop a running container.
-            + docker restart <container>	                Restart a container.
-            + docker rm <container>	                        Remove a container.
-            + docker logs -f <container>	                View real-time logs of a container.
-
-    + Docker Hub/ Registry:
-        + A place to store and distribute docker image
-        + Public registry: hub.docker.com
-        + Command:
-            + docker push <repo>:<tag>	        Push an image to a registry.
-            + docker tag <image> <repo>:<tag>	Tag an image for pushing to a registry.
-            + docker pull <image>	            Download an image from Docker Hub.
-
     + Dockerfile :
         + Script to define how to build an image
         + Example : 
@@ -72,6 +34,60 @@
             # Run the Spring Boot app
             CMD ["java", "-jar", "target/your-app.jar"]
 
+    + Docker Image:
+        + A blueprint of docker container
+        + Template to build docker container
+        + Created from Dockerfile
+        + Store in docker hub/ registry
+        + Contain several image layers
+        + Image layer:
+            + Each command in Dockerfile create a layer.
+            + Layers are cached, if we built 7 layers and change the 5th, so it will run quickly from 1 -> 4
+        + Command:
+            + docker pull <image>	            Download an image from Docker Hub.
+            + docker images	                    List all downloaded images.
+            + docker rmi <image>	            Remove an image.
+            + docker tag <image> <repo>:<tag>	Tag an image for pushing to a registry.
+            + docker push <repo>:<tag>	        Push an image to a registry.
+            + docker build -t myapp .	        Build an image from a Dockerfile.
+
+    + Docker Container:
+        + Isolated runtime enviroments created from image
+        + Run application across different enviroments
+        + Can be started, stopped, restarted and removed
+        + Command:
+            + docker ps	                                    List running containers.
+            + docker ps -a	                                List all containers (including stopped ones).
+            + docker run -d --name myapp -p 8080:80 nginx	Run a container in detached mode.
+                + Some parameters:
+                    + --name <container_name> => set up container name
+                    + -p <host_port>:<container_port> => Map port
+                    + --rm : remove container when it stops 
+                    + -v <host_part>:<container_path> => Map volume
+                    + --hostname <host_name>
+                    + -e set environment variables:
+                        + MYSQL_ROOT_PASSWORD:
+                        + MYSQL_DATABASE :
+                        + ....
+                    + -d	Run container in detached mode (background).
+                    + -it	Interactive mode with a terminal (useful for debugging).
+                    + --network	Connect the container to a specific network.
+
+Example:
+            + docker start <container>	                    Start a stopped container.
+            + docker stop <container>	                    Stop a running container.
+            + docker restart <container>	                Restart a container.
+            + docker rm <container>	                        Remove a container.
+            + docker logs -f <container>	                View real-time logs of a container.
+
+    + Docker Hub/ Registry:
+        + A place to store and distribute docker image
+        + Public registry: hub.docker.com
+        + Command:
+            + docker push <repo>:<tag>	        Push an image to a registry.
+            + docker tag <image> <repo>:<tag>	Tag an image for pushing to a registry.
+            + docker pull <image>	            Download an image from Docker Hub.
+
     + Docker Compose :
         + A tool for managing multi-container applications.
         + Uses a docker-compose.yml file to define services.
@@ -89,6 +105,20 @@
         + Command: 
             + docker volume create my-data
             + docker run -d -v my-data:/app/data my-app
+
+- SUMMARY:
+    - To run your application in a new enviroment:
+        + S1: Determine all required app to run your system:
+            + Database : MySQL, MariaDB, MongoDB, ...
+            + All of your apps: single app for monolith, apps for microservices
+        + S2: Prepare all step to setup each apps to run in docker container:
+            + For database : Pull docker images from registry and run with parameters like root pass, port, ...
+            + For app      : Write dockerfile to run docker container, and put it in each projects
+        + S3: Push all code to GitHub
+        + S4: Pull from GitHub to deploy PC
+        + S5: For each app, run docker build to create image
+        + S6: Run "docker run" to run the container with each app.
+
 
 - Working with Docker Images:
     + Understanding Docker Hub.
