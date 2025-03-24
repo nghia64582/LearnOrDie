@@ -63,7 +63,12 @@
 
 - JS in browser: 
     + JavaScript in the Browser
-    + DOM Manipulation → document.querySelector(), element.innerHTML, element.style.
+    + DOM Manipulation → 
+        + document.querySelector()  :
+        + element.innerHTML         :
+        + element.style             :
     + Events → addEventListener('click', callback).
-    + LocalStorage & SessionStorage → Storing data in the browser.
+    + LocalStorage                  :
+    + SessionStorage                :
+    + Storing data in the browser   :
     + Fetch API & AJAX → Making HTTP requests (fetch(), XMLHttpRequest).

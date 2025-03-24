@@ -1,0 +1,95 @@
+S1: Hiểu về Container & Kubernetes cơ bản
+    * Mục tiêu: Nắm vững Docker và Kubernetes, nền tảng cốt lõi của Rancher.
+    - Kiến thức cần có:
+        - Docker: - 90
+            + Image
+            + Container
+            + Volume
+            + Network
+        - Docker Compose: - 90
+        - Kubernetes: 
+            + Definition : An open source system help to manage, deploy, scale and develop containerized applications.
+            + Pod : 
+                + Smallest unit can be deployed in Kubernetes
+                + A pod can contain one or more container share the same network + volume
+            + Deployment
+            + Service
+            + Ingress
+        - Helm Chart - pending
+        - Basic YAML & Kubernetes manifest - pending
+    - Thực hành:
+        - Cài đặt Docker & Minikube
+        - Tạo Pod, Deployment, Service trong Kubernetes
+        - Triển khai ứng dụng mẫu bằng kubectl
+
+S2: Làm quen với Rancher
+    * Mục tiêu: Hiểu Rancher là gì và cách nó quản lý Kubernetes cluster.
+    - Kiến thức cần có:
+        - Rancher Overview: Kiến trúc, thành phần chính
+            + 
+        - Cách cài đặt Rancher (Docker-based hoặc Helm trên Kubernetes)
+            + 
+        - UI, CLI, API của Rancher
+            + 
+        - Rancher vs OpenShift vs k3s
+            + 
+    - Thực hành:
+        - Cài Rancher trên Docker (docker run ...)
+        - Khởi tạo Rancher Cluster
+        - Tạo namespace & deploy một ứng dụng mẫu
+
+S3: Quản lý Cluster & Workload với Rancher
+    * Mục tiêu: Biết cách sử dụng Rancher để quản lý Kubernetes.
+    - Kiến thức cần có:
+        - Quản lý Cluster: Node, taint, label
+        - Quản lý Namespace & Project
+        - Triển khai Workload (Pod, Deployment, StatefulSet)
+        - Network trong Rancher: Load Balancer, Ingress
+        - Storage & Persistent Volume
+    - Thực hành:
+        - Triển khai ứng dụng WordPress + MySQL qua Rancher
+        - Cấu hình Ingress Controller
+        - Gắn Persistent Volume cho ứng dụng
+
+S4: Bảo mật & RBAC
+    * Mục tiêu: Đảm bảo tính bảo mật cho hệ thống Kubernetes.
+    - Kiến thức cần có:
+        - Authentication & Authorization trong Rancher
+        - Cấu hình Role-Based Access Control (RBAC)
+        - Quản lý TLS, SSL, Service Mesh với Rancher
+        - Cấu hình Network Policy
+    - Thực hành:
+        Tạo User Role với quyền hạn khác nhau
+        Cấu hình Network Policy để hạn chế truy cập giữa namespace
+
+S5: Giám sát & Logging
+    * Mục tiêu: Theo dõi tình trạng cluster & debug lỗi nhanh chóng.
+    - Kiến thức cần có:
+        - Giám sát với Rancher Monitoring (Prometheus + Grafana)
+        - Logging với Fluentd, Loki
+        - Alerting với Rancher Alerts & Notifiers
+    - Thực hành:
+        Cài đặt Prometheus & Grafana để theo dõi cluster
+        Tạo alert khi CPU/RAM vượt ngưỡng
+
+S6: Tích hợp DevOps & CI/CD
+    * Mục tiêu: Tự động hóa triển khai ứng dụng với Rancher & GitOps.
+    - Kiến thức cần có:
+        - GitOps với FluxCD, ArgoCD
+        - CI/CD với Jenkins/GitHub Actions + Rancher
+        - Cấu hình Helm Chart cho ứng dụng
+    - Thực hành:
+        Tích hợp GitOps với ArgoCD
+        Dùng Jenkins + Rancher để tự động build & deploy
+
+S7: Tổng kết
+    - Nếu bạn làm DevOps/K8s Engineer, Rancher giúp quản lý & bảo mật Kubernetes dễ dàng.
+    - Lộ trình gợi ý:
+        - Cơ bản: Docker, Kubernetes
+        - Rancher: Cài đặt, quản lý cluster
+        - Triển khai ứng dụng: Workload, Ingress, Storage
+        - Bảo mật: RBAC, Network Policy
+        - Monitoring & Logging: Prometheus, Fluentd
+        - CI/CD & GitOps: Jenkins, ArgoCD
+
+Bạn muốn triển khai Rancher trên on-premise hay cloud (AWS, GCP, Azure)? 🚀

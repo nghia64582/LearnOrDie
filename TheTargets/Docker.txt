@@ -11,28 +11,12 @@
 - Docker concept: 
     + Dockerfile :
         + Script to define how to build an image
-        + Example : 
-            # Use an official JDK as base image
-            FROM eclipse-temurin:17-jdk-alpine
-
-            # Set working directory
-            WORKDIR /app
-
-            # Copy the Maven wrapper files and POM to leverage caching
-            COPY mvnw pom.xml ./
-            COPY .mvn .mvn
-
-            # Download dependencies before copying source code for better caching
-            RUN ./mvnw dependency:go-offline
-
-            # Copy the entire project
-            COPY . .
-
-            # Build the application
-            RUN ./mvnw clean package -DskipTests
-
-            # Run the Spring Boot app
-            CMD ["java", "-jar", "target/your-app.jar"]
+        + Popular steps (layer) in Dockerfile:
+            + Start from an image (from resitry)    : FROM maven:3.9.6-eclipse-temurin-17
+            + Set working directory                 : WORKDIR /app
+            + Copy code project to docker container : COPY . /app
+            + Run command to download dependencies  : 
+            + Run command to run the app            : CMD ["python", "app/src/main.py"]
 
     + Docker Image:
         + A blueprint of docker container
@@ -63,7 +47,8 @@
                     + --name <container_name> => set up container name
                     + -p <host_port>:<container_port> => Map port
                     + --rm : remove container when it stops 
-                    + -v <host_part>:<container_path> => Map volume
+                    + -v    <host_part>:<container_path> => Map volume by host part ()
+                    +     <volume_name>:<container_path> => Map volumn by name (should be create before)
                     + --hostname <host_name>
                     + -e set environment variables:
                         + MYSQL_ROOT_PASSWORD:
@@ -119,6 +104,14 @@ Example:
         + S5: For each app, run docker build to create image
         + S6: Run "docker run" to run the container with each app.
 
+--- IMPORTANT:
+    + To communicate app between docker container:
+        + We need to use container name or host name 
+            (need to declare in docker command, avoid implicit declaration)
+        + Create specific network instead of default to communicate between containers in docker
+            like docker network create my-network
+
+    + Should use docker command
 
 - Working with Docker Images:
     + Understanding Docker Hub.

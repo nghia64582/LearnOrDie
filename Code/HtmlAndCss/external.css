@@ -167,3 +167,17 @@ h6[id="Fantasy-font"] {
     padding: 20px;
     font-size: 30px;
 }
+.container {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    background-color: #2196F3;
+    padding: 10px;
+}
+
+.container > div {
+    background-color: #f1f1f1;
+    border: 1px solid black;
+    padding: 10px;
+    font-size: 30px;
+    text-align: center;
+  }
