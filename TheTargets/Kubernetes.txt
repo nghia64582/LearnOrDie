@@ -1,0 +1,100 @@
+Whether you're a developer, DevOps engineer, or sysadmin, here’s a structured roadmap to mastering Kubernetes. 🚀
+
+S1: Basics of Containers & Orchestration (Pre-requisites)
+    * Understand Linux & Command Line - 90
+    * Learn Docker:
+
+    What is Docker? - 100
+        + Dockerfile, Images, Containers - 100
+        + Docker Compose, Networking, Volumes - 100
+    * Understand Container Orchestration:
+        + Why do we need Kubernetes?
+        + Problems with standalone Docker
+
+S2: Kubernetes Fundamentals 🛠️
+    * Core Concepts:
+        + Pods
+            + Smallest unit can be deployed in Kubernetes
+            + A pod can contain one or more container share the same network + volume
+        + Deployments
+            + Manage multiple pods to scale and update
+        + Services (ClusterIP, NodePort, LoadBalancer, Ingress)
+            + Exposes pods internally or externally
+        + Namespaces
+            + 
+            + Command:
+                + kubectl get namespaces  # List all namespaces
+                + kubectl create namespace my-namespace  # Create a new namespace
+                + kubectl delete namespace my-namespace  # Delete a namespace
+
+    * YAML Basics:
+        + Writing Kubernetes manifests
+        + Defining Deployments, Services, ConfigMaps
+
+    * Networking in Kubernetes:
+        + Cluster Networking
+        + Service Discovery
+        + Ingress Controllers
+
+    * Config & Secrets Management:
+        + ConfigMaps
+        + Secrets
+        + Environment Variables
+
+S3: Kubernetes Cluster Management :
+    * Set Up a Local Kubernetes Cluster:
+        + Minikube, Kind, K3s, or Docker Desktop
+
+    * Multi-Node Cluster Setup (Production-like)
+        + kubeadm, kOps, or Kubernetes on cloud providers (GKE, AKS, EKS)
+
+    * RBAC (Role-Based Access Control)
+        + Users, Roles, RoleBindings, Service Accounts
+
+    * Storage in Kubernetes
+        + Persistent Volumes (PVs) & Persistent Volume Claims (PVCs)
+        + Storage Classes
+
+    * Logging & Monitoring
+        + Use Prometheus, Grafana, ELK Stack
+
+S4: Kubernetes Advanced Topics :
+    * Helm (Package Manager for Kubernetes)
+    + Helm Charts, Custom Helm Templates
+
+    * Operators & CRDs (Custom Resource Definitions)
+        + Understand Operators
+        + Write a simple CRD
+
+    * Service Mesh (Advanced Networking & Security)
+        + Istio, Linkerd, Consul
+
+    * Scaling & Auto-Healing
+        + Horizontal Pod Autoscaler (HPA)
+        + Cluster Autoscaler
+        + Pod Disruption Budgets
+
+    * CI/CD with Kubernetes
+        + Deploying Apps with ArgoCD, Jenkins, or GitOps
+
+S5: Kubernetes in Production 🏢
+    * Security Best Practices
+        + Pod Security Policies
+        + Network Policies
+        + Image Scanning & Security Tools
+
+    * Disaster Recovery & Backups
+        + Velero for Kubernetes backups
+
+    * Multi-Cluster & Hybrid Cloud
+        + Kubernetes Federation
+        + Managing Multi-Cluster with Rancher
+
+    * Serverless on Kubernetes
+        + Knative & OpenFaaS
+
+    * Bonus: Certifications & Learning Paths
+        + Certified Kubernetes Administrator (CKA) 🏆
+        + Certified Kubernetes Application Developer (CKAD)
+        + Certified Kubernetes Security Specialist (CKS)
+        + Would you like help setting up a Kubernetes lab for hands-on learning? 🚀
