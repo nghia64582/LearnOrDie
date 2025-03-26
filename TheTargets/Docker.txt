@@ -91,6 +91,17 @@ Example:
             + docker volume create my-data
             + docker run -d -v my-data:/app/data my-app
 
+    + Docker network:
+        + Command:
+            + docker network ls                                         : Show all networks
+            + docker network inspect my_network                         : Show network info 
+            + docker network create my_custom_network                   : Create a network
+            + docker network rm my_custom_network                       : Remove the network (only able to do if no container is using network)
+            + docker network connect my_network <container_name>        : Add a container to a network 
+            + docker network disconnect my_network <container_name>     : Disconnect a container to a network
+            + docker network prune                                      : Delete all not-in-used networks
+            + docker run --network=my_network -d <my_container>         : Start a container in a network
+
 - SUMMARY:
     - To run your application in a new enviroment:
         + S1: Determine all required app to run your system:
@@ -110,8 +121,14 @@ Example:
             (need to declare in docker command, avoid implicit declaration)
         + Create specific network instead of default to communicate between containers in docker
             like docker network create my-network
-
-    + Should use docker command
+    + Should use docker command to build and run image instead of docker desktop since we can pass params easily, ..
+    + Priority level:
+        + When we have multiple properties definitions, there is a specific priority level:
+            - L1 (highest): enviroment variables (eg: in docker-compose.yml)
+            - L2 : Command line
+            - L3 : 
+            - L4 : application.properties, application.yml, config file in project
+            - L5 : 
 
 - Working with Docker Images:
     + Understanding Docker Hub.

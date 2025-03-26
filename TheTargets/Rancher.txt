@@ -13,8 +13,11 @@ S1: Hiểu về Container & Kubernetes cơ bản
                 + Smallest unit can be deployed in Kubernetes
                 + A pod can contain one or more container share the same network + volume
             + Deployment
+                + 
             + Service
+                + 
             + Ingress
+                + 
         - Helm Chart - pending
         - Basic YAML & Kubernetes manifest - pending
     - Thực hành:
@@ -69,8 +72,8 @@ S5: Giám sát & Logging
         - Logging với Fluentd, Loki
         - Alerting với Rancher Alerts & Notifiers
     - Thực hành:
-        Cài đặt Prometheus & Grafana để theo dõi cluster
-        Tạo alert khi CPU/RAM vượt ngưỡng
+        - Cài đặt Prometheus & Grafana để theo dõi cluster
+        - Tạo alert khi CPU/RAM vượt ngưỡng
 
 S6: Tích hợp DevOps & CI/CD
     * Mục tiêu: Tự động hóa triển khai ứng dụng với Rancher & GitOps.

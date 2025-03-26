@@ -9,6 +9,8 @@ S1: Basics of Containers & Orchestration (Pre-requisites)
         + Docker Compose, Networking, Volumes - 100
     * Understand Container Orchestration:
         + Why do we need Kubernetes?
+            + A tool to help manage, scale, remove, run and duplicate container in large scale, 
+            + Standardize with other cloud Services
         + Problems with standalone Docker
 
 S2: Kubernetes Fundamentals 🛠️
@@ -18,10 +20,14 @@ S2: Kubernetes Fundamentals 🛠️
             + A pod can contain one or more container share the same network + volume
         + Deployments
             + Manage multiple pods to scale and update
-        + Services (ClusterIP, NodePort, LoadBalancer, Ingress)
+        + Services:
             + Exposes pods internally or externally
+            + ClusterIP     : 
+            + NodePort      : 
+            + LoadBalancer  : 
+            + Ingress       : 
         + Namespaces
-            + 
+            + Used to logically separate resources within cluster
             + Command:
                 + kubectl get namespaces  # List all namespaces
                 + kubectl create namespace my-namespace  # Create a new namespace
@@ -29,7 +35,14 @@ S2: Kubernetes Fundamentals 🛠️
 
     * YAML Basics:
         + Writing Kubernetes manifests
-        + Defining Deployments, Services, ConfigMaps
+            + A .yaml file
+            + Separate by ---
+            + kind=(Deployment or Service or ConfigMap)
+            + 
+        + Definition:
+            + Deployments   :
+            + Services      :
+            + ConfigMaps    :
 
     * Networking in Kubernetes:
         + Cluster Networking
