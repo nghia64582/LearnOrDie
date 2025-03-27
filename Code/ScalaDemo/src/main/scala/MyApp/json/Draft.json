@@ -1,0 +1,67 @@
+[
+  {
+    "areaId": 0,
+    "lsBet": [
+      {
+        "coinBet": 9000,
+        "count": 28710,
+        "totalLose": -4399567043,
+        "totalWin": 4767947460
+      },
+      {
+        "coinBet": 10000,
+        "count": 22364,
+        "totalLose": -3966027591,
+        "totalWin": 4435047393
+      },
+      {
+        "coinBet": 3000,
+        "count": 11159,
+        "totalLose": -529924746,
+        "totalWin": 590854185
+      },
+      {
+        "coinBet": 1000,
+        "count": 11336,
+        "totalLose": -158550347,
+        "totalWin": 180418568
+      },
+      {
+        "coinBet": 7000,
+        "count": 9213,
+        "totalLose": -955198193,
+        "totalWin": 1046688650
+      },
+      {
+        "coinBet": 2000,
+        "count": 15674,
+        "totalLose": -511382033,
+        "totalWin": 570913862
+      },
+      {
+        "coinBet": 4000,
+        "count": 8205,
+        "totalLose": -512707228,
+        "totalWin": 569263321
+      },
+      {
+        "coinBet": 6000,
+        "count": 4966,
+        "totalLose": -443779696,
+        "totalWin": 490902383
+      },
+      {
+        "coinBet": 5000,
+        "count": 9513,
+        "totalLose": -796119058,
+        "totalWin": 886687996
+      },
+      {
+        "coinBet": 8000,
+        "count": 4457,
+        "totalLose": -490399175,
+        "totalWin": 537871805
+      }
+    ]
+  }
+]

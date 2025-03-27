@@ -1,0 +1,137 @@
+[
+  {
+    "label": "Khu Dân làng hạ",
+    "data": [
+      125597,
+      120623,
+      121101,
+      132623,
+      134233,
+      142353,
+      143224,
+      0
+    ],
+    "borderColor": "#cccc00",
+    "backgroundColor": "#cccc00"
+  },
+  {
+    "label": "Khu Dân làng thượng",
+    "data": [
+      133384,
+      128234,
+      132217,
+      142682,
+      142954,
+      148441,
+      148266,
+      0
+    ],
+    "borderColor": "#99ff33",
+    "backgroundColor": "#99ff33"
+  },
+  {
+    "label": "Khu Lý trưởng",
+    "data": [
+      77453,
+      74573,
+      75332,
+      81947,
+      81962,
+      84351,
+      83580,
+      0
+    ],
+    "borderColor": "#009933",
+    "backgroundColor": "#009933"
+  },
+  {
+    "label": "Khu Thương gia",
+    "data": [
+      22688,
+      22024,
+      22199,
+      22774,
+      23912,
+      24878,
+      24271,
+      0
+    ],
+    "borderColor": "#00ffcc",
+    "backgroundColor": "#00ffcc"
+  },
+  {
+    "label": "Khu Chánh Tổng",
+    "data": [
+      2884,
+      2487,
+      2997,
+      3146,
+      2893,
+      3846,
+      3962,
+      0
+    ],
+    "borderColor": "#0066ff",
+    "backgroundColor": "#0066ff"
+  },
+  {
+    "label": "Khu Vương Gia",
+    "data": [
+      151,
+      323,
+      261,
+      150,
+      161,
+      276,
+      171,
+      0
+    ],
+    "borderColor": "#6600ff",
+    "backgroundColor": "#6600ff"
+  },
+  {
+    "label": "Khu Thi Hương",
+    "data": [
+      4716,
+      0,
+      4800,
+      0,
+      5160,
+      0,
+      5340,
+      0
+    ],
+    "borderColor": "#cc33ff",
+    "backgroundColor": "#cc33ff"
+  },
+  {
+    "label": "Khu Thi Hội",
+    "data": [
+      0,
+      5417,
+      0,
+      6282,
+      0,
+      6385,
+      0,
+      0
+    ],
+    "borderColor": "#003300",
+    "backgroundColor": "#003300"
+  },
+  {
+    "label": "Khu Thi Đình",
+    "data": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "borderColor": "#cc0066",
+    "backgroundColor": "#cc0066"
+  }
+]

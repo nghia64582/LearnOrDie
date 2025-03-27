@@ -1,0 +1,20 @@
+- Process test code server:
+    + Update server code
+    + Create pull request
+    + Build server dev-env and restart
+    + Use client dev-env to test
+
+- Build image in dev repo:
+    + docker login r.bennuoc.com
+        Username: deployment
+        Password:
+    + sbt docker:publish
+
+- Build sfs-chan:
+    + Them credentials.sbt vao C:\Users\NghiaVT\.sbt\1.0
+
+
+- TODO:
+    + Add new option "4.Choc" in "Thong ke so lan nap" and "Thong ke so UID nap" for "Thong ke so lan nap" - 100
+    + Update tease feature in ranking
+    + Learn to set up new chart in web stats

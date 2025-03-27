@@ -1,0 +1,122 @@
+- Scala:
+    - val and var: 100%
+        + val : declare immutable
+        + var : declare mutable
+        + def : declare function
+    - Trait : 100%
+        + Same as java interface
+        + Use extend instead of implement
+        + with for multiple implement
+        + Able to implement method with body
+    - Case class: 100%
+        + different vs class
+        - Case class
+           + immutable (no change in runtime)
+           + able for pattern matching + functional programming
+           + auto gen equals + hashcode
+           + able to be used as key in map
+        - Class
+           + Define object blueprint
+           + Mutable state
+    - Companion object : 100%
+        + A object has same name with trait or class
+        + Use method like static
+        + Can be used to build factory pattern
+    - Option : 100%
+        + Pretty same like optional in java
+        + Has 1 in 2 values (Some(AnyRef) or None)
+    - Try : 100%
+        + try - catch block VV
+        + Try : use Try {}.recover {} like try {} catch in java
+    - Future : 100%
+        + Set up a new value in the future, due to the result of async function
+        + After setup async function and future value, we implement onSuccess and onFailure
+    - DataType: 100%
+        - Primitive type.
+        - immutable : List, Vector, Set, Map, Tuple
+        - mutable :
+        - .map -> Map every element in collection into a new one
+        - .flatmap -> first is just like map, then convert into 1D List
+        - .flatten -> convert 2D list into 1D list
+        - .contains -> check if collection contain value
+        - .filter -> choose all suitable values in collection to retain, return collection
+        - .find -> choose first suitable values in collection to retain, return optional
+    - patternMatching : 100%
+        - pretty like switch in java, js, ... but more flexible
+        - can be used like lambda function
+    - implicit : 100%
+        + Implicit => define a method, class or a value where the engine auto define in some specific use cases
+        + Implicit method or implicit conversion:
+            + Auto convert a object to another one with different type
+            + Cannot be ambitious, there is only one implicit method convert from Class A -> Class B
+            + Shouldn't use in global scope (Can use import to ensure intention)
+            + Compiler will check and convert from Class A -> Class B
+        + Implicit parameter:
+            + When not define parameter of method, compiler will detect implicit value in current scope to use as param
+                for this method
+        + Implicit value:
+            + Is used as parameter in function use implicit parameter, in the same scope
+        + Implicit class:
+            + Use to add define other methods
+- Play2x framework: 100%
+    - Build web app by scala + java
+    - Route file :
+        + To config method + endpoint => method
+        + create controller class
+        + config in route file
+            + GET     /                           controllers.HomeController.index()
+              GET     /hello/:name                controllers.HomeController.hello(name: String)
+              GET     /json                       controllers.HomeController.jsonData()
+        + Add data to body
+        + Get result from response
+        + Add authentication info to header
+    - Sync/Async api: 100%
+        + Sync API: Client send request -> wait for response from server -> do other thing
+        + Async API: Client send request, setup callback -> do other thing
+    - Anorm : 100%
+        + ORM for scala, pretty like JPA + Hibernate
+        + Set up config in application.conf
+        + Config RowParser for each type of query
+    - Suitable for CRUD operation, like request, create update and delete resources
+- SmartFox Server: 100%
+    - What is?
+        + Game server for multiplayer game
+    - Some core features:
+        + Extension Manager, Zone monitor, Zone configurator, BlueBox Monitor, Server configurator, Log viewer, Ban manager
+        + handleClientRequest, handleServerEvent
+    - Code extension: Scala/Java code handle custom logic on server side
+    - SFSObject: Contain int, boolean, string, ...
+    - Ext request/ Ext response: API between client <-> server for communication
+- Akka actor: 100%
+    - What is actor, actor ref
+        + Actor Model: Handle concurrent + async
+        + Actor:
+            + Has mailbox to store message from sender
+            + Message from mailbox will be handled in order
+            + Handle message in method "receive"
+        + Actor ref
+            + Reference to a actor
+            + Is used to send message to the actor
+        + Communicate between actor
+            + Use a ActorService to manage all actor
+            + Get specific actor for action
+    - Send/Received message
+        + Send message by ActorRef
+        + Handle received messages by overriding receive method
+- Pipe actor
+    + Technique to handle Future in Actor
+- FSM:
+    + Each object will have a state at any time and a corresponding data with the state
+    + Transition: The changes of the state to another
+    + FSM could be triggered by an event or input and change from one state to other state
+
+- RHActor
+    + Actor handle client request
+- EHActor
+    + Actor handle server event
+- Zone:
+    + An application contain multiple zones, each zone has specific
+- Build simple app with SFS
+
+
+-

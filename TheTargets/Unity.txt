@@ -24,42 +24,36 @@
     + Rigidbodies & Colliders (BoxCollider, SphereCollider, MeshCollider)
     + Collision Detection (OnCollisionEnter, OnTriggerEnter)
     + Forces & Gravity (Rigidbody.AddForce())
-
     👉 Mini Project: Make a bouncing ball simulation with physics.
 
 - UI & User Interaction
     + Canvas, Buttons, Text, Images
     + Handling UI Clicks (Button.onClick.AddListener())
     + HUD (Health Bar, Score Counter, Timer)
-
     👉 Mini Project: Create a simple main menu with Start & Quit buttons.
 
 - GameObjects & Prefabs
     + What is a Prefab? (Reusable GameObjects)
     + Instantiating Prefabs (Instantiate(prefab, position, rotation))
     + Destroying GameObjects (Destroy(gameObject))
-
     👉 Mini Project: Spawn enemies at random positions using prefabs.
 
 - Animations & Effects
     + Unity Animator (State Machine & Transitions)
     + Particle System (Fire, Smoke, Explosions)
     + Sound Effects & Background Music (AudioSource)
-
     👉 Mini Project: Animate a character walking & jumping.
 
 - Game AI & NPCs
     + Basic AI Movement (NavMeshAgent)
     + Enemy Behavior (Chase, Patrol, Attack)
     + Finite State Machines (FSM) for AI
-
     👉 Mini Project: Create a basic enemy that chases the player.
 
 - Saving & Loading Game Data
     + PlayerPrefs (Simple Data Storage)
     + Saving Data to JSON or a Database
     + Checkpoints & Save Systems
-
     👉 Mini Project: Add a high score system that saves player progress.
 
 - Optimizing Your Game

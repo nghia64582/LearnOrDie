@@ -1,0 +1,56 @@
+- Set up request in route - 100
+- Set up action in HTML same as route - 100
+- Get data from ScalaJdbcConnection: - 0
+    + Setup Connection, Table, SQL, ... and get data, return to service
+- Create button in leftbar.scala
+- Update href in the new created tab
+- Constructor param html: - 60
+    + mailBoxData : @(
+        labelArray: Html,
+        datasetsFee: Html,
+        from: Html,
+        to: Html,
+        labelName: ListBuffer[String],
+        allDatas: ListBuffer[MailBoxData],
+    )
+- Update logic in ToolsController - 50
+    + Set up from route in file "route"
+    + Return corresponding html in ToolsController method
+
+- In .html file, we need to use input to display the chart
+---- SET UP CHART DATA
+ $(function () {
+     //fee chart
+     const dataFee = {
+         labels: @labelArray,
+         datasets: @datasetsFee
+     };
+     const configFee = {
+         type: 'line',
+         data: dataFee,
+         options: {
+             scales: {
+                 y: {
+                     position: 'right'
+                 }
+             },
+             responsive: true,
+             plugins: {
+                 legend: {
+                     position: 'left',
+                 },
+                 title: {
+                     display: true,
+                     text: 'từ @from đến @to'
+                 }
+             }
+         },
+     };
+     var lineChartFee = new Chart($('#lineChartFee').get(0).getContext('2d'), configFee)
+     $('#range').daterangepicker({
+         startDate: '@from',
+         endDate: '@to',
+         locale: {
+             format: 'YYYY-MM-DD'
+         }
+     });

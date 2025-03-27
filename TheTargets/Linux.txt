@@ -1,0 +1,78 @@
+Linux is a powerful operating system widely used in servers, DevOps, embedded systems, cybersecurity, and software development. Below is a structured roadmap to learn Linux efficiently.
+
+* Step 1: Basics of Linux (For Beginners)
+    + Learn Linux Fundamentals
+        + What is Linux?
+        + Linux Distributions (Ubuntu, Debian, CentOS, Arch, etc.)
+        + File System Structure (/bin, /etc, /home, /var, /tmp, etc.)
+        + Basic Linux Commands (ls, cd, pwd, cp, mv, rm, cat, echo)
+        + File Permissions (chmod, chown, ls -l)
+        + Working with Users and Groups (adduser, deluser, usermod, groups)
+
+    - Resources:
+        Try Ubuntu or Fedora on a Virtual Machine (VM) or WSL (Windows Subsystem for Linux)
+        Use Linux Journey
+
+* Step 2: Linux Shell and Scripting
+    + Master Linux Shell (Bash)
+        + Understand the Shell (bash, zsh, fish)
+        + Command Chaining (&&, ||, ;)
+        + Input/Output Redirection (>, >>, <, |)
+        + Environment Variables (export, $HOME, $PATH)
+        + Process Management (ps, top, kill, nice, jobs, bg, fg)
+
+    * Bash Scripting
+        + Writing Shell Scripts (.sh files)
+        + Variables, Loops (for, while), and Conditionals (if, case)
+        + Functions in Bash
+        + Cron Jobs (Automating Tasks)
+
+    - Practice:
+        Write scripts to automate file backups
+        Automate package updates
+
+* Step 3: Package Management & Networking
+    + Package Management
+        + Install & Manage Software (apt, dnf, yum, pacman)
+        + Using snap and flatpak
+        + Compiling from Source (make, ./configure, gcc)
+
+    Linux Networking
+        + Network Configuration (ip a, ifconfig, netstat, ss)
+        + Check Network Connectivity (ping, traceroute, nc)
+        + SSH (ssh, scp, rsync)
+        + Firewall (ufw, iptables, firewalld)
+        + VPN & Proxy (OpenVPN, WireGuard, squid)
+
+- Step 4: Linux Server Administration
+    - Linux System Administration
+        + User & Permission Management (sudo, groups, passwd)
+        + Disk Management (df, du, mount, umount, fdisk, lsblk)
+        + Process Management (systemctl, service, journalctl)
+        + Log Management (/var/log/, dmesg, syslog)
+
+    - Services & Daemons
+        + Web Servers (Nginx, Apache)
+        + Databases (MySQL, PostgreSQL)
+        + File Sharing (Samba, NFS)
+        + Mail Servers (Postfix, Dovecot)
+
+- Step 5: DevOps, Cloud & Security
+    - Linux Security
+        + Secure Shell Hardening (fail2ban, ssh-keygen)
+        + Firewalls (iptables, ufw, firewalld)
+        + SELinux & AppArmor
+        + Scanning for Vulnerabilities (Lynis, ClamAV)
+
+    - Linux for DevOps & Cloud
+        + Containers (Docker, Podman)
+        + Kubernetes (kubectl, helm)
+        + Configuration Management (Ansible, Puppet, Chef)
+        + CI/CD (Jenkins, GitHub Actions)
+
+- Step 6: Mastering Linux (Advanced Topics)
+    + Kernel & Modules (uname -r, lsmod, modprobe)
+    + Compiling Linux Kernel
+    + Filesystem Management (LVM, RAID, XFS, EXT4, ZFS)
+    + Linux for Embedded Systems (Raspberry Pi)
+    + High Availability & Load Balancing

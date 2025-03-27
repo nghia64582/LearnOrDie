@@ -1,0 +1,9 @@
+- sd-api:
+    + Dùng play framework handle http và data
+- sd-cb:
+    +
+- game-server:
+    + Dùng smart-fox-server, giao tiếp socket với client dữ liệu về tìm trận và bàn chơi
+- web-stat-tool:
+    + Tool dùng để hiển thị chart từ db
+    + Doc data từ chanpro db

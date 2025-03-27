@@ -1,0 +1,30 @@
+- Cửa hàng:
+    + 1 d ~ 600 bao
+    + 166 d ~ 1 xu co dai
+    + 1000 d ~ 1 ngoc
+- Chọn khu chơi => level, đánh thường
+- Khoa cử => Đánh rank
+
+- PheBaoTool :
+    + Đọc log mỗi ngày và ghi vào db phebao
+    + Update function ghi log trong MysqlConectionUtils cua PheBaoTool
+
+- Step to build new chart in Web stat
+B1: Create table in phebao db
+    + Create manually by SQL
+B2: Update code in PheBaoTool to auto insert data from data source
+    + The data source is (data/*.$strDay.log) - ?
+    + Update code in MysqlConectionUtils to add new row to MySQL db
+B3: Update code in web stat to add a new tab and build the chart from data
+    + Set up request in route - 100
+    + Set up action in HTML same as route - 100
+    + Get data from ScalaJdbcConnection: - 0
+    + Setup Connection, Table, SQL, ... and get data, return to service
+    + Create button in leftbar.scala
+    + Update "href" in the new created tab
+    + Update logic in ToolsController - 50
+        + Set up from route in file "route"
+        + Return corresponding html in ToolsController method
+    + In .html file, update onMenuClick() and chart data
+    + Main content and data of table is in <thead> tag
+    + Main content and data of charts is in <script> tag
