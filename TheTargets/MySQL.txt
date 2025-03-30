@@ -1,10 +1,10 @@
-- What is MySQL? (Relational Database, Client-Server Model):
+1. What is MySQL? (Relational Database, Client-Server Model):
     + Relational Database
     + Installing MySQL (MySQL Workbench, MySQL CLI)
     + Understanding Databases vs. Tables
     + Basic SQL Syntax (Case Sensitivity, Comments, Semicolon ;)
 
-- Core SQL Commands
+2. Core SQL Commands
     + Creating & Managing Databases :
         CREATE DATABASE my_database;
         SHOW DATABASES;
@@ -42,7 +42,7 @@
         SELECT department, COUNT(*) FROM employees GROUP BY department;
 Example : Get the total number of users who registered today.
 
-4️⃣ Table Relationships & Joins
+3. Table Relationships & Joins
     + Types of Relationships (One-to-One, One-to-Many, Many-to-Many)
     + Primary & Foreign Keys
     + JOINs (INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN)
@@ -53,7 +53,7 @@ Example : Get the total number of users who registered today.
         SELECT name FROM users WHERE id IN (SELECT user_id FROM orders);
 Example: Get all orders with user names from two tables using JOIN.
 
-5️⃣ Indexing & Performance Optimization
+4. Indexing & Performance Optimization
     + Why Indexing Matters?
     + Creating Indexes
         CREATE INDEX idx_email ON users(email);
@@ -69,7 +69,7 @@ Example: Get all orders with user names from two tables using JOIN.
 
 Example : Identify slow queries and optimize them with indexes.
 
-6️⃣ Stored Procedures & Triggers
+6. Stored Procedures & Triggers
     + Stored Procedures
         DELIMITER //
         CREATE PROCEDURE GetUsers()
@@ -88,7 +88,7 @@ Example : Identify slow queries and optimize them with indexes.
         SELECT users.name, orders.amount FROM users JOIN orders ON users.id = orders.user_id;
 Example : Create a trigger that automatically logs changes in a table.
 
-7️⃣ Database Security & Best Practices
+7. Database Security & Best Practices
     + User Privileges & Access Control
         CREATE USER 'dev_user'@'localhost' IDENTIFIED BY 'securepassword';
         GRANT SELECT, INSERT ON my_database.* TO 'dev_user'@'localhost';
@@ -104,7 +104,7 @@ Example : Create a trigger that automatically logs changes in a table.
         mysql -u root -p my_database < backup.sql
 Example : Create a new user with restricted database permissions.
 
-- Scaling & High Availability
+8. Scaling & High Availability
     + Replication (Master-Slave, Master-Master) : 
         + Technique to handle large amount of request
         + One main db server and several smaller servers
@@ -121,3 +121,9 @@ Example : Create a new user with restricted database permissions.
             to increase speed of request, especially get resources
         + Some core features to compare:
             + 
+
+---- DESIGN DATABASE
+S1: Define entities:
+    + Raw entities (Employee, Product, Category, Vehicle, Item, ...)
+    + Session entities (Order, Check-in, Attendance)
+    + Temporary entities (For n-n relationship, like product-category, class-student, ...)
