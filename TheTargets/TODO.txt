@@ -1,40 +1,55 @@
-
-- sd-cb:
-    - @Singleton CAO class
-        + Used to store data into database
-        + extends JsCAO
-        + Methods:
-            + override protected def key(uid: Int)
-            + getOrCreate(uid: Int)
-            + getOrCreateWithCAS(uid: Int)
-            + updateOne(uid: Int, data: Entity)
-            + updateOneValue
-            + updateManyValue
-            + useAncientToRoll
-            + updateDataWithLog
-    - @Singleton Ops class
-        + Used to define method which access and modify the data
-            + purchase item, exchange item, spin the wheel, use the ticket, ...
-        + Inject CAO class to interact with db (like save, load, update, ...)
-        + Methods:
-            + purchaseItem
-            + tryOpenBook
-            + useTheTicket
-    - Entity case class:
-        + Used to define structure of entities which is stored in db
-        + Methods:
-            + implicit val writes
-            + implicit val reads
-            + val default
-- sd-api:
-    + Controller: Handle RestAPI
-        + needMod, needLogin: Authentication
-        +
-    + Use cb as library to access db (CAO, Ops, Entity)
-- game-server:
-    + Use smart-fox-server to organize game, handle matching logic, ...
-    + Create class extends trait Cmd to define response to send to FE 
-        + sendTo : send message to FE with data
-    + Create class extends trait Req to define request sent from FE
-        + 
-    + Use cb as library to access db (CAO, Ops, Entity)
+- Tìm hiểu tính năng chọc trong game-server:
+    + Cài đặt chi phí chọc trong bàn chơi Khoa cử 10M
+    + 
+- Các lớp trong game-server:
+    + TeaseCmd
+        + extends Cmd
+        + "t"   : id
+        + "ub"  : teaseUids.map(Integer.valueOf).asJava
+        + "uc"  : uid
+        + "nc"  : username
+    + TeaseSubscriptionCmd
+        + extends Cmd
+        + "t"   : time
+    + UserTeaseCmd
+        + extends Cmd
+        + List[id: Int, remaining: Int]
+    + TeaseConfigCmd
+        + extends Cmd
+        + "t"   : cfg.timeLimit
+    + TeaseHandler:
+        + extends BaseFSM
+    + ITease:
+        + trait
+        + def sendTease(req: TeaseReq): Unit
+    + TeaseImpl:
+        + trait
+        + extends ITease
+    + TeaseReq(TeaseParam):
+        + "id"          : id
+        + Optional["u"] : uid
+- Các lớp trong sd-api :
+    + ForeignCurrency teaseSub: long
+    + 
+- Các lớp trong sd-cb  :
+    + TeaseConfig
+        + timeLimit             : Int
+        + items                 : List[TeaseItem]
+        + limitStakeUsingTease  : Int
+        + spectatorCanTease     : Boolean
+        + isActive              : Boolean
+    + TeaseConfigCAO
+        + Store data into db
+    + UserTeaseData
+        + data      : List[TeaseData]
+    + TeaseData:
+        + id        : Int
+        + remaining : Int
+    + UserTeaseDataCAO
+        + Store data into db
+    + TeaseItem:
+        + id        : Int
+        + tax       : Double
+        + totalFree : Int
+        + usingCoin : Boolean
+        + status    : Int

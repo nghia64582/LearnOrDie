@@ -1,0 +1,180 @@
+1. Prerequisites: Learn the Basics
+    Before diving into React Native, you should know:
+        + JavaScript (ES6+ features) → let/const, arrow functions, async/await, destructuring
+        + React.js Basics → Components, Props, State, Hooks (useState, useEffect)
+        + Basic HTML & CSS → For styling components
+
+2. Setting Up React Native Environment
+    + Install Node.js (LTS version)
+    + Install React Native CLI:
+        npm install -g react-native-cli
+    + Set up Android Studio (for Android Emulator) and Xcode (for iOS development)
+    + Create a new React Native project:
+        + npx react-native init MyApp
+        + cd MyApp
+        + npx react-native start
+    + Run on a simulator/emulator:
+        + npx react-native run-android   # For Android  
+        + npx react-native run-ios       # For iOS  
+
+3. Understanding Core Concepts
+    + Components:
+        - Functional vs Class Components
+    + Props & State:
+        - Data flow in React Native
+    + Hooks:
+        - useState, useEffect, useRef, useContext
+    + Navigation:
+        - Using react-navigation for screens & stacks
+    + Styling:
+        - Flexbox, StyleSheet API
+    + Handling Events:
+        - Touchable components (TouchableOpacity, TouchableHighlight)
+
+    - Example: Basic Component
+        import React from 'react';
+        import { Text, View, StyleSheet } from 'react-native';
+
+        const App = () => {
+            return (
+                <View style={styles.container}>
+                <Text>Hello, React Native!</Text>
+                </View>
+            );
+        };
+
+        const styles = StyleSheet.create({
+            container: {
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+            },
+        });
+
+        export default App;
+
+4. State Management
+    + Local State: useState, useReducer
+    + Global State: Context API, Redux, Zustand
+    + Data Fetching: fetch(), axios, react-query
+    + Example: Fetch API Data
+        import React, { useState, useEffect } from 'react';
+        import { View, Text, FlatList } from 'react-native';
+
+        const App = () => {
+            const [data, setData] = useState([]);
+
+            useEffect(() => {
+                fetch('https://jsonplaceholder.typicode.com/posts')
+                .then(response => response.json())
+                .then(json => setData(json));
+            }, []);
+
+            return (
+                <FlatList
+                data={data}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item }) => <Text>{item.title}</Text>}
+                />
+            );
+        };
+
+    export default App;
+
+5. Navigation & Routing
+    - Install React Navigation:
+        npm install @react-navigation/native
+        npm install react-native-screens react-native-safe-area-context react-native-gesture-handler react-native-reanimated
+    - Example: Stack Navigation
+        import React from 'react';
+        import { createStackNavigator } from '@react-navigation/stack';
+        import { NavigationContainer } from '@react-navigation/native';
+        import { View, Text, Button } from 'react-native';
+
+        const HomeScreen = ({ navigation }) => (
+            <View>
+                <Text>Home Screen</Text>
+                <Button title="Go to Details" onPress={() => navigation.navigate('Details')} />
+            </View>
+        );
+
+        const DetailsScreen = () => <Text>Details Screen</Text>;
+
+        const Stack = createStackNavigator();
+        const App = () => (
+            <NavigationContainer>
+                <Stack.Navigator>
+                <Stack.Screen name="Home" component={HomeScreen} />
+                <Stack.Screen name="Details" component={DetailsScreen} />
+                </Stack.Navigator>
+            </NavigationContainer>
+        );
+
+        export default App;
+
+6. Backend Communication & API Integration
+    + REST API Integration (fetch, axios)
+    + GraphQL API (Apollo Client, Relay)
+    + Real-time Communication (WebSockets, Firebase)
+
+7. Database & Storage
+    + Async Storage (Local storage) → @react-native-async-storage/async-storage
+    + SQLite (Local Database) → react-native-sqlite-storage
+    + Firebase Firestore (Cloud Database)
+    + Realm (NoSQL for Mobile Apps)
+
+    + Example: AsyncStorage
+        npm install @react-native-async-storage/async-storage
+
+        import AsyncStorage from '@react-native-async-storage/async-storage';
+
+        const storeData = async () => {
+        await AsyncStorage.setItem('username', 'JohnDoe');
+        };
+
+        const getData = async () => {
+        const value = await AsyncStorage.getItem('username');
+        console.log(value);
+        };
+
+8. Authentication & Security
+    + OAuth & Social Login → Firebase Auth, Google Sign-In
+    + JWT Authentication → Token-based login
+    + Secure Storage → react-native-keychain
+    + Example: Firebase Authentication
+    npm install @react-native-firebase/auth
+        import auth from '@react-native-firebase/auth';
+
+        const signIn = async () => {
+        const user = await auth().signInWithEmailAndPassword(email, password);
+        console.log(user);
+        };
+
+9. Performance Optimization
+    + Use FlatList instead of ScrollView for large lists
+    + Use memoization (React.memo, useCallback)
+    + Optimize re-renders (avoid unnecessary state updates)
+    + Reduce bundle size (tree shaking, lazy loading)
+
+10. Deployment & Publishing
+    - Android APK Build:
+        cd android && ./gradlew assembleRelease
+    - iOS Build:
+        cd ios && pod install
+        npx react-native run-ios --configuration Release
+    - Publish to App Store & Play Store
+
+11. Advanced Topics
+    - Native Modules & Bridging (when JavaScript isn’t enough)
+    - Push Notifications (react-native-push-notification)
+    - Animations with Reanimated (react-native-reanimated)
+    - Offline Support (Data persistence, caching strategies)
+
+12. Final Summary
+    1. Learn JavaScript & React Basics
+    2. Set up React Native Environment
+    3. Understand Components, Hooks, and State
+    4. Learn Navigation & API Integration
+    5. Use Databases & Authentication
+    6. Optimize Performance & Security
+    7. Deploy to Play Store & App Store

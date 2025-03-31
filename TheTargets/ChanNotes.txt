@@ -1,9 +1,45 @@
-- sd-api:
-    + Dùng play framework handle http và data
 - sd-cb:
-    +
+    - @Singleton CAO class
+        + Used to store data into database
+        + extends JsCAO
+        + Methods:
+            + override protected def key(uid: Int)
+            + getOrCreate(uid: Int)
+            + getOrCreateWithCAS(uid: Int)
+            + updateOne(uid: Int, data: Entity)
+            + updateOneValue
+            + updateManyValue
+            + useAncientToRoll
+            + updateDataWithLog
+    - @Singleton Ops class
+        + Used to define method which access and modify the data
+            + purchase item, exchange item, spin the wheel, use the ticket, ...
+        + Inject CAO class to interact with db (like save, load, update, ...)
+        + Methods:
+            + purchaseItem
+            + tryOpenBook
+            + useTheTicket
+    - Entity case class:
+        + Used to define structure of entities which is stored in db
+        + Methods:
+            + implicit val writes
+            + implicit val reads
+            + val default
+- sd-api:
+    + Controller: Handle Http RestAPI
+        + needMod, needLogin: Authentication
+        + connect with sql database by anorm, set up query + parser
+        + case class to store entity
+        + BoardMgr 
+    + Use cb as library to access couchbase db (CAO, Ops, Entity)
 - game-server:
-    + Dùng smart-fox-server, giao tiếp socket với client dữ liệu về tìm trận và bàn chơi
-- web-stat-tool:
-    + Tool dùng để hiển thị chart từ db
-    + Doc data từ chanpro db
+    + Use smart-fox-server to organize game, handle matching logic, ...
+    + Create class extends trait Cmd to define response to send to FE 
+        + sendTo : send message to FE with data
+    + Create class extends trait Req to define request sent from FE
+    + Come with corresponding Param class to define structure of data
+    + Use cb as library to access db (CAO, Ops, Entity)
+- web-tool :
+    + Connect to chanpro db to show data
+    + Use html + scala
+    + 

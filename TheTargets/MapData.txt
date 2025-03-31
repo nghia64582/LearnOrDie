@@ -1,0 +1,14 @@
+- Some popular libs to get data:
+    - Geopy Python:
+        + Convert coordinate to address and vice versa
+        + Example : 
+            + Số 250 Minh Khai, Hai Bà Trưng, Hà Nội => 
+                + Latitude: 20.994613793045183
+                + Longitude: 105.85720871103645
+            + 21.012228, 105.855491 => Phố Hương Viên, Phường Đồng Nhân, Quận Hai Bà Trưng, Thành phố Hà Nội, 10078, Việt Nam
+    - 
+- Some popular API:
+    - 
+    - 
+- Show map on mobile-app/web:
+    - 

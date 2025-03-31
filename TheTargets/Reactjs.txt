@@ -12,15 +12,152 @@
 - React Basics
     + Understanding React:
         + What is React? Why React?
-        + SPA (Single Page Applications) vs. Multi-Page Applications
-        + JSX (JavaScript XML)
+            + Components-based javascript library
+        + SPA (Single Page Applications): 80
+            + Browser only load one time after server send html, css, js to client
+            + Update current page with new data without reloading page
+            + Increase speed, reduce load time
+            + First loading time is long
+            + Not good for SEO
+        + Multi-Page Applications: 80
+            + Browser send new html, css, js code each request (GET, POST, ...)
+            + Update current page by getting a whole new html code
+            + Increase the load for server side
+        + JSX (JavaScript XML):
+            + Exp :
+                + const element = <h1>Hello, World!</h1>;
+            + Pass variable:
+                + const name = "Nghia";
+                + const element = <h1>Hello, {name}!</h1>;
+                + We can pass any valid function in js like 2 + 2, user.firstName, ...
+            + If tag doesn't have child tag, we can close instantly:
+                + const element = <img src={user.avatarUrl} />
+            + Jsx can have child tag:
+                + const element = (
+                +  <div>
+                +    <h1>Hello</h1>
+                +    <h2>Are you there?</h2>
+                +  </div>
+                + );
     + Core Concepts:
-        + Components (function vs. class components)
-        + Props (Passing data between components)
-        + State (useState hook)
-        + Event Handling (onClick, onChange)
+        + Components:
+            + Definition:
+
+            + Function components:
+                + Stateless, no state, no lifecycle function
+                + Exp:
+                    import React from 'react';
+
+                    function MyComponent(props) {
+                    return (
+                        <div>
+                        <h1>Hello, {props.name}!</h1>
+                        <p>{props.message}</p>
+                        </div>
+                    );
+                    }
+
+                    export default MyComponent;
+
+            + Class components:
+                + Have state, lifecycle function
+                + Exp:
+                    import React from 'react';
+
+                    class MyComponent extends React.Component {
+                        constructor(props) {
+                            super(props);
+                            this.state = { count: 0 };
+                        }
+
+                        handleClick = () => {
+                            this.setState(prevState => ({
+                            count: prevState.count + 1
+                            }));
+                        };
+
+                        render() {
+                            return (
+                            <div>
+                                <h1>Count: {this.state.count}</h1>
+                                <button onClick={this.handleClick}>Increment</button>
+                            </div>
+                            );
+                        }
+                    }
+
+                    export default MyComponent;
+
+            + Presentational components:
+                + Only show data, don't have logic
+                + Exp:
+                    import React from 'react';
+
+                    const Greeting = ({ name }) => {
+                        return (
+                            <div>
+                            <h1>Hello, {name}!</h1>
+                            <p>Welcome to my website.</p>
+                            </div>
+                        );
+                    };
+
+                    export default Greeting;
+
+            + Container components:
+                + Handle business logic and pass to presentational components.
+                + Exp:
+
+        + Props (Passing data between components):
+            + Used to send data to components.
+            + Props is unchangable, const
+            + Exp:
+                import React from "react";
+                const Profile = (props) => {
+                    // props.img_url = 'http://via.placeholder.com/350x150'
+                    const style = {
+                        padding: '10px',
+                        border: '1px solid green',
+                        display: 'block',
+                    }
+                    return (
+                        <div style={style}>
+                            <img src={props.logo_url} height="250px"/>
+                            <h1>{props.title}</h1>
+                        </div>
+                    );
+                }
+                module.exports = Profile;
+
+        + State (useState hook):
+            + Use to manage state for components.
+            + Need to use when update the content of components.
+            + React.Component is base class for all components.
+            + Need to use setState to update components.
+            + Do not directly change (this.state = {'key':'value'}).
+                + => Use setState(prevState => {...prevState}) instead.
+                    + ...prevState ensure all keys are remain
+                + Auto render component after update state.
+
+        + Event Handling
+            + Many event (onpaste, oncopy, onkeydown, onmousemove, ...)
+                + A button has been clicked.
+                + A file has been loaded.
+                + A keyboard has been pressed.
+                + A animation has started.
+                + ............................
+            + Can be used for any type of components
+            + onClick:
+                + Event happen when user click a component
+                + Declare <input type="button" value="Add tag" onClick={addNewWord}/> (No "()" )
+            + onChange:
+                + Event happend when state change
+
         + Conditional Rendering (&&, ternary operator)
+            + Use if else, switch case, ... to render object
+            + 
         + Lists & Keys (map to render lists)
+            + 
     =====> Project Idea: Build a Todo App to practice state & props.
 
 - Intermediate React

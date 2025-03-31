@@ -1,6 +1,6 @@
 ---- TO LEARN JAVA SPRING ----
 
-- Java Core:
+- Java Core: 90
     + OOP: Encapsulation, Inheritance, Polymorphism, Abstraction - 100
     + Interfaces & Abstract Classes - 100
     + Lambdas & Streams API - 80
@@ -12,7 +12,8 @@
     + Spring Core
     + Dependency Injection - 
     + Inversion of Control: 
-    + Bean: The objects are managed by Spring IoC
+    + Bean: 
+        + The objects are managed by Spring IoC
     + Spring Profiles – Manage different environments (dev, prod, test)
     + How to start a new spring project - 100
     + Spring Boot Auto-Configuration – No need for complex XML configs
@@ -47,9 +48,10 @@
     + Spring Cloud (Microservices, Eureka, Feign, Resilience4J)
     + Kafka & RabbitMQ for Event-Driven Architecture
 
-- AOP :
+- AOP : 90
     + The technique is used to add logic of a method to "other method" without 
         writing the code which is directly dependent to "other method"
     + Perfect to handle some popular problems:
         + Counting method calls times
         + Handle redis, caching strategy
+        + Measure runtime

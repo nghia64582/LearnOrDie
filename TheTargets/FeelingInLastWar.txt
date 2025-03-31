@@ -1,0 +1,45 @@
+- Buttons:
+    + Receive resources
+    + Upgrade buildings
+    + Contribute to clan technology
+- Actions:
+    + Build new buildings
+    + Upgrade buildings
+        + Required resources and prerequisites
+    + Perform custom action of each buildings
+        + Receive resources
+        + Train new army
+        + Cure the soldiers
+        + Research new technology
+        + Upgrade the drone, ....
+- Features:
+    + Resources:
+        + 3 type of resources: food, steel, coin
+        + Could harvest from:
+            + Resource buildings
+            + Reward of daily tasks, clan events, ...
+    + Clans:
+        + Contribute for technology of clan
+        + Leader board to compete and share joy with community
+        + Clans chat.
+        + Move your base to new position.
+    + Develop your base:
+        + Level up the buildings with required resources and 
+        + Upgrade center
+    + Upgrade hero:
+        + Upgrade Level
+        + Upgrade item
+        + Upgrade military rank
+    + Battle:
+        + Drag character to optimize result
+        + Make several decisions in a game
+    + Events:
+        + Clans event.
+        + Global event.
+    + Inventory:
+        + Contain several categories, like resources, 
+    + Monetization:
+        + Buy new hero
+        + Buy the resources
+        + Buy the second builder team (allow use to upgrade 2 buildings at the same time)
+- 
