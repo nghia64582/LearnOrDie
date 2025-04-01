@@ -1,0 +1,32 @@
+- Luật chơi:
+    - Số người: 2 -> 4 người chơi
+    - Lá bài:
+        + 100 lá:
+        + Mỗi lá có số nhị (2) -> cửu (9), 3 chất (vạn văn sách) * 4 Lá
+        + 4 lá chi chi
+    - Hành động:
+        + Đến lượt người chơi có thể bốc 1 lá từ nọc
+            => Xong ăn lá đấy và đánh lá khác
+            => Ăn lá người cửa trước vừa đánh
+    - Mục tiêu: "tròn bài" rồi "ù"
+        + Tròn bài  : Bài gồm toàn các bộ, không lẻ lá nào
+        + Bộ        : là chắn hoặc cạ
+        + Chắn      : 2 lá giống hệt nhau, VD nhị sách và nhị sách
+        + Cạ        : 2 lá cùng số, khác chất, VD cửu vạn và cửu văn
+        + Ăn        : Nếu muốn ăn một lá bài về làm bộ, thì cần kéo lá bài vừa đánh
+            về vị trí, và đặt lá bài trên tay mình lên trên lá vừa đặt được.
+        + Bốc cái   : Sau khi chia bài, 1 người thắng ván trước sẽ bốc 1 lá bài (cái)
+            xong chia cho 1 người random xong người này sẽ bắt đầu ván chơi.
+        + Bốc nọc   : Nếu không ăn bài người trước đánh thì phải bốc 1 lá từ nọc
+        + Dưới      : Sau khi bốc, nếu không ăn thì "Dưới", tức là nhường quyền ăn 
+            cho người sau
+        + Chíu      : Một người (A) có 3 lá giống hệt nhau, 1 người khác đánh ra lá 
+            giống lá này, thì A được ăn lá này dù không theo thứ tự
+        + Đánh      : Sau khi ăn phải đánh đi một lá
+        + Trả cửa   : 
+        + Ù         : Khi 19 lá trên tay kết hợp với lá vừa bốc thành 10 bộ, trong
+            đó có ít nhất 6 chắn thì gọi là ù.
+        + Cước      : Một số đặc điểm của bộ bài khi Ù giúp ăn nhiều tiền hơn
+        + Xướng     : Sau khi ù phải đọc tên các Cước đang có
+    - Quy trình:
+        + Đầu tiên mỗi người được chia 19 lá, số còn lại đặt làm nọc

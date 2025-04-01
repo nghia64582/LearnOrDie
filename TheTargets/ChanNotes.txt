@@ -42,4 +42,14 @@
 - web-tool :
     + Connect to chanpro db to show data
     + Use html + scala
-    + 
+
+- Dev account:
+    + nghiavt1 atbx6541
+
+- Development process:
+    + Update code 
+    + Commit and push
+    + Engine auto build and show image name in Chắn Dev 
+    + Change image in Rancher chan-2-dev-thuong
+    + Switch to Dev and test
+    + Test and back to step 1, ....

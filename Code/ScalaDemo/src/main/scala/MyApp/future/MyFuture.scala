@@ -7,7 +7,52 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object MyFuture {
   def main(args: Array[String]): Unit = {
-    sortByFuture()
+//    sortByFuture()
+//    foreachFuture()
+    recoverWithFuture()
+  }
+
+  def recoverWithFuture(): Unit = {
+    def fetchData(id: Int): Future[String] = {
+      if (id == 0) Future.failed(new IllegalArgumentException("Invalid ID"))
+      else Future.successful(s"Data for ID $id")
+    }
+
+
+    // recoverWith
+    // return another future if origin future return an exception
+    // do nothing if origin future return a value
+    var finish: Boolean = false
+    val result: Future[String] = fetchData(1).recoverWith {
+      case _: IllegalArgumentException => Future.successful("Default data")
+    }
+    result.foreach((st) =>
+      println("Value of future " + st)
+      finish = true
+    )
+    while (!finish) {
+
+    }
+
+  }
+
+  def foreachFuture(): Unit = {
+    var finish: Boolean = false
+    val future1: Future[String] = Future {
+      Thread.sleep(1000)
+      "Finish future 1"
+    }
+    future1.foreach(st => {
+      println("Future 1 finished, value " + st)
+      finish = true
+    })
+    var c: Int = 0
+    while (!finish) {
+      c += 1
+      if (c % 10000000 == 0) {
+        println(c)
+      }
+    }
   }
 
   def futureSample(): Unit = {
