@@ -127,3 +127,8 @@ S1: Define entities:
     + Raw entities (Employee, Product, Category, Vehicle, Item, ...)
     + Session entities (Order, Check-in, Attendance)
     + Temporary entities (For n-n relationship, like product-category, class-student, ...)
+S2: Define column, index, ...
+--- NOTE:
+ - In 1-n relationship, we shouldn't store number of object in (1) table due to redundancy, 
+ - If there are 2 (1-n) relationships, like school-class and class-student, we shouldn't 
+    store school id in student

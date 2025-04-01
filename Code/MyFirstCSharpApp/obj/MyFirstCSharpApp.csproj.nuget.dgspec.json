@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\ToLearn\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj": {}
+    "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\LearnOrDie\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj": {}
   },
   "projects": {
-    "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\ToLearn\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj": {
+    "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\LearnOrDie\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\ToLearn\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj",
+        "projectUniqueName": "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\LearnOrDie\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj",
         "projectName": "MyFirstCSharpApp",
-        "projectPath": "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\ToLearn\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj",
+        "projectPath": "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\LearnOrDie\\Code\\MyFirstCSharpApp\\MyFirstCSharpApp.csproj",
         "packagesPath": "C:\\Users\\LaptopKhanhTran\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\ToLearn\\Code\\MyFirstCSharpApp\\obj\\",
+        "outputPath": "C:\\Users\\LaptopKhanhTran\\Desktop\\Workspace\\LearnOrDie\\Code\\MyFirstCSharpApp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

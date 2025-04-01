@@ -1,0 +1,55 @@
+ - Raw entities:
+    + Staff
+        + id
+        + name
+        + email
+        + phone_number
+        + role (SECURITY, WAITER, JANITOR, MANAGER)
+        + created_at
+    + Item
+        + id
+        + name
+        + price
+        + description
+        + image_path
+        + category_id
+    + Customer
+        + id
+        + phone_number
+        + first_order_time
+ - Session entities:
+    + Attendance
+        + id
+        + time
+        + staff_id
+        + type (IN, OUT)
+    + Order
+        + id
+        + time
+    + OrderItem
+        + id
+        + item_id
+    + Import
+        + id
+    + ImportItem
+        + id
+        + import_id
+ - Category entites:
+    + Category
+        + id 
+        + name
+ - State entities:
+    + Amount
+        + id
+        + item_id
+        + quantity
+ - Temporary entites:
+ - Security entities:
+    + User
+        - id
+        - username
+        - password
+    + Authority
+        - id
+        - user_id
+        - role
