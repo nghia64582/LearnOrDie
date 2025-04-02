@@ -47,6 +47,8 @@ object MyDataType {
     val set3 = Set()
     val set4 = Map()
     val set5 = Tuple()
+    
+    val e = (1, 2)
   }
 
   def isEven(x: Int) : Boolean = {

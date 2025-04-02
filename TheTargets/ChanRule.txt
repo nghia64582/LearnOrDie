@@ -31,3 +31,4 @@
     - Quy trình:
         + Đầu tiên mỗi người được chia 19 lá, số còn lại đặt làm nọc
 
+   

@@ -56,11 +56,11 @@
     + UserTeaseDataCAO
         + Lưu data trong db
     + TeaseItem:
-        + id        : Int
-        + tax       : Double
+        + id        : Int, id của loại chọc
+        + tax       : Double, phí dùng chọc
         + totalFree : Int
-        + usingCoin : Boolean
-        + status    : Int
+        + usingCoin : Boolean, có dùng bảo không 
+        + status    : Int, disable = 0, enable = 1, coming = 2, priv = 3
     + ForeignCurrencyOps:
 
         + addTeaseSub
@@ -134,4 +134,15 @@ override def sendTease(req: TeaseReq): Unit = {
     }
   }
 
+CoinOps.usingTease feeTease là số tiền dùng cho tease
+TeaseImpl updateTease có tax là số tiền dùng cho tease
 
+
+- Update TeaseConfig : Thêm config phí chọc trong khoa cử thi đình
+- Kiểm tra thi đình  : Cần xem kiểm tra board base có phải khoa cử thi đình
+- Acc mod ở dev không cộng được bảo nữa.
+
+- Thêm gói "bỏ qua quảng cáo", id = 5
+
+- Log?
+- Update user data
