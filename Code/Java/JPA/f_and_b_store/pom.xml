@@ -73,6 +73,7 @@
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
 						</path>
+						<release>24</release> <!-- Ensure this is set to 24 or higher -->
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>

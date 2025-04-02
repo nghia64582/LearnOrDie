@@ -30,3 +30,4 @@
         + Xướng     : Sau khi ù phải đọc tên các Cước đang có
     - Quy trình:
         + Đầu tiên mỗi người được chia 19 lá, số còn lại đặt làm nọc
+
