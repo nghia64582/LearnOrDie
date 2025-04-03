@@ -1,6 +1,8 @@
 - Tìm hiểu tính năng chọc trong game-server:
     + Cài đặt chi phí chọc trong bàn chơi Khoa cử - 4 mức thi đình lên 10M
 
+- Find out NapLanDau
+
 - Các lớp trong game-server:
     + TeaseCmd
         + extends Cmd
@@ -67,79 +69,13 @@
 - BoardFSM implement TeaseHandler
 - abstract Board extends TeaseImpl
 
-override def sendTease(req: TeaseReq): Unit = {
-    SD.userByUid(req.uid).foreach { u =>                                // thực hiện nếu có req.uid
-      teaseConfigCAO.getTeaseConfigCache().foreach { cfg =>             // thực hiện sau khi future có giá trị
-        if(cfg.isActive) {                                              // kiểm tra điều kiện chọc
-          val canTease = if(cfg.spectatorCanTease) u.isPlayer(game) || u.isSpectator(game) else u.isPlayer(game)        // kiếm tra có thể chọc
-          if (canTease) {
-            req.p.teaseUid.foreach { teaseUid =>
-              val teaseUser = userByUid(teaseUid)
-              if ((teaseUser == null || !teaseUser.isPlayer(game)) && !isPlayer(teaseUid)) {
-                ErrCmd.teaseErr(player_not_on_board).sendTo(u)
-                return
-              }
-            }
-            userTeaseDataCAO.getOrCreate(req.uid, cfg) onComplete {                             // xử lý sau khi có UserTeaseData
-              case Success(userData) =>
-                val idTease = req.p.id
-                val (quantityTease, usernameTease, uidsTease) = req.p.teaseUid match {
-                  case Some(uidTease) =>
-                    val userTease = player(uidTease).map(_.name) match {
-                      case Some(username) => username
-                      case None => userByUid(uidTease).username
-                    }
-                    (1, s"người chơi $userTease", List(uidTease))
-                  case None =>
-                    val uids = game.getPlayersList.asScala.map(_.uid).filterNot(_ == req.uid).toList
-                    (uids.length, "tất cả các người chơi trong bàn", uids)
-                }
-                val msg = calcMsg(idTease, usernameTease)
-                if (quantityTease <= 0) {
-                  ErrCmd.teaseErr(play_tease_err).sendTo(u)
-                  logger.error(s"quantityTease: $quantityTease, uid: ${req.uid} - teaseUid: ${req.p.teaseUid} - playerOnBoard: ${uidsTease.length}")
-                } else if (userData.canTease(idTease, quantityTease)) {
-                  // dùng miễn phí
-                  updateTease(req.uid, userData, cfg, quantityTease, idTease, msg, 0, uidsTease, u)
-                } else {
-                  // dùng trực tiếp coin
-                  cfg.items.find(_.id == idTease) match {
-                    case Some(itemCfg) =>
-                      if (itemCfg.usingCoin) {
-                        val itemRemaining = userData.remaining(idTease)
-                        val quantity = if (itemRemaining > 0) quantityTease - itemRemaining else quantityTease
-                        if (enoughCoinToTease(u, quantity, itemCfg.tax, cfg.limitStakeUsingTease)) {
-                          updateTease(req.uid, userData, cfg, itemRemaining, idTease, msg, (quantity * stake * itemCfg.tax).toLong, uidsTease, u)
-                        } else {
-                          ErrCmd.teaseErr(not_enough_coin_to_tease).sendTo(u)
-                        }
-                      } else {
-                        ErrCmd.teaseErr(item_not_using_coin).sendTo(u)
-                      }
-                    case None =>
-                      logger.error(s"sendTease, teaseConfigCAO find id err: id: $idTease, cfg: $cfg, uid: ${req.uid}")
-                      ErrCmd.teaseErr(play_tease_err).sendTo(u)
-                  }
-                }
-              case Failure(ex) =>
-                logger.error(s"get cfg or userTeaseDataCAO err - uid: ${req.uid} - reason: ${ex.getMessage} ")
-            }
-          } else {
-            ErrCmd.teaseErr(player_tease_is_not_exist).sendTo(u)
-          }
-        } else {
-          ErrCmd.teaseErr(tease_disable).sendTo(u)
-        }
-      }
-    }
-  }
-
 CoinOps.usingTease feeTease là số tiền dùng cho tease
 TeaseImpl updateTease có tax là số tiền dùng cho tease
 
 
 - Update TeaseConfig : Thêm config phí chọc trong khoa cử thi đình
 - Kiểm tra thi đình  : Cần xem kiểm tra board base có phải khoa cử thi đình
+- Test thi đình      : Acc thidinh(1->200) : abc1235
 - Acc mod ở dev không cộng được bảo nữa.
 
 - Thêm gói "bỏ qua quảng cáo", id = 5

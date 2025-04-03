@@ -25,6 +25,7 @@
             + implicit val writes
             + implicit val reads
             + val default
+
 - sd-api:
     + Controller: Handle Http RestAPI
         + needMod, needLogin: Authentication
@@ -32,6 +33,7 @@
         + case class to store entity
         + BoardMgr 
     + Use cb as library to access couchbase db (CAO, Ops, Entity)
+
 - game-server:
     + Use smart-fox-server to organize game, handle matching logic, ...
     + Create class extends trait Cmd to define response to send to FE 
@@ -39,17 +41,32 @@
     + Create class extends trait Req to define request sent from FE
     + Come with corresponding Param class to define structure of data
     + Use cb as library to access db (CAO, Ops, Entity)
+
 - web-tool :
     + Connect to chanpro db to show data
     + Use html + scala
 
 - Dev account:
     + nghiavt1 atbx6541
+    + thidinh(1-200) abc1235
+
+- Dev switching key:
+    + 3Sd13221
 
 - Development process:
     + Update code 
     + Commit and push
     + Engine auto build and show image name in Chắn Dev 
-    + Change image in Rancher chan-2-dev-thuong
+    + Update image in Rancher chan-2-dev-thuong
     + Switch to Dev and test
     + Test and back to step 1, ....
+
+- General:
+    - Access Chan Testing for newest web version
+    - Dont login docker desktop to ensure not conflict
+    - Couchbase Dev:
+        + Enter key + base36(uid) to get the value of model CAO
+    - With game-server, sd-cb, sd-api : get image name from mattermost
+    - With webtool, get image from command line after sbt docker:publish
+    - Change "+" into "-" in image name of mattermost, and only 
+

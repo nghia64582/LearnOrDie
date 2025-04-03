@@ -8,6 +8,9 @@
         + Đến lượt người chơi có thể bốc 1 lá từ nọc
             => Xong ăn lá đấy và đánh lá khác
             => Ăn lá người cửa trước vừa đánh
+    - Các lỗi phổ biến:
+        + Bỏ chắn ăn cạ
+        + 
     - Mục tiêu: "tròn bài" rồi "ù"
         + Tròn bài  : Bài gồm toàn các bộ, không lẻ lá nào
         + Bộ        : là chắn hoặc cạ
@@ -30,5 +33,6 @@
         + Xướng     : Sau khi ù phải đọc tên các Cước đang có
     - Quy trình:
         + Đầu tiên mỗi người được chia 19 lá, số còn lại đặt làm nọc
+
 
    

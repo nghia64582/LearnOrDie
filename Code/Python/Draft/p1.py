@@ -1,7 +1,4 @@
-import sys
+import time
 
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        print(f'Arguments passed: {sys.argv[1:]}')
-    else:
-        print('No arguments were passed.')
+a_30_DAY = 30 * 24 * 60 * 60  # seconds in 30 days
+print(time.time() + a_30_DAY)
