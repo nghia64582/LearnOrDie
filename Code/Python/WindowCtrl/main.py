@@ -12,70 +12,97 @@ class AutoBase36Converter(tk.Tk):
         
         # Configure the window
         self.title("Auto Base36 Converter")
-        self.geometry("400x250")
+        self.geometry("500x350")  # Increased window size
         self.resizable(True, True)
         
         # Clipboard monitoring variables
         self.monitor_active = False
         self.monitor_thread = None
         self.last_clipboard_content = ""
+        self.idle_counter = 0
+        
+        # Set up larger font and styling
+        self.default_font = ('Arial', 14)  # Increased font size by ~40%
+        self.setup_styles()
         
         # Create and place the widgets
         self.create_widgets()
         
-        # Set up styling
+        # Update CPU usage indicator periodically
+        self.update_cpu_usage()
+        
+    def setup_styles(self):
+        """Configure styles for larger components"""
         self.style = ttk.Style()
-        self.style.configure('TButton', font=('Arial', 10))
-        self.style.configure('TLabel', font=('Arial', 10))
-        self.style.configure('TEntry', font=('Arial', 10))
+        
+        # Configure larger fonts and padding for all elements
+        self.style.configure('TLabel', font=self.default_font, padding=(5, 5))
+        self.style.configure('TButton', font=self.default_font, padding=(10, 5))
+        self.style.configure('TEntry', font=self.default_font, padding=(5, 5))
+        self.style.configure('TCheckbutton', font=self.default_font, padding=(5, 10))
+        self.style.configure('TFrame', padding=(10, 10))
+        self.style.configure('TLabelframe', font=self.default_font, padding=(10, 10))
+        self.style.configure('TLabelframe.Label', font=self.default_font)
         
     def create_widgets(self):
-        # Create a main frame
+        # Create a main frame with padding
         main_frame = ttk.Frame(self, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Prefix input section
         prefix_frame = ttk.Frame(main_frame)
-        prefix_frame.pack(fill=tk.X, pady=10)
+        prefix_frame.pack(fill=tk.X, pady=15)  # Increased vertical padding
         
         prefix_label = ttk.Label(prefix_frame, text="Prefix:")
-        prefix_label.pack(side=tk.LEFT, padx=5)
+        prefix_label.pack(side=tk.LEFT, padx=10)  # Increased horizontal padding
         
         self.prefix_var = tk.StringVar(value="")
-        self.prefix_entry = ttk.Entry(prefix_frame, textvariable=self.prefix_var, width=20)
-        self.prefix_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        self.prefix_entry = ttk.Entry(prefix_frame, textvariable=self.prefix_var, width=20, font=self.default_font)
+        self.prefix_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)  # Increased padding
         
-        # Toggle button for auto-monitor
+        # Toggle button for auto-monitor with indicator
+        toggle_frame = ttk.Frame(main_frame)
+        toggle_frame.pack(fill=tk.X, pady=15)  # Increased vertical padding
+        
         self.toggle_var = tk.BooleanVar(value=False)
         self.toggle_button = ttk.Checkbutton(
-            main_frame, 
+            toggle_frame, 
             text="Auto-convert clipboard numbers", 
             variable=self.toggle_var,
-            command=self.toggle_monitoring
+            command=self.toggle_monitoring,
+            style='TCheckbutton'
         )
-        self.toggle_button.pack(fill=tk.X, pady=10)
+        self.toggle_button.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # CPU load indicator
+        self.cpu_indicator_var = tk.StringVar(value="Low")
+        self.cpu_indicator = ttk.Label(toggle_frame, textvariable=self.cpu_indicator_var)
+        self.cpu_indicator.pack(side=tk.RIGHT, padx=10)  # Increased padding
+        
+        cpu_label = ttk.Label(toggle_frame, text="CPU:")
+        cpu_label.pack(side=tk.RIGHT)
         
         # Result display
         result_frame = ttk.LabelFrame(main_frame, text="Last Conversion")
-        result_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        result_frame.pack(fill=tk.BOTH, expand=True, pady=15)  # Increased padding
         
         original_label = ttk.Label(result_frame, text="Original:")
-        original_label.pack(anchor=tk.W, padx=5, pady=5)
+        original_label.pack(anchor=tk.W, padx=10, pady=10)  # Increased padding
         
         self.original_var = tk.StringVar(value="")
-        original_display = ttk.Entry(result_frame, textvariable=self.original_var, state="readonly")
-        original_display.pack(fill=tk.X, padx=5, pady=5)
+        original_display = ttk.Entry(result_frame, textvariable=self.original_var, state="readonly", font=self.default_font)
+        original_display.pack(fill=tk.X, padx=10, pady=5)  # Increased padding
         
         converted_label = ttk.Label(result_frame, text="Converted:")
-        converted_label.pack(anchor=tk.W, padx=5, pady=5)
+        converted_label.pack(anchor=tk.W, padx=10, pady=10)  # Increased padding
         
         self.converted_var = tk.StringVar(value="")
-        converted_display = ttk.Entry(result_frame, textvariable=self.converted_var, state="readonly")
-        converted_display.pack(fill=tk.X, padx=5, pady=5)
+        converted_display = ttk.Entry(result_frame, textvariable=self.converted_var, state="readonly", font=self.default_font)
+        converted_display.pack(fill=tk.X, padx=10, pady=5)  # Increased padding
         
         # Status bar
         self.status_var = tk.StringVar(value="Ready")
-        status_bar = ttk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
+        status_bar = ttk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W, font=('Arial', 12))
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
         
     def convert_to_base36(self, number):
@@ -117,9 +144,10 @@ class AutoBase36Converter(tk.Tk):
             # Stop monitoring
             self.monitor_active = False
             self.status_var.set("Monitoring stopped")
+            self.cpu_indicator_var.set("Low")
     
     def monitor_clipboard(self):
-        """Monitor clipboard for integer numbers and convert them"""
+        """Monitor clipboard for integer numbers and convert them - with adaptive sleep"""
         while self.monitor_active:
             try:
                 # Get current clipboard content
@@ -148,18 +176,46 @@ class AutoBase36Converter(tk.Tk):
                         # Copy result back to clipboard
                         self.last_clipboard_content = result
                         pyperclip.copy(result)
+                        
+                        # Reset idle counter after activity
+                        self.idle_counter = 0
                     else:
                         self.last_clipboard_content = current_content
                 else:
                     # Update the last clipboard content
                     self.last_clipboard_content = current_content
-                    
-                # Sleep to prevent high CPU usage
-                time.sleep(0.5)
+                    # Increment idle counter
+                    self.idle_counter += 1
                 
+                # Adaptive sleep: Sleep longer when idle, shorter when active
+                if self.idle_counter < 5:
+                    # Recently active - check more frequently (0.5 sec)
+                    time.sleep(0.5)
+                elif self.idle_counter < 20:
+                    # Moderately idle - check every second
+                    time.sleep(1.0)
+                else:
+                    # Very idle - check every 2 seconds
+                    time.sleep(2.0)
+                    
             except Exception as e:
                 self.after(0, lambda: self.status_var.set(f"Error: {str(e)}"))
                 time.sleep(1)
+    
+    def update_cpu_usage(self):
+        """Update the CPU usage indicator"""
+        if self.monitor_active:
+            if self.idle_counter < 5:
+                self.cpu_indicator_var.set("Medium")
+            elif self.idle_counter < 20:
+                self.cpu_indicator_var.set("Low")
+            else:
+                self.cpu_indicator_var.set("Very Low")
+        else:
+            self.cpu_indicator_var.set("Low")
+            
+        # Schedule the next update
+        self.after(1000, self.update_cpu_usage)
     
     def on_closing(self):
         """Clean up before closing"""
