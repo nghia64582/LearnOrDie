@@ -1,16 +1,35 @@
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
 class Solution {
-    public int maxProfit(int[] prices, int fee) {
-        int n = prices.length;
-        if (n == 0) return 0;
-        int[][] dp = new int[n][2];
-        dp[0][0] = 0; // not holding stock
-        dp[0][1] = -prices[0]; // holding stock
+    public ListNode removeZeroSumSublists(ListNode head) {
+        ListNode dummy = new ListNode(0, head);
+        Map<Integer, ListNode> prefixSumMap = new HashMap<>();
+        int prefixSum = 0;
+        ListNode current = dummy;
 
-        for (int i = 1; i < n; i++) {
-            dp[i][0] = Math.max(dp[i - 1][0], dp[i - 1][1] + prices[i] - fee); // not holding stock today
-            dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][0] - prices[i]); // holding stock today
+        while (current != null) {
+            prefixSum += current.val;
+            prefixSumMap.put(prefixSum, current);
+            current = current.next;
         }
 
-        return dp[n - 1][0]; // maximum profit when not holding stock at the end
+        prefixSum = 0;
+        current = dummy;
+
+        while (current != null) {
+            prefixSum += current.val;
+            current.next = prefixSumMap.get(prefixSum).next;
+            current = current.next;
+        }
+
+        return dummy.next;
     }
 }
