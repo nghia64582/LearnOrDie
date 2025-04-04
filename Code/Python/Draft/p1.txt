@@ -1,0 +1,28 @@
+ll | -> RefreshCoinCmd 4728211 : {"c":48973465462,"e":100063,"v":20000}
+04 Apr 2025 | 14:59:18,700 | DEBUG | scala-execution-context-global-160 | sd.cmd.Cmd | null | -> TeaseSubscriptionCmd 4728212 : {"t":1746263703}
+04 Apr 2025 | 14:59:18,700 | DEBUG | scala-execution-context-global-160 | sd.cmd.Cmd | null | -> RemoveAdsSubCmd 4728212 : {"t":0}
+04 Apr 2025 | 14:59:18,700 | DEBUG | scala-execution-context-global-160 | sd.cmd.Cmd | null | -> RefreshCoinCmd 4728212 : {"c":3355997072,"e":10053,"v":17000}
+04 Apr 2025 | 14:59:25,497 | INFO  | https-jsse-nio-8443-exec-5 | bitswarm.sessions.DefaultSessionManager | null | Session removed: { Id: 5, Type: WEBSOCKET, Logged: Yes, IP: 171.241.49.67:57915 }
+04 Apr 2025 | 14:59:25,497 | INFO  | SFSWorker:Sys:4 | v2.api.SFSApi | null | User disconnected: { Zone: sfsak }, ( User Name: 4728208, Id: 4, Priv: 0, Sess: 171.241.49.67:57915 ) , SessionLen: 51842, Type: unity-DesktopC10:2.0.3
+04 Apr 2025 | 14:59:25,497 | DEBUG | application-akka.actor.default-dispatcher-9 | sd.EHActor | null | 4728208 leavedRoomNull
+04 Apr 2025 | 14:59:27,905 | INFO  | https-jsse-nio-8443-exec-9 | bitswarm.sessions.DefaultSessionManager | null | Session created: { Id: 6, Type: WEBSOCKET, Logged: No, IP: 171.241.49.67 } on Server port: 8443 <---> 57962
+04 Apr 2025 | 14:59:28,014 | INFO  | application-akka.actor.default-dispatcher-9 | akka.actor.RepointableActorRef | null | Message [com.sandinh.paho.akka.Message] from Actor[akka://application/user/mqtt/login1#-1669975744] to Actor[akka://application/user/loginPrevent#-987325785] was unhandled. [9] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+04 Apr 2025 | 14:59:28,394 | INFO  | SFSWorker:Ext:2 | v2.api.SFSApi | null | User login: { Zone: sfsak }, ( User Name: 4728208, Id: 5, Priv: 0, Sess: 171.241.49.67:57962 ) , Type: unity-DesktopC10:2.0.3
+04 Apr 2025 | 14:59:28,407 | DEBUG | application-akka.actor.default-dispatcher-9 | sd.SD | null | <- GetRemainAdsByDeviceIDReq  4728208  {"d":"6957A885-3945-3445-5177-00000000B595"}
+04 Apr 2025 | 14:59:28,407 | INFO  | application-akka.actor.default-dispatcher-7 | sd.free.FreeCoinActor | null | Get ads remain per device 4728208 6957A885-3945-3445-5177-00000000B595 LimitAdsPerDevice(1743753451,15)
+04 Apr 2025 | 14:59:28,407 | DEBUG | application-akka.actor.default-dispatcher-9 | sd.cmd.Cmd | null | -> RemainAdsByDeviceCmd 4728208 : {"r":15}
+04 Apr 2025 | 14:59:28,581 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> BuddyInitCmd 4728208 : {"ru":[],"rn":[],"m":200,"ur":[],"yf":[]}
+04 Apr 2025 | 14:59:28,733 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> VuongGiaCfgCmd 4728208 : {"cfg":[{"s":20000000,"c":20,"nb":5,"ms":20000000,"v":20000,"g":[],"n":"Ngoại Điện","o":true},{"s":20000000,"c":100,"nb":4,"ms":40000000,"v":20000,"g":[0,1,2,3],"n":"Nội điện","o":true},{"s":50000000,"c":100,"nb":2,"ms":50000000,"v":20000,"g":[],"n":"Phủ đệ","o":false}]}
+04 Apr 2025 | 14:59:28,734 | DEBUG | application-akka.actor.default-dispatcher-8 | sd.EHActor | null | cacheVersionClientUser 4728208 - v: 326 - blockTime: 0 - bv: 2.0.3_noads_28_Desktop
+04 Apr 2025 | 14:59:28,735 | DEBUG | application-akka.actor.default-dispatcher-8 | sd.cmd.Cmd | null | -> UserCountCmd 4728208 : {"c":"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0;0,0,0,0;0,0,0,0;0,0,0,0,0;0,0,0,0,0;3,0,0,0;0"}
+04 Apr 2025 | 14:59:28,735 | INFO  | application-akka.actor.default-dispatcher-8 | sd.EHActor | null | client-type-unknown: unity-desktopc10
+04 Apr 2025 | 14:59:28,737 | INFO  | application-akka.actor.default-dispatcher-6 | sd.EHActor | null | 4728208 joinZone
+04 Apr 2025 | 14:59:28,737 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> FeatureCfgCmd 4728208 : {"l":[{"s":1674143412,"e":1674143412,"i":48},{"s":1674143412,"e":1674143412,"i":50}]}
+04 Apr 2025 | 14:59:28,801 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> PetDataCmd 4728208 : {"lp":[{"ip":5,"id":1,"et":-1},{"ip":4,"id":1,"et":-1}]}
+04 Apr 2025 | 14:59:28,802 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> TourCfgCmd 4728208 : {"p":40,"r":0,"c":1743785999,"t":2,"d":30,"e":23,"f":10000000,"g":false,"j":true,"m":10,"o":1743699601}
+04 Apr 2025 | 14:59:28,802 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> MultiTourCfgCmd 4728208 : {"v":[]}
+04 Apr 2025 | 14:59:28,815 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> StickerTicketRemain 4728208 : {"q":150}
+04 Apr 2025 | 14:59:28,815 | DEBUG | scala-execution-context-global-162 | sd.cmd.Cmd | null | -> StickerTicketDataCmd 4728208 : {"d":[{"e":-1,"id":0},{"e":-1,"id":1}]}
+04 Apr 2025 | 14:59:28,835 | INFO  | application-akka.actor.default-dispatcher-9 | sd.cluster.EnableFeaturesHandler | null | 4728208: enableChallenge =false
+04 Apr 2025 | 14:59:28,886 | DEBUG | application-akka.actor.default-dispatcher-8 | sd.SD | null | <- GetProgressTTDataReq  4728208  {}
+^A^C

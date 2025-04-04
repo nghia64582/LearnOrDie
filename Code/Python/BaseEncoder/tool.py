@@ -2,78 +2,115 @@ import tkinter as tk
 from tkinter import ttk
 import pyperclip
 import string
+import threading
+import time
+import re
 
-class Base36Converter(tk.Tk):
+class AutoBase36Converter(tk.Tk):
     def __init__(self):
         super().__init__()
         
         # Configure the window
-        self.title("Base36 Converter")
-        self.geometry("400x300")
+        self.title("Auto Base36 Converter")
+        self.geometry("500x350")  # Increased window size
         self.resizable(True, True)
+        
+        # Clipboard monitoring variables
+        self.monitor_active = False
+        self.monitor_thread = None
+        self.last_clipboard_content = ""
+        self.idle_counter = 0
+        
+        # Set up larger font and styling
+        self.default_font = ('Arial', 14)  # Increased font size by ~40%
+        self.setup_styles()
         
         # Create and place the widgets
         self.create_widgets()
         
-        # Set up styling
+        # Update CPU usage indicator periodically
+        self.update_cpu_usage()
+        
+    def setup_styles(self):
+        """Configure styles for larger components"""
         self.style = ttk.Style()
-        self.style.configure('TButton', font=('Arial', 10))
-        self.style.configure('TLabel', font=('Arial', 10))
-        self.style.configure('TEntry', font=('Arial', 10))
-        345
+        
+        # Configure larger fonts and padding for all elements
+        self.style.configure('TLabel', font=self.default_font, padding=(5, 5))
+        self.style.configure('TButton', font=self.default_font, padding=(10, 5))
+        self.style.configure('TEntry', font=self.default_font, padding=(5, 5))
+        self.style.configure('TCheckbutton', font=self.default_font, padding=(5, 10))
+        self.style.configure('TFrame', padding=(10, 10))
+        self.style.configure('TLabelframe', font=self.default_font, padding=(10, 10))
+        self.style.configure('TLabelframe.Label', font=self.default_font)
+        
     def create_widgets(self):
-        # Create a main frame
+        # Create a main frame with padding
         main_frame = ttk.Frame(self, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Prefix input section
         prefix_frame = ttk.Frame(main_frame)
-        prefix_frame.pack(fill=tk.X, pady=10)
+        prefix_frame.pack(fill=tk.X, pady=15)  # Increased vertical padding
         
         prefix_label = ttk.Label(prefix_frame, text="Prefix:")
-        prefix_label.pack(side=tk.LEFT, padx=5)
+        prefix_label.pack(side=tk.LEFT, padx=10)  # Increased horizontal padding
         
         self.prefix_var = tk.StringVar(value="")
-        self.prefix_entry = ttk.Entry(prefix_frame, textvariable=self.prefix_var, width=20)
-        self.prefix_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        self.prefix_entry = ttk.Entry(prefix_frame, textvariable=self.prefix_var, width=20, font=self.default_font)
+        self.prefix_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)  # Increased padding
         
-        # Convert button
-        convert_button = ttk.Button(main_frame, text="Convert Clipboard to Base36", command=self.convert_clipboard)
-        convert_button.pack(fill=tk.X, pady=10)
+        # Toggle button for auto-monitor with indicator
+        toggle_frame = ttk.Frame(main_frame)
+        toggle_frame.pack(fill=tk.X, pady=15)  # Increased vertical padding
         
-        # Manual input section
-        manual_frame = ttk.Frame(main_frame)
-        manual_frame.pack(fill=tk.X, pady=10)
+        self.toggle_var = tk.BooleanVar(value=False)
+        self.toggle_button = ttk.Checkbutton(
+            toggle_frame, 
+            text="Auto-convert clipboard numbers", 
+            variable=self.toggle_var,
+            command=self.toggle_monitoring,
+            style='TCheckbutton'
+        )
+        self.toggle_button.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        manual_label = ttk.Label(manual_frame, text="Decimal input:")
-        manual_label.pack(side=tk.LEFT, padx=5)
+        # CPU load indicator
+        self.cpu_indicator_var = tk.StringVar(value="Low")
+        self.cpu_indicator = ttk.Label(toggle_frame, textvariable=self.cpu_indicator_var)
+        self.cpu_indicator.pack(side=tk.RIGHT, padx=10)  # Increased padding
         
-        self.manual_var = tk.StringVar(value="")
-        self.manual_entry = ttk.Entry(manual_frame, textvariable=self.manual_var, width=20)
-        self.manual_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-        
-        convert_manual_button = ttk.Button(main_frame, text="Convert Input to Base36", command=self.convert_manual)
-        convert_manual_button.pack(fill=tk.X, pady=10)
+        cpu_label = ttk.Label(toggle_frame, text="CPU:")
+        cpu_label.pack(side=tk.RIGHT)
         
         # Result display
-        result_label = ttk.Label(main_frame, text="Result:")
-        result_label.pack(anchor=tk.W, pady=(10, 5))
+        result_frame = ttk.LabelFrame(main_frame, text="Last Conversion")
+        result_frame.pack(fill=tk.BOTH, expand=True, pady=15)  # Increased padding
         
-        self.result_var = tk.StringVar(value="")
-        result_display = ttk.Entry(main_frame, textvariable=self.result_var, state="readonly", width=40)
-        result_display.pack(fill=tk.X, pady=5)
+        original_label = ttk.Label(result_frame, text="Original:")
+        original_label.pack(anchor=tk.W, padx=10, pady=10)  # Increased padding
+        
+        self.original_var = tk.StringVar(value="")
+        original_display = ttk.Entry(result_frame, textvariable=self.original_var, state="readonly", font=self.default_font)
+        original_display.pack(fill=tk.X, padx=10, pady=5)  # Increased padding
+        
+        converted_label = ttk.Label(result_frame, text="Converted:")
+        converted_label.pack(anchor=tk.W, padx=10, pady=10)  # Increased padding
+        
+        self.converted_var = tk.StringVar(value="")
+        converted_display = ttk.Entry(result_frame, textvariable=self.converted_var, state="readonly", font=self.default_font)
+        converted_display.pack(fill=tk.X, padx=10, pady=5)  # Increased padding
         
         # Status bar
         self.status_var = tk.StringVar(value="Ready")
-        status_bar = ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
-    
+        status_bar = ttk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W, font=('Arial', 12))
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        
     def convert_to_base36(self, number):
         """Convert decimal number to base36"""
         try:
             number = int(number)
             if number < 0:
-                return "-" + self.convert_to_base36(-number)
+                return None  # Skip negative numbers
             
             # Use string.digits + string.ascii_lowercase for base36 digits (0-9, a-z)
             digits = string.digits + string.ascii_lowercase
@@ -88,56 +125,95 @@ class Base36Converter(tk.Tk):
                 
             return result
         except ValueError:
-            self.status_var.set("Error: Invalid decimal number")
             return None
     
-    def convert_clipboard(self):
-        """Convert number from clipboard to base36 with prefix"""
-        try:
-            # Get the decimal number from clipboard
-            clipboard_content = pyperclip.paste()
+    def toggle_monitoring(self):
+        """Toggle clipboard monitoring on/off"""
+        if self.toggle_var.get():
+            # Start monitoring
+            self.monitor_active = True
+            self.status_var.set("Monitoring clipboard for numbers...")
             
-            # Convert to base36
-            base36_value = self.convert_to_base36(clipboard_content)
+            # Save current clipboard content to avoid processing it immediately
+            self.last_clipboard_content = pyperclip.paste()
             
-            if base36_value:
-                # Add prefix
-                prefix = self.prefix_var.get()
-                result = prefix + base36_value
-                
-                # Display result
-                self.result_var.set(result)
-                
-                # Copy result back to clipboard
-                pyperclip.copy(result)
-                
-                self.status_var.set(f"Converted {clipboard_content} to {result} (copied to clipboard)")
-        except Exception as e:
-            self.status_var.set(f"Error: {str(e)}")
+            # Start the monitoring thread
+            self.monitor_thread = threading.Thread(target=self.monitor_clipboard, daemon=True)
+            self.monitor_thread.start()
+        else:
+            # Stop monitoring
+            self.monitor_active = False
+            self.status_var.set("Monitoring stopped")
+            self.cpu_indicator_var.set("Low")
     
-    def convert_manual(self):
-        """Convert manually entered number to base36 with prefix"""
-        try:
-            # Get the decimal number from entry
-            decimal_value = self.manual_var.get()
+    def monitor_clipboard(self):
+        """Monitor clipboard for integer numbers and convert them - with adaptive sleep"""
+        while self.monitor_active:
+            try:
+                # Get current clipboard content
+                current_content = pyperclip.paste()
+                
+                # Check if content has changed and is a positive integer number
+                if (current_content != self.last_clipboard_content and 
+                    current_content.strip() and 
+                    re.match(r'^\d+$', current_content.strip())):
+                    
+                    original = current_content.strip()
+                    
+                    # Convert to base36
+                    base36_value = self.convert_to_base36(original)
+                    
+                    if base36_value:
+                        # Add prefix
+                        prefix = self.prefix_var.get()
+                        result = prefix + base36_value
+                        
+                        # Update the display (using the main thread)
+                        self.after(0, lambda: self.original_var.set(original))
+                        self.after(0, lambda: self.converted_var.set(result))
+                        self.after(0, lambda: self.status_var.set(f"Converted {original} → {result}"))
+                        
+                        # Copy result back to clipboard
+                        self.last_clipboard_content = result
+                        pyperclip.copy(result)
+                        
+                        # Reset idle counter after activity
+                        self.idle_counter = 0
+                    else:
+                        self.last_clipboard_content = current_content
+                else:
+                    # Update the last clipboard content
+                    self.last_clipboard_content = current_content
+                    # Increment idle counter
+                    self.idle_counter += 1
+                
+                # Adaptive sleep: Sleep longer when idle, shorter when active
+                time.sleep(0.5)
+            except Exception as e:
+                self.after(0, lambda: self.status_var.set(f"Error: {str(e)}"))
+                time.sleep(1)
+    
+    def update_cpu_usage(self):
+        """Update the CPU usage indicator"""
+        if self.monitor_active:
+            if self.idle_counter < 5:
+                self.cpu_indicator_var.set("Medium")
+            elif self.idle_counter < 20:
+                self.cpu_indicator_var.set("Low")
+            else:
+                self.cpu_indicator_var.set("Very Low")
+        else:
+            self.cpu_indicator_var.set("Low")
             
-            # Convert to base36
-            base36_value = self.convert_to_base36(decimal_value)
-            
-            if base36_value:
-                # Add prefix
-                prefix = self.prefix_var.get()
-                result = prefix + base36_value
-                
-                # Display result
-                self.result_var.set(result)
-                
-                # Copy result to clipboard
-                pyperclip.copy(result)
-                
-                self.status_var.set(f"Converted {decimal_value} to {result} (copied to clipboard)")
-        except Exception as e:
-            self.status_var.set(f"Error: {str(e)}")
+        # Schedule the next update
+        self.after(1000, self.update_cpu_usage)
+    
+    def on_closing(self):
+        """Clean up before closing"""
+        self.monitor_active = False
+        if self.monitor_thread and self.monitor_thread.is_alive():
+            self.monitor_thread.join(timeout=1.0)
+        self.destroy()
 
 if __name__ == "__main__":
     # Check if pyperclip is installed
@@ -147,5 +223,6 @@ if __name__ == "__main__":
         print("The pyperclip module is required. Install it with 'pip install pyperclip'")
         exit(1)
     
-    app = Base36Converter()
+    app = AutoBase36Converter()
+    app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()

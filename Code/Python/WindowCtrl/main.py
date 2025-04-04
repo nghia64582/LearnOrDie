@@ -1,237 +1,118 @@
-import tkinter as tk
-from tkinter import ttk
-import pyperclip
-import string
-import threading
+import pyautogui
+import subprocess
 import time
-import re
+import os
+import platform
 
-class AutoBase36Converter(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        
-        # Configure the window
-        self.title("Auto Base36 Converter")
-        self.geometry("500x350")  # Increased window size
-        self.resizable(True, True)
-        
-        # Clipboard monitoring variables
-        self.monitor_active = False
-        self.monitor_thread = None
-        self.last_clipboard_content = ""
-        self.idle_counter = 0
-        
-        # Set up larger font and styling
-        self.default_font = ('Arial', 14)  # Increased font size by ~40%
-        self.setup_styles()
-        
-        # Create and place the widgets
-        self.create_widgets()
-        
-        # Update CPU usage indicator periodically
-        self.update_cpu_usage()
-        
-    def setup_styles(self):
-        """Configure styles for larger components"""
-        self.style = ttk.Style()
-        
-        # Configure larger fonts and padding for all elements
-        self.style.configure('TLabel', font=self.default_font, padding=(5, 5))
-        self.style.configure('TButton', font=self.default_font, padding=(10, 5))
-        self.style.configure('TEntry', font=self.default_font, padding=(5, 5))
-        self.style.configure('TCheckbutton', font=self.default_font, padding=(5, 10))
-        self.style.configure('TFrame', padding=(10, 10))
-        self.style.configure('TLabelframe', font=self.default_font, padding=(10, 10))
-        self.style.configure('TLabelframe.Label', font=self.default_font)
-        
-    def create_widgets(self):
-        # Create a main frame with padding
-        main_frame = ttk.Frame(self, padding="20")
-        main_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # Prefix input section
-        prefix_frame = ttk.Frame(main_frame)
-        prefix_frame.pack(fill=tk.X, pady=15)  # Increased vertical padding
-        
-        prefix_label = ttk.Label(prefix_frame, text="Prefix:")
-        prefix_label.pack(side=tk.LEFT, padx=10)  # Increased horizontal padding
-        
-        self.prefix_var = tk.StringVar(value="")
-        self.prefix_entry = ttk.Entry(prefix_frame, textvariable=self.prefix_var, width=20, font=self.default_font)
-        self.prefix_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)  # Increased padding
-        
-        # Toggle button for auto-monitor with indicator
-        toggle_frame = ttk.Frame(main_frame)
-        toggle_frame.pack(fill=tk.X, pady=15)  # Increased vertical padding
-        
-        self.toggle_var = tk.BooleanVar(value=False)
-        self.toggle_button = ttk.Checkbutton(
-            toggle_frame, 
-            text="Auto-convert clipboard numbers", 
-            variable=self.toggle_var,
-            command=self.toggle_monitoring,
-            style='TCheckbutton'
-        )
-        self.toggle_button.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
-        # CPU load indicator
-        self.cpu_indicator_var = tk.StringVar(value="Low")
-        self.cpu_indicator = ttk.Label(toggle_frame, textvariable=self.cpu_indicator_var)
-        self.cpu_indicator.pack(side=tk.RIGHT, padx=10)  # Increased padding
-        
-        cpu_label = ttk.Label(toggle_frame, text="CPU:")
-        cpu_label.pack(side=tk.RIGHT)
-        
-        # Result display
-        result_frame = ttk.LabelFrame(main_frame, text="Last Conversion")
-        result_frame.pack(fill=tk.BOTH, expand=True, pady=15)  # Increased padding
-        
-        original_label = ttk.Label(result_frame, text="Original:")
-        original_label.pack(anchor=tk.W, padx=10, pady=10)  # Increased padding
-        
-        self.original_var = tk.StringVar(value="")
-        original_display = ttk.Entry(result_frame, textvariable=self.original_var, state="readonly", font=self.default_font)
-        original_display.pack(fill=tk.X, padx=10, pady=5)  # Increased padding
-        
-        converted_label = ttk.Label(result_frame, text="Converted:")
-        converted_label.pack(anchor=tk.W, padx=10, pady=10)  # Increased padding
-        
-        self.converted_var = tk.StringVar(value="")
-        converted_display = ttk.Entry(result_frame, textvariable=self.converted_var, state="readonly", font=self.default_font)
-        converted_display.pack(fill=tk.X, padx=10, pady=5)  # Increased padding
-        
-        # Status bar
-        self.status_var = tk.StringVar(value="Ready")
-        status_bar = ttk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W, font=('Arial', 12))
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
-        
-    def convert_to_base36(self, number):
-        """Convert decimal number to base36"""
-        try:
-            number = int(number)
-            if number < 0:
-                return None  # Skip negative numbers
-            
-            # Use string.digits + string.ascii_lowercase for base36 digits (0-9, a-z)
-            digits = string.digits + string.ascii_lowercase
-            
-            if number == 0:
-                return "0"
-                
-            result = ""
-            while number > 0:
-                result = digits[number % 36] + result
-                number //= 36
-                
-            return result
-        except ValueError:
-            return None
+def open_chrome_quad_windows(urls):
+    """
+    Opens 4 separate Chrome windows and positions each one in a quarter of the screen.
     
-    def toggle_monitoring(self):
-        """Toggle clipboard monitoring on/off"""
-        if self.toggle_var.get():
-            # Start monitoring
-            self.monitor_active = True
-            self.status_var.set("Monitoring clipboard for numbers...")
-            
-            # Save current clipboard content to avoid processing it immediately
-            self.last_clipboard_content = pyperclip.paste()
-            
-            # Start the monitoring thread
-            self.monitor_thread = threading.Thread(target=self.monitor_clipboard, daemon=True)
-            self.monitor_thread.start()
-        else:
-            # Stop monitoring
-            self.monitor_active = False
-            self.status_var.set("Monitoring stopped")
-            self.cpu_indicator_var.set("Low")
+    Args:
+        urls (list): List of 4 URLs to open in separate Chrome windows
+    """
+    # Get screen dimensions
+    screen_width, screen_height = pyautogui.size()
     
-    def monitor_clipboard(self):
-        """Monitor clipboard for integer numbers and convert them - with adaptive sleep"""
-        while self.monitor_active:
+    # Calculate dimensions for each quarter
+    quarter_width = screen_width // 2
+    quarter_height = screen_height // 2
+    
+    # Define the positions for each quarter of the screen
+    quarters = [
+        (0, 0),                           # Top-left
+        (quarter_width, 0),               # Top-right
+        (0, quarter_height),              # Bottom-left
+        (quarter_width, quarter_height)   # Bottom-right
+    ]
+    
+    # Get the appropriate Chrome command for the current OS
+    system = platform.system()
+    
+    for i, url in enumerate(urls[:4]):  # Limit to 4 URLs
+        # Open Chrome with a new window for each URL
+        if system == "Windows":
+            chrome_path = find_chrome_path_windows()
+            subprocess.Popen([chrome_path, "--new-window", url])
+        
+        elif system == "Darwin":  # macOS
+            os.system(f'open -n -a "Google Chrome" --args --new-window "{url}"')
+        
+        else:  # Linux
+            chrome_cmd = find_chrome_command_linux()
+            subprocess.Popen([chrome_cmd, "--new-window", url])
+        
+        # Wait for the window to open
+        time.sleep(3)
+        
+        # Position and resize the window
+        x, y = quarters[i]
+        
+        if system == "Windows":
+            # Get the active window and resize it
+            window = pyautogui.getActiveWindow()
+            if window:
+                window.moveTo(x, y)
+                window.resizeTo(quarter_width, quarter_height)
+        
+        elif system == "Darwin":  # macOS
+            # Use AppleScript to position the window
+            applescript = f'''
+            tell application "Google Chrome"
+                set bounds of front window to {{{x}, {y}, {x + quarter_width}, {y + quarter_height}}}
+            end tell
+            '''
+            os.system(f"osascript -e '{applescript}'")
+        
+        else:  # Linux
+            # Use wmctrl or xdotool (needs to be installed)
             try:
-                # Get current clipboard content
-                current_content = pyperclip.paste()
+                # Get window ID of the most recently opened window
+                window_id = subprocess.check_output(
+                    "xdotool getactivewindow", 
+                    shell=True
+                ).decode().strip()
                 
-                # Check if content has changed and is a positive integer number
-                if (current_content != self.last_clipboard_content and 
-                    current_content.strip() and 
-                    re.match(r'^\d+$', current_content.strip())):
-                    
-                    original = current_content.strip()
-                    
-                    # Convert to base36
-                    base36_value = self.convert_to_base36(original)
-                    
-                    if base36_value:
-                        # Add prefix
-                        prefix = self.prefix_var.get()
-                        result = prefix + base36_value
-                        
-                        # Update the display (using the main thread)
-                        self.after(0, lambda: self.original_var.set(original))
-                        self.after(0, lambda: self.converted_var.set(result))
-                        self.after(0, lambda: self.status_var.set(f"Converted {original} → {result}"))
-                        
-                        # Copy result back to clipboard
-                        self.last_clipboard_content = result
-                        pyperclip.copy(result)
-                        
-                        # Reset idle counter after activity
-                        self.idle_counter = 0
-                    else:
-                        self.last_clipboard_content = current_content
-                else:
-                    # Update the last clipboard content
-                    self.last_clipboard_content = current_content
-                    # Increment idle counter
-                    self.idle_counter += 1
-                
-                # Adaptive sleep: Sleep longer when idle, shorter when active
-                if self.idle_counter < 5:
-                    # Recently active - check more frequently (0.5 sec)
-                    time.sleep(0.5)
-                elif self.idle_counter < 20:
-                    # Moderately idle - check every second
-                    time.sleep(1.0)
-                else:
-                    # Very idle - check every 2 seconds
-                    time.sleep(2.0)
-                    
-            except Exception as e:
-                self.after(0, lambda: self.status_var.set(f"Error: {str(e)}"))
-                time.sleep(1)
-    
-    def update_cpu_usage(self):
-        """Update the CPU usage indicator"""
-        if self.monitor_active:
-            if self.idle_counter < 5:
-                self.cpu_indicator_var.set("Medium")
-            elif self.idle_counter < 20:
-                self.cpu_indicator_var.set("Low")
-            else:
-                self.cpu_indicator_var.set("Very Low")
-        else:
-            self.cpu_indicator_var.set("Low")
-            
-        # Schedule the next update
-        self.after(1000, self.update_cpu_usage)
-    
-    def on_closing(self):
-        """Clean up before closing"""
-        self.monitor_active = False
-        if self.monitor_thread and self.monitor_thread.is_alive():
-            self.monitor_thread.join(timeout=1.0)
-        self.destroy()
+                # Position and resize the window
+                os.system(f"xdotool windowmove {window_id} {x} {y}")
+                os.system(f"xdotool windowsize {window_id} {quarter_width} {quarter_height}")
+            except:
+                print(f"Failed to position window {i+1}. Make sure xdotool is installed.")
 
-if __name__ == "__main__":
-    # Check if pyperclip is installed
-    try:
-        import pyperclip
-    except ImportError:
-        print("The pyperclip module is required. Install it with 'pip install pyperclip'")
-        exit(1)
+def find_chrome_path_windows():
+    """Find the Chrome executable path on Windows"""
+    possible_paths = [
+        os.path.join(os.environ.get('PROGRAMFILES', 'C:\\Program Files'), 'Google\\Chrome\\Application\\chrome.exe'),
+        os.path.join(os.environ.get('PROGRAMFILES(X86)', 'C:\\Program Files (x86)'), 'Google\\Chrome\\Application\\chrome.exe'),
+        os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Google\\Chrome\\Application\\chrome.exe')
+    ]
     
-    app = AutoBase36Converter()
-    app.protocol("WM_DELETE_WINDOW", app.on_closing)
-    app.mainloop()
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+    
+    return "chrome"  # Fallback to command name
+
+def find_chrome_command_linux():
+    """Find the Chrome command on Linux"""
+    for cmd in ['google-chrome', 'chrome', 'chromium', 'chromium-browser']:
+        try:
+            subprocess.check_call(['which', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return cmd
+        except subprocess.CalledProcessError:
+            continue
+    
+    return "google-chrome"  # Default fallback
+
+# Example usage
+if __name__ == "__main__":
+    # urls = [
+    #     "https://www.google.com",
+    #     "https://www.github.com", 
+    #     "https://www.youtube.com",
+    #     "https://www.google.com"
+    # ]
+    CHAN_WEB_URL = "https://dev.sandinhstudio.com/chanunity/vihl/index.html?build=14098501558-2.0.3"
+    urls = [CHAN_WEB_URL for _ in range(4)]
+    
+    open_chrome_quad_windows(urls)
