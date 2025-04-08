@@ -2,6 +2,14 @@
     + Cài đặt chi phí chọc trong bàn chơi Khoa cử - 4 mức thi đình lên 10M
 
 - Find out NapLanDau
+- Idea for final project:
+    + Second hand stuffes market:
+        + Idea
+
+- Input:
+    - Ngày l -> r
+- Output:
+    - Tổng b của các dòng log của biến b từ ngày l -> r có chứa freeCoinVer và isSkip=True
 
 - Các lớp trong game-server:
     + TeaseCmd

@@ -6,6 +6,25 @@ Linux is a powerful operating system widely used in servers, DevOps, embedded sy
         + Linux Distributions (Ubuntu, Debian, CentOS, Arch, etc.)
         + File System Structure (/bin, /etc, /home, /var, /tmp, etc.)
         + Basic Linux Commands (ls, cd, pwd, cp, mv, rm, cat, echo)
+            + ls: Show content in current directory
+                + ls -l: Show with detailed information
+                + ls -a: Show all files, include hidden ones.
+            + cd: Change current directory
+                + cd ..: Move up one level
+                + cd ~ : Move to home
+            + pwd: Print full path of current directory
+            + mkdir: Create new directory
+            + rmdir: Remove an empty directory
+            + rm: remove files or directories
+            + cat: Display contents of a file
+            + grep: Search for pattern in files
+                + grep "pattern" filename
+                + -i ignore case
+                + -n show line number
+            + head: Display the first few lines of a file
+                + head -n 10 filename: Display the first 10 lines of file
+            + tail: Display the last the lines of a file
+                + tail -n 10 filename: Display the last 10 lines of file
         + File Permissions (chmod, chown, ls -l)
         + Working with Users and Groups (adduser, deluser, usermod, groups)
 
