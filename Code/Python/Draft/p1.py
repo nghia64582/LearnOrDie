@@ -1,27 +1,10 @@
-import ast
-
-def python_list_to_java_format(file_path):
-    with open(file_path, "r") as f:
-        content = f.read().strip()
-
-    try:
-        data = ast.literal_eval(content)  # Safely evaluate the Python list
-        if not isinstance(data, list):
-            raise ValueError("Expected a list of lists")
-
-        # Convert to Java-style string
-        java_formatted = "{" + ", ".join(
-            "{" + ", ".join(str(x) for x in sublist) + "}" for sublist in data
-        ) + "};"
-
-        return java_formatted
-
-    except Exception as e:
-        print("Error parsing input:", e)
-        return ""
-
-# Usage
-input_file = "input.txt"
-java_output = python_list_to_java_format(input_file)
-print("Java format:")
-print(java_output)
+file = open("C:/Users/NghiaVT/Desktop/Workspace/LearnOrDie/Code/Python/Draft/p1.txt", "r", encoding="utf-8")
+lines = file.readlines()
+count = {}
+for line in lines:
+    parts = line.split(" | ")
+    topic = parts[4] if len(parts) > 4 else "Unknown"
+    if topic not in count:
+        count[topic] = 0
+    count[topic] += 1
+print(count)

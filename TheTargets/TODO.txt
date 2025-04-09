@@ -1,10 +1,8 @@
 - Tìm hiểu tính năng chọc trong game-server:
     + Cài đặt chi phí chọc trong bàn chơi Khoa cử - 4 mức thi đình lên 10M
 
-- Find out NapLanDau
-- Idea for final project:
-    + Second hand stuffes market:
-        + Idea
+- Find out napLanDau
+- Set up stickerV2 : No reduce item for user when using sticker
 
 - Input:
     - Ngày l -> r

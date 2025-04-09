@@ -60,6 +60,8 @@
     + Update image in Rancher chan-2-dev-thuong
     + Switch to Dev and test
     + Test and back to step 1, ....
+    + After testing => create pull request from self branch
+    + After reviewed + testing finished => merge to master + push tag
 
 - General:
     - Access Chan Testing for newest web version
