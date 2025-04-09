@@ -1,0 +1,94 @@
+digraph {
+	OnLineAuctionPlatformApplication [label=OnLineAuctionPlatformApplication fillcolor=lightblue shape=box style=filled]
+	ControllerAspect [label=ControllerAspect fillcolor=lightblue shape=box style=filled]
+	AutoTask [label=AutoTask fillcolor=lightblue shape=box style=filled]
+	LocalDateTimeAdapter [label=LocalDateTimeAdapter fillcolor=lightblue shape=box style=filled]
+	AuctioneerController [label=AuctioneerController fillcolor=lightblue shape=box style=filled]
+	AuctioneerController -> AuctioneerService
+	BiddenPriceController [label=BiddenPriceController fillcolor=lightblue shape=box style=filled]
+	BiddenPriceController -> BiddenPriceService
+	BiddenPriceController -> BiddingReqDto
+	BiddenPriceController -> SellTheProductReqDto
+	BidderController [label=BidderController fillcolor=lightblue shape=box style=filled]
+	BidderController -> Bidder
+	BidderController -> GetBiddersReqDto
+	BidderController -> BidderService
+	GoogleOAuthController [label=GoogleOAuthController fillcolor=lightblue shape=box style=filled]
+	ProductController [label=ProductController fillcolor=lightblue shape=box style=filled]
+	ProductController -> GetSellingProductReqDto
+	ProductController -> Product
+	ProductController -> GetOpenProductReqDto
+	ProductController -> SoldProduct
+	ProductController -> AddProductReqDto
+	ProductController -> UpdateProductRequestDto
+	ProductController -> DeleteProductReqDto
+	ProductController -> ProductService
+	ProductController -> GetSoldProductsByBidderReqDto
+	ProductController -> GetBiddingProductReqDto
+	ProductController -> GetProductReqDto
+	TestController [label=TestController fillcolor=lightblue shape=box style=filled]
+	BiddingReqDto [label=BiddingReqDto fillcolor=lightblue shape=box style=filled]
+	SellTheProductReqDto [label=SellTheProductReqDto fillcolor=lightblue shape=box style=filled]
+	GetBidderInfoReqDto [label=GetBidderInfoReqDto fillcolor=lightblue shape=box style=filled]
+	GetBiddersReqDto [label=GetBiddersReqDto fillcolor=lightblue shape=box style=filled]
+	UpdateBidderInfoReqDto [label=UpdateBidderInfoReqDto fillcolor=lightblue shape=box style=filled]
+	AddProductReqDto [label=AddProductReqDto fillcolor=lightblue shape=box style=filled]
+	DeleteProductReqDto [label=DeleteProductReqDto fillcolor=lightblue shape=box style=filled]
+	GetBiddingProductReqDto [label=GetBiddingProductReqDto fillcolor=lightblue shape=box style=filled]
+	GetOpenProductReqDto [label=GetOpenProductReqDto fillcolor=lightblue shape=box style=filled]
+	GetProductReqDto [label=GetProductReqDto fillcolor=lightblue shape=box style=filled]
+	GetSellingProductReqDto [label=GetSellingProductReqDto fillcolor=lightblue shape=box style=filled]
+	GetSoldProductsByBidderReqDto [label=GetSoldProductsByBidderReqDto fillcolor=lightblue shape=box style=filled]
+	UpdateProductRequestDto [label=UpdateProductRequestDto fillcolor=lightblue shape=box style=filled]
+	Auctioneer [label=Auctioneer fillcolor=lightblue shape=box style=filled]
+	Authority [label=Authority fillcolor=lightblue shape=box style=filled]
+	BiddenPrice [label=BiddenPrice fillcolor=lightblue shape=box style=filled]
+	BiddenPrice -> Product
+	BiddenPrice -> Bidder
+	Bidder [label=Bidder fillcolor=lightblue shape=box style=filled]
+	Category [label=Category fillcolor=lightblue shape=box style=filled]
+	Product [label=Product fillcolor=lightblue shape=box style=filled]
+	Product -> Auctioneer
+	SoldProduct [label=SoldProduct fillcolor=lightblue shape=box style=filled]
+	SoldProduct -> Bidder
+	User [label=User fillcolor=lightblue shape=box style=filled]
+	AuctionExceptionHandler [label=AuctionExceptionHandler fillcolor=lightblue shape=box style=filled]
+	AuctionExceptionHandler -> AuctionExceptionResponse
+	AuctionExceptionResponse [label=AuctionExceptionResponse fillcolor=lightblue shape=box style=filled]
+	AdminHelper [label=AdminHelper fillcolor=lightblue shape=box style=filled]
+	BiddenPriceHelper [label=BiddenPriceHelper fillcolor=lightblue shape=box style=filled]
+	BidderHelper [label=BidderHelper fillcolor=lightblue shape=box style=filled]
+	BidderHelper -> ProductService
+	BidderHelper -> BiddenPrice
+	ProductHelper [label=ProductHelper fillcolor=lightblue shape=box style=filled]
+	ProductHelper -> Product
+	UserHelper [label=UserHelper fillcolor=lightblue shape=box style=filled]
+	UserHelper -> User
+	AdminSecurityConfig [label=AdminSecurityConfig fillcolor=lightblue shape=box style=filled]
+	AuctioneerService [label=AuctioneerService fillcolor=lightblue shape=box style=filled]
+	AuctioneerService -> Auctioneer
+	AuthorityService [label=AuthorityService fillcolor=lightblue shape=box style=filled]
+	AuthorityService -> Authority
+	BiddenPriceService [label=BiddenPriceService fillcolor=lightblue shape=box style=filled]
+	BiddenPriceService -> Bidder
+	BiddenPriceService -> Product
+	BiddenPriceService -> BiddenPrice
+	BidderService [label=BidderService fillcolor=lightblue shape=box style=filled]
+	BidderService -> Bidder
+	CachingService [label=CachingService fillcolor=lightblue shape=box style=filled]
+	CachingService -> Bidder
+	CachingService -> Product
+	CachingService -> Auctioneer
+	ImageService [label=ImageService fillcolor=lightblue shape=box style=filled]
+	LoginService [label=LoginService fillcolor=lightblue shape=box style=filled]
+	ProductService [label=ProductService fillcolor=lightblue shape=box style=filled]
+	ProductService -> Product
+	ProductService -> ImageService
+	ProductService -> SoldProduct
+	ProductService -> AddProductReqDto
+	UserService [label=UserService fillcolor=lightblue shape=box style=filled]
+	UserService -> User
+	WebSocketConfig [label=WebSocketConfig fillcolor=lightblue shape=box style=filled]
+	WebSocketHandler [label=WebSocketHandler fillcolor=lightblue shape=box style=filled]
+	online_auction_platformApplicationTests [label=online_auction_platformApplicationTests fillcolor=lightblue shape=box style=filled]
+}

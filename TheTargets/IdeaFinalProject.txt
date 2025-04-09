@@ -1,0 +1,18 @@
+1. Ứng dụng học tiếng anh với bộ ba kĩ năng chính là nói, nghe và từ vựng.
+ - Tính năng chính:
+  + Cho phép người học thêm từ vựng thông qua voice => phân tích => lựa chọn từ cần học
+hoặc chủ đề (một nhóm các từ vựng liên quan) hoặc thêm tay
+  + Tự động tạo bài kiểm tra dựa trên các yếu tố như độ phổ biến của từ, mức độ thành 
+thạo của user với từ, kiểm tra khả năng nói, nghe cũng như ngữ nghĩa của từ để kiểm tra
+độ thành thạo của người dùng với mỗi từ.
+  + Đánh giá level của người dùng, cho phép người dùng nắm được vị trí của mình ở đâu
+trên lộ trình học tiếng anh: Số từ vựng đã nắm được (ước lượng, ), số từ vựng theo chủ đề
+  + Tạo leaderboard, cho phép người dùng có thể so sánh mình với các người dùng khác, 
+tạo cảm giác cạnh tranh và cho phép người dùng liên tục nắm được vị trí học tập của mình 
+trong cộng đồng
+  + Một số mini-game daily nhỏ, cho phép người dùng vừa học vừa chơi, và cũng có thể
+battle với những người chơi khác
+  + Các tính năng chung: đăng ký, đăng nhập, thanh toán subcription với các gói khác nhau.
+ - Tập user chính: Những người học tiếng anh cần cải thiện từ vựng một cách nhanh chóng
+  cần một công cụ quản lý các từ mình học một cách hiệu quả.
+2. Ứng 

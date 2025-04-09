@@ -17,6 +17,7 @@
         + id
         + phone_number
         + first_order_time
+ 
  - Session entities:
     + Attendance
         + id
@@ -26,24 +27,31 @@
     + Order
         + id
         + time
+        + customer_id (allow null)
     + OrderItem
         + id
         + item_id
     + Import
         + id
+        + created_at
     + ImportItem
         + id
         + import_id
+        + item_id
+ 
  - Category entites:
     + Category
         + id 
         + name
+ 
  - State entities:
     + Amount
         + id
         + item_id
         + quantity
+ 
  - Temporary entites:
+ 
  - Security entities:
     + User
         - id
@@ -53,3 +61,7 @@
         - id
         - user_id
         - role
+
+- Context : a schema database f_and_b_store, with 12 tables.
+- Requirements : a base python script using mysql.connector, some command like (create_random_data_queries, run_query_delete_data, 
+run_query_create_data, run_all)
