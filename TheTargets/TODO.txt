@@ -2,7 +2,10 @@
     + Cài đặt chi phí chọc trong bàn chơi Khoa cử - 4 mức thi đình lên 10M
 
 - Find out napLanDau
-- Set up stickerV2 : No reduce item for user when using sticker
+
+- Set up stickerV2 : 
+ + No reduce item for users when using sticker
+ + Able with the users with no sticker (so users use it as a free feature)
 
 - Input:
     - Ngày l -> r

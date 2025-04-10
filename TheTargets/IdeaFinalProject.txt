@@ -1,18 +1,112 @@
-1. Ứng dụng học tiếng anh với bộ ba kĩ năng chính là nói, nghe và từ vựng.
+-- CÁC CÔNG NGHỆ CHÍNH SỬ DỤNG
+  + FE: ReactJS
+  + BE: SpringBoot Java
+  + DB: 
+    + Relational : MySQL, MariaDB, ...
+    + NoSQL      : MongoDB, CouchBase, ...
+  + Chart: Superset, 
+  + Git, Latex, Jira, MySQL WorkBench, ...
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Ứng dụng học tiếng anh 
+ - Giới thiệu:
+   + Một nền tảng học tiếng anh với bộ ba kĩ năng chính sẽ tập trung để người dùng luyện tập là nói, nghe và từ vựng.
+   + Các tính năng trong nền tảng sẽ thiết kế để tối ưu UX giúp người dùng có thể nhanh chóng học được 
+
+  - Tính năng chính:
+    + Cho phép người học xây dựng danh sách từ vựng thông qua voice => phân tích => lựa chọn 
+      từ cần học hoặc chủ đề (một nhóm các từ vựng liên quan) hoặc thêm tay
+    + Tự động tạo bài kiểm tra dựa trên các yếu tố như độ phổ biến của từ, mức độ thành 
+      thạo của user với từ, kiểm tra khả năng nói, nghe cũng như ngữ nghĩa của từ để kiểm tra
+      độ thành thạo của người dùng với mỗi từ => Giúp người học tối ưu được khả năng từ vựng 
+      của mình trong một thời gian ngắn.
+    + Đánh giá level của người dùng, cho phép người dùng nắm được vị trí của mình ở đâu
+      trên lộ trình học tiếng anh: Số từ vựng đã nắm được (ước lượng, ), số từ vựng theo mỗi chủ đề
+    + Tạo leaderboard, cho phép người dùng có thể so sánh mình với các người dùng khác, 
+      tạo cảm giác cạnh tranh và cho phép người dùng liên tục nắm được vị trí học tập của mình 
+      trong cộng đồng
+    + Một số mini-game daily nhỏ, cho phép người dùng vừa học vừa chơi, và cũng có thể
+      battle với những người chơi khác
+    + Các tính năng chung: đăng ký, đăng nhập, thanh toán subcription với các gói khác nhau.
+
+  - Tập user chính: Những người học tiếng anh cần cải thiện từ vựng một cách nhanh chóng
+    cần một công cụ quản lý các từ mình học một cách hiệu quả.
+
+  - Thử thách chính:
+    + Có khá nhiều từ điển open source hiện nay, tuy nhiên mỗi cái có thể bị outdate
+      => Khi người dùng thêm từ mới, app sẽ show các định nghĩa phổ biến nhất, nếu không có
+        người dùng có thể tự viết định nghĩa.
+      => Cứ sau một khoảng thời gian lại chạy script để lấy các từ mới (qua từ điển của user, qua các nguồn public, ...)
+        sau đó dùng dùng AI api để có định nghĩa các từ này và lưu trữ vào từ điển chính.
+
+    + Mỗi user có thể học khá nhiều từ vựng, cần tìm một cách tối ưu để lưu trữ từ vựng
+      + Mỗi người có thể học từ 200 -> nhiều nghìn từ khi làm quen với tiếng anh, mỗi từ có thể lưu nội dung và định nghĩa, 
+        nội dung sẽ rất lớn với quy mô hàng triệu người dùng nếu lưu hết.
+      => Với các từ mà người dùng chỉ chọn một từ trong từ điển và định nghĩa có sẵn, ta chỉ cần lưu id trong từ điển thôi
+        điều này sẽ giúp không phải lưu các thông tin lặp lại, chúng ta chỉ lưu custom các từ mà user tự định nghĩa.
+
+    + Người học nhập thêm từ mới sẽ hơi lâu trên bản mobile một chút
+      => Tính năng gợi ý từ dựa trên voice, do accent của người non-native sẽ khó để các hệ thống 
+        voice to text nhận diện được. Để giải quyết, chương trình sẽ yêu cầu người dùng đọc từ muốn thêm, sau đó
+        app sẽ tính các từ có phát âm gần giống nhất và hiển thị để người dùng chọn, VD: khi người dùng đọc "line"
+        hệ thống có thể hiển thị "line" đầu tiên và "like", "lime", "lie", ... tiếp theo để người dùng chọn, điều 
+        này sẽ phát huy tác dụng với một số từ dài hoặc những người cần nhập nhiều chục từ mỗi ngày trên nền tảng mobile.
+
+    + Người học hơi sẽ hơi mơ hồ trong một quá trình học với mục đích nào đấy
+      + VD: Người dùng học để làm việc trong công ty nước ngoài, tuy 
+      => Các bài kiểm tra có thể test trình độ người nghe ở mỗi chủ đề với mỗi level xác định
+
+- Mô hình kiếm tiền chính: Quảng cáo và subcription
+- USP: 
+  + Tính năng thêm từ vựng qua voice giúp tối ưu UX trên mobile do mobile khó gõ bàn phím
+  + Tối ưu quá trình học từ vựng của user bằng cách quản lý quá trình học của user dựa theo mỗi từ
+  + Cho phép người dùng nắm được tốc độ học của mình với mỗi mục đích nhất định
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+2. Trang web bán đồ second-hand, hàng xách tay, hàng unique, ...
+ - Giới thiệu:
+   + Một website giúp người dùng có thể mua hoặc bán các sản phẩm đặc trưng, 
+   + Các sản phẩm chính sẽ là đồ điện tử gia dụng (máy giặt, bếp điện, ...), điện thoại, laptop, xe máy oto, hàng phụ kiện chất lượng cao, ...
+   + Cần có các tính năng tối ưu giúp người bán và người mua tìm được giá tốt nhất cho 2 bên
  - Tính năng chính:
-  + Cho phép người học thêm từ vựng thông qua voice => phân tích => lựa chọn từ cần học
-hoặc chủ đề (một nhóm các từ vựng liên quan) hoặc thêm tay
-  + Tự động tạo bài kiểm tra dựa trên các yếu tố như độ phổ biến của từ, mức độ thành 
-thạo của user với từ, kiểm tra khả năng nói, nghe cũng như ngữ nghĩa của từ để kiểm tra
-độ thành thạo của người dùng với mỗi từ.
-  + Đánh giá level của người dùng, cho phép người dùng nắm được vị trí của mình ở đâu
-trên lộ trình học tiếng anh: Số từ vựng đã nắm được (ước lượng, ), số từ vựng theo chủ đề
-  + Tạo leaderboard, cho phép người dùng có thể so sánh mình với các người dùng khác, 
-tạo cảm giác cạnh tranh và cho phép người dùng liên tục nắm được vị trí học tập của mình 
-trong cộng đồng
-  + Một số mini-game daily nhỏ, cho phép người dùng vừa học vừa chơi, và cũng có thể
-battle với những người chơi khác
-  + Các tính năng chung: đăng ký, đăng nhập, thanh toán subcription với các gói khác nhau.
- - Tập user chính: Những người học tiếng anh cần cải thiện từ vựng một cách nhanh chóng
-  cần một công cụ quản lý các từ mình học một cách hiệu quả.
-2. Ứng 
+  + Người dùng sẽ có 3 role chính là quản trị viên, người mua, người bán, một user có thể có nhiều role
+  + Các tính năng chung:
+    + Đăng nhập, đăng ký, SSO, 
+  + Người mua:
+    + Xem danh sách các mặt hàng, theo filter(địa điểm, giá, tag, chủ đề, ...), theo page
+    + So sánh các sản phẩm tương tự với nhau.
+    + Đăng ký xem trực tiếp các sản phẩm.
+    + Tham gia đấu giá sản phẩm.
+  + Người bán:
+    + Đăng bán sản phẩm:
+      + Điền thông tin về sản phẩm (năm mua hoặc sản xuất) + vị trí + danh sách ảnh, tag, ...
+      + Thêm, xóa, sửa các sản phẩm hiện tại.
+  + Các tính năng chung: 
+ - Thử thách chính:
+   + UI cần thuận tiện cho user, để người mua có cảm giác tốt nhất khi mua đồ cũ.
+   + Một số tính năng gây race condition như 2 người mua cùng một món hàng.
+     + Cần thiết kế luồng để xử lý các trường hợp như này
+       + Dùng synchronized trong java để tránh 2 luồng cùng truy cập một data
+       + Thiết kế luồng phù hợp để đảm bảo tính ACID của data.
+   + Cần kiểm soát số lượng user và data lớn dần theo thời gian.
+     + Thiết kế DB phù hợp
+     + Kết hợp với caching để tối ưu flow yêu cầu tài nguyên.
+   + Định giá là một bài toán phức tạp cho các mặt hàng đồ cũ:
+     + Thêm thông tin về địa điểm, giúp người mua có thể cân nhắc xem có thể quan sát trực tiếp không.
+     + Gợi ý các thông số, tính năng, yêu cầu chính ứng với mỗi loại sản phẩm đồ cũ cho người mua
+     + Thêm trang biểu đồ hiển thị xu hướng giá của các mặt hàng tương tự gần đây giúp người mua và người bán nắm được tình hình thị trường
+     + Tính toán khấu hao dựa trên các thông số chung của sản phẩm.
+     + Thêm tính năng đấu giá.
+     + Đề xuất người bán cũng như người mua các lý do để tăng/giảm giá.
+     + Xây dựng quy trình hoạt động với các cửa hàng vật lý, hỗ trợ các quy trình, như ký gửi, thẩm định, ...
+
+ - Tập user chính:
+    + Người bán là hầu hết những người có đồ cũ thay vì bỏ đi có thể pass lại, thì đây sẽ là một sự lựa chọn cho họ
+    + Người mua là những người có mong muốn mua các sản phẩm với giá tối ưu, vì không phải đồ cũ là kém giá trị.
+    + Nền tảng cũng có thể có các cửa hàng vật lý, để hỗ trợ một số quy trình, ví dụ kí gửi, thẩm định, ...
+
+ - Mô hình kiếm tiền: Chủ yếu đến từ quảng cáo và có thể là phí đăng tin với một số sản phẩm giá trị cao
+ - USP: 
+    + Các tính năng như show trend, kết hợp với cửa hàng vật lý giúp tối ưu giá cho người bán và người mua với mỗi sản phẩm.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

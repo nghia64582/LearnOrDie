@@ -72,3 +72,4 @@
     - With webtool, get image from command line after sbt docker:publish
     - Change "+" into "-" in image name of mattermost, and only 
     - After add new key in CouchBase entity, should delete value of corresponding key, so the game server auto load default value or add new key, value 
+    - We can use dev thuong and c3 alternatively, so when one is used, use the other one
