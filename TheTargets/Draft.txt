@@ -1,0 +1,20 @@
+Send sticker
+11 Apr 2025 | 14:27:43,934 | DEBUG | application-akka.actor.default-dispatcher-7 | sd.SD | null | <- StickerV2Req  4728210  {"u":4728210,"i":0,"m":"ST04","n":"thidinh3"}
+11 Apr 2025 | 14:27:44,117 | DEBUG | scala-execution-context-global-17752 | sd.cmd.Cmd | null | -> StickerV2Req 0_0_12 4728210,4728208 : {"u":4728210,"i":0,"m":"ST04","n":"thidinh3"}
+11 Apr 2025 | 14:27:44,118 | DEBUG | scala-execution-context-global-17752 | sd.cmd.Cmd | null | -> StickerTicketRemain 4728210 : {"q":209}
+11 Apr 2025 | 14:27:44,298 | DEBUG | scala-execution-context-global-17752 | sd.cmd.Cmd | null | -> UpdateProgressThienThuCmd 4728210 : {"p":18,"i":27}
+11 Apr 2025 | 14:27:44,422 | DEBUG | scala-execution-context-global-17752 | sd.cmd.Cmd | null | -> UpdateProgressThienThuCmd 4728210 : {"p":18,"i":28}
+
+Send pet
+11 Apr 2025 | 14:28:13,241 | DEBUG | application-akka.actor.default-dispatcher-4 | sd.SD | null | <- StickerV2Req  4728210  {"u":4728210,"i":-1,"m":"PEID5","n":"thidinh3"}
+11 Apr 2025 | 14:28:13,425 | DEBUG | scala-execution-context-global-17760 | sd.cmd.Cmd | null | -> StickerV2Req 0_0_12 4728210,4728208 : {"u":4728210,"i":-1,"m":"PEID5","n":"thidinh3"}
+11 Apr 2025 | 14:28:13,426 | DEBUG | scala-execution-context-global-17760 | sd.cmd.Cmd | null | -> StickerTicketRemain 4728210 : {"q":208}
+11 Apr 2025 | 14:28:13,549 | DEBUG | scala-execution-context-global-17760 | sd.cmd.Cmd | null | -> UpdateProgressThienThuCmd 4728210 : {"p":19,"i":27}
+11 Apr 2025 | 14:28:13,730 | DEBUG | scala-execution-context-global-17760 | sd.cmd.Cmd | null | -> UpdateProgressThienThuCmd 4728210 : {"p":19,"i":28}
+
+Send sticker 
+11 Apr 2025 | 14:28:58,728 | DEBUG | application-akka.actor.default-dispatcher-7 | sd.SD | null | <- StickerV2Req  4728210  {"u":4728210,"i":0,"m":"ST05","n":"thidinh3"}
+11 Apr 2025 | 14:28:58,913 | DEBUG | scala-execution-context-global-17775 | sd.cmd.Cmd | null | -> StickerV2Req 0_0_12 4728210 : {"u":4728210,"i":0,"m":"ST05","n":"thidinh3"}
+11 Apr 2025 | 14:28:58,916 | DEBUG | scala-execution-context-global-17775 | sd.cmd.Cmd | null | -> StickerTicketRemain 4728210 : {"q":207}
+11 Apr 2025 | 14:28:59,041 | DEBUG | scala-execution-context-global-17775 | sd.cmd.Cmd | null | -> UpdateProgressThienThuCmd 4728210 : {"p":20,"i":27}
+11 Apr 2025 | 14:28:59,225 | DEBUG | scala-execution-context-global-17775 | sd.cmd.Cmd | null | -> UpdateProgressThienThuCmd 4728210 : {"p":20,"i":28}

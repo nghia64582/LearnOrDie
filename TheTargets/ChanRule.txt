@@ -33,17 +33,25 @@
         + Xướng     : Sau khi ù phải đọc tên các Cước đang có
 - Cước:
     + Suông             : Không có gì đặc biệt
-    + Thông             : Đã ù ván trước
+    + Thông             : Đã ù ván trước giờ ù tiếp
     + Trì               : Bốc bài từ nọc xong ù
     + Thiên ù           : Bốc cái lên ù luôn 
     + Thiên ù bạch thủ  : thiên ù + 6 chắn
     + Ăn bòn  (xn)      : có sẵn chắn, tách ra ăn 1 chắn, xong sau đấy lại ăn một chắn nữa
-    + Chíu ù (xn)       : Chíu mà tròn bài luôn (10 bộ) thì là chắn
+    + Chíu ù (xn)       : Chíu mà tròn bài luôn (10 bộ) thì là chắn (khác với ù có chíu)
+    + Ù có Chíu         : Lúc ù ăn bài không phải ăn chíu (đã có chíu trước đó)
     + Thiên khai (xn)   : Có 4 lá giống nhau
+        => n là số bộ đếm lá giống nhau
     + Thập thành        : Có 10 chắn 
-    + Bạch định         : Ù toàn lá đen (lá đỏ có dấu màu đỏ ở sau chữ)
-    + Tám đỏ            : Ù đúng 8 lá đỏ
-    + Tôm               : Có tam vạn, tam sách, thất văn
-    + Phá thiên         : 
+    + Bạch định         : Ù toàn lá đen 
+        (lá đỏ có dấu màu đỏ ở sau chữ)
+    + Tám đỏ            : Ù đúng 8 lá đỏ 
+        (ít hơn hay nhiều hơn đều không được)
+    + Tôm               : Có cả tam vạn, tam sách, thất văn (337)
+        (chỉ chắn hay cạ cũng được?)
+        => (đếm số lá có ít nhất trong 3 giá trị tam vạn, tam sách, thất văn)
+    + Lèo               : Có cả cửu vạn, bát sách, chi chi thì là có lèo (890)
+        (chỉ chắn hay cạ cũng được?)
+        => (đếm số lá có ít nhất trong 3 giá trị cửu vạn, bát sách, chi chi)
     + Bạch thủ          : Đang chờ ù có 5 chắn, 4 cạ, 1 què, không có 3 đầu
-        (3 con cùng số khác chất), ăn một con thành ù
+        (3 con cùng số khác chất), ăn một con thành ù (6 chắn, 4 cạ)

@@ -64,7 +64,7 @@
   + Cho phép người dùng nắm được tốc độ học của mình với mỗi mục đích nhất định
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-2. Trang web bán đồ second-hand, hàng xách tay, hàng unique, ...
+2. Trang web bán đồ cũ
  - Giới thiệu:
    + Một website giúp người dùng có thể mua hoặc bán các sản phẩm đặc trưng, 
    + Các sản phẩm chính sẽ là đồ điện tử gia dụng (máy giặt, bếp điện, ...), điện thoại, laptop, xe máy oto, hàng phụ kiện chất lượng cao, ...
