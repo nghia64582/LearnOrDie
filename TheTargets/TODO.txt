@@ -1,16 +1,41 @@
-- Tìm hiểu tính năng chọc trong game-server:
-    + Cài đặt chi phí chọc trong bàn chơi Khoa cử - 4 mức thi đình lên 10M
+- Tìm hiểu tính năng chọc trong game-server: - done
+    + Cài đặt chi phí chọc trong bàn chơi Khoa cử - 4 mức thi đình lên 10M - done
 
-- Find out napLanDau
+- Tìm hiểu napLanDau
 
-- Set up stickerV2 : 
- + No reduce item for users when using sticker
- + Able with the users with no sticker (so users use it as a free feature)
+- Set up stickerV2 : - done
+    + No reduce item for users when using sticker - done
+    + Able with the users with no sticker (so users use it as a free feature) - done
 
-- Input:
-    - Ngày l -> r
-- Output:
-    - Tổng b của các dòng log của biến b từ ngày l -> r có chứa freeCoinVer và isSkip=True
+- Tìm hiểu dev server: - done
+    - Input:
+        - Ngày l -> r
+    - Output:
+        - Tổng b của các dòng log của biến b từ ngày l -> r có chứa 
+            freeCoinVer và isSkip=True
+
+- Tìm hiểu AdsOps, cb, offer
+    + Xử lý trong controller pay hàm payCardSimGw, getCardInfo, payCardSimGwNew, payCardSimGwVuaHungEvent
+        truyền msg tới actor payCardByBotVtpActor là json
+    + Trong receive của payCardByBotVtpActor sẽ xử lý các input chính (chú ý cần viết implicit json format)
+        xử lý thông tin người dùng mua offer và sau đó cập nhật tài nguyên của user.
+    + Cập nhật trong 3 actor:
+        + PayCardByBotVtpActor
+        + PayCardBySimGateWayActor
+        + PayCardByUssdActor
+    + Trong UssdModel, thêm isRemoveAdsPack vào:
+        + ReqPayCardSubscriber
+        + UssdCard
+        + RepayUssdCard
+        + RepaySubscriberCard
+    + Trong sd-cb:
+        + Thêm "packRemoveAds" vào AdsRewardData thể hiện timestamp hết bỏ quảng cáo.
+        + Thêm hàm addPackRemoveAds vào AdsRewardOps để xử lý thêm pack bỏ quảng cáo.
+        + ForeignCurrency thêm gói mới.
+
+- Chuẩn bị ra gói flash-sale bảo:
+    + Logic mua tăng bảo lời hơn dựa theo một điều kiện nhất định.
+    + Cài đặt một ForeignCurrency mới trong sd-cb cho gói này.
 
 - Các lớp trong game-server:
     + TeaseCmd

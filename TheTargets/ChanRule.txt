@@ -8,6 +8,9 @@
         + Đến lượt người chơi có thể bốc 1 lá từ nọc
             => Xong ăn lá đấy và đánh lá khác
             => Ăn lá người cửa trước vừa đánh
+        + Ù : Khi 19 lá trên tay kết hợp với lá vừa bốc thành 10 bộ, trong
+            đó có ít nhất 6 chắn thì gọi là ù.
+        + Chỉ được ù từ lá bốc, không được ù từ lá đánh ra
     - Các lỗi phổ biến:
         + Bỏ chắn ăn cạ
         + 
