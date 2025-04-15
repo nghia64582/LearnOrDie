@@ -1,0 +1,12 @@
+- Trong này lưu trữ các hook như useState, useEffect, useContext
+// - useState: dùng để quản lý state trong component
+// - useEffect: dùng để thực hiện các side effects trong component, ví dụ như gọi API, cập nhật DOM, v.v.
+// - useContext: dùng để truy cập vào context trong component, giúp truyền dữ liệu giữa các component mà không cần phải truyền props qua từng cấp
+// - useReducer: dùng để quản lý state phức tạp hơn, tương tự như Redux nhưng không cần phải cài đặt thư viện Redux
+// - useRef: dùng để truy cập vào DOM element hoặc lưu trữ giá trị mà không cần phải render lại component
+// - useMemo: dùng để tối ưu hóa hiệu suất của component bằng cách ghi nhớ giá trị đã tính toán trước đó
+// - useCallback: dùng để tối ưu hóa hiệu suất của component bằng cách ghi nhớ hàm đã tạo trước đó, giúp tránh việc tạo lại hàm mỗi khi component render lại
+// - useImperativeHandle: dùng để tùy chỉnh giá trị mà ref trả về khi sử dụng với forwardRef, giúp tạo ra các API tùy chỉnh cho component
+// - useLayoutEffect: tương tự như useEffect nhưng được gọi ngay sau khi DOM đã được cập nhật, giúp thực hiện các tác vụ liên quan đến layout
+// - useDebugValue: dùng để hiển thị giá trị debug trong React DevTools, giúp dễ dàng theo dõi giá trị của hook trong quá trình phát triển
+// - useTransition: dùng để quản lý trạng thái chuyển tiếp trong React, giúp tối ưu hóa hiệu suất khi có nhiều tác vụ đồng thời

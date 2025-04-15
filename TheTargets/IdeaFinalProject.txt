@@ -115,4 +115,8 @@
     + Đối với tập sản phẩm giá tầm trung (2tr - 5tr), khách hàng 
     + Đối với tập sản phẩm giá trị 5tr-10tr nếu chúng ta giúp người bán hàng cũ pass nhanh sản phẩm, việc thu phí với họ (1-5%)
       là có thể, cơ mà ở đây sẽ phát sinh mâu thuẫn ở cách thu phí.
+    + Các quy trình có thể áp dụng để tăng hiệu quả bán hàng và tăng tỉ lệ đơn chốt trên hệ thống:
+      + Xây dựng quy trình kí gửi với một số hàng giá trị tầm trung trở lên.
+      + Với các mặt hàng giá thấp khó thu phí, ta có thể set up free hoàn toàn với các sản phẩm này.
+      + Một số mặt hàng giá trị cao (trên 15tr), ta có thể xây dựng mô hình đấu giá với 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
