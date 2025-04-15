@@ -46,6 +46,70 @@
     + Connect to chanpro db to show data
     + Use html + scala
 
+- Các lớp trong game-server:
+    + TeaseCmd
+        + extends Cmd
+        + "t"   : id
+        + "ub"  : teaseUids.map(Integer.valueOf).asJava
+        + "uc"  : uid
+        + "nc"  : username
+    + TeaseSubscriptionCmd
+        + extends Cmd
+        + "t"   : time
+    + UserTeaseCmd
+        + extends Cmd
+        + List[id: Int, remaining: Int]
+    + TeaseConfigCmd
+        + extends Cmd
+        + "t"   : cfg.timeLimit
+    + TeaseHandler:
+        + extends BaseFSM
+        + whenAllState {
+            case Ev(req: TeaseReq) => 
+                sendTease(req)
+                stay()
+        }
+    + ITease:
+        + trait
+        + def sendTease(req: TeaseReq): Unit
+    + TeaseImpl:
+        + trait
+        + extends ITease
+        + sendTease => check if user can tease 
+        + updateTease: 
+    + TeaseReq(TeaseParam):
+        + "id"          : id
+        + Optional["u"] : uid
+
+- Các lớp trong sd-api :
+    + ForeignCurrency teaseSub: long
+
+- Các lớp trong sd-cb  :
+    + TeaseConfig
+        + timeLimit             : Int
+        + items                 : List[TeaseItem]
+        + limitStakeUsingTease  : Int
+        + spectatorCanTease     : Boolean
+        + isActive              : Boolean
+    + TeaseConfigCAO
+        + Lưu data trong db
+    + UserTeaseData
+        + data      : List[TeaseData]
+    + TeaseData:
+        + id        : Int
+        + remaining : Int
+    + UserTeaseDataCAO
+        + Lưu data trong db
+    + TeaseItem:
+        + id        : Int, id của loại chọc
+        + tax       : Double, phí dùng chọc
+        + totalFree : Int
+        + usingCoin : Boolean, có dùng bảo không 
+        + status    : Int, disable = 0, enable = 1, coming = 2, priv = 3
+    + ForeignCurrencyOps:
+
+        + addTeaseSub
+
 - Dev account:
     + nghiavt1 atbx6541
     + thidinh(1-200) abc1235
@@ -70,6 +134,11 @@
         + Enter key + base36(uid) to get the value of model CAO
     - With game-server, sd-cb, sd-api : get image name from mattermost
     - With webtool, get image from command line after sbt docker:publish
-    - Change "+" into "-" in image name of mattermost, and only 
+    - Change "+" into "-" in image name of mattermost, and only in rancher
     - After add new key in CouchBase entity, should delete value of corresponding key, so the game server auto load default value or add new key, value 
     - We can use dev thuong and c3 alternatively, so when one is used, use the other one
+    - To store data in couchbase, we need to implement
+        + A user data case class to define the structure of data
+        + A companion object with json format to store in db
+        + The value in data should be Int, String, Float, Double, Option[], ...
+        + Then define a CAO as singleton and inject CB to store data.

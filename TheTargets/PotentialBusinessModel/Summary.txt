@@ -64,3 +64,16 @@
       thể tối ưu hóa được chi phí giao hàng.
   - Quy trình vận hành:
 4. Ứng dụng đặt xe ghép đi học, làm.
+  - Mô tả:
+    + Hiện nay, việc đặt xe qua các nền tảng công nghệ đã khá phổ biến trên 
+      thị trường, nhưng việc đặt xe ghép đi học, đi làm thì vẫn chưa phổ biến
+      lắm. Việc này sẽ giúp người dùng tiết kiệm được chi phí đi lại, và
+      cũng giúp các nhà xe có thể tối ưu hóa được chi phí vận chuyển.
+  - Quy trình vận hành:
+    + Người dùng có thể lên ứng dụng, chọn điểm đi, điểm đến, thời gian đi,
+      và số lượng người đi cùng. Sau đó, ứng dụng sẽ tự động ghép các 
+      người dùng lại với nhau, và thông báo cho người dùng về lịch trình 
+      đi lại.
+    + Người dùng có thể chọn đi cùng nhau, hoặc đi riêng lẻ. Nếu đi cùng
+      nhau, người dùng sẽ được chia sẻ thông tin về nhau, và có thể 
+      chat với nhau để thống nhất lịch trình đi lại.

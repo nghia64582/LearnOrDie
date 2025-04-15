@@ -68,12 +68,23 @@ object MyFuture {
       "Finish future 2"
     }
 
-    // set up callback after future has a specific value
+    /*
+    * onComplete
+    * return Unit
+    * define function to be executed after future success
+    * execute whether future success or fail
+    * */
     future1.onComplete {
       case Success(value) => println("Success : " + value)
       case Failure(exception) => println("Exception : " + exception)
     }
-    future2.onComplete {
+
+    /*
+    * andThen
+    * return new Future
+    * define
+    * */
+    future2.andThen {
       case Success(value) => println("Success : " + value)
       case Failure(exception) => println("Exception : " + exception)
     }

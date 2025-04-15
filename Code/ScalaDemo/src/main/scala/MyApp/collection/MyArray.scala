@@ -2,6 +2,10 @@ package MyApp.collection
 
 import scala.collection.mutable.*;
 
+trait Ord[T]:
+  def compare(x: T, y: T): Int
+
+
 object MyArray {
 
   def main(args: Array[String]): Unit = {
