@@ -1,0 +1,10 @@
+Loại ù(S suông hoặc 3, 4), số người(2 - 4), số bài trong nọc, kết quả
+S,4,13,tám đỏ lèo
+S,4,9,tám đỏ tôm có chíu
+S,3,17,trì
+S,4,17,suông
+S,4,16,tôm
+S,4,10,thông tôm
+S,4,7,trì
+S,4,13,bạch thủ
+S,4,8,trì tôm

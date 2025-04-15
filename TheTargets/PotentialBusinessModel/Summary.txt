@@ -1,0 +1,66 @@
+1. Bán quần áo online cho mặc thử.
+  - Mô tả:
+    + Hiện nay, thương mại điện tử, mua bán online không còn xa lạ gì, và gần như đã tiếp cận mọi 
+      mặt hàng, từ viên kẹo 1-2k cho đến cái xe trăm triệu. Việc buôn bán online gần như đã trở thành 
+      điều hiển nhiên trong mắt người tiêu dùng, thậm chí kể cả là cụ già U70-80 hay cậu bé dưới 
+      5-10 tuổi. Tuy nhiên, hình thức này vẫn có một số đặc điểm bất lợi nhất định, khiến nó chưa 
+      thể thay thế hoàn toàn thương mại truyền thống. Một trong số đó là đảm bảo chất lượng, uy 
+      tín, đặc thù sản phẩm sử dụng. Và hàng may mặc, thời trang, quần áo là không ngoại lệ. không
+      ít người đã từng trải nghiệm việc nhìn người mẫu mặc trên Shopee, Tiktok hay Facebook thì 
+      rất đẹp, nhưng khi mua về cho mình mặc thì khá tệ, rất đến trải nghiệm không tốt dù giá thành
+      rẻ. Do đó, mô hình này có thể là một phương án giúp tăng trải nghiệm người dùng, giúp họ dễ 
+      dàng mua được món hàng phù hợp hơn.
+  - Quy trình vận hành:
+    + 
+2. Mua tạp hóa online số lượng lớn từ nhà máy đến người dùng cuối
+  - Mô tả:
+    + Hiện nay, người dùng khi mua đồ tạp hóa có thói quen lâu đời là 
+      ra tiệm tạp hóa gần nhà hoặc tiện đường đi học, làm. Cách làm này
+      khá tiện, nhanh, gọn, giá cũng chưa quá mắc. Nó cũng là cơ hội kinh
+      doanh với các tiệm tạp hóa truyền thống và các chuỗi cửa hàng tiện
+      lợi, chuỗi tạp hóa, ... Tuy nhiên, hiện nay, khi các nền tảng thương
+      mại điện tử đang dần thay đổi cuộc chơi, việc bán hàng tạp hóa có 
+      thể diễn ra theo một cách khác, nhất là khi chi phí mặt bằng ngày
+      càng đắt đỏ, ngoài ra mô hình truyền thống có nhiều cửa hàng trung
+      gian, dẫn đến giá có thể bị đội lên khá nhiều, thậm chí x10, ví dụ 
+      một chai dầu gội bán ngoài tiệm 60-100k nhưng giá ở xưởng chỉ tầm 
+  - Ý tưởng:
+    + Một nền tảng thương mại điện tử, cho phép người dùng có thể đặt 
+      hàng tạp hóa online với số lượng lớn, từ nhà máy đến tay người tiêu 
+      dùng. Nền tảng này sẽ giúp người dùng có thể tiết kiệm được chi phí 
+      khi mua sắm đồ tạp hóa do không phải qua nhiều khâu trung gian.
+  - Quy trình vận hành:
+    + Người mua có nhu cầu mua đồ tạp hóa, thay vì khi cần, thiếu thì ra 
+      cửa hàng mua có thể lựa chọn một phương án mới, đó là lên kế hoạch 
+      mua tạp hóa cho 2-6 tháng tiếp theo luôn. Khi đó, họ lên danh sách
+      10-20 món đồ tạp hóa cần mua (mì, bánh đa, dầu, muối, sữa tắm, ...)
+      xong lên nền tảng lựa chọn. Nền tảng sẽ hiển thị 20-50 món tạp hóa 
+      phổ biến nhất, mỗi món 2-10 hãng, thương hiệu phổ biến, sau đó chọn
+      giao, có 2 cách đặt địa điểm giao là về địa chỉ cá nhân (thường là 
+      nhà) hoặc giao về một điểm tập kết trung chuyển (là một kho gần nhà
+      hoặc tiện đường). Sau tầm 2-3 ngày, người dùng sẽ nhận được hàng tại 
+      điểm giao hàng đã chọn. Đây là phương án khả thi hơn do thời gian 
+      giao hàng không cố định. 
+  - Lợi ích:
+    + Tận dụng tối đa lợi thế thương mại điện tử, việc bán hàng trực tiếp
+      tới tay người tiêu dùng sẽ giảm thiểu chi phí tối đa, thậm chí giá
+      có thể giảm đến 50-70% so với giá thị trường hiện tại (nghĩa là 
+      một chai dầu gội 60k có thể chỉ còn 20-30k, nếu mua đơn hàng lớn từ 
+      1 tr sẽ giảm được khá nhiều).
+  - Nhược điểm:
+    + Đây là ván bài tất tay của nhà máy sản xuất hàng FMCG, vì bán hàng
+      trực tiếp tới người tiêu dùng sẽ "giết" các nhà bán lẻ tới người 
+      dùng. Do đó cần đảm bảo, các nhà máy, thương hiệu có thể thay đổi
+      thói quen tiêu dùng của người dân ở quy mô lớn để mô hình này hoạt
+      định ổn định và lâu dài.
+    + Do người dùng mua
+3. Nền tảng đặt món ăn hẹn giờ, cho phép ghép nhiều đơn thức ăn
+  - Mô tả:
+    + Hiện nay, việc đặt món ăn online đã trở nên rất phổ biến, và gần như 
+      không còn xa lạ gì với người tiêu dùng. Tuy nhiên, việc đặt món ăn 
+      online vẫn có một số bất cập nhất định, ví dụ như việc đặt món ăn 
+      hẹn giờ, hoặc ghép nhiều đơn thức ăn lại với nhau. Việc này sẽ giúp
+      người dùng tiết kiệm thời gian hơn, và cũng giúp các nhà hàng có 
+      thể tối ưu hóa được chi phí giao hàng.
+  - Quy trình vận hành:
+4. Ứng dụng đặt xe ghép đi học, làm.

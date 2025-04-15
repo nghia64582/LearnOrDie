@@ -109,4 +109,10 @@
  - Mô hình kiếm tiền: Chủ yếu đến từ quảng cáo và có thể là phí đăng tin với một số sản phẩm giá trị cao
  - USP: 
     + Các tính năng như show trend, kết hợp với cửa hàng vật lý giúp tối ưu giá cho người bán và người mua với mỗi sản phẩm.
+ - Mô hình hoạt động:
+    + Đối với các sản phẩm giá trị thấp (dưới 2 triệu), sẽ rất khó thuyết phục người dùng sử dụng nền tảng nếu thu phí
+      nên chúng ta sẽ thiên về phương án free hoàn toàn với tập mặt hàng này.
+    + Đối với tập sản phẩm giá tầm trung (2tr - 5tr), khách hàng 
+    + Đối với tập sản phẩm giá trị 5tr-10tr nếu chúng ta giúp người bán hàng cũ pass nhanh sản phẩm, việc thu phí với họ (1-5%)
+      là có thể, cơ mà ở đây sẽ phát sinh mâu thuẫn ở cách thu phí.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
