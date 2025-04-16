@@ -1,0 +1,2 @@
+- Trong routes lưu trữ các file định nghĩa các route cho ứng dụng
+//  ReactJS. Các file này sẽ định nghĩa các đường dẫn và các component

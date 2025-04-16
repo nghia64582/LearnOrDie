@@ -1,0 +1,12 @@
+- Trong types của ReactJS, chúng ta có thể định nghĩa các kiểu dữ liệu
+ cho các props và state của component. Điều này giúp cho việc kiểm tra 
+ kiểu dữ liệu trở nên dễ dàng hơn và giúp phát hiện lỗi sớm hơn trong 
+ quá trình phát triển ứng dụng.
+Ví dụ, chúng ta có thể định nghĩa một kiểu dữ liệu cho props của
+    component như sau:
+type MyComponentProps = {
+    title: string;
+    count: number;
+    isActive: boolean;
+};
+// Trong đó, title là một chuỗi, count là một số và isActive là một boolean.

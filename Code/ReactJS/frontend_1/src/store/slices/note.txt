@@ -1,0 +1,5 @@
+- Trong store/slices lưu trữ các slice của Redux, mỗi slice 
+tương ứng với một phần của state trong Redux store. Mỗi slice 
+sẽ có reducer và action riêng để quản lý state của nó. Các 
+slice này sẽ được kết hợp lại thành một store lớn hơn bằng 
+cách sử dụng combineReducers trong Redux.
