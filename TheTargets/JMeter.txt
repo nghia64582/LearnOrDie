@@ -1,0 +1,19 @@
+1. Nội dung JMeter
+    - Thread Group:
+        - Đại diện cho một nhóm người dùng.
+        - Mỗi thread đại diện cho một người dùng ảo.
+        - JMeter cho phép bạn cấu hình số lượng thread, thời gian khởi động và thời gian chạy của mỗi thread.
+        - Các thông số tùy chỉnh:
+            + Số lượng thread
+            + Ram-Up Period: Thời gian để khởi động tất cả các thread.
+            + Loop Count: Số lần lặp lại những yêu cầu của người dùng.
+        - VD:
+            + Số lượng thread: 10
+            + Ram-Up Period: 5 giây
+            + Loop Count: 3 lần
+        => JMeter sẽ tạo ra 10 người dùng ảo, mỗi người dùng sẽ thực hiện 
+            các yêu cầu trong 5 giây và lặp lại 3 lần.
+    - Controller
+    - Configuration Element
+    - Listener
+    - Timer

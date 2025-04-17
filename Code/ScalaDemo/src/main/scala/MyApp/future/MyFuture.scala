@@ -9,7 +9,7 @@ object MyFuture {
   def main(args: Array[String]): Unit = {
 //    sortByFuture()
 //    foreachFuture()
-    recoverWithFuture()
+    useForWithMultiFuture()
   }
 
   def recoverWithFuture(): Unit = {
@@ -127,6 +127,39 @@ object MyFuture {
       if (!not_done) {
         finish = true
       }
+    }
+  }
+
+  def useForWithMultiFuture(): Unit = {
+    // using multiple future to execute them sequentially by using for {}
+    val ret = for {
+      ftSt1 <- Future {
+        Thread.sleep(1000)
+        println("Logging finish future1")
+        "Finish future1"
+      }
+      ftSt2 <- Future {
+        Thread.sleep(1000)
+        println("Logging finish future2")
+        "Finish future2"
+      }
+      ftSt3 <- Future {
+        Thread.sleep(1000)
+        println("Logging finish future3")
+        "Finish future3"
+      }
+    } yield ftSt3 // return a future with the value of ftSt3
+    var finish: Boolean = false
+    ret.onComplete { // return Unit, handle after Future is completed
+      case Success(st) => {
+        finish = true
+        println(s"ret finished, value : ${st}")
+      }
+      case Failure(e) =>
+        println(s"ret failed.")
+    }
+    while (!finish) {
+      Thread.sleep(100)
     }
   }
 }

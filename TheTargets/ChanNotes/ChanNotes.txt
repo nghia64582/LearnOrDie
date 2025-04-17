@@ -142,3 +142,4 @@
         + A companion object with json format to store in db
         + The value in data should be Int, String, Float, Double, Option[], ...
         + Then define a CAO as singleton and inject CB to store data.
+    - 

@@ -35,7 +35,7 @@
         + Thêm hàm addPackRemoveAds vào AdsRewardOps để xử lý thêm pack bỏ quảng cáo.
         + ForeignCurrency thêm gói mới.
 
-- Update query trong đếm unique user nạp ở web tool. - done, recheeck
+- Update query trong đếm unique user nạp ở web tool. - done, recheck
     + Ngày 14-4 query cũ có 718 unique user mua
     + Check query mới.
 
@@ -73,5 +73,19 @@
     + Điều kiện hiển thị:
         + Server sẽ gửi thêm thông tin về flashSale cho client, và client tự xử lý
 
-- ??: Các logic về gói nạp đang xử lý thể nào:
-    + Logic nạp gói
+- TODO:
+    + Tạo data cho gói flash sale trong sd-cb - done
+    + Tạo handle trong sd-cb ops - done
+    + Clone code trong sd-api ứng với gói remove ads - done
+    + Cập nhật cb và api theo hướng hạn chế update ở cb, đặt config ở cb - done
+    + Tạo endpoint để test gói flash sale - remove
+    + Tạo handle trong sd-api trong flow thường - done
+    + Để config hard code trong api, không để trong sd-cb do api dễ cập nhật hơn - done
+    + Xử lý trường hợp user nạp thừa. - done
+    + Cập nhật thêm một trường trong ForeignCurrency để lưu thời gian hiện gói 
+        flashsale gần nhất trong ngày. - done
+    + Xử lý logic hiển thị 2 giờ mỗi ngày 1 lần nếu user chưa mua
+        + Trigger update flashSaleTimeStamp khi user vào khu chơi (nếu timestamp là hôm qua
+            thì update là now, nếu là hôm nay thì không update)
+        + Gửi flashSaleTimeStamp cho client mỗi lần login - done
+        + Tạo req trigger flash sale và gửi đến CoinSyncActor để trigger flash sale
