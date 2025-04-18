@@ -12,6 +12,7 @@
       dàng mua được món hàng phù hợp hơn.
   - Quy trình vận hành:
     + 
+
 2. Mua tạp hóa online số lượng lớn từ nhà máy đến người dùng cuối
   - Mô tả:
     + Hiện nay, người dùng khi mua đồ tạp hóa có thói quen lâu đời là 
@@ -54,6 +55,7 @@
       thói quen tiêu dùng của người dân ở quy mô lớn để mô hình này hoạt
       định ổn định và lâu dài.
     + Do người dùng mua
+
 3. Nền tảng đặt món ăn hẹn giờ, cho phép ghép nhiều đơn thức ăn
   - Mô tả:
     + Hiện nay, việc đặt món ăn online đã trở nên rất phổ biến, và gần như 
@@ -63,6 +65,7 @@
       người dùng tiết kiệm thời gian hơn, và cũng giúp các nhà hàng có 
       thể tối ưu hóa được chi phí giao hàng.
   - Quy trình vận hành:
+
 4. Ứng dụng đặt xe ghép đi học, làm.
   - Mô tả:
     + Hiện nay, việc đặt xe qua các nền tảng công nghệ đã khá phổ biến trên 
@@ -77,3 +80,5 @@
     + Người dùng có thể chọn đi cùng nhau, hoặc đi riêng lẻ. Nếu đi cùng
       nhau, người dùng sẽ được chia sẻ thông tin về nhau, và có thể 
       chat với nhau để thống nhất lịch trình đi lại.
+
+5. Ứng dụng học tiếng anh 
