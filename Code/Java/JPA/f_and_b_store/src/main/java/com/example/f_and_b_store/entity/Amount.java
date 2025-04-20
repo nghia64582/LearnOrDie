@@ -18,5 +18,6 @@ public class Amount {
 
     @Column(name = "quantity")
     private Integer quantity;
+
     
 }

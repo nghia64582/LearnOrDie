@@ -1,0 +1,35 @@
+- User:
+    + id: int(11) auto_increment primary key
+    + username: varchar(50)
+    + password: varchar(50)
+    + email: varchar(50)
+    + created_at: datetime
+    + updated_at: datetime
+    + last_login: datetime
+    + status: enum('active', 'inactive', 'banned')
+
+- Role:
+    + id: int(11) auto_increment primary key
+    + name: varchar(50) ("ROLE_ADMIN", "ROLE_CUSTOMER", "ROLE_SELLER")
+    + description: text
+    + created_at: datetime
+    + updated_at: datetime
+
+- Product:
+    + id: int(11) auto_increment primary key
+    + name: varchar(100)
+    + description: text
+    + price: decimal(10,2)
+    + stock: int(11)
+    + category_id: int(11) foreign key references Category(id)
+    + created_at: datetime
+    + updated_at: datetime
+    + status: enum('active', 'inactive', 'deleted')
+
+- Category:
+    + id: int(11) auto_increment primary key
+    + name: varchar(50)
+    + description: text
+    + created_at: datetime
+    + updated_at: datetime
+

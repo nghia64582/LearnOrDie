@@ -1,0 +1,17 @@
+1. Mô tả chung
+    - Bất kỳ người dùng nào cũng có thể là cả người bán và người mua, ngoài ra sẽ có các tài khoản
+       được chỉ định là quản trị viên.
+2. Các use cases chính:
+    - Người mua:
+        - Đăng nhập, đăng ký.
+        - Xem danh sách các mặt hàng với các bộ lọc nhất định (địa chỉ, giá, sắp xếp)
+        - Xem thông tin chi tiết của mặt hàng.
+        - Đặt hàng, thanh toán.
+        - Xem lại lịch sử đặt hàng.
+    - Người bán:
+        - Đăng nhập, đăng ký.
+        - Xem danh sách mặt hàng đang bán, thông tin chung của mỗi mặt hàng.
+        - Xem lại danh sách mặt hàng đã bán.
+    - Quản trị viên:
+        - Xem danh sách mặt hàng.
+        - Xem danh sách người dùng.

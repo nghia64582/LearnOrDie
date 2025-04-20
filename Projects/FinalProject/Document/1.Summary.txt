@@ -1,0 +1,25 @@
+1. Giới thiệu.
+    - Hiện nay, việc mua hàng trên các nền tảng thương mại điện tử đã diễn ra rất phổ biến. 
+    - Tuy nhiên, việc mua hàng mới với giá cao không phải lúc nào cũng là lựa chọn tốt nhất.
+    - Việc mua hàng cũ với giá thấp hơn có thể giúp tiết kiệm chi phí và giảm thiểu lãng phí tài nguyên.
+        Giúp người bán có thể kiếm tiền từ những món đồ không còn sử dụng. Người mua có được món Đồ
+        ưng ý, chất lượng không thua gì hàng mới với giá thấp hơn.
+2. Các thuật ngữ liên quan
+    - Người bán: 
+        + Những người có đồ cũ và muốn thanh lý, bán lại cho người khác.
+        + Họ có thể là cá nhân, tổ chức hoặc doanh nghiệp.
+        + Họ có thể đăng ký tài khoản trên trang thương mại điện tử giúp việc bán hàng dễ dàng hơn.
+    - Người mua: 
+        + Những người có nhu cầu mua các món đồ cũ với giá trị thấp hơn. 
+    - Đồ cũ:
+        + Những đồ dùng đã trải qua quá trình sử dụng một thời gian. Đồ cũ thường có giá giảm dần 
+            theo thời gian, mức độ mài mòn, giảm giá trị và các tai nạn trong quá trình sử dụng.
+    - Khấu hao: Đặc tính giảm giá trị của mặt hàng cũ trong quá trình sử dụng được định lượng bằng tiền.
+        + Ví dụ: Một chiếc điện thoại mới có giá trị 5 triệu, sau 2 năm dùng bán lại được 2 triệu
+           như vậy khấu hao ở đây là 3 triệu.
+        + Khấu hao được tính theo công thức: 
+            - Khấu hao = Giá trị ban đầu - Giá trị còn lại
+            - Giá trị còn lại = Giá trị ban đầu - (Giá trị ban đầu * Tỷ lệ khấu hao * Thời gian sử dụng)
+    - Tuổi thọ: 
+        + Thời gian mà đồ dùng đã được sử dụng, có thể tính từ lúc sản xuất hoặc từ lúc mua.
+        + Với hầu hết mặt hàng, tuổi thọ càng cao thì giá trị còn lại càng thấp.
