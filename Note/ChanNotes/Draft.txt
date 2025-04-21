@@ -1,0 +1,30 @@
+
+- Logic cần check:   
+    + Server cần check:
+        + User thuộc nhóm A hay B (client có thể check để hiển thị nếu logic
+            A/B phụ thuộc vào id, hoặc các thông tin khác của user)
+        + User đã mua gói trong tuần này chưa. Nếu mua rồi thì cần gửi data
+            để client check và không cần hiển thị trong lần login này nữa.
+        + Hạn dùng cảm xúc của gói này là khi nào (+ n ngày từ khi mua)
+        => Như vậy server data sẽ lưu timestamp là thời gian cuối cùng mà user
+            mua flash sale, sau đó timestamp này sẽ dùng để check xem
+            + User có thể mua trong tuần này không
+            + Hạn dùng sticker
+
+- Logic mua flash sale:
+    + Server check xem user thuộc A/B và tăng cập nhật tài nguyên tương ứng
+        + Bảo cộng theo gói A/B
+        + Cập nhật flashSale timeStamp để sau này biết user có thể dùng sticker ko
+
+- Thiết kế data:
+    + Server lưu config của các gói offer tương ứng trong fodi, thể hiện config 
+        của toàn server (VD: Gói 1, user A, rate 600, giá 10k, 3 ngày cảm xúc, ...) =>
+        + case class + companion object FlashSaleConfig
+
+    + User data sẽ lưu timestamp của flashsale, -1 là chưa mua bao giờ, còn không
+        thì sẽ lưu thời gian mua gần nhất =>
+        + Thêm trường flashSale vào ForeignCurrency
+
+- Thiết kế API:
+    + Điều kiện hiển thị:
+        + Server sẽ gửi thêm thông tin về flashSale cho client, và client tự xử lý

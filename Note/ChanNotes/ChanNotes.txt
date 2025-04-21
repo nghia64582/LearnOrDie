@@ -142,4 +142,38 @@
         + A companion object with json format to store in db
         + The value in data should be Int, String, Float, Double, Option[], ...
         + Then define a CAO as singleton and inject CB to store data.
-    - 
+    - Each action update users' coin has to write logCao
+    - Remember use merge branch in github.com, instead of in Github desktop
+
+Google Subscription Billing Payment
+
+1. Set Up Google Play Console
+    Register your app on Google Play Console.
+    Set up in-app products and subscriptions under Monetize > Products > Subscriptions.
+
+2. Use Google Play Developer API
+    Google provides REST APIs to:
+        + Validate purchases.
+        + Check subscription status.
+        + Acknowledge and cancel subscriptions.
+
+3. Create a backend endpoint in Play Framework
+    This would receive the purchase token from the Android app and call Google Play Developer API to validate it:
+
+    def validatePurchase = Action.async(parse.json) { request =>
+        val purchaseToken = (request.body \ "purchaseToken").as[String]
+        val subscriptionId = (request.body \ "subscriptionId").as[String]
+        
+        // Your logic to access Google API using HTTP client
+        // Include access token in header
+    }
+
+4. Use a library to access Google APIs
+    You can use an HTTP client like sttp or [Akka HTTP] to call the Google Play API.
+
+5. Authentication
+    Authenticate using a service account. Download the JSON key and use it to request an access token via Google OAuth2.
+
+6. Android App Side
+    Use Google Play Billing Library.
+    After the user subscribes, get the purchaseToken and send it to your server.

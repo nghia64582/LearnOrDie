@@ -33,3 +33,11 @@
     + created_at: datetime
     + updated_at: datetime
 
+- Order:
+    + id: int(11) auto_increment primary key
+    + user_id: int(11) foreign key references User(id)
+    + total_price: decimal(10,2)
+    + status: enum('pending', 'completed', 'cancelled')
+    + created_at: datetime
+    + updated_at: datetime
+

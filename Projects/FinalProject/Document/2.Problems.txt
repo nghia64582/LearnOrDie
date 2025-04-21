@@ -1,3 +1,19 @@
 --- CÁC VẤN ĐỀ CẦN GIẢI QUYẾT ---
+- UI cần thuận tiện cho người mua 
+=> + Thiết kế UI thân thiện, dễ sử dụng, giúp người mua có cảm giác tốt nhất khi mua đồ cũ.
+   + Cần có các tính năng giúp người mua tìm kiếm sản phẩm dễ dàng hơn như lọc 
+     theo địa điểm, giá, tag, chủ đề, ... và theo page.
+
 - Định giá hàng cũ là vấn đề hợp lý và khó khăn, cần có các phương pháp giúp giá bán được tối ưu, 
     quá trình mua bán diễn ra nhanh chóng và thuận lợi hơn.
+=> Thêm thông tin về địa điểm, giúp người mua có thể cân nhắc xem có thể quan sát trực tiếp không.
+   + Gợi ý các thông số, tính năng, yêu cầu chính ứng với mỗi loại sản phẩm đồ cũ cho người mua.
+   + Thêm trang biểu đồ hiển thị xu hướng giá của các mặt hàng tương tự gần đây giúp người mua và 
+     người bán nắm được tình hình thị trường
+   + Tính toán khấu hao dựa trên các thông số chung của sản phẩm.
+   + Thêm tính năng đấu giá, đây là một tính năng phức tạp, nó chỉ thực sự hiệu quả với các sản
+     phẩm có giá trị lớn. Ngoài ra, việc đấu giá có thể là công cụ thao túng giá.
+   + Đề xuất người bán cũng như người mua các lý do để tăng/giảm giá.
+   + Xây dựng quy trình hoạt động với các cửa hàng vật lý, hỗ trợ các quy trình, như ký gửi, thẩm định, ...
+   + Xây dựng các chỉ số đo lường để giúp người bán nắm được hiệu quả truyền thông và mức giá có phù hợp không
+   

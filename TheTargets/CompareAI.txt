@@ -1,0 +1,39 @@
+1. Github Copilot
+    + Giá: 
+        + 10$/tháng, 100$/năm
+    + Leetcode test: 7/10
+        + Gen code nhanh nhưng thỉnh thoảng không đúng
+        + Không gen multiple block
+    + Multiple file edit prompt
+    + Tạo code bằng comment và method name:
+2. Trae
+    + Giá:
+        + Free hoàn toàn, trang chủ còn không có nút price.
+    + Cảm giác:
+        + Giao diện đẹp, dễ sử dụng
+        + Tích hợp vscode
+        + Thỉnh thoảng sau khi complete code bị nhảy con trỏ.
+    + Leetcode test: 8/10
+        + Gen code nhanh nhưng thỉnh thoảng không đúng
+        + Có thể gen multiple block
+        + Thỉnh thoảng không đúng, cần minor fix
+    + Multiple file edit prompt:
+    + Tạo code bằng comment và method name:
+3. Cursor AI
+    + Giá:
+        + 20$/tháng, 200$/năm
+    + Leetcode test: 9/10
+        + Gen code nhanh và đúng
+        + Có thể gen multiple block
+        + Thỉnh thoảng không đúng, cần minor fix
+    + Multiple file edit prompt:
+    + Tạo code bằng comment và method name:
+4. Firebase Studio
+    + Giá:
+        + Free cho 
+    + Cảm giác: 
+        + Giao diện đẹp, code luôn trên browser
+    + Leetcode test:
+    + Complete text:
+    + Multiple file edit prompt:
+    + Tạo code bằng comment và method name:
