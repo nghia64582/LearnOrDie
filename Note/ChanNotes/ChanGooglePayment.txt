@@ -1,0 +1,73 @@
+--- System Architecture Overview ---
+
+    - Unity Client
+        + Integrates Google Play Billing Library.
+        + Handles purchase flow on device.
+        + Sends the purchase token (proof of purchase) to your backend.
+
+    - Scala Play Backend
+        + Receives token and user info.
+        + Verifies the token with Google Play Developer API.
+        + Stores purchase data (e.g., product ID, expiry date).
+        + Handles subscription renewal, expiry, etc.
+
+* Step-by-Step Guide
+1. Unity Setup (Google Billing)
+    + Install Google Play Billing Library via Unity Package Manager.
+    + Use official Google Billing plugin or Unity IAP package.
+    + Example purchase flow:
+        // Initialize billing, then purchase a product
+        CodelessIAPStoreListener.Instance.InitiatePurchase("com.yourapp.product_id");
+
+    After a successful purchase, get the purchase token:
+        // After success callback
+        string purchaseToken = args.purchasedProduct.receipt;
+        // Send this to backend for verification
+        📤 Send this token to your Scala backend via secure HTTP.
+
+2. Backend: Verify the Token (Scala Play)
+    a. Enable Google Play Developer API
+        + Go to Google Play Console → API Access
+        + Link a Google Cloud project
+        + Enable Google Play Developer API
+        + Create a service account, assign it permissions (View financial data, Manage orders), and download JSON key
+
+    b. Scala: Call Google API to Verify Purchase
+        - Use the Google Play Developer REST API to verify:
+
+        - One-time products:
+            + GET https://androidpublisher.googleapis.com/androidpublisher/v3/applications/packageName/purchases/products/productId/tokens/token
+
+        - Subscriptions:
+            + GET https://androidpublisher.googleapis.com/androidpublisher/v3/applications/packageName/purchases/subscriptions/subscriptionId/tokens/token
+
+        - You’ll need to:
+            + Use the service account JSON key to generate an OAuth2 access token.
+            + Use a Scala HTTP client like sttp, akka-http, or play-ws to call Google APIs.
+            
+        - Example Flow in Scala (pseudo-code)
+            val accessToken = getAccessTokenFromServiceAccount()
+
+            val response = ws.url(
+            s"https://androidpublisher.googleapis.com/androidpublisher/v3/applications/$packageName/purchases/subscriptions/$subId/tokens/$token"
+            ).addHttpHeaders("Authorization" -> s"Bearer $accessToken")
+            .get()
+            ✅ Parse the response to check purchase state (active, expired, refunded, etc.)
+
+3. What to Store in Backend
+    + User ID / Account ID
+    + Purchase product ID
+    + Purchase token
+    + Expiry timestamp
+    + Status (ACTIVE, EXPIRED, CANCELED, etc.)
+
+4. (Optional) Handle Subscription Updates (Webhook)
+    + Use Google Real-time Developer Notifications (RTDN) to receive updates about subscriptions.
+    + Setup an endpoint in Play like /google/notifications to receive them.
+    + Parse notifications, then fetch updated status from Google to sync.
+    
+5. Security Tips
+    + Validate token on server, never trust Unity client alone.
+    + Rate-limit or verify request origin.
+    + Ensure product IDs are hardcoded and not user-modifiable.
+    + Would you like a sample Scala code for verifying a purchase token with the Google API? I can help generate one using Play WS or Akka HTTP.
