@@ -1,2 +1,16 @@
 --- CÁC THÔNG TIN CẦN LƯU TRỮ TRÊN HỆ THỐNG ---
 
+1. Người dùng
+  + Tên, địa chỉ email, số điện thoại liên hệ, password, ...
+2. Sản phẩm
+  + Tên 
+  + Mô tả
+  + Danh sách ảnh
+  + Ngày đăng
+  + Năm sản xuất
+  + Danh sách đặc điểm định lượng đã kiểm định.
+  + Tình trạng bán của sản phẩm (Không kiểm định, đã kiểm định, đang đấu giá, )
+  + Danh sách ảnh.
+3. Ảnh
+4. 
+5. 

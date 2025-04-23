@@ -1,6 +1,17 @@
 1. Mô tả chung
     - Bất kỳ người dùng nào cũng có thể là cả người bán và người mua, ngoài ra sẽ có các tài khoản
        được chỉ định là quản trị viên.
+    - Với mỗi mặt hàng, sẽ có các thông tin chung, và một số thông tin đặc thù ứng với mỗi một mặt hàng
+        + Thông tin chung gồm 
+            + Giá mong muốn
+            + Năm sản xuất
+            + Tuổi thọ
+            + Tình trạng tuyệt đối
+            + Danh sách ảnh
+            + Mô tả chung
+            + Chủ sở hữu
+        + Thông tin riêng với mỗi nhóm mặt hàng
+
 2. Các use cases chính:
     - Người mua:
         - Đăng nhập, đăng ký.
