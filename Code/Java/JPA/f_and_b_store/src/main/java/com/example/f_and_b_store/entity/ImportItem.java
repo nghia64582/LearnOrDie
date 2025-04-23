@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "import_time")
+@Table(name = "import_item")
 public class ImportItem {
 
     @Id

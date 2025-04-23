@@ -6,3 +6,8 @@ which must be really convinient to help users add, edit and track their progress
     (number of times it appears in popular documents), learning progress of the word (0-100%).
  - Every day or week, user can do a small test to check their learning progress, 
     there are several types of tests: choose the meaning, fill in the blank (multiple choice)
+
+
+Write a spring app with 2 endpoints, 1 variable, when a user send request to the first endpoint
+app will wait until the variable is set (default value is null), then return the value of the variable.
+The variable is only set by the second endpoint. Maybe we use future or some async method

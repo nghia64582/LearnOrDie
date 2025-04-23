@@ -144,6 +144,7 @@
         + Then define a CAO as singleton and inject CB to store data.
     - Each action update users' coin has to write logCao
     - Remember use merge branch in github.com, instead of in Github desktop
+    - 
 
 Google Subscription Billing Payment
 

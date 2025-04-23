@@ -9,16 +9,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.f_and_b_store.entity.User;
 
+import lombok.Data;
+
+@Data
 public class CustomUserDetails implements UserDetails {
 
-    private final User user;
-
-    public CustomUserDetails(User user) {
-        this.user = user;
-    }
+    private User user;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        //
         return user.getAuthorities()
             .stream()
             .map(auth -> new SimpleGrantedAuthority(auth.getRole()))
