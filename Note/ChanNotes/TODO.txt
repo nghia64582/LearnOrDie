@@ -47,10 +47,35 @@
 - Trong api, xóa addVipScore đi, thay bằng allHandle. - done
 
 - Xây dựng luồng nạp wallet:
-    + User đăng ký và tự động nạp mỗi tháng.
-    + Chuẩn bị google play account và app store account.
+    + User đăng ký và tự động nạp mỗi tháng. 
+    + Chuẩn bị google play account và app store account. - done
     + Tạo endpoint trong sd-api.
 
+- Xây dựng tính năng nạp thẻ mua thiên thư (một kiểu battle pass):
+    + Tạo gói thanh toán mua thiên thư 100k
+        + sd-cb openBookThienThu 
+            + uid: 4728210
+            + pack: PackThienThuItem(true,100,0,b1) -> redundant
+            + tpePromotion: -1 -> redundant
+            + turnPromo: 0 -> redundant
+            + timeStart: 1731258000 -> redundant
+            + msg: "Dùng 100 Ngọc mua quyển Thiên thư"
+    + Cập nhật sd-cb
+        + Logic cập nhật đổi ngọc và bảo cho user.
+        + Mở khóa thiên thư cho user dựa trên payment
+        + Đổi ngọc sẽ đổi toàn bộ lấy bảo, không đổi một phần.
+    + Cập nhật sd-api
+        + Thêm logic các gói thanh toán về thiên thư, tương tự như flash sale.
+    + Cập nhật game-server
+        + Tạo actor trong game server để xử lý việc đổi ngọc lấy bảo.
+        + Khi user login sẽ gửi một request lên, server nhận, cập nhật bảo và ngọc cho user và response về cho client.
+    + Flow đổi ngọc:
+        + Mỗi khi user login, client sau khi có thông tin về ngọc và xu, nếu >0 sẽ gửi request lên server để đổi cả 2 lấy bảo
+        + Game-server nhận request xong đổi ngọc cho user và thông báo về cho client.
+
+- Cần làm rõ:
+    + Trong trường hợp login lần đầu, đổi ngọc lấy bảo, xong bằng cách nào đó có ngọc (vd nạp qua backdoor)
+        thì có bị đổi ngọc tiếp không?
 
 - TODO:
     + Tạo data cho gói flash sale trong sd-cb - done
