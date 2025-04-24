@@ -1,16 +1,53 @@
 --- CÁC THÔNG TIN CẦN LƯU TRỮ TRÊN HỆ THỐNG ---
 
 1. Người dùng
-  + Tên, địa chỉ email, số điện thoại liên hệ, password, ...
+  + Tên
+  + Username
+  + Mật khẩu
+  + Địa chỉ email
+  + Địa chỉ quận/huyện
+  + Địa chỉ tỉnh/thành phố
+  + Danh sách sản phẩm đã đăng
+  + Danh sách sản phẩm đã bán
+  + Danh sách sản phẩm đã liên hệ
+  + Danh sách sản phẩm đã xem
+  + Danh sách sản phẩm đang/ đã đấu giá
 2. Sản phẩm
   + Tên 
   + Mô tả
+  + Giá kì vọng
   + Danh sách ảnh
+  + User đăng sản phẩm
   + Ngày đăng
   + Năm sản xuất
+  + Địa chỉ quận/huyện
+  + Địa chỉ tỉnh/thành phố
   + Danh sách đặc điểm định lượng đã kiểm định.
   + Tình trạng bán của sản phẩm (Không kiểm định, đã kiểm định, đang đấu giá, )
   + Danh sách ảnh.
-3. Ảnh
-4. 
-5. 
+3. Ý kiến đóng góp
+  + User gửi ý kiến
+  + Nội dung ý kiến
+  + Ngày gửi ý kiến
+  + Trả lời của admin (nếu có)
+  + Trạng thái đã trả lời hay chưa.
+4. Tin nhắn
+  + User gửi tin nhắn
+  + User nhận tin nhắn
+  + Nội dung tin nhắn
+  + Ngày gửi tin nhắn
+  + Trạng thái đã đọc hay chưa.
+5. Nhật ký hoạt động
+  + User thực hiện hành động
+  + Thời gian thực hiện hành động
+  + Hành động thực hiện (Đăng sản phẩm, Đấu giá, Đăng nhập, Đăng xuất, Xóa sản phẩm, Gửi tin nhắn, Gửi ý kiến đóng góp)
+  + Trạng thái thành công hay thất bại.
+6. Thông báo
+  + User nhận thông báo
+  + Nội dung thông báo
+  + Ngày gửi thông báo
+  + Trạng thái (đã đọc, chưa đọc)
+7. Cảm xúc
+  + User gửi cảm xúc
+  + Sản phậm nhận cảm xúc
+  + Ngày gửi cảm xúc

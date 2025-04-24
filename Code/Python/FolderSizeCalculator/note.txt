@@ -1,0 +1,6 @@
+Big folders:
+    + Program Files: 31.19 GB | 159762 file(s) 
+    + Program Files (x86): 5.91 GB | 20504 file(s)
+    + ProgramData: 21.79 GB | 64706 file(s)
+    + Users: 95.58 GB | 1007075 file(s)
+    + Windows: 34.52 GB | 327144 file(s)
