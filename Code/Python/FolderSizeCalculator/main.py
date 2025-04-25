@@ -27,7 +27,7 @@ def list_folder_info(directory):
                 size, count = get_folder_info(entry.path)
                 total_size += size
                 file_count += count
-                print(f"{entry.name}: {get_size_readable(size)} | {count} file(s) | {time() - start:.2f} seconds")
+                print(f"{entry.name:>30}|{get_size_readable(size):>10}|{f'{count} file(s)':>15}|{f'{time() - start:.2f} seconds':>15}")
     print(f"\nTotal size of all folders: {get_size_readable(total_size)} | Total files: {file_count}")
 
 if __name__ == "__main__":

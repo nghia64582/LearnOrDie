@@ -61,8 +61,8 @@
             + timeStart: 1731258000 -> redundant
             + msg: "Dùng 100 Ngọc mua quyển Thiên thư"
     + Cập nhật sd-cb
-        + Logic cập nhật đổi ngọc và bảo cho user.
-        + Mở khóa thiên thư cho user dựa trên payment
+        + Logic cập nhật đổi ngọc và bảo cho user. - done
+        + Mở khóa thiên thư cho user dựa trên payment - done
         + Đổi ngọc sẽ đổi toàn bộ lấy bảo, không đổi một phần.
     + Cập nhật sd-api
         + Thêm logic các gói thanh toán về thiên thư, tương tự như flash sale.
@@ -92,4 +92,4 @@
         + Trigger update flashSaleTimeStamp khi user vào khu chơi (nếu timestamp là hôm qua
             thì update là now, nếu là hôm nay thì không update)
         + Gửi flashSaleTimeStamp cho client mỗi lần login - done
-        + Tạo req trigger flash sale và gửi đến CoinSyncActor để trigger flash sale
+        + Tạo req trigger flash sale và gửi đến CoinSyncActor để trigger flash sale - done
