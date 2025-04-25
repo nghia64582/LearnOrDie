@@ -24,7 +24,12 @@
   + Địa chỉ tỉnh/thành phố
   + Danh sách đặc điểm định lượng đã kiểm định.
   + Tình trạng bán của sản phẩm (Không kiểm định, đã kiểm định, đang đấu giá, )
+  + Tình trạng kí gửi (không kí gửi, có kí gửi và kiểm định)
   + Danh sách ảnh.
+2x. Thông tin đặc thù của từng loại sản phẩm
+  + Oto:
+  + Xe máy
+  + Xe đạp
 3. Ý kiến đóng góp
   + User gửi ý kiến
   + Nội dung ý kiến

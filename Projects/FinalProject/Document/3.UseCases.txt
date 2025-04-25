@@ -15,21 +15,26 @@
               người mua có thể tham khảo và đưa ra quyết định mua hàng.
             
 2. Các use cases chính:
-    - Người mua:
+    - Người mua/ bán:
         - Đăng nhập, đăng ký.
-        - Chỉnh sửa thông tin cá nhân.
+        - Xem thông tin cá nhân.
+            + Chỉnh sửa thông tin cá nhân.        
         - Xem danh sách các mặt hàng với các bộ lọc nhất định (địa chỉ, giá, sắp xếp)
         - Xem thông tin chi tiết của mặt hàng.
         - Đặt hàng, thanh toán.
         - Thêm sản phẩm vào danh sách yêu thích.
         - Xem lại lịch sử đặt hàng.
         - Nạp tiền vào tài khoản, cho phép dùng các tính năng premium.
-    - Người bán:
-        - Đăng nhập, đăng ký.
-        - Chinh sửa thông tin cá nhân.
         - Xem danh sách mặt hàng đang bán, thông tin chung của mỗi mặt hàng.
         - Xem lại danh sách mặt hàng đã bán.
     - Quản trị viên:
         - Xem danh sách mặt hàng.
         - Xem danh sách người dùng.
+        - Xem danh sách các ý kiến đóng góp.
+            + Viết phản hồi cho ý kiến đóng góp.
         - 
+3. Một số tính năng mở rộng:
+    - Hệ thống tự động đề xuất giá tiền sau khi hoàn thành thủ tục kiểm định.
+    - Tính năng người dùng trả giá cho sản phẩm.
+    
+        

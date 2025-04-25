@@ -17,3 +17,10 @@
    + Xây dựng quy trình hoạt động với các cửa hàng vật lý, hỗ trợ các quy trình, như ký gửi, thẩm định, ...
    + Xây dựng các chỉ số đo lường để giúp người bán nắm được hiệu quả truyền thông và mức giá có phù hợp không
    
+- Cần các chỉ số đo lường để giúp người bán nắm được hiệu quả truyền thông và mức giá có phù hợp không
+=> Thêm các tính năng giúp đo lường mức độ hot của sản phẩm:
+   + Số người thả cảm xúc
+   + Số người xem
+   + Số người bấm nút hiện điện thoại, hoặc nhắn tin.
+
+- 
