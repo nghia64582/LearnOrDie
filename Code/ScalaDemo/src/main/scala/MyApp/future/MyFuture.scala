@@ -137,7 +137,7 @@ object MyFuture {
         Thread.sleep(1000)
         println("Logging finish future1")
         "Finish future1"
-      }
+      } if ftSt1.equals("Finish future3")
       ftSt2 <- Future {
         Thread.sleep(1000)
         println("Logging finish future2")

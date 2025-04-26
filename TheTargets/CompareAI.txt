@@ -4,7 +4,8 @@
     + Leetcode test: 7/10
         + Gen code nhanh nhưng thỉnh thoảng không đúng
         + Không gen multiple block
-    + Multiple file edit prompt
+    + Multiple file edit prompt:
+        + Siêu gà
     + Tạo code bằng comment và method name:
 2. Trae
     + Giá:
@@ -28,12 +29,23 @@
         + Thỉnh thoảng không đúng, cần minor fix
     + Multiple file edit prompt:
     + Tạo code bằng comment và method name:
-4. Firebase Studio
+4. Windsurf
     + Giá:
-        + Free cho 
+        + 10$/tháng, 100$/năm
+    + Leetcode test: 8/10
+        + Gen code nhanh nhưng thỉnh thoảng không đúng
+        + Có thể gen multiple block
+        + Thỉnh thoảng không đúng, cần minor fix
+    + Multiple file edit prompt:
+    + Tạo code bằng comment và method name:
+5. Firebase Studio
+    + Giá:
+        + Free cho 3 project
     + Cảm giác: 
         + Giao diện đẹp, code luôn trên browser
     + Leetcode test:
     + Complete text:
     + Multiple file edit prompt:
     + Tạo code bằng comment và method name:
+    + Điểm trừ:
+        + Code trên browser nên không 
