@@ -1,14 +1,20 @@
-# Definition for a binary tree node.
-class TreeNode:
-    def __init__(self, val=0, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
-from typing import Optional
-
-
 class Solution:
-    def isSameTree(self, p: Optional[TreeNode], q: Optional[TreeNode]) -> bool:
-        if not p and not q:
-            return True
-        return p and q and p.val == q.val and self.isSameTree(p.left, q.left) and self.isSameTree(p.right, q.right)
+    def kthSmallest(self, matrix: List[List[int]], k: int) -> int:
+        def count_less_equal(x):
+            count, row, col = 0, len(matrix) - 1, 0
+            while row >= 0 and col < len(matrix[0]):
+                if matrix[row][col] <= x:
+                    count += row + 1
+                    col += 1
+                else:
+                    row -= 1
+            return count
+
+        left, right = matrix[0][0], matrix[-1][-1]
+        while left < right:
+            mid = (left + right) // 2
+            if count_less_equal(mid) < k:
+                left = mid + 1
+            else:
+                right = mid
+        return left

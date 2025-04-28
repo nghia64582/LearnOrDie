@@ -73,7 +73,7 @@
         + Mỗi khi user login, client sau khi có thông tin về ngọc và xu, nếu >0 sẽ gửi request lên server để đổi cả 2 lấy bảo - done
         + Game-server nhận request xong đổi ngọc cho user và thông báo về cho client. - done
     + Validate thông tin của user, trong trường hợp != 0 mới thực hiện update, còn = 0 thì không thực hiện để hạn chế lưu db
-    + Các test case:
+    + Các test case: - done
         + T1:
             + Set up ngọc và xu của acc != 0
             + Vào game
@@ -84,10 +84,16 @@
                     => Kết quả:
                         + Xu và ngọc về 0
                         + Bảo được cập nhật theo công thức
+    + Cập nhật api để xử lý add tease sub cho user theo một số ngày nhất định
+        + Chỉnh lại hàm addAncientMoney4User trong Mod controller => Tạo hàm mới - done
+        + Copy api về pay-api để test trên local
+        + Không push các file login, ... lên branch chính
 
 - Cần làm rõ:
     + Trong trường hợp login lần đầu, đổi ngọc lấy bảo, xong bằng cách nào đó có ngọc (vd nạp qua backdoor)
         thì có bị đổi ngọc tiếp không? => Có.
+    + Đổi tên được không, tại sao?
+    + api mod test trên dev
 
 - TODO:
     + Tạo data cho gói flash sale trong sd-cb - done

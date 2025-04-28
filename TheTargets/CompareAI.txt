@@ -48,4 +48,4 @@
     + Multiple file edit prompt:
     + Tạo code bằng comment và method name:
     + Điểm trừ:
-        + Code trên browser nên không 
+        + Code trên browser nên không có data ở local, không có UI
