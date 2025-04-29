@@ -144,7 +144,10 @@
         + Then define a CAO as singleton and inject CB to store data.
     - Each action update users' coin has to write logCao
     - Remember use merge branch in github.com, instead of in Github desktop
-    - 
+    - When testing local with sd-api-pay:
+        + Remember to delete cookie to re-login
+        + If code ts change, need to restart the app, other change, the restart is not neccessary
+        + 
 
 Google Subscription Billing Payment
 
