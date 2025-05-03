@@ -45,7 +45,7 @@
 5. Nhật ký hoạt động
   + User thực hiện hành động
   + Thời gian thực hiện hành động
-  + Hành động thực hiện (Đăng sản phẩm, Đấu giá, Đăng nhập, Đăng xuất, Xóa sản phẩm, Gửi tin nhắn, Gửi ý kiến đóng góp)
+  + Hành động thực hiện (Đăng sản phẩm, Đăng nhập, Đăng xuất, Xóa sản phẩm, Gửi tin nhắn, Gửi ý kiến đóng góp)
   + Trạng thái thành công hay thất bại.
 6. Thông báo
   + User nhận thông báo
