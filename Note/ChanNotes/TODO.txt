@@ -94,8 +94,6 @@
         thì có bị đổi ngọc tiếp không? => Có.
     + Đổi tên được không, tại sao?
     + api mod test trên dev
-
-- TODO:
     + Tạo data cho gói flash sale trong sd-cb - done
     + Tạo handle trong sd-cb ops - done
     + Clone code trong sd-api ứng với gói remove ads - done
@@ -111,3 +109,12 @@
             thì update là now, nếu là hôm nay thì không update)
         + Gửi flashSaleTimeStamp cho client mỗi lần login - done
         + Tạo req trigger flash sale và gửi đến CoinSyncActor để trigger flash sale - done
+
+- TODO:
+    + Cài đặt đồng quan cho user:
+        + Thêm thông tin trong ForeignCurrency
+        + Quan để chơi làng
+        + na ná giống bảo ở các bàn chơi cũ
+    + Các logic chủ yếu xoay quanh quan => 
+        + Thêm quan vào fc (silverCoin)
+        + 

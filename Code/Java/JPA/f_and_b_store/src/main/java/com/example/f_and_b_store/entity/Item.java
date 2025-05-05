@@ -3,30 +3,22 @@ package com.example.f_and_b_store.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Data
-@AllArgsConstructor
 @Table(name = "item")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Item {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Integer id;
 
-    @Column(name = "name")
+    @Column(length = 50)
     private String name;
 
-    @Column(name = "price")
-    private int price;
-
-    @Column(name = "description")
+    @Column(length = 50)
     private String description;
-
-    @Column(name = "image_path")
-    private String imagePath;
-
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
 }

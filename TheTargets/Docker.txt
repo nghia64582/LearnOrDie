@@ -124,11 +124,11 @@ Example:
     + Should use docker command to build and run image instead of docker desktop since we can pass params easily, ..
     + Priority level:
         + When we have multiple properties definitions, there is a specific priority level:
-            - L1 (highest): enviroment variables (eg: in docker-compose.yml)
-            - L2 : Command line
-            - L3 : 
-            - L4 : application.properties, application.yml, config file in project
-            - L5 : 
+            - L1 (highest): variable in docker command line (docker run -e or docker-compose run -e)
+            - L2 : enviroment in docker-compose.yml file
+            - L3 : env_file in docker-compose.yml file (rarely used)
+            - L4 : ENV in Dockerfile
+            - L5 : application.properties, application.yml, config file in project
 
 - Working with Docker Images:
     + Understanding Docker Hub.
