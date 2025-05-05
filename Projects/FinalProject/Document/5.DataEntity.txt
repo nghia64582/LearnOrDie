@@ -10,7 +10,7 @@
 
 - Role:
     + id: int(11) auto_increment primary key
-    + name: varchar(50) ("ROLE_ADMIN", "ROLE_CUSTOMER", "ROLE_SELLER")
+    + name: varchar(50) ("ROLE_ADMIN", "ROLE_USER")
     + description: text
     + created_at: datetime
     + updated_at: datetime
@@ -41,3 +41,26 @@
     + created_at: datetime
     + updated_at: datetime
 
+- UserReaction:
+    + id: int(11) auto_increment primary key
+    + user_id: int(11) foreign key references User(id)
+    + product_id: int(11) foreign key references Product(id)
+    + reaction_type: enum('like', 'show_phone', 'show_email')
+    + created_at: datetime
+
+- UserNotification:
+    + id: int(11) auto_increment primary key
+    + user_id: int(11) foreign key references User(id)
+    + notification_type: enum('email', 'sms', 'push')
+    + message: text
+    + status: enum('unread', 'read')
+    + created_at: datetime
+    + updated_at: datetime
+
+- Message:
+    + id: int(11) auto_increment primary key
+    + sender_id: int(11) foreign key references User(id)
+    + receiver_id: int(11) foreign key references User(id)
+    + content: text
+    + created_at: datetime
+    + status: enum('sent', 'received', 'read')
