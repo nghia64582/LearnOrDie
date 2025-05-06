@@ -113,8 +113,8 @@
 - TODO:
     + Cài đặt đồng quan cho user:
         + Thêm thông tin trong ForeignCurrency
-        + Quan để chơi làng
-        + na ná giống bảo ở các bàn chơi cũ
+        + Quan để chơi làng 
+        + Na ná giống bảo ở các bàn chơi cũ
     + Các logic chủ yếu xoay quanh quan => 
-        + Thêm quan vào fc (silverCoin)
-        + 
+        + Thêm quan vào fc (silverCoin) - done
+        + Cộng trừ quan trong bàn chơi (vào gà, tổng kết, chọc, ...)

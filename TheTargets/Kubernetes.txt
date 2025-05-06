@@ -22,9 +22,9 @@ S2: Kubernetes Fundamentals 🛠️
             + Manage multiple pods to scale and update
         + Services:
             + Exposes pods internally or externally
-            + ClusterIP     : 
-            + NodePort      : 
-            + LoadBalancer  : 
+            + ClusterIP     : Exposes the service on a cluster-internal IP, 
+            + NodePort      : Exposes the service on each Node’s IP at a static port,
+            + LoadBalancer  : Exposes the service externally using a cloud provider’s load balancer
             + Ingress       : 
         + Namespaces
             + Used to logically separate resources within cluster
@@ -111,3 +111,19 @@ S5: Kubernetes in Production 🏢
         + Certified Kubernetes Application Developer (CKAD)
         + Certified Kubernetes Security Specialist (CKS)
         + Would you like help setting up a Kubernetes lab for hands-on learning? 🚀
+
+- General questions:
+    - Does each yaml has only a kind, apiVersion, metadata, and spec?
+        - No, apiVersion, kind and metadata are required, but spec is not required.
+    - Set of kinds.
+        - Core (API Group: ""): Pod, Service, Namespace, ConfigMap, Secret, PersistentVolume, LimitRange, ResourceQuota, Endpoints, Event, Node
+        - Apps (API Group: "apps/v1"): Deployment, StatefulSet, ReplicaSet, DaemonSet
+        - Batch (API Group: "batch/v1"): Job, CronJob
+        - Networking (API Group: "networking.k8s.io/v1"): Ingress, NetworkPolicy
+    - Do we need to build the Pods first before the Deployment?
+        - No, 
+    - Which pod sets are selected by the selector?
+    - Do we need to build the images first before the Deployment?
+        - Yes, of course, 
+    - Could one yaml file contain multiple kinds?
+    - 

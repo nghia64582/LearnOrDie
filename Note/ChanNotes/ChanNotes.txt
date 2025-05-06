@@ -148,6 +148,12 @@
         + Remember to delete cookie to re-login
         + If code ts change, need to restart the app, other change, the restart is not neccessary
         + 
+    - Machine: uf5, f2, uf4, f3
+    - Log api-dev-c3: dev.sandinhstudio.com - /opt/sd/api-log-c3
+    - Log api-dev-thuong: dev.sandinhstudio.com - 
+    - Log game-server-dev-c3:
+    - Log game-server-dev-thuong:
+    - Log game-server-live: /mnt/hdd2/f1chanlogs
 
 Google Subscription Billing Payment
 

@@ -1,0 +1,95 @@
+apiVersion: apps/v1 # API version of the Deployment resource
+  # Value set: apps/v1, extensions/v1beta1, batch/v1, batch/v1beta1, etc.
+kind: Deployment # API version and kind of the resource
+  # Value set: Deployment, StatefulSet, DaemonSet, ReplicaSet, Job, CronJob
+metadata: # Metadata for the Deployment
+  name: first-deployment # Name of the Deployment
+  namespace: <namespace-name> # Optional: defaults to 'default'
+  labels:
+    app: <app-name> # Recommended: used for selecting Pods
+    # Add other relevant labels as needed
+  annotations:
+    # Add any descriptive annotations here
+    # example: description: "My awesome Nginx deployment"
+spec: # Define the desired state of the Deployment
+  replicas: 2 # Desired number of Pods
+  selector: # Define how to select Pods managed by this Deployment
+    matchLabels:
+      app: <app-name> # Matches the 'app' label in the Pod template
+  strategy: # Defines the strategy for updating Pods
+    type: RollingUpdate # Default strategy for zero-downtime updates
+    # Value set: RollingUpdate or Recreate
+    rollingUpdate:
+      maxSurge: 25%       # Or a number, e.g., 1. Max new Pods during update
+      maxUnavailable: 25% # Or a number, e.g., 1. Max unavailable Pods during update
+    # type: Recreate # Alternative strategy: kill all old Pods before creating new ones
+  template: # Defines the Pod specification
+    metadata:
+      labels:
+        app: <app-name> # Must match the selector's matchLabels
+        # Add other labels that apply to the Pods
+      annotations:
+        # Annotations specific to the Pods
+    spec:
+      # --- Pod Specification ---
+      containers:
+        - name: <container-name> # Name of your container
+          image: <container-image>:<tag> # Docker image to run
+          ports:
+            - containerPort: <container-port> # Port your application listens on
+              name: <port-name> # Optional name for the port
+              protocol: TCP # Default is TCP
+          env:
+            - name: <ENVIRONMENT_VARIABLE_NAME>
+              value: "<environment_variable_value>"
+            - name: <SECRET_ENVIRONMENT_VARIABLE_NAME>
+              valueFrom:
+                secretKeyRef:
+                  name: <secret-name>
+                  key: <secret-key>
+          resources:
+            limits:
+              cpu: "500m" # Example: 0.5 CPU core
+              memory: "512Mi" # Example: 512 Megabytes of memory
+            requests:
+              cpu: "100m" # Example: 0.1 CPU core
+              memory: "128Mi" # Example: 128 Megabytes of memory
+          livenessProbe: # Checks if the container is running and healthy
+            httpGet:
+              path: /health # Your application's health check endpoint
+              port: <container-port>
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe: # Checks if the container is ready to serve traffic
+            httpGet:
+              path: /ready # Your application's readiness check endpoint
+              port: <container-port>
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: <volume-name>
+              mountPath: <path-inside-container>
+              readOnly: false # Optional: default is false
+      volumes:
+        - name: <volume-name>
+          emptyDir: {} # Example: creates a temporary volume for the Pod's lifecycle
+          # Other volume types: persistentVolumeClaim, hostPath, configMap, secret, etc.
+      imagePullSecrets: # Optional: used for private Docker registries
+        - name: <registry-secret-name> # If your image is in a private registry
+      nodeSelector:
+        <node-label-key>: <node-label-value> # Run Pods on specific nodes
+      affinity:
+        nodeAffinity:
+          # ... node affinity rules
+        podAffinity:
+          # ... pod affinity rules
+        podAntiAffinity:
+          # ... pod anti-affinity rules
+      tolerations:
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+      restartPolicy: Always # Default: always restart containers on failure
