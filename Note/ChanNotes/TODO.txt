@@ -118,3 +118,7 @@
     + Các logic chủ yếu xoay quanh quan => 
         + Thêm quan vào fc (silverCoin) - done
         + Cộng trừ quan trong bàn chơi (vào gà, tổng kết, chọc, ...)
+        + Xử lý logic logCao.createOne - done
+        + Cộng trừ quan cho user thông qua mod. - done
+    + Xử lý trường hợp biên, một số user có một dương, một âm trong ancient, gem 
+        + 
