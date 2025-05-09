@@ -251,9 +251,10 @@ class VisionDetector:
     def find_transformed(self, image: np.ndarray, key_name: str, 
                         scale_range: Tuple[float, float] = (0.5, 1.5),
                         rotation_range: Tuple[int, int] = (-30, 30),
-                        rotation_step: int = 10) -> Optional[DetectionResult]:
+                        rotation_step: int = 10,
+                        blur_levels: List[int] = [0, 3, 5, 7]) -> Optional[DetectionResult]:
         """
-        Find a transformed (scaled/rotated) match of a key image
+        Find a transformed (scaled/rotated/blurred) match of a key image
         
         Args:
             image: Target image to search in
@@ -261,6 +262,7 @@ class VisionDetector:
             scale_range: Tuple of (min_scale, max_scale) to search
             rotation_range: Tuple of (min_angle, max_angle) to search in degrees
             rotation_step: Step size for rotation search in degrees
+            blur_levels: List of blur kernel sizes to test (0 means no blur)
             
         Returns:
             DetectionResult or None if not found
@@ -279,7 +281,7 @@ class VisionDetector:
         min_angle, max_angle = rotation_range
         h, w = gray_key.shape
         
-        # Search through scales and rotations
+        # Search through scales, rotations, and blur levels
         for scale in np.linspace(min_scale, max_scale, 5):
             new_w, new_h = int(w * scale), int(h * scale)
             if new_w <= 0 or new_h <= 0:
@@ -289,27 +291,39 @@ class VisionDetector:
             resized_key = cv2.resize(gray_key, (new_w, new_h))
             
             for angle in range(min_angle, max_angle + 1, rotation_step):
-                if angle == 0 and scale == 1.0:
-                    # Skip identity transform, it's handled by find_exact
+                # Skip identity transform only when all parameters are default
+                if angle == 0 and scale == 1.0 and 0 in blur_levels and len(blur_levels) == 1:
                     continue
                     
                 # Rotate the key image
                 M = cv2.getRotationMatrix2D((new_w // 2, new_h // 2), angle, 1)
                 rotated_key = cv2.warpAffine(resized_key, M, (new_w, new_h))
                 
-                # Search for the rotated key image
-                result = cv2.matchTemplate(gray_image, rotated_key, cv2.TM_CCOEFF_NORMED)
-                min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-                
-                if max_val > best_confidence:
-                    best_confidence = max_val
-                    best_result = DetectionResult(
-                        key_name=key_name,
-                        confidence=float(max_val),
-                        location=(max_loc[0], max_loc[1]),
-                        size=(new_w, new_h),
-                        match_type=f"transformed(scale={scale:.2f},rotation={angle})"
-                    )
+                for blur_size in blur_levels:
+                    transformed_key = rotated_key
+                    transform_desc = f"scale={scale:.2f},rotation={angle}"
+                    
+                    # Apply blur if blur_size > 0
+                    if blur_size > 0:
+                        # Make sure blur_size is odd as required by GaussianBlur
+                        if blur_size % 2 == 0:
+                            blur_size += 1
+                        transformed_key = cv2.GaussianBlur(rotated_key, (blur_size, blur_size), 0)
+                        transform_desc += f",blur={blur_size}"
+                    
+                    # Search for the transformed key image
+                    result = cv2.matchTemplate(gray_image, transformed_key, cv2.TM_CCOEFF_NORMED)
+                    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+                    
+                    if max_val > best_confidence:
+                        best_confidence = max_val
+                        best_result = DetectionResult(
+                            key_name=key_name,
+                            confidence=float(max_val),
+                            location=(max_loc[0], max_loc[1]),
+                            size=(new_w, new_h),
+                            match_type=f"transformed({transform_desc})"
+                        )
         
         return best_result if best_confidence >= self.confidence_threshold else None
     
