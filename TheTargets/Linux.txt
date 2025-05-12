@@ -66,6 +66,9 @@ Linux is a powerful operating system widely used in servers, DevOps, embedded sy
 - Step 4: Linux Server Administration
     - Linux System Administration
         + User & Permission Management (sudo, groups, passwd)
+            + 
+            + 
+            + 
         + Disk Management (df, du, mount, umount, fdisk, lsblk)
         + Process Management (systemctl, service, journalctl)
         + Log Management (/var/log/, dmesg, syslog)

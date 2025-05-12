@@ -121,6 +121,7 @@
         + Xử lý logic logCao.createOne - done
         + Cộng trừ quan cho user thông qua mod. - done
     + Thêm service game server cho đồng quan:
-        + Chú ý host port của service mới.
-        + Truyền thêm host port của game server mới này cho đồng quan.
-        + Chú ý dữ liệu về host, port 
+        + Chú ý host port của service mới. - done
+        + Truyền thêm host port của game server mới này cho đồng quan. - done
+        + Chú ý dữ liệu về host, port - done
+        + Game server chỉ gửi một đống data lúc login, không cần gửi lúc connect.
