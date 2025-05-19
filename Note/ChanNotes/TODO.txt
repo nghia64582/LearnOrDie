@@ -124,4 +124,18 @@
         + Chú ý host port của service mới. - done
         + Truyền thêm host port của game server mới này cho đồng quan. - done
         + Chú ý dữ liệu về host, port - done
-        + Game server chỉ gửi một đống data lúc login, không cần gửi lúc connect.
+        + Game server chỉ gửi một đống data lúc login, không cần gửi lúc connect. - done
+        + Update lại port cho web trong quan. - done
+    + Update thêm data cho quan trong web tool:
+        + Thêm các mức cược vào mục dân làng thượng
+            + 1, 2, 3, 5, 8
+        + Thêm dãy cột cho dân làng hạ quan
+            + Thêm 
+        + Dãy cột cho dân làng hạ cũ
+        + Chỉnh data trong phebao tool để update được data cho webtool,
+    + Tạo tab ứng với đồng quan:
+        + Tạo 2 tab ứng với đồng quan: 
+            + Số ván chơi
+            + Số phế quan
+            + Các cột: tổng và các mức cược 10, 20, 30, 50k quan
+            + Các dòng: ngày

@@ -1,11 +1,9 @@
-Error: Stack trace: 
-at AppCtrl.d.setPaySuccessMsg (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:621:50500) 
-at ModCtrl.onRepaySuccess (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:621:88604) 
-at http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:279834 
-at processQueue (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:152623) 
-at http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:153242 
-at Scope.$digest (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:160148) 
-at Scope.$apply (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:162123) 
-at done (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:131313) 
-at completeRequest (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:134633) 
-at g.onload (http://localhost:9000/api/public/javascripts/bank.js?2.1.0-12-ef672457-20250429-1116-SNAPSHOT:6:135094
+Ngày    Tổng    10  20  30 50
+05-19    50     10  10  20 30 
+05-18    60     30  10  15 5
+05-17    40     20  10  5  15
+
+fee_quan
+ - day, bet, fee_quan, match_count
+ - label: 10, 20, 30, 50
+ - data: silverCoinData

@@ -154,6 +154,7 @@
     - Log game-server-dev-c3:/opt/sd/chan-log-namnh
     - Log game-server-dev-thuong:/opt/sd/chan-log
     - Log game-server-live: /mnt/hdd2/f1chanlogs
+    - Version to run pay api local: nvm version 1, node version 8
 
 Google Subscription Billing Payment
 

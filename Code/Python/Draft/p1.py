@@ -1,11 +1,5 @@
-def decrement(a):
-    a[1] = 2
+import random as rd
 
-def increment(a):
-    a[0] = 1
-
-
-
-a = {}
-decrement(a)
-print(a)
+for i in range(14):
+    print(rd.randint(100000000, 999999999))
+    # print(rd.randint())
