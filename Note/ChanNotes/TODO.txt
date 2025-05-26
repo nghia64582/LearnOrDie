@@ -139,3 +139,34 @@
             + Số phế quan
             + Các cột: tổng và các mức cược 10, 20, 30, 50k quan
             + Các dòng: ngày
+
+    + Tạo chart nguồn cấp quan: - done
+        + Tạo database cho chart nguồn cấp quan: - done
+            + Tên: silver_coin_in
+            + Các cột: id, day, coin, source 
+        + Update phebao tool để parse dữ liệu và ghi vào db này - done
+            + Parse dữ liệu từ log và convert sang dạng List<SilverCoinIn>
+            + Update hàm ghi vào db: - done
+                + Với mỗi ngày sẽ ghi nhiều dòng ứng với nhiều source khác nhau
+            * Tạm thời khi chưa có data có thể fake dữ liệu vào bảng silver_coin_in
+        + Update webtool để đọc dữ liệu từ bảng silver_coin_in:
+            + Update repository: - done
+                + Đọc dữ liệu từ bảng silver_coin_in
+                + Chuyển đổi dữ liệu sang List<SilverCoinIn>
+            + Trong tool controller: - done
+                + Truyền dữ liệu List<SilverCoinIn> vào trong html
+            + Trong html: - done
+                + Tạo chart từ data của List<SilverCoinIn>
+    + Tạo 2 phebao có update: - done
+        + branch fee_quan ghi vào fee_quan, silver_coin_in với source là 1, 2 - done
+        + branch main ghi vào các db khác và silver_coin_in với source là 3 - done
+    + Xử lý case khi viết vào table silver_coin_in:
+        + Có thể có case 2 tool cùng ghi vào 1 bảng
+            => Để xử lý, trước khi ghi vào bảng thì get ra xem có data không, 
+                nếu có thì cộng, nếu không thì ghi - done
+
+    - Tạo offer flash sale 2.0:
+        + Bán bảo và gói cảm xúc + ném gạch, ...
+        + Đặc điểm offer tạo ra sẽ dựa trên lịch sử mua của user
+    => Cần nghiên cứu về lịch sử mua offer của user để gắn nhãn
+    => Tạo gói offer với các giá trị linh hoạt

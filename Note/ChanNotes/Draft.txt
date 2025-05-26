@@ -1,9 +1,1 @@
-Ngày    Tổng    10  20  30 50
-05-19    50     10  10  20 30 
-05-18    60     30  10  15 5
-05-17    40     20  10  5  15
-
-fee_quan
- - day, bet, fee_quan, match_count
- - label: 10, 20, 30, 50
- - data: silverCoinData
+{"day":"2025-05-21","freeCoin":1000,"mailBoxQuan":3000,"mailBoxBao":0}{"day":"2025-05-20","freeCoin":3250,"mailBoxQuan":6540,"mailBoxBao":0}{"day":"2025-05-18","freeCoin":6430,"mailBoxQuan":5520,"mailBoxBao":0}{"day":"2025-05-17","freeCoin":4440,"mailBoxQuan":2250,"mailBoxBao":0}{"day":"2025-05-19","freeCoin":1940,"mailBoxQuan":1000,"mailBoxBao":0};
