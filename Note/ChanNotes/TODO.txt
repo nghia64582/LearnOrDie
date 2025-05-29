@@ -169,4 +169,23 @@
         + Bán bảo và gói cảm xúc + ném gạch, ...
         + Đặc điểm offer tạo ra sẽ dựa trên lịch sử mua của user
     => Cần nghiên cứu về lịch sử mua offer của user để gắn nhãn
+        + Có thể check lịch sử trong sql db của sd-api với các bảng: pay_card_history (cho nạp thẻ),
+            play_store_purchase1 (cho nạp qua google play), apple_store_purchase2(cho nạp qua apple store)
+        + Các cột cần quan tâm:
+            + pay_card_history: uid, amout (số tiền), 
+            + play_store_purchase1: uid, amount (số bảo)
+            + apple_store_purchase2: uid, amount (số bảo)
     => Tạo gói offer với các giá trị linh hoạt
+        + Lưu vào bằng cb với couchbase
+    - Flow dự kiến:
+        + User khi trải qua một sự kiện nào đấy sẽ gửi api trigger offer
+        + Api nhận sẽ parse data về lịch sử pay của user
+        + Lưu offer vào cb (các thông tin bao gồm số bảo và số tiền)
+        + Gửi thông tin của offer về cho client (qua api)
+        + Mỗi offer lưu thông tin bao gồm số bảo và số tiền
+    - Trong api:
+        + Nếu get data của flashsale có 3 trường hợp:
+            + Chưa có => Trigger và gửi data của offer mới về cho user
+            + Đã có => Gửi thông tin của offer hiện tại về cho user
+            + Sau khi mua offer cần đánh flag là đã mua (để server biết mà không gen ra nữa)
+    - Pass wifi Sd132456@

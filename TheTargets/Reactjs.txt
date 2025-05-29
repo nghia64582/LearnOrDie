@@ -224,3 +224,107 @@
     + Integrate Backend (Node.js, APIs, Authentication)
     + Deploy and Test Your Applications
 
+1. ⚛️ Components
+    - React is component-based. A component is a reusable piece of UI (like a button, card, or entire page).
+
+    - Two types:
+        + Function components (most common now)
+        + Class components (older, still used)
+
+    function Hello() {
+    return <h1>Hello World!</h1>;
+    }
+2. 🎯 JSX (JavaScript XML)
+    - JSX lets you write HTML-like code inside JavaScript.
+    - It compiles to React.createElement(...).
+        const element = <h1>Hello, JSX!</h1>;
+    - You can embed expressions:
+
+    const name = "Alice";
+    const greet = <h1>Hello, {name}!</h1>;
+3. 📦 Props (Properties)
+    - Props are inputs to a component.
+    - They let you pass data from a parent to a child component.
+
+    function Greeting({ name }) {
+        return <p>Hello, {name}</p>;
+    }
+
+    // Usage:
+    <Greeting name="Bob" />
+4. 🧠 State
+    State is data that changes over time and affects what the component renders.
+
+    Use useState() to manage it in functional components.
+
+    import { useState } from 'react';
+
+    function Counter() {
+    const [count, setCount] = useState(0);
+
+    return <button onClick={() => setCount(count + 1)}>Count: {count}</button>;
+    }
+5. 🔁 Hooks
+    Hooks are functions that add stateful logic to function components.
+
+    Common hooks:
+
+    useState() – for local state
+
+    useEffect() – for side effects (e.g., fetch data, set up a timer)
+
+    useContext() – consume context
+
+    useRef() – reference DOM or persist mutable values
+
+    useMemo() and useCallback() – performance optimizations
+
+    useEffect(() => {
+    console.log('Component mounted or updated');
+    }, [dependency]);
+6. 🌐 Context
+    A way to pass data globally without prop drilling.
+
+    Useful for things like theme, user auth, language.
+
+    const ThemeContext = createContext();
+
+    <ThemeContext.Provider value="dark">
+    <MyComponent />
+    </ThemeContext.Provider>
+7. 🌲 Virtual DOM & Reconciliation
+    React uses a Virtual DOM — an in-memory representation of the real DOM.
+
+    When state/props change, React updates only what’s necessary in the actual DOM (efficient!).
+
+8. 🔁 Rendering & Re-rendering
+    A component re-renders when:
+    Its state changes
+    Its props change
+    Its parent re-renders
+
+9. 🔀 Conditional Rendering
+    Show or hide components based on conditions.
+
+    {isLoggedIn ? <Dashboard /> : <Login />}
+10. 🚦 Lifecycle (via hooks in functional components)
+    useEffect replaces lifecycle methods like componentDidMount, componentDidUpdate, and componentWillUnmount.
+
+    useEffect(() => {
+    // on mount
+    return () => {
+        // on unmount
+    };
+    }, []);
+🔚 Summary Table
+- Concept	    Purpose
+- Component	    Reusable UI building block
+- JSX	        HTML-like syntax in JavaScript
+- Props	        Pass data into components
+- State	        Internal data that changes over time
+- Hooks	        Add logic to function components
+- Context	    Global data sharing without prop drilling
+- Virtual DOM	Efficient rendering model
+- useEffect	    Perform side effects (like lifecycle methods)
+- Conditional   Rendering	Show/hide components dynamically
+- Re-rendering	Auto updates when props/state change
