@@ -110,6 +110,8 @@
         + Gửi flashSaleTimeStamp cho client mỗi lần login - done
         + Tạo req trigger flash sale và gửi đến CoinSyncActor để trigger flash sale - done
 
+- Pass wifi Sd132456@
+
 - TODO:
     + Cài đặt đồng quan cho user:
         + Thêm thông tin trong ForeignCurrency
@@ -188,4 +190,14 @@
             + Chưa có => Trigger và gửi data của offer mới về cho user
             + Đã có => Gửi thông tin của offer hiện tại về cho user
             + Sau khi mua offer cần đánh flag là đã mua (để server biết mà không gen ra nữa)
-    - Pass wifi Sd132456@
+    - Khi user mua red brick:
+        + Mở tease 5 ngày
+        + Mở brick 5 ngày
+        + Cộng bảo theo offer
+    - Vấn đề:
+        - api dev thuong -> game server dev thường
+        - api dev c3 -> game server dev thường
+    - Giải pháp:
+        - Đổi file mounting ở dev c3 sang 9012 của dev thường
+
+    - Nghiên cứu thienthu, tự động nhận thưởng ở tab nhiệm vụ sau khi hoàn thành

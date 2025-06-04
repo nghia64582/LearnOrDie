@@ -112,7 +112,7 @@ if __name__ == "__main__":
     #     "https://www.youtube.com",
     #     "https://www.google.com"
     # ]
-    CHAN_WEB_URL = "https://dev.sandinhstudio.com/chanunity/vihl/index.html?build=14512868535-1.0.7"
-    urls = [CHAN_WEB_URL for _ in range(4)]
+    CHAN_WEB_URL = "https://dev.sandinhstudio.com/chanunity/vihl/index.html?build=14098501558-2.0.3"
+    urls = [CHAN_WEB_URL for _ in range(2)]
     
     open_chrome_quad_windows(urls)
