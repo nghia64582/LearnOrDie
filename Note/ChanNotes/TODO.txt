@@ -200,4 +200,127 @@
     - Giải pháp:
         - Đổi file mounting ở dev c3 sang 9012 của dev thường
 
-    - Nghiên cứu thienthu, tự động nhận thưởng ở tab nhiệm vụ sau khi hoàn thành
+    - Nghiên cứu thienthu, nếu có thiên thư, tự động nhận thưởng ở tab nhiệm vụ sau khi hoàn thành
+        - Các bug đang vướng:
+            + Không nhận nhiệm vụ đăng nhập - vv
+            + Ở ngoài bàn chơi không thông báo khi hoàn thành nhiệm vụ
+            + Khi hoàn thành trong bàn chơi, client vẫn hiển thị nút nhận
+
+    - Cài đặt Consumable cho gói gạch đỏ apple pay + google play:
+        + Quy trình:
+            - User mua qua wallet lấy về một receipt
+            - Sau khi thanh toán xong, server của apple/google sẽ gửi về 1 receipt
+            - User gửi receipt lên server
+            - Server sẽ parse receipt và lấy ra các thông tin cần thiết
+            - Server gửi receipt lên apple/google để verify
+            - Sau khi verify thành công, server sẽ cập nhật thông tin cho user
+    - Tạo server quan 2 => rebase quan 2 vào master
+    - Cập nhật lại logic vào bàn nhanh:
+        - Ưu tiên các bàn đã có người, đợi người mới vào
+
+    - Thêm flashsale + gạch đỏ - done
+    - Chỉnh thời gian: chọn 5-11 thì hiện 5-11 thay vì 5-12
+    - Tối ưu query cho nhanh hơn:
+
+    - Cách xếp phòng:
+        + Số người
+        + Mức cược
+        + Trạng thái - Đang là waiting
+
+    => Log:
+        + Danh sách các bàn chơi phù hợp và thông số mỗi bàn chơi (số người, mức cược, trạng thái)
+    + Sau đó chỉ cần chọn một bàn ngẫu nhiên:
+        + 
+
+    - Cần test:
+        + Quick join là ngẫu nhiên, mỗi lần join sẽ là một bàn khác nhau (trong một danh sách thỏa mãn)
+        + Quick join sẽ ưu tiên bàn có người chơi, nếu không có thì mới tạo bàn mới
+        + Có thể đặt điều kiện với các thông tin của bàn chơi như mức cược, số người
+
+    - Cập nhật thiên thư
+        + Chỉ còn nhiệm vụ ngày và nhiệm vụ kì
+        + Nhiệm vụ thường:
+           + Có 1 task cố định
+           + Reset mỗi ngày
+           + Chọn ngẫu nhiên n task từ danh sách m task
+           + Progress vẫn như cũ, cố định
+        + Nhiệm vụ vip:
+            + Reset mỗi 2 tuần
+            + Chọn toàn bộ danh sách trong config
+        + Cần cập nhật cả server quan và server thường
+        + Reward normal đợi đặt lại
+
+    => Tìm hiểu yếu tố:
+        + Khởi tạo mới task mỗi ngày.
+        + Update task mỗi event.
+        + Hoàn thiện task (đã nhận exp tự động)
+        + Phân biệt nhiệm vụ ngày với nhiệm vụ vip
+        + RewardCfg có thể cập nhật trong couchbase
+
+    - Vấn đề:
+        + Với config nhiệm vụ mới có 2 phương án:
+            + Thêm các id nhiệm vụ mới vào config cũ
+                +++ Có thể không cần cập nhật ở client
+                --- 
+            + Tạo một config mới hoàn toàn
+                +++ 
+                --- 
+
+    - Các phần thay đổi và giải pháp:
+        + Thay vì 3 phần exp là ngày, tuần và kì (3 tuần) thì giờ thành ngày và vip (2 tuần)
+        + Ngày thì ai cũng có, vip thì chỉ có người mua mới có
+        + Danh sách nhiệm vụ thay đổi và chia theo ngày và vip
+
+    - Step 1:
+        + Làm tình năng còn 2 phần: ngày và vip
+        + Nhiệm vụ ngày có 1 task cố định, reset mỗi ngày
+        + Nhiệm vụ vip có toàn bộ task, reset mỗi 2 tuần
+    - Bug 1:
+        + Không hiển thị nhiệm vụ trong thiên thư - done
+        => Đã fix
+    - Bug 2: 
+        + Daily task đang không random
+        + VIP task đang giống config cũ - done
+    - Bug 3:
+        + Đã tạo task và hiển thị client thành công:
+    + Đặt thêm log trong cb:
+        + Khi tạo nhiệm vụ ngày và nhiệm vụ vip
+        + Check ngày mới
+    => TODO:
+        + Thêm logic để cập nhật task trên server:  
+            38 - Chơi 10 ván - done
+            39 - Ù trên 5 điểm - done
+            40 - Ù trên 10 điểm - done
+            41 - Ăn 10 cạ - 
+            42 - Ăn 10 chắn - 
+            43 - Ù Trì bạch thủ 1 lần - done
+            44 - Ù bạch định 1 lần - done
+            45 - Ù có Tôm 1 lần - done
+            46 - Ù có Lèo 1 lần - done
+            47 - Ù Trì bạch thủ Chi 1 lần - done
+            48 - Dùng biểu cảm 5 lần - done
+            49 - Ù có Chíu 1 lần - done
+            50 - Ù Thông trì 1 lần - done
+            51 - Ù có bòn 1 lần - done
+            52 - Ù Thông 2 lần - done
+        
+            53 - Mở quyển thượng
+            54 - Chơi 100 ván - done
+            55 - Ù trên 15 điểm - done
+            56 - Ù trên 25 điểm - done
+            57 - Ăn 100 cạ - 
+            58 - Ăn 100 chắn - 
+            59 - Ù Trì bạch thủ 5 lần - done
+            60 - Ù bạch định 5 lần - done
+            61 - Ù có Tôm 10 lần - done
+            62 - Ù có Lèo 10 lần - done
+            63 - Ù Trì bạch thủ Chi 5 lần - done
+            64 - Dùng biểu cảm 50 lần - done
+            65 - Ù có Chíu 10 lần - done
+            66 - Ù Thông trì 10 lần - done
+            67 - Ù có bòn 10 lần - done
+            68 - Ù Thông 10 lần - done
+        val uThong10LanV2 = Value(68, "Ù Thông 10 lần")
+            + Logic các id đã hoàn thành
+               + 54, 38, 39, 40, 55, 56
+        

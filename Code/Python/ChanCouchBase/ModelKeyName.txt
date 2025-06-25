@@ -1,0 +1,5 @@
+ca-Foreign Currency
+u-SDAcc
+f-SDFriend
+qt-ThienThu
+lt-Letter
