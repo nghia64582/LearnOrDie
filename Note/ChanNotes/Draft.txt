@@ -1,37 +1,11 @@
-
-25 Jun 2025 | 17:55:43,134 | INFO  | https-jsse-nio-8443-exec-9 | bitswarm.sessions.DefaultSessionManager | null | Session created: { Id: 2, Type: WEBSOCKET, Logged: No, IP: 104.28.254.74 } on Server port: 8443 <---> 57536
-25 Jun 2025 | 17:55:43,413 | INFO  | application-akka.actor.default-dispatcher-8 | akka.actor.RepointableActorRef | null | Message [com.sandinh.paho.akka.Message] from Actor[akka://application/user/mqtt/login1#1945776085] to Actor[akka://application/user/loginPrevent#-741104095] was unhandled. [4] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
-25 Jun 2025 | 17:55:43,461 | INFO  | SFSWorker:Ext:4 | v2.api.SFSApi | null | User login: { Zone: sfsak }, ( User Name: 100025452, Id: 1, Priv: 0, Sess: 104.28.254.74:57536 ) , Type: unity-DesktopC10:1.1.0
-25 Jun 2025 | 17:55:43,606 | DEBUG | application-akka.actor.default-dispatcher-10 | sd.SD | null | <- GetRemainAdsByDeviceIDReq  100025452  {"d":"A55BCB55-5636-519A-63BE-00000000884E"}
-25 Jun 2025 | 17:55:43,607 | DEBUG | application-akka.actor.default-dispatcher-12 | sd.cmd.Cmd | null | -> RemainAdsByDeviceCmd 100025452 : {"r":15}
-25 Jun 2025 | 17:55:43,606 | INFO  | application-akka.actor.default-dispatcher-10 | sd.free.FreeCoinActor | null | Get ads remain per device 100025452 A55BCB55-5636-519A-63BE-00000000884E LimitAdsPerDevice(1750848836,15)
-25 Jun 2025 | 17:55:43,663 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> BuddyInitCmd 100025452 : {"ru":[],"rn":[],"m":200,"ur":[],"yf":[]}
-25 Jun 2025 | 17:55:43,707 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> OfferCmd 100025452 : {"rb":0,"rbp":50000,"rbc":35000000,"fl":0,"fls":1750818072}
-25 Jun 2025 | 17:55:43,708 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> VuongGiaCfgCmd 100025452 : {"cfg":[{"s":20000000,"c":20,"nb":5,"ms":20000000,"v":20000,"g":[],"n":"Ngoại Điện","o":true},{"s":20000000,"c":100,"nb":4,"ms":40000000,"v":20000,"g":[0,1,2,3],"n":"Nội điện","o":true},{"s":50000000,"c":100,"nb":2,"ms":50000000,"v":20000,"g":[],"n":"Phủ đệ","o":false}]}
-25 Jun 2025 | 17:55:43,710 | DEBUG | application-akka.actor.default-dispatcher-10 | sd.EHActor | null | cacheVersionClientUser 100025452 - v: 326 - blockTime: 0 - bv: 1.1.0_charge_39_Desktop
-25 Jun 2025 | 17:55:43,711 | DEBUG | application-akka.actor.default-dispatcher-8 | sd.cmd.Cmd | null | -> UserCountCmd 100025452 : {"c":"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0;0,0,0,0;0,0,0,0;0,0,0,0,0;0,0,0,0,0;0,0,0,0;0"}
-25 Jun 2025 | 17:55:43,711 | INFO  | application-akka.actor.default-dispatcher-7 | sd.EHActor | null | client-type-unknown: unity-desktopc10
-25 Jun 2025 | 17:55:43,722 | INFO  | application-akka.actor.default-dispatcher-10 | sd.EHActor | null | 100025452 joinZone
-25 Jun 2025 | 17:55:43,722 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> FeatureCfgCmd 100025452 : {"l":[{"s":1674143412,"e":1674143412,"i":48},{"s":1674143412,"e":1674143412,"i":50}]}
-25 Jun 2025 | 17:55:43,727 | DEBUG | application-akka.actor.default-dispatcher-7 | sd.SD | null | <- GetProgressTTDataReq  100025452  {}
-25 Jun 2025 | 17:55:43,736 | INFO  | application-akka.actor.default-dispatcher-10 | sd.thienThu.ThienThuActor | null | ThienThuMissionUpdate|uid=100025452,missionID=1,quantity=1,timeStart=1702227600
-25 Jun 2025 | 17:55:43,756 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> TourCfgCmd 100025452 : {"cd":0,"c":1750865400,"d":30,"e":8,"ch":false,"f":20000000,"g":false,"j":false,"m":4,"o":1750784401,"p":40,"ar":[{"i":0,"tr":0},{"i":1,"tr":0},{"i":2,"tr":0}],"r":0,"t":1,"to":[{"t":"26/6/2025","i":0},{"t":"2/7/2025","i":2}],"tr":[{"r":100000000,"i":2},{"r":200000000,"i":3},{"r":40000000,"i":10},{"r":60000000,"i":11}]}
-25 Jun 2025 | 17:55:43,760 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> MultiTourCfgCmd 100025452 : {"v":[]}
-25 Jun 2025 | 17:55:43,760 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> PetDataCmd 100025452 : {"lp":[]}
-25 Jun 2025 | 17:55:43,761 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> StickerTicketRemain 100025452 : {"q":0}
-25 Jun 2025 | 17:55:43,761 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> StickerTicketDataCmd 100025452 : {"d":[{"e":-1,"id":0},{"e":-1,"id":1}]}
-25 Jun 2025 | 17:55:43,769 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> UserTeaseCmd 100025452 : {"datas":[{"r":0,"id":0},{"r":1,"id":1}]}
-25 Jun 2025 | 17:55:43,771 | DEBUG | scala-execution-context-global-169 | sd.cmd.Cmd | null | -> TeaseConfigCmd 100025452 : {"tt":[{"t":20000,"z":6},{"t":50000,"z":7},{"t":10000000,"z":8}],"t":5,"ls":20,"i":[{"p":0.1,"s":1,"f":1,"id":0,"uc":true},{"p":0.1,"s":1,"f":1,"id":1,"uc":true},{"p":0.125,"s":1,"f":0,"id":3,"uc":true},{"p":0.125,"s":3,"f":0,"id":2,"uc":true},{"p":0.1,"s":0,"f":0,"id":4,"uc":false},{"p":0.1,"s":0,"f":0,"id":5,"uc":false},{"p":0.1,"s":3,"f":0,"id":6,"uc":true},{"p":0.1,"s":3,"f":0,"id":7,"uc":true},{"p":0.05,"s":3,"f":0,"id":8,"uc":true},{"p":0.125,"s":3,"f":0,"id":9,"uc":true},{"p":0,"s":3,"f":0,"id":10,"uc":true}]}
-25 Jun 2025 | 17:55:43,785 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuData | null | Check same day, same week 1702227600 1750848943, 1750818025
-25 Jun 2025 | 17:55:43,786 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuData | null | No need to reset ThienThuData due to same day
-25 Jun 2025 | 17:55:43,786 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuMission | null | getMissionProgress: 1 type: 1 result: MissionProgress(1,0,false)
-25 Jun 2025 | 17:55:43,786 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.MissionProgress | null | MissionProgress.isFullKPI: id=1, progress=0, kpi=1, result=false
-25 Jun 2025 | 17:55:43,786 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuMission | null | updateMissionProgress: 1 type: 1 result: ThienThuMission(QuestMission(Map(1 -> MissionProgress(1,1,false), 40 -> MissionProgress(40,0,false), 42 -> MissionProgress(42,0,false), 48 -> MissionProgress(48,5,true))),QuestMission(HashMap(10 -> MissionProgress(10,1,false), 14 -> MissionProgress(14,1,false), 20 -> MissionProgress(20,0,false), 21 -> MissionProgress(21,0,false), 9 -> MissionProgress(9,0,false), 13 -> MissionProgress(13,0,false), 17 -> MissionProgress(17,0,false), 12 -> MissionProgress(12,0,false), 7 -> MissionProgress(7,0,false), 18 -> MissionProgress(18,0,false), 16 -> MissionProgress(16,0,false), 11 -> MissionProgress(11,0,false), 8 -> MissionProgress(8,0,false), 19 -> MissionProgress(19,0,false), 15 -> MissionProgress(15,0,false))),QuestMission(HashMap(56 -> MissionProgress(56,0,false), 57 -> MissionProgress(57,0,false), 61 -> MissionProgress(61,0,false), 60 -> MissionProgress(60,0,false), 65 -> MissionProgress(65,0,false), 53 -> MissionProgress(53,0,false), 64 -> MissionProgress(64,13,false), 59 -> MissionProgress(59,0,false), 54 -> MissionProgress(54,7,false), 66 -> MissionProgress(66,0,false), 63 -> MissionProgress(63,1,false), 67 -> MissionProgress(67,0,false), 55 -> MissionProgress(55,1,true), 58 -> MissionProgress(58,0,false), 68 -> MissionProgress(68,0,false), 62 -> MissionProgress(62,0,false))))
-25 Jun 2025 | 17:55:43,787 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuMission | null | getMissionProgress: 1 type: 1 result: MissionProgress(1,1,false)
-25 Jun 2025 | 17:55:43,787 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuData | null | UpdateLoginProgress: uid=QuestMission(Map(1 -> MissionProgress(1,0,false), 40 -> MissionProgress(40,0,false), 42 -> MissionProgress(42,0,false), 48 -> MissionProgress(48,5,true))), result=1
-25 Jun 2025 | 17:55:43,829 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuData | null | Check same day, same week 1702227600 1750848943, 1750818025
-25 Jun 2025 | 17:55:43,830 | INFO  | application-akka.actor.default-dispatcher-12 | cb.thienThu.ThienThuData | null | No need to reset ThienThuData due to same day
-25 Jun 2025 | 17:55:43,889 | INFO  | application-akka.actor.default-dispatcher-10 | sd.cluster.EnableFeaturesHandler | null | 100025452: enableChallenge =false
-25 Jun 2025 | 17:55:53,388 | DEBUG | application-akka.actor.default-dispatcher-8 | sd.SD | null | <- GetProgressTTDataReq  100025452  {}
-25 Jun 2025 | 17:55:53,443 | INFO  | application-akka.actor.default-dispatcher-8 | cb.thienThu.ThienThuData | null | Check same day, same week 1702227600 1750848953, 1750818025
-25 Jun 2025 | 17:55:53,443 | INFO  | application-akka.actor.default-dispatcher-8 | cb.thienThu.ThienThuData | null | No need to reset ThienThuData due to same day
+ForeignCurrency
+    a-ancientMoney
+    x-exchangeAMRemain
+    g-gem
+    t-teaseSub
+    f-lastTimeBuyFlashSale
+    fs-flashSaleLastShow
+    s-silverCoin
+    r-lastTimeBuyRedBrick
+    p-redBrickPrice
+    c-redBrickCoin
