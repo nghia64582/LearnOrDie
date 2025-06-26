@@ -8,3 +8,4 @@ else:
 file = open("response.html", "w", encoding="utf-8")
 file.write(res.text)
 file.close()
+# [Go to folder](../Code/sh-be/src/main/java/com/example/sh_be/controllers/AuthenticationController.java) 

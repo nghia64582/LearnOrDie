@@ -3,13 +3,15 @@ import datetime
 import os
 
 # Define the specific keys to monitor
+# MONITORED_KEYS = [
+#     'a', 'b', 'c', 'd', 'e',
+#     'space', 'enter', 'esc',
+#     'ctrl', 'alt', 'shift',
+#     'f1', 'f2', 'f3', 'f4'
+# ]
 MONITORED_KEYS = [
-    'a', 'b', 'c', 'd', 'e',
-    'space', 'enter', 'esc',
-    'ctrl', 'alt', 'shift',
-    'f1', 'f2', 'f3', 'f4'
+    'f4', 'f1'
 ]
-
 # Log file path
 LOG_FILE = 'keyboard_log.txt'
 
@@ -28,12 +30,15 @@ def log_key_press(key_name):
 def on_key_event(event):
     """Handle keyboard events"""
     # Only log key press events (not releases)
-    if event.event_type == keyboard.KEY_DOWN:
-        key_name = event.name.lower()
-        
-        # Check if the pressed key is in our monitored list
-        if key_name in MONITORED_KEYS:
-            log_key_press(key_name)
+    try:
+        if event.event_type == keyboard.KEY_DOWN:
+            key_name = event.name.lower()
+            
+            # Check if the pressed key is in our monitored list
+            if key_name in MONITORED_KEYS:
+                log_key_press(key_name)
+    except:
+        pass
 
 def main():
     """Main function to start keyboard monitoring"""
