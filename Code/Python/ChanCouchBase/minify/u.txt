@@ -1,0 +1,8 @@
+n-username
+g-gender
+b-balance
+e-experience
+c-midnight
+d-debit_mark
+v-vip_score
+vt-vip_update_time
