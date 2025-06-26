@@ -1,6 +1,7 @@
 import requests
 from requests.auth import HTTPBasicAuth
 from utils import to_base36
+import json
 
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -24,7 +25,6 @@ def get_data(model_key: str, user_id: int, bucket: str) -> dict:
     print(key)
     # http://128.199.246.136:8091/pools/default/buckets/acc/docs/qt1njw4t
     url = f"http://128.199.246.136:8091/pools/default/buckets/{bucket}/docs/{key}"  # Customize
-    print(url)
     response = requests.get(url, headers=HEADERS, auth=HTTPBasicAuth("vinhbt", "nguyenthelinh"))
     return response.json()
 
@@ -32,10 +32,11 @@ def put_data(model_key: str, user_id: int, data: dict, bucket: str) -> dict:
     key = model_key + to_base36(user_id)
     url = f"http://128.199.246.136:8091/pools/default/buckets/{bucket}/docs/{key}"  # Customize
     payload = {
-        "value": data,
-        "flag": 33554432
+        "value": json.dumps(data),
+        "flags": 33554432
     }
-    response = requests.put(url, headers=HEADERS, json=payload)
+    response = requests.post(url, headers=HEADERS, data=payload)
+    print(response.__dict__)
     return response.json()
 
 def login():

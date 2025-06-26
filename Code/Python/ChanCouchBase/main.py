@@ -2,9 +2,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from model_keys import load_model_keys
 from api_client import get_data, put_data, login
-from utils import normalize_json
+from utils import *
 from tkinter import font
 import json
+import trace
 
 class DataTool:
     def __init__(self, root):
@@ -12,8 +13,9 @@ class DataTool:
         self.root.title("Couchbase Data Tool")
 
         self.model_keys = load_model_keys()
-        self.custom_font = font.Font(family="Consolas", size=16)
+        self.custom_font = font.Font(family="JetBrains Mono", size=12)
         self.create_widgets()
+        self.login()
 
     def create_widgets(self):
         # Configure column and row weights
@@ -23,6 +25,7 @@ class DataTool:
         tk.Label(self.root, text="Bucket:", font=self.custom_font).grid(row=1, column=0, sticky="ew")
         self.bucket_entry = tk.Entry(self.root, font=self.custom_font)
         self.bucket_entry.grid(row=1, column=1, sticky="ew")
+        self.bucket_entry.insert(0, "acc")  # Default bucket
 
         # Then move User ID and below down one row
         tk.Label(self.root, text="User ID:", font=self.custom_font).grid(row=2, column=0, sticky="ew")
@@ -36,13 +39,15 @@ class DataTool:
         tk.Button(self.root, text="Read", command=self.read_data, font=self.custom_font, bd=2, relief="solid").grid(row=4, column=0, sticky="ew")
         tk.Button(self.root, text="Write", command=self.write_data, font=self.custom_font, bd=2, relief="solid").grid(row=4, column=1, sticky="ew")
 
-        self.raw_text = tk.Text(self.root, height=10, font=self.custom_font)
+        self.raw_text = tk.Text(self.root, height=20, font=self.custom_font)
         self.raw_text.grid(row=5, column=0, columnspan=2, sticky="nsew")
-        tk.Button(self.root, text="Copy Raw", command=lambda: self.copy_to_clipboard(self.raw_text), font=self.custom_font, bd=2, relief="solid").grid(row=6, column=0, columnspan=2, sticky="ew")
+        tk.Button(self.root, text="Copy Raw", command=lambda: self.copy_to_clipboard(self.raw_text), font=self.custom_font, bd=2, relief="solid").grid(row=6, column=0, columnspan=1, sticky="ew")
 
-        self.normalized_text = tk.Text(self.root, height=10, font=self.custom_font)
+        self.normalized_text = tk.Text(self.root, height=20, font=self.custom_font)
         self.normalized_text.grid(row=7, column=0, columnspan=2, sticky="nsew")
-        tk.Button(self.root, text="Copy Normalized", command=lambda: self.copy_to_clipboard(self.normalized_text), font=self.custom_font, bd=2, relief="solid").grid(row=8, column=0, columnspan=2, sticky="ew")
+        tk.Button(self.root, text="Copy Normalized", command=lambda: self.copy_to_clipboard(self.normalized_text), font=self.custom_font, bd=2, relief="solid").grid(row=8, column=0, columnspan=1, sticky="ew")
+
+        tk.Button(self.root, text="Convert Normalized to Raw", command=lambda: self.convert_normal_to_raw(), font=self.custom_font, bd=2, relief="solid").grid(row=8, column=1, columnspan=1, sticky="ew")
 
         # Update row weights to match new layout
         self.root.grid_rowconfigure(4, weight=1)
@@ -55,16 +60,24 @@ class DataTool:
         self.root.clipboard_clear()
         self.root.clipboard_append(widget.get("1.0", tk.END))
 
+    def convert_normal_to_raw(self):
+        data = json.loads(self.normalized_text.get("1.0", tk.END))
+        raw_data = minify_json(data, self.model_keys[self.model_dropdown.get()])
+        self.raw_text.delete("1.0", tk.END)
+        self.raw_text.insert(tk.END, json.dumps(raw_data, indent=4))
+
     def read_data(self):
         uid = self.uid_entry.get()
         model = self.model_dropdown.get()
+        bucket = self.bucket_entry.get()
         try:
-            data = get_data(self.model_keys[model], int(uid), "acc")["json"]
+            response = get_data(self.model_keys[model], int(uid), bucket)
+            data = response.get("json", {})
             data_json = json.dumps(data, indent=4)
             self.raw_text.delete("1.0", tk.END)
             self.raw_text.insert(tk.END, data_json)
             # If you have a mapping, normalize here
-            normalized = normalize_json(data, {})  # Supply a real mapping if needed
+            normalized = normalize_json(data, self.model_keys[model])  # Supply a real mapping if needed
             self.normalized_text.delete("1.0", tk.END)
             self.normalized_text.insert(tk.END, json.dumps(normalized, indent=4))
         except Exception as e:
@@ -74,7 +87,8 @@ class DataTool:
         uid = self.uid_entry.get()
         model = self.model_dropdown.get()
         try:
-            data = eval(self.raw_text.get("1.0", tk.END))  # Consider using `json.loads` for safety
+            data = eval(self.raw_text.get("1.0", tk.END))
+            print(data)
             result = put_data(self.model_keys[model], int(uid), data, "acc")
             messagebox.showinfo("Success", "Data updated!")
         except Exception as e:

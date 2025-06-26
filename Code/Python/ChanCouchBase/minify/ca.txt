@@ -1,0 +1,10 @@
+a-ancientMoney
+x-exchangeAMRemain
+g-gem
+t-teaseSub
+f-lastTimeBuyFlashSale
+fs-flashSaleLastShow
+s-silverCoin
+r-lastTimeBuyRedBrick
+p-redBrickPrice
+c-redBrickCoin
