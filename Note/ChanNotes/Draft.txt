@@ -1,11 +1,5 @@
-ForeignCurrency
-    a-ancientMoney
-    x-exchangeAMRemain
-    g-gem
-    t-teaseSub
-    f-lastTimeBuyFlashSale
-    fs-flashSaleLastShow
-    s-silverCoin
-    r-lastTimeBuyRedBrick
-    p-redBrickPrice
-    c-redBrickCoin
+0,0,18,15,24,19,16,16,23,23,8,28,22,22,21,17,0,14,18
+6,11,8,25,9,0,12,0,21,20,22,26,18,11,11,12,23,18,6
+13,17,15,8,26,7,14,20,0,20,13,6,9,13,25,20,24,10,24
+15,15,12,12,10,6,27,27,27,29,17,10,23,21,16,11,9,28,28
+19,12,9,29,8,25,7,26,21,13,24,29,25,10,17,14,16,22,24,23,23,23,6,19

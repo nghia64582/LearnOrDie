@@ -323,4 +323,19 @@
         val uThong10LanV2 = Value(68, "Ù Thông 10 lần")
             + Logic các id đã hoàn thành
                + 54, 38, 39, 40, 55, 56
-        
+    
+    - Nhờ anh Thắng test
+    - Cherry pick quan
+        + Squash commit cho dễ
+    - Nhờ lynt hoanhnh review code
+    - Merge vào và đánh tag bảo
+
+    - Update code:
+        + Xóa logger - done
+        + Cập nhật thiên thư mission: Game bắn event sang thienThuActor, để 
+            ThienThuActor xử lý convert event sang mission và cập nhật các nhiệm vụ tương ứng - 
+        + Cân nhắc lưu mission config trong cb thay vì hard code - 
+            + Các thông tin lưu vào trong config cb:
+                + Tạo map EventId -> List[MissionId]
+        + Xóa các change không cần thiết - done
+        + Xử lý option trường hợp isEmpty - done
