@@ -13,13 +13,13 @@ CARDS_PER_PLAYER = 19
 TOTAL_CARDS = 100
 CARDS_FOLDER = "cards"  # Adjust as needed
 CARD_WIDTH = 30
-CARD_HEIGHT = 110
+CARD_HEIGHT = 115
 
 class CardDeckTool:
     def __init__(self, root):
         self.root = root
         self.root.title("Card Deck Setup Tool")
-        self.root.geometry("1200x1200")
+        self.root.geometry("1350x700")
 
         self.deck = []
         self.players = [[] for _ in range(PLAYER_COUNT)]
@@ -77,25 +77,29 @@ class CardDeckTool:
         control_frame = tk.Frame(self.root)
         control_frame.pack(pady=5)
 
-        tk.Button(control_frame, text="Shuffle Deck", command=self.shuffle_deck, font=font_conf).grid(row=0, column=0)
-        tk.Button(control_frame, text="Save to File", command=self.save_to_file, font=font_conf).grid(row=0, column=1)
+        tk.Button(control_frame, text="Shuffle", command=self.shuffle_deck, font=font_conf).grid(row=0, column=0)
+        tk.Button(control_frame, text="Save", command=self.save_to_file, font=font_conf).grid(row=0, column=1)
         tk.Button(control_frame, text="Reset", command=self.reset_all, font=font_conf).grid(row=0, column=2)
-        tk.Button(control_frame, text="Upload to Server", command=self.upload_to_server, font=font_conf).grid(row=0, column=3)
-        tk.Button(control_frame, text="Load Deck", command=self.load_from_file, font=font_conf).grid(row=0, column=4)
+        tk.Button(control_frame, text="Upload", command=self.upload_to_server, font=font_conf).grid(row=0, column=3)
+        tk.Button(control_frame, text="Load", command=self.load_from_file, font=font_conf).grid(row=0, column=4)
 
-        # Horizontal card picker and selected display
-        picker_wrapper = tk.Frame(self.root)
-        picker_wrapper.pack(pady=5, fill="x")
+        # Two main horizontal frames
+        main_frame = tk.Frame(self.root)
+        main_frame.pack(fill="both", expand=True)
+
+        # Left: Card Picker
+        picker_wrapper = tk.Frame(main_frame)
+        picker_wrapper.pack(side=tk.LEFT, padx=10, pady=5)
 
         selected_display = tk.Frame(picker_wrapper)
-        selected_display.pack(side=tk.LEFT, padx=20)
-        tk.Label(selected_display, text="Current Selected Card:", font=font_conf).pack()
+        selected_display.pack()
+        tk.Label(selected_display, text="CurCard:", font=font_conf).pack()
         self.selected_card_display = tk.Label(selected_display)
         self.selected_card_display.pack(pady=5)
         self.update_selected_display()
 
         card_picker = tk.Frame(picker_wrapper)
-        card_picker.pack(side=tk.LEFT)
+        card_picker.pack()
         tk.Label(card_picker, text="Select Card:", font=font_conf).pack(anchor="w")
 
         grid_frame = tk.Frame(card_picker)
@@ -105,22 +109,23 @@ class CardDeckTool:
             btn = tk.Button(grid_frame, image=img, command=lambda c=cid: self.select_card(c))
             btn.image = img
             row, col = self.calc_row_col(cid)
-            btn.grid(row=row, column=col, padx=2, pady=2)
+            btn.grid(row=row, column=col, padx=0, pady=2)
 
-        player_buttons = tk.Frame(self.root)
+        player_buttons = tk.Frame(picker_wrapper)
         player_buttons.pack(pady=5)
         for i in range(PLAYER_COUNT):
-            tk.Button(player_buttons, text=f"Add to Player {i+1}", command=lambda i=i: self.add_card(i), font=font_conf).pack(side=tk.LEFT, padx=2)
-        tk.Button(player_buttons, text="Add to Rest", command=lambda: self.add_card(PLAYER_COUNT), font=font_conf).pack(side=tk.LEFT, padx=2)
+            tk.Button(player_buttons, text=f"+=> {i+1}", command=lambda i=i: self.add_card(i), font=font_conf).pack(side=tk.LEFT, padx=2)
+        tk.Button(player_buttons, text="+=>Noc", command=lambda: self.add_card(PLAYER_COUNT), font=font_conf).pack(side=tk.LEFT, padx=2)
 
-        self.card_frame = tk.Frame(self.root)
-        self.card_frame.pack()
+        # Right: Card view
+        self.card_frame = tk.Frame(main_frame)
+        self.card_frame.pack(side=tk.LEFT, padx=10, pady=5, anchor='n')
 
         self.card_label_frames = []
         for i in range(PLAYER_COUNT):
             frame = tk.Frame(self.card_frame)
             frame.pack(pady=2, anchor='w')
-            label = tk.Label(frame, text=f"Player {i+1} (0)", font=("JetBrains Mono", 12))
+            label = tk.Label(frame, text=f"P{i+1}-0", font=("JetBrains Mono", 12))
             label.pack(side=tk.LEFT)
             self.card_label_frames.append((frame, label))
             self.card_labels[i] = []
@@ -149,9 +154,11 @@ class CardDeckTool:
         for i in range(PLAYER_COUNT + 1):
             cards = self.players[i] if i < PLAYER_COUNT else self.rest
             frame, count_label = self.card_label_frames[i]
-            count_label.config(text=f"{'Player ' + str(i+1) if i < PLAYER_COUNT else 'Rest'} ({len(cards)})")
+            txt = f"{'Player ' + str(i+1) if i < PLAYER_COUNT else 'Rest'} ({len(cards)})"
+            while len(txt) < 12:
+                txt = " " + txt
+            count_label.config(text=txt)
 
-            # Reuse or create labels
             for j in range(max(len(cards), len(self.card_labels[i]))):
                 if j >= len(self.card_labels[i]):
                     lbl = tk.Label(frame)
@@ -165,7 +172,7 @@ class CardDeckTool:
                     lbl.configure(image=img)
                     lbl.image = img
                     lbl.bind("<Button-1>", lambda e, p=i, c=cid: self.remove_card(p, c))
-                    lbl.pack(side=tk.LEFT, padx=2)
+                    lbl.pack(side=tk.LEFT, padx=0)
                 else:
                     lbl.pack_forget()
 
