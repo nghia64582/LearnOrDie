@@ -87,8 +87,7 @@ class DataTool:
         uid = self.uid_entry.get()
         model = self.model_dropdown.get()
         try:
-            data = eval(self.raw_text.get("1.0", tk.END))
-            print(data)
+            data = json.loads(self.raw_text.get("1.0", tk.END))
             result = put_data(self.model_keys[model], int(uid), data, "acc")
             messagebox.showinfo("Success", "Data updated!")
         except Exception as e:

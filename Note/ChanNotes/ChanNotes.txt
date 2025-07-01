@@ -158,6 +158,8 @@
     - Just upgrade container in rancher after testing is done (slowly)
     - Handle conflict in rancher: 
         + Change scale to 0, 1, or 2 
+    - Update Mod để không bị lỗi 415 cần định nghĩa json trong modNapBao của mod.ts
+    - Để build sd-api-pay trên product cần push các file js được build, nếu không sẽ không có thay đổi
 
 Google Subscription Billing Payment
 
