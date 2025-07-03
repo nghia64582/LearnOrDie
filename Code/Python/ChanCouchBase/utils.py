@@ -63,4 +63,21 @@ def minify_keys(data, key_dict):
     else:
         return data
     
+def find_txt_files(directory_path: str) -> list[str]:
+    txt_files = []
+
+    if not os.path.isdir(directory_path):
+        print(f"Error: The path '{directory_path}' is not a valid directory.")
+        return []
+    
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            # Check if the file has a .txt extension (case-insensitive)
+            if file.lower().endswith('.txt'):
+                # Construct the full path to the .txt file
+                full_path = os.path.join(root, file)
+                txt_files.append(full_path)
+
+    return txt_files
+
 parse_key_mapping_folder()

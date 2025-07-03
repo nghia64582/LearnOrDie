@@ -14,6 +14,7 @@ class DataTool:
 
         self.model_keys = load_model_keys()
         self.custom_font = font.Font(family="JetBrains Mono", size=12)
+        self.get_dict_users()
         self.create_widgets()
         self.login()
 
@@ -23,21 +24,27 @@ class DataTool:
 
         # Row 0: Bucket Label and Entry
         tk.Label(self.root, text="Bucket:", font=self.custom_font).grid(row=1, column=0, sticky="ew")
-        self.bucket_entry = tk.Entry(self.root, font=self.custom_font)
+        self.bucket_entry = ttk.Combobox(self.root, values=["acc", "fodi"], font=self.custom_font)
         self.bucket_entry.grid(row=1, column=1, sticky="ew")
-        self.bucket_entry.insert(0, "acc")  # Default bucket
+        self.bucket_entry.set("acc")  # Default bucket
 
         # Then move User ID and below down one row
         tk.Label(self.root, text="User ID:", font=self.custom_font).grid(row=2, column=0, sticky="ew")
-        self.uid_entry = tk.Entry(self.root, font=self.custom_font)
+        self.uid_entry = ttk.Combobox(self.root, values=list(self.users.keys()), font=self.custom_font)
         self.uid_entry.grid(row=2, column=1, sticky="ew")
 
         tk.Label(self.root, text="Model:", font=self.custom_font).grid(row=3, column=0, sticky="ew")
         self.model_dropdown = ttk.Combobox(self.root, values=list(self.model_keys.keys()), font=self.custom_font)
         self.model_dropdown.grid(row=3, column=1, sticky="ew")
+        # set callback when model_dropdown changes
+        self.model_dropdown.bind("<<ComboboxSelected>>", lambda event: self.raw_text.delete("1.0", tk.END))
 
         tk.Button(self.root, text="Read", command=self.read_data, font=self.custom_font, bd=2, relief="solid").grid(row=4, column=0, sticky="ew")
         tk.Button(self.root, text="Write", command=self.write_data, font=self.custom_font, bd=2, relief="solid").grid(row=4, column=1, sticky="ew")
+
+        self.root.bind('<Control-z>', lambda event: self.raw_text.edit_undo())
+        self.root.bind('<Control-Return>', lambda event: self.write_data())
+        self.root.bind('<Return>', lambda event: self.read_data())
 
         self.raw_text = tk.Text(self.root, height=20, font=self.custom_font)
         self.raw_text.grid(row=5, column=0, columnspan=2, sticky="nsew")
@@ -68,16 +75,18 @@ class DataTool:
 
     def read_data(self):
         uid = self.uid_entry.get()
-        model = self.model_dropdown.get()
+        uid = self.users.get(uid, uid)
+        model_name = self.model_dropdown.get()
         bucket = self.bucket_entry.get()
+        model_key = self.model_keys.get(model_name, model_name)
         try:
-            response = get_data(self.model_keys[model], int(uid), bucket)
+            response = get_data(model_key, int(uid), bucket)
             data = response.get("json", {})
             data_json = json.dumps(data, indent=4)
             self.raw_text.delete("1.0", tk.END)
             self.raw_text.insert(tk.END, data_json)
             # If you have a mapping, normalize here
-            normalized = normalize_json(data, self.model_keys[model])  # Supply a real mapping if needed
+            normalized = normalize_json(data, model_key)  # Supply a real mapping if needed
             self.normalized_text.delete("1.0", tk.END)
             self.normalized_text.insert(tk.END, json.dumps(normalized, indent=4))
         except Exception as e:
@@ -85,6 +94,7 @@ class DataTool:
 
     def write_data(self):
         uid = self.uid_entry.get()
+        uid = self.users.get(uid, uid)
         model = self.model_dropdown.get()
         try:
             data = json.loads(self.raw_text.get("1.0", tk.END))
@@ -92,7 +102,21 @@ class DataTool:
             messagebox.showinfo("Success", "Data updated!")
         except Exception as e:
             messagebox.showerror("Error", str(e))
-
+   
+    def get_dict_users(self):
+        # read "uids.txt" and return dict
+        self.users = {}
+        try:
+            with open("uids.txt", "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or '-' not in line:
+                        continue
+                    uid, username = line.split('-', 1)
+                    self.users[uid] = username
+        except FileNotFoundError:
+            messagebox.showerror("Error", "uids.txt file not found.")
+    
 if __name__ == "__main__":
     root = tk.Tk()
     app = DataTool(root)

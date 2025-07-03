@@ -21,8 +21,7 @@ HEADERS = {
 COOKIE = ""
 
 def get_data(model_key: str, user_id: int, bucket: str) -> dict:
-    key = model_key + to_base36(user_id)
-    print(key)
+    key = model_key + to_base36(user_id) if bucket == "acc" else model_key
     # http://128.199.246.136:8091/pools/default/buckets/acc/docs/qt1njw4t
     url = f"http://128.199.246.136:8091/pools/default/buckets/{bucket}/docs/{key}"  # Customize
     response = requests.get(url, headers=HEADERS, auth=HTTPBasicAuth("vinhbt", "nguyenthelinh"))
@@ -36,7 +35,6 @@ def put_data(model_key: str, user_id: int, data: dict, bucket: str) -> dict:
         "flags": 33554432
     }
     response = requests.post(url, headers=HEADERS, data=payload)
-    print(response.__dict__)
     return response.json()
 
 def login():
