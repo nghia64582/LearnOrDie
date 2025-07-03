@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 import os
 import random
 import paramiko
+import sys
 
 # Constants
 CARD_IDS = [0] + list(range(6, 30))  # 0 and 6->29
@@ -16,6 +17,13 @@ CARDS_FOLDER = "cards"  # Adjust as needed
 CARDS_DECK_FOLDER = "card_deck"  # Adjust as needed
 CARD_WIDTH = 30
 CARD_HEIGHT = 115
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class CardDeckTool:
     def __init__(self, root):
@@ -41,10 +49,10 @@ class CardDeckTool:
         self.load_list_cards()
         self.load_cards()
         self.create_ui()
-
+    
     def load_list_cards(self):
         self.list_cards = []
-        list_cards = self.find_txt_files(CARDS_DECK_FOLDER)
+        list_cards = self.find_txt_files(resource_path(CARDS_DECK_FOLDER))
         if not list_cards:
             print(f"Error: No card files found in '{CARDS_DECK_FOLDER}'.")
             return
@@ -52,7 +60,7 @@ class CardDeckTool:
 
     def load_cards(self):
         for cid in CARD_IDS:
-            path = os.path.join(CARDS_FOLDER, f"card_{cid}.png")
+            path = resource_path(os.path.join(CARDS_FOLDER, f"card_{cid}.png"))
             if os.path.exists(path):
                 img = Image.open(path).resize((CARD_WIDTH, CARD_HEIGHT))
                 self.images[cid] = ImageTk.PhotoImage(img)
@@ -223,15 +231,17 @@ class CardDeckTool:
         if not self.is_satisfy():
             messagebox.showwarning("Invalid Deck", "Please ensure each player has 19 cards and the rest has 24 cards.")
             return
-        
+
         deck_name = self.deck_name_var.get().strip()
         if not deck_name:
             messagebox.showwarning("Missing Name", "Please enter a deck name.")
             return
 
-        if not os.path.exists("card_deck"):
-            os.makedirs("card_deck")
-        file_path = os.path.join("card_deck", f"{deck_name}.txt")
+        folder_path = resource_path(CARDS_DECK_FOLDER)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        file_path = os.path.join(folder_path, f"{deck_name}.txt")
         with open(file_path, "w") as f:
             for p in reversed(self.players):
                 f.write(",".join(map(str, p)) + "\n")
@@ -243,7 +253,7 @@ class CardDeckTool:
 
     def load_from_file(self):
         deck_name = self.deck_name_var.get().strip()
-        file_path = os.path.join("card_deck", f"{deck_name}.txt")
+        file_path = resource_path(os.path.join(CARDS_DECK_FOLDER, f"{deck_name}.txt"))
         if not os.path.exists(file_path):
             messagebox.showerror("Error", f"Deck file not found: {file_path}")
             return
@@ -292,13 +302,14 @@ class CardDeckTool:
         if not os.path.isdir(directory_path):
             print(f"Error: The path '{directory_path}' is not a valid directory.")
             return []
-        
+
         for root, dirs, files in os.walk(directory_path):
             for file in files:
                 if file.lower().endswith('.txt'):
                     txt_files.append(file.replace('.txt', ''))
 
         return txt_files
+
     
     def is_satisfy(self):
         # each player has 19 cards, and the rest has 24 cards
