@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk, messagebox
 from tkinter import messagebox, filedialog
 from PIL import Image, ImageTk
 import os
@@ -12,6 +13,7 @@ PLAYER_COUNT = 4
 CARDS_PER_PLAYER = 19
 TOTAL_CARDS = 100
 CARDS_FOLDER = "cards"  # Adjust as needed
+CARDS_DECK_FOLDER = "card_deck"  # Adjust as needed
 CARD_WIDTH = 30
 CARD_HEIGHT = 115
 
@@ -26,7 +28,6 @@ class CardDeckTool:
         self.rest = []
         self.images = {}
         self.selected_card = tk.IntVar(value=CARD_IDS[0])
-        self.deck_name_var = tk.StringVar()
         self.selected_card_display = None
 
         # SSH config
@@ -37,8 +38,17 @@ class CardDeckTool:
 
         self.card_labels = [[] for _ in range(PLAYER_COUNT + 1)]
 
+        self.load_list_cards()
         self.load_cards()
         self.create_ui()
+
+    def load_list_cards(self):
+        self.list_cards = []
+        list_cards = self.find_txt_files(CARDS_DECK_FOLDER)
+        if not list_cards:
+            print(f"Error: No card files found in '{CARDS_DECK_FOLDER}'.")
+            return
+        self.list_cards = list_cards
 
     def load_cards(self):
         for cid in CARD_IDS:
@@ -66,7 +76,9 @@ class CardDeckTool:
         top_frame.pack(pady=5)
 
         tk.Label(top_frame, text="Deck Name:", font=font_conf).pack(side=tk.LEFT)
-        tk.Entry(top_frame, textvariable=self.deck_name_var, width=30, font=font_conf).pack(side=tk.LEFT, padx=5)
+        # tk.Entry(top_frame, textvariable=self.deck_name_var, width=30, font=font_conf).pack(side=tk.LEFT, padx=5)
+        self.deck_name_var = ttk.Combobox(top_frame, values=self.list_cards, font=font_conf)
+        self.deck_name_var.pack(side=tk.LEFT, padx=5)
 
         tk.Label(top_frame, text="SSH Passphrase:", font=font_conf).pack(side=tk.LEFT)
         tk.Entry(top_frame, textvariable=self.ssh_passphrase, show="*", width=20, font=font_conf).pack(side=tk.LEFT, padx=5)
@@ -208,6 +220,10 @@ class CardDeckTool:
         self.render_cards()
 
     def save_to_file(self):
+        if not self.is_satisfy():
+            messagebox.showwarning("Invalid Deck", "Please ensure each player has 19 cards and the rest has 24 cards.")
+            return
+        
         deck_name = self.deck_name_var.get().strip()
         if not deck_name:
             messagebox.showwarning("Missing Name", "Please enter a deck name.")
@@ -221,6 +237,9 @@ class CardDeckTool:
                 f.write(",".join(map(str, p)) + "\n")
             f.write(",".join(map(str, self.rest)) + "\n")
         messagebox.showinfo("Saved", f"Card deck saved to {file_path}")
+
+        self.load_list_cards()  # Refresh the list of decks
+        self.deck_name_var['values'] = self.list_cards
 
     def load_from_file(self):
         deck_name = self.deck_name_var.get().strip()
@@ -239,12 +258,15 @@ class CardDeckTool:
             self.render_cards()
 
     def upload_to_server(self):
+        if not self.is_satisfy():
+            messagebox.showwarning("Invalid Deck", "Please ensure each player has 19 cards and the rest has 24 cards.")
+            return
         remote_path = self.remote_file_path.get().strip()
         passphrase = self.ssh_passphrase.get().strip()
         deck_name = self.deck_name_var.get().strip()
 
-        if not remote_path or not passphrase or not deck_name:
-            messagebox.showwarning("Missing Info", "Please enter deck name, SSH passphrase, and remote path.")
+        if not remote_path or not passphrase:
+            messagebox.showwarning("Missing Info", "Please enter SSH passphrase, and remote path.")
             return
 
         local_content = "\n".join([",".join(map(str, p)) for p in reversed(self.players)] + [",".join(map(str, self.rest))]) + "\n"
@@ -264,6 +286,29 @@ class CardDeckTool:
         except Exception as e:
             messagebox.showerror("Upload Failed", str(e))
 
+    def find_txt_files(self, directory_path: str) -> list[str]:
+        txt_files = []
+
+        if not os.path.isdir(directory_path):
+            print(f"Error: The path '{directory_path}' is not a valid directory.")
+            return []
+        
+        for root, dirs, files in os.walk(directory_path):
+            for file in files:
+                if file.lower().endswith('.txt'):
+                    txt_files.append(file.replace('.txt', ''))
+
+        return txt_files
+    
+    def is_satisfy(self):
+        # each player has 19 cards, and the rest has 24 cards
+        if len(self.rest) != TOTAL_CARDS - PLAYER_COUNT * CARDS_PER_PLAYER:
+            return False
+        for player in self.players:
+            if len(player) != CARDS_PER_PLAYER:
+                return False
+        return True
+    
 if __name__ == "__main__":
     root = tk.Tk()
     app = CardDeckTool(root)
