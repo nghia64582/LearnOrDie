@@ -8,3 +8,6 @@
   + S1: pip install pyinstaller (nếu chưa cài)
   + S2: vào console thư mục chứa file main.py
   + S3: pyinstaller --noconsole --icon=icon.ico --add-data "cards;cards" --add-data "card_deck;card_deck" main.py
+
+ - Chú ý [Note]
+  + 

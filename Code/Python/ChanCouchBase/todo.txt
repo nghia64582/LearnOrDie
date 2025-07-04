@@ -3,4 +3,4 @@
 - TODO:
   + Đặt combobox cho uid với một số uid quen thuộc
   + Đặt combobox cho bucket: nếu là fodi thì không tính uid, nếu là acc thì tính uid
-  +
+  + 

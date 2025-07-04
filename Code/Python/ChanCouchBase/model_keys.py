@@ -1,4 +1,4 @@
-def load_model_keys(filepath="ModelKeyName.txt") -> dict:
+def load_model_keys(filepath="model_key_name.txt") -> dict:
     keys = {}
     with open(filepath, "r") as f:
         for line in f:
