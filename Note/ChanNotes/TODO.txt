@@ -339,3 +339,16 @@
                 + Tạo map EventId -> List[MissionId]
         + Xóa các change không cần thiết - done
         + Xử lý option trường hợp isEmpty - done
+    - Note approve để merge code - done
+
+    - Tính năng mới: AI Assitance
+        + Một tool hỗ trợ người chơi trong bàn chơi
+        + cb lưu timestamp hạn dùng AI
+        + Khi vào bàn chơi, nếu có ai thì sẽ các tính năng hỗ trợ
+        + Các phần cần triển khai:
+            + cb: Lưu timestamp hạn dùng AI trong ForeignCurrency
+            + cb: Mở AI cho user từ gói nạp
+            + cb: Mở AI cho user bằng mod
+
+            
+            

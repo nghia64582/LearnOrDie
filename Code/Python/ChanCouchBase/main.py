@@ -96,9 +96,11 @@ class DataTool:
         uid = self.uid_entry.get()
         uid = self.users.get(uid, uid)
         model = self.model_dropdown.get()
+        model = self.model_keys.get(model, model)
+        bucket = self.bucket_entry.get()
         try:
             data = json.loads(self.raw_text.get("1.0", tk.END))
-            result = put_data(self.model_keys[model], int(uid), data, "acc")
+            result = put_data(model, int(uid), data, bucket=bucket)
             messagebox.showinfo("Success", "Data updated!")
         except Exception as e:
             messagebox.showerror("Error", str(e))

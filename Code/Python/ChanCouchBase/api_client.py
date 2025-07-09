@@ -28,7 +28,7 @@ def get_data(model_key: str, user_id: int, bucket: str) -> dict:
     return response.json()
 
 def put_data(model_key: str, user_id: int, data: dict, bucket: str) -> dict:
-    key = model_key + to_base36(user_id)
+    key = model_key + to_base36(user_id) if bucket == "acc" else model_key
     url = f"http://128.199.246.136:8091/pools/default/buckets/{bucket}/docs/{key}"  # Customize
     payload = {
         "value": json.dumps(data),
