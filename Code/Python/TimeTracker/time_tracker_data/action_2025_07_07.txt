@@ -1,0 +1,16 @@
+{
+  "python.exe": 18.0,
+  "conhost.exe": 6.0,
+  "dllhost.exe": 2.0,
+  "tasklist.exe": 2.0,
+  "LocationNotificationWindows.exe": 2.0,
+  "svchost.exe": 6.0,
+  "python.exe - Time Tracker": 252.0,
+  "MySQLWorkbench.exe - MySQL Workbench": 2.0,
+  "Code.exe - main.py - LearnOrDie - Visual Studio Code": 10.0,
+  "chrome.exe - (31) C\u01a1 Tr\u01b0\u1edfng C\u01a1 Ph\u00f3 M\u1ea3i Bu\u00f4n Chuy\u1ec7n Qu\u00ean Kh\u00f4ng Cho M\u00e1y Bay H\u1ea1 C\u00e1nh| Northwest 188 - YouTube - Google Chrome": 390.0,
+  "chrome.exe - New Incognito Tab - Google Chrome": 2.0,
+  "chrome.exe - Facebook - Google Chrome": 4.0,
+  "No active window": 30.0,
+  "AFK": 34.0
+}

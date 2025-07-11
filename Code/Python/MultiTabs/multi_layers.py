@@ -2,9 +2,24 @@ import tkinter as tk
 from tkinter import ttk
 
 def create_multi_layer_tabs():
+    # Create the main application window
+    global root
+    global main_notebook
+    global main_tab1_frame, main_tab2_frame, main_tab3_frame
+
+
+    # Set up main font
+    font = ("Inter", 12)
+
     root = tk.Tk()
     root.title("Tkinter Multi-Layer Tab App")
     root.geometry("800x600")
+    root.option_add("*TButton*font", font)
+    root.option_add("*TLabel*font", font)
+    root.option_add("*TEntry*font", font)
+    root.option_add("*TScale*font", font)
+    root.option_add("*TFrame*font", font)
+    root.option_add("*TNotebook*font", font)
 
     # --- Main Notebook ---
     main_notebook = ttk.Notebook(root)

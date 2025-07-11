@@ -1,0 +1,5 @@
+ - Vấn đề:
+   + Với mỗi một nhóm kiến thức, kĩ năng, để nắm được, thành thạo, người dùng cần kết hợp học lý thuyết
+     + làm bài tập + thực hành trên môi trường thực.
+   + Cần học tập trên rất nhiểu lĩnh vực và môi trường khác nhau.
+   + 

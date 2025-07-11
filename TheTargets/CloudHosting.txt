@@ -1,0 +1,10 @@
+- Tool CPanel
+- Các bước thiết lập web app:
+    + Cài đặt domain
+    + Trỏ domain sang ip của cloud hosting
+    + Set up một python app
+- Các điều cần lưu ý:
+    + Cần setup CCCD cho domain
+    + 
+- Todo:
+    + 

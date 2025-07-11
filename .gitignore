@@ -21,3 +21,5 @@ Projects/FinalProject/Code/sh-be/src/main/resources/client_secret.json
 /Code/Python/Tools
 /Code/Python/General/build
 /Code/Python/General/dist
+/Code/Python/ChanCouchBase/__pycache__
+/Code/Python/General/build

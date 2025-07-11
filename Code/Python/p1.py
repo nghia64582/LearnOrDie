@@ -1,59 +1,62 @@
-import tkinter as tk
-from tkinter import ttk
+import subprocess
+import os
+import sys
 
-def create_multi_layer_tabs():
-    root = tk.Tk()
-    root.title("Tkinter Multi-Layer Tab App")
-    root.geometry("800x600")
+def stop_mysql_service(service_name="MySQL"):
+    """
+    Stops the specified MySQL Windows Service.
+    Requires Administrator privileges.
+    """
+    if os.name != 'nt':
+        print("This function is for Windows operating systems only.")
+        return
 
-    # --- Main Notebook ---
-    main_notebook = ttk.Notebook(root)
-    main_notebook.pack(expand=True, fill="both", padx=10, pady=10)
+    # Check if running as administrator (basic check)
+    try:
+        # For Windows, check if the process has elevated privileges
+        import ctypes
+        if not ctypes.windll.shell32.IsUserAnAdmin():
+            print("Error: This script needs to be run with Administrator privileges to stop a service.")
+            print("Right-click your IDE/terminal and choose 'Run as Administrator'.")
+            return
+    except ImportError:
+        # Fallback for non-Windows or if ctypes isn't available
+        print("Warning: Could not verify administrator privileges. Ensure you run this as administrator.")
 
-    # --- Main Tab 1: Dashboard ---
-    main_tab1_frame = ttk.Frame(main_notebook)
-    main_tab1_frame.pack(fill="both", expand=True)
-    main_notebook.add(main_tab1_frame, text="Dashboard")
-    ttk.Label(main_tab1_frame, text="Welcome to the Dashboard!").pack(pady=20)
+    command = f"net stop \"{service_name}\""
+    print(f"Attempting to stop MySQL service: '{service_name}'...")
 
-    # --- Main Tab 2: Data View (This will contain sub-tabs) ---
-    main_tab2_frame = ttk.Frame(main_notebook)
-    main_tab2_frame.pack(fill="both", expand=True)
-    main_notebook.add(main_tab2_frame, text="Data View")
+    try:
+        # Use subprocess.run to execute the command
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False # Do not raise an error for non-zero exit code, we'll check manually
+        )
 
-    # --- Create a SUB-NOTEBOOK inside main_tab2_frame ---
-    sub_notebook = ttk.Notebook(main_tab2_frame) # Parent is main_tab2_frame
-    sub_notebook.pack(expand=True, fill="both", padx=10, pady=10)
+        if result.returncode == 0:
+            print(f"Successfully stopped service '{service_name}'.")
+            print(result.stdout)
+        elif result.returncode == 2: # Error code 2 often means service not started
+            print(f"Service '{service_name}' is not running or already stopped.")
+            print(result.stdout)
+        else:
+            print(f"Failed to stop service '{service_name}'. Exit code: {result.returncode}")
+            print(f"Stdout:\n{result.stdout}")
+            print(f"Stderr:\n{result.stderr}")
 
-    # --- Sub-Tab 2.1: Raw Data ---
-    sub_tab1_frame = ttk.Frame(sub_notebook)
-    sub_tab1_frame.pack(fill="both", expand=True)
-    sub_notebook.add(sub_tab1_frame, text="Raw Data")
-    ttk.Label(sub_tab1_frame, text="Displaying Raw Data here.").pack(pady=20)
-    ttk.Entry(sub_tab1_frame, width=50).pack()
+    except FileNotFoundError:
+        print(f"Error: 'net' command not found. This should not happen on Windows.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
-    # --- Sub-Tab 2.2: Summaries ---
-    sub_tab2_frame = ttk.Frame(sub_notebook)
-    sub_tab2_frame.pack(fill="both", expand=True)
-    sub_notebook.add(sub_tab2_frame, text="Summaries")
-    ttk.Label(sub_tab2_frame, text="Data Summaries and Aggregations.").pack(pady=20)
-    ttk.Label(sub_tab2_frame, text="Chart placeholder...").pack()
+# --- How to use ---
+if __name__ == "__main__":
+    # IMPORTANT: Replace "MySQL" with the exact name of your MySQL service.
+    # You can find this name in the Windows Services Manager (services.msc).
+    # Common names are "MySQL" or "MySQL80" for MySQL 8.0.
+    your_mysql_service_name = "MySQL80" # <<< CHANGE THIS TO YOUR ACTUAL SERVICE NAME
 
-    # --- Sub-Tab 2.3: Reports ---
-    sub_tab3_frame = ttk.Frame(sub_notebook)
-    sub_tab3_frame.pack(fill="both", expand=True)
-    sub_notebook.add(sub_tab3_frame, text="Reports")
-    ttk.Label(sub_tab3_frame, text="Generate and view reports.").pack(pady=20)
-    ttk.Button(sub_tab3_frame, text="Generate Report").pack()
-
-    # --- Main Tab 3: Configuration ---
-    main_tab3_frame = ttk.Frame(main_notebook)
-    main_tab3_frame.pack(fill="both", expand=True)
-    main_notebook.add(main_tab3_frame, text="Configuration")
-    ttk.Label(main_tab3_frame, text="App Configuration Options.").pack(pady=20)
-    ttk.Scale(main_tab3_frame, from_=0, to_=100, orient="horizontal", length=300).pack(pady=10)
-
-    root.mainloop()
-
-# Run the multi-layer tabbed app
-create_multi_layer_tabs()
+    stop_mysql_service(your_mysql_service_name)

@@ -1,0 +1,27 @@
+11:37
+CPU Usage
+19 / 100 (19%)
+Physical Memory Usage
+101.82 MB / 1 GB (9.94%)
+Addon Domains
+0 / 0
+Disk Usage
+132.73 MB / 1 GB (12.96%)
+Database Disk Usage
+2.07 KB / 891.27 MB (0%)
+Bandwidth
+4.1 MB / ∞
+
+11:42
+CPU Usage
+20 / 100 (20%)
+Physical Memory Usage
+97.95 MB / 1 GB (9.56%)
+Addon Domains
+0 / 0
+Disk Usage
+133.04 MB / 1 GB (12.99%)
+Database Disk Usage
+2.07 KB / 890.96 MB (0%)
+Bandwidth
+4.1 MB / ∞
