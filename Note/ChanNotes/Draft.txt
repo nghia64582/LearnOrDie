@@ -1,3 +1,107 @@
- - Nhiệm vụ ăn cạ:
-    + Ăn cạ đầu tiên sai có cộng nhiệm vụ
-    + Ăn cạ thứ hai báo nhưng không cộng nhiệm vụ
+Build process started...
+
+Running PyInstaller command from directory: D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase
+
+Command: pyinstaller --noconsole --noconfirm --icon="D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase/icon.ico" --add-data "minify;minify" --add-data "model_key_name.txt;." --add-data "uids.txt;." "main.py"
+
+210 INFO: PyInstaller: 6.13.0, contrib hooks: 2025.3
+210 INFO: Python: 3.13.2
+243 INFO: Platform: Windows-11-10.0.26100-SP0
+243 INFO: Python environment: C:\Users\NghiaVT\AppData\Local\Programs\Python\Python313
+244 INFO: wrote D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\main.spec
+256 INFO: Module search paths (PYTHONPATH):
+['C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\pyinstaller.exe',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\win32',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\win32\\lib',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\Pythonwin',
+'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\setuptools\\_vendor',
+'D:\\Workspace\\LearnOrDie\\Code\\Python\\ChanCouchBase']
+682 INFO: Appending 'datas' from .spec
+682 INFO: checking Analysis
+692 INFO: Building because D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\main.py changed
+692 INFO: Running Analysis Analysis-00.toc
+692 INFO: Target bytecode optimization level: 0
+692 INFO: Initializing module dependency graph...
+693 INFO: Initializing module graph hook caches...
+704 INFO: Analyzing modules for base_library.zip ...
+1943 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+3558 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+4340 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+4764 INFO: Caching module dependency graph...
+4796 INFO: Looking for Python shared library...
+4805 INFO: Using Python shared library: C:\Users\NghiaVT\AppData\Local\Programs\Python\Python313\python313.dll
+4805 INFO: Analyzing D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\main.py
+4823 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+4824 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+5030 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+5085 INFO: Processing standard module hook 'hook-urllib3.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+5233 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+5234 INFO: SetuptoolsInfo: initializing cached setuptools info...
+8442 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+8512 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+9544 INFO: Processing standard module hook 'hook-charset_normalizer.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+9646 INFO: Processing standard module hook 'hook-cryptography.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+10608 INFO: hook-cryptography: cryptography does not seem to be using dynamically linked OpenSSL.
+10845 INFO: Processing standard module hook 'hook-bcrypt.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+10874 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+10999 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+11003 INFO: Processing module hooks (post-graph stage)...
+11039 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks'
+11047 INFO: Performing binary vs. data reclassification (940 entries)
+11216 INFO: Looking for ctypes DLLs
+11222 INFO: Analyzing run-time hooks ...
+11223 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+11226 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+11228 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+11230 INFO: Including run-time hook 'pyi_rth_cryptography_openssl.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+11232 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'C:\\Users\\NghiaVT\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+11254 INFO: Creating base_library.zip...
+11293 INFO: Looking for dynamic libraries
+11815 INFO: Extra DLL search directories (AddDllDirectory): []
+11816 INFO: Extra DLL search directories (PATH): []
+12299 INFO: Warnings written to D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\build\main\warn-main.txt
+12322 INFO: Graph cross-reference written to D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\build\main\xref-main.html
+12349 INFO: checking PYZ
+12362 INFO: checking PKG
+12363 INFO: Building because D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\main.py changed
+12363 INFO: Building PKG (CArchive) main.pkg
+12386 INFO: Building PKG (CArchive) main.pkg completed successfully.
+12386 INFO: Bootloader C:\Users\NghiaVT\AppData\Local\Programs\Python\Python313\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+12386 INFO: checking EXE
+12387 INFO: Building because icon changed
+12387 INFO: Building EXE from EXE-00.toc
+12388 INFO: Copying bootloader EXE to D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\build\main\main.exe
+12420 INFO: Copying icon to EXE
+12749 INFO: Copying 0 resources to EXE
+12749 INFO: Embedding manifest in EXE
+12752 INFO: Appending PKG archive to EXE
+12755 INFO: Fixing EXE headers
+12862 INFO: Building EXE from EXE-00.toc completed successfully.
+12868 INFO: checking COLLECT
+12875 INFO: Removing dir D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\dist\main
+13093 INFO: Building COLLECT COLLECT-00.toc
+14173 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+14186 INFO: Build complete! The results are available in: D:\Workspace\LearnOrDie\Code\Python\ChanCouchBase\dist
+
+PyInstaller build successful!
+Received add_data_str in copy_files_after_build: 'minify;minify,model_key_name.txt;.,uids.txt;.'
+Expected PyInstaller app folder (source) at: D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase\dist\main
+Contents of PyInstaller source folder 'D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase\dist\main': ['main.exe', '_internal']
+Clearing existing contents of target directory: D:/Workspace/LearnOrDie/Code/Python/Tools
+Copied main executable: 'main.exe' to 'D:/Workspace/LearnOrDie/Code/Python/Tools'
+Copied '_internal' folder from 'D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase\dist\main\_internal' to 'D:/Workspace/LearnOrDie/Code/Python/Tools\_internal'
+Processing --add-data pair: SOURCE='D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase\dist\main\_internal\minify', DEST='D:/Workspace/LearnOrDie/Code/Python/Tools\minify'
+Copied directory 'minify' to 'minify'
+Processing --add-data pair: SOURCE='D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase\dist\main\_internal\model_key_name.txt', DEST='D:/Workspace/LearnOrDie/Code/Python/Tools'
+Copied file 'model_key_name.txt' to '.'
+Processing --add-data pair: SOURCE='D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase\dist\main\_internal\uids.txt', DEST='D:/Workspace/LearnOrDie/Code/Python/Tools'
+Copied file 'uids.txt' to '.'
+
+Application built and files copied successfully to target directory!
+Your application is located in: D:/Workspace/LearnOrDie/Code/Python/Tools
+

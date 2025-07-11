@@ -6,6 +6,7 @@ from utils import *
 from tkinter import font
 import json
 import trace
+import datetime
 
 class DataTool:
     def __init__(self, root):
@@ -13,7 +14,7 @@ class DataTool:
         self.root.title("Couchbase Data Tool")
 
         self.model_keys = load_model_keys()
-        self.custom_font = font.Font(family="JetBrains Mono", size=12)
+        self.custom_font = font.Font(family="Times New Roman", size=14)
         self.get_dict_users()
         self.create_widgets()
         self.login()
@@ -46,19 +47,51 @@ class DataTool:
         self.root.bind('<Control-Return>', lambda event: self.write_data())
         self.root.bind('<Return>', lambda event: self.read_data())
 
-        self.raw_text = tk.Text(self.root, height=20, font=self.custom_font)
+        self.raw_text = tk.Text(self.root, height=10, font=self.custom_font)
         self.raw_text.grid(row=5, column=0, columnspan=2, sticky="nsew")
         tk.Button(self.root, text="Copy Raw", command=lambda: self.copy_to_clipboard(self.raw_text), font=self.custom_font, bd=2, relief="solid").grid(row=6, column=0, columnspan=1, sticky="ew")
 
-        self.normalized_text = tk.Text(self.root, height=20, font=self.custom_font)
+        self.normalized_text = tk.Text(self.root, height=10, font=self.custom_font)
         self.normalized_text.grid(row=7, column=0, columnspan=2, sticky="nsew")
         tk.Button(self.root, text="Copy Normalized", command=lambda: self.copy_to_clipboard(self.normalized_text), font=self.custom_font, bd=2, relief="solid").grid(row=8, column=0, columnspan=1, sticky="ew")
 
         tk.Button(self.root, text="Convert Normalized to Raw", command=lambda: self.convert_normal_to_raw(), font=self.custom_font, bd=2, relief="solid").grid(row=8, column=1, columnspan=1, sticky="ew")
 
-        # Update row weights to match new layout
-        self.root.grid_rowconfigure(4, weight=1)
-        self.root.grid_rowconfigure(6, weight=1)
+        # Add 7 text fields, 6 for time numbers (year, month, day, hour, minute, second) and 1 for timestamp in second
+        self.time_fields = {}
+        time_labels = ["Year", "Month", "Day", "Hour", "Minute", "Second", "Timestamp"]
+        for i, label in enumerate(time_labels):
+            tk.Label(self.root, text=label + ":", font=self.custom_font).grid(row=9 + i, column=0, sticky="ew")
+            self.time_fields[label.lower()] = tk.Entry(self.root, font=self.custom_font)
+            self.time_fields[label.lower()].grid(row=9 + i, column=1, sticky="ew")
+        # Set default values for time fields
+        self.time_fields['year'].insert(0, "2025")
+        self.time_fields['month'].insert(0, "10")
+        self.time_fields['day'].insert(0, "01")
+        self.time_fields['hour'].insert(0, "0")
+        self.time_fields['minute'].insert(0, "00")
+        self.time_fields['second'].insert(0, "00")
+        self.time_fields['timestamp'].insert(0, "1696156800")
+
+        # Setup auto calculate timestamp after edit time
+        for field in ['year', 'month', 'day', 'hour', 'minute', 'second']:
+            self.time_fields[field].bind("<KeyRelease>", self.update_timestamp)
+
+    def update_timestamp(self, event):
+        # If input is invalid, show timestamp as "invalid"
+        try:
+            year = int(self.time_fields['year'].get())
+            month = int(self.time_fields['month'].get())
+            day = int(self.time_fields['day'].get())
+            hour = int(self.time_fields['hour'].get())
+            minute = int(self.time_fields['minute'].get())
+            second = int(self.time_fields['second'].get())
+            timestamp = int(datetime.datetime(year, month, day, hour, minute, second).timestamp())
+            self.time_fields['timestamp'].delete(0, tk.END)
+            self.time_fields['timestamp'].insert(0, str(timestamp))
+        except ValueError:
+            self.time_fields['timestamp'].delete(0, tk.END)
+            self.time_fields['timestamp'].insert(0, "invalid")
 
     def login(self):
         login()

@@ -350,5 +350,4 @@
             + cb: Mở AI cho user từ gói nạp
             + cb: Mở AI cho user bằng mod
 
-            
-            
+    - Auto reset Quan của user sau một khoảng thời gian

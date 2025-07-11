@@ -147,7 +147,6 @@
     - When testing local with sd-api-pay:
         + Remember to delete cookie to re-login
         + If code ts change, need to restart the app, other change, the restart is not neccessary
-        + 
     - Machine: uf5, f2, uf4, f3, uf5
     - Log api-dev-c3: dev.sandinhstudio.com - /opt/sd/api-log-c3
     - Log api-dev-thuong: dev.sandinhstudio.com - /opt/sd/api-log
@@ -160,36 +159,13 @@
         + Change scale to 0, 1, or 2 
     - Update Mod để không bị lỗi 415 cần định nghĩa json trong modNapBao của mod.ts
     - Để build sd-api-pay trên product cần push các file js được build, nếu không sẽ không có thay đổi
-
-Google Subscription Billing Payment
-
-1. Set Up Google Play Console
-    Register your app on Google Play Console.
-    Set up in-app products and subscriptions under Monetize > Products > Subscriptions.
-
-2. Use Google Play Developer API
-    Google provides REST APIs to:
-        + Validate purchases.
-        + Check subscription status.
-        + Acknowledge and cancel subscriptions.
-
-3. Create a backend endpoint in Play Framework
-    This would receive the purchase token from the Android app and call Google Play Developer API to validate it:
-
-    def validatePurchase = Action.async(parse.json) { request =>
-        val purchaseToken = (request.body \ "purchaseToken").as[String]
-        val subscriptionId = (request.body \ "subscriptionId").as[String]
-        
-        // Your logic to access Google API using HTTP client
-        // Include access token in header
-    }
-
-4. Use a library to access Google APIs
-    You can use an HTTP client like sttp or [Akka HTTP] to call the Google Play API.
-
-5. Authentication
-    Authenticate using a service account. Download the JSON key and use it to request an access token via Google OAuth2.
-
-6. Android App Side
-    Use Google Play Billing Library.
-    After the user subscribes, get the purchaseToken and send it to your server.
+    - Config fodi:
+        + Cần hàm getOrCreate
+        + cache lại trong cacheApi
+        + Tạo hàm reload config trong small tool
+    - Cần rebase trước khi tạo pull request
+    - Chú ý hàm SuccessPurchase
+    - sd-api-pay dùng 
+        + nvm - 1.1.11
+        + npm - 6.13.4
+    - Các 
