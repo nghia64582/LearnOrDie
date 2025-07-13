@@ -1,0 +1,1241 @@
+11	13	Phan Thi Le Hang	75
+11	14	Dang Huyen	70
+11	16	Nguyen Thi Thanh	70
+11	18	Le Van Chi	70
+11	22	Hien Hien	65
+11	23	Nguyen Thuy Linh	70
+11	25		
+11	27	Nguyen Thu Hang	80
+11	28	Lau Kinh	75
+11	29	Thuy Duong	70
+11	30	Kim Hoa	70
+12	1		
+12	2		
+12	3	Ha Phuong	65
+12	4	Chu Tam	70
+12	6	Hien Hien	75
+12	7	Giao ga	75
+12	9	Dao Thuy Huong	75
+12	10	Yen Nguyen	75
+12	11	Pham Minh Hang	75
+12	16	Thuong Ngo	70
+12	17		
+12	18	Phuong Nguyen	80
+12	19	Thuong Ngo	75
+12	20	Trinh Thi Ngoc Khanh	75
+12	21	Kim Hoa	75
+12	23	Thuong Ngo	75
+12	24	Ha Phuong	75
+12	26	Phan Thi Le Hang	75
+12	28	Moonwol	75
+12	30	Nguyen Thu Hang	80
+1	1	Le Doan Hai Anh	75
+1	2	Hien Hien	75
+1	3	Chu Tam	75
+1	5	Ha Phuong	70
+1	7	Nguyen Thuy Linh	75
+1	8	Trinh Thi Ngoc Khanh	75
+1	9	Kim Hoa	75
+1	11	Duong Tran	75
+1	13		
+1	14	Hien Hien	75
+1	15	Rei kishou	75
+1	16	Minh Hanh	75
+1	17	Minh Hanh	75
+1	19	Le Doan Hai Anh	75
+1	20	Nguyen Thi Thanh	75
+1	20	Hien Hien	75
+1	22	Minh Hanh	75
+1	24	To Anh	75
+1	25	Phuong Anh	75
+1	26	Pham Thai Ha	75
+1	28	Cao Miho	75
+1	29	Nguyen Thuy Linh	75
+1	29	Phan Thi Cam Tu	75
+1	30	Nguyen Yen	75
+1	30	Hien Hien	75
+2	2	Dao Thuy Huong	75
+2	3	Kinh Dich	75
+2	4	Ha Phuong	75
+2	6	Huong Tram	75
+2	7		
+2	8	Kim Hoa	75
+2	9	Pham Thai Ha	75
+2	10	Trinh Thi Ngoc Khanh	75
+2	11	Dang Minh Thuy	75
+2	12	Nguyen Ngoc Thu Phuong	75
+2	13	Chu Tam	75
+2	14	Kim Hoa	75
+2	15	Pham Thai Ha	75
+2	16	Le Doan Hai Anh	75
+2	17	Hien Hien	75
+2	18	Ha Phuong	75
+2	19	Cao My Duyen	75
+2	22		
+2	23	Trinh Thi Ngoc Khanh	75
+2	26	Nhung Chu	75
+2	27	Nguyen Thi Thanh	75
+2	27	Kim Hoa	75
+3	1	Ha Nhat Chu	75
+3	2	Hien Hien	75
+3	2	Mai Linh	75
+3	3	Nguyen Ngoc Thu Phuong	75
+3	4	Tran Quynh Trang	75
+3	5	Nguyen Ngoc Thu Phuong	75
+3	7	Yen Nguyen	75
+3	9	Nguyen Thu Hang	80
+3	10	Trinh Thi Ngoc Khanh	75
+3	11	Nhung Chu	75
+3	12	Pham Thi Cam Tu	75
+3	13		75
+3	15	Kim Hoa	75
+3	16	Kinh Dich Hoi	75
+3	18	Ha Phuong	75
+3	19	Chu Nhung	75
+3	20	EDM wall	75
+3	21	Le Doan Hai Anh	75
+3	22	Nhac remix wall	75
+3	23	Hong Nhung Grab	75
+3	24	Nguyen Thu Hang	85
+3	25	Pham Thai Ha	75
+3	26	Ha Nhat Chu	75
+3	26	Tran Ngo Thien Trang	75
+3	27	Carnation Xuyen Chan Voi	75
+3	28	Chu Nhung	75
+4	1		75
+4	2	Jio Phuong	75
+4	3	Ha Phuong	75
+4	5	HMULinh	75
+4	6	Cao My Duyen	75
+4	7	Thuong Ngo	75
+4	8		75
+4	9	Nhac remix wall	75
+4	10	Ha Phuong	75
+4	12	Phuong Anh Chivas	75
+4	13	Le Doan Hai Anh	75
+4	14	Chi Mai	75
+4	15	Tam An	75
+4	16	Nguyen Thu Hang	80
+4	17	Chu Nhung	80
+4	18	Tran Quynh Trang	75
+4	20	Pham Thai Ha	80
+4	21	Trinh Thi Ngoc Khanh	75
+4	23		
+4	24	Thao Linh	75
+4	25	Phuong Anh Chivas	75
+4	28	Nude	75
+5	2	Hien Hien	75
+5	3	Nude	75
+5	4	Ha Nhat Chu	80
+5	6	Thao Linh	80
+5	7	Anh Tuyet	80
+5	8	Cao My Duyen	70
+5	10	Ha Phuong	60
+5	12	Mai Linh	75
+5	14	Nude	75
+5	15	Kim Hoa	75
+5	17	Ha Nhat Chu	80
+5	18	Kinh Dich Hoi	70
+5	21	Pham Thai Ha	80
+5	23	Nhung Chu	75
+5	24	Thao Linh	80
+5	26	Nguyen Ngoc Thu Phuong	70
+5	27	Tran Ngo Thien Trang	75
+5	28	Anh Tuyet	75
+5	29	Kim Hoa	75
+5	30	Le Doan Hai Anh	75
+6	1	Nguyen Thu Hang	75
+6	1	Trinh Thi Ngoc Khanh	70
+6	2	Ha Phuong	65
+6	3	Ha Nhat Chu	70
+6	4	Dao Thuy Huong	70
+6	5	Pham Thai Ha	70
+6	6	Ha Phuong	70
+6	8	Holi Tieu	70
+6	9	Nguyen Yen	60
+6	12	Kim Hoa	70
+6	12	Nguyen Thu Hang	70
+6	14	Trinh Thi Ngoc Khanh	70
+6	16	Le Doan Hai Anh	70
+6	18	Ha Nhat Chu	80
+6	19	Le Doan Hai Anh	70
+6	21	Ha Nhat Chu	80
+6	22	Anh Tuyet	75
+6	23	Ha Phuong	65
+6	25	Hien Hien	75
+6	26	Ha Nhat Chu	75
+6	28	Nguyen Thu Hang	75
+7	2	Ha Nhat Chu	75
+7	5	Ha Nhat Chu	75
+7	8	Pham Thai Ha	75
+7	11	Ha Nhat Chu	80
+7	13	Holi Tieu	75
+7	14	Thao Linh	75
+7	15	Nguyen Thu Hang	80
+7	18	Phong thu toi	70
+7	19	Yen Nguyen	75
+7	23	Ha Nhat Chu	80
+7	24	Hien Hien	80
+7	27		
+7	29	Thao Linh	75
+7	30	Ha Phuong	65
+8	2	Le Doan Hai Anh	75
+8	4	Hien Hien	75
+8	6	Mai Phuong	75
+8	12	Ha Nhat Chu	80
+8	14	Hien Hien	75
+8	16	Korean	65
+8	19		
+8	21	Ha Nhat Chu	75
+8	22	Pham Thai Ha	75
+8	23	Mai Phuong	75
+8	25		70
+8	27	Mai Phuong	75
+8	29	Nancy	75
+9	4	Ha Nhat Chu	75
+9	7	Ha Nhat Chu	75
+9	9	Hien Hien	75
+9	10	Ve Dan	75
+9	11	Pham Thai Ha	75
+9	13	Do Khanh Linh	75
+9	14	Tam An	75
+9	16	Nguyen Ngoc Thu Phuong	75
+9	17	Mai Phuong	75
+9	20	Ha Nhat Chu	80
+9	21	Le Doan Hai Anh	75
+9	22	Hien Hien	75
+9	23		
+9	24	Nguyen Thuc Thuy Tien	60
+9	25	Dang Huyen	70
+9	26	Ha Nhat Chu	80
+9	29	Mai Phuong	75
+10	1	Ha Nhat Chu	80
+10	2	Nhung Chu	75
+10	3	Dang Phuong Thao	75
+10	5	Ha Nhat Chu	70
+10	6	Trinh Thi Ngoc Khanh	70
+10	7	Hien Hien	70
+10	7	Holi Tieu	65
+10	11	Do Khanh Linh	75
+10	13	Ha Nhat Chu	75
+10	15	Hang Nguyen	75
+10	16	Thao Linh	75
+10	18	Ha Phuong	65
+10	19	Ha Nhat Chu	75
+10	19	Share FB	70
+10	22	Unknown	75
+10	22	Unknown	75
+10	23	Do Khanh Linh	75
+10	24	Mai Phuong	80
+10	26	Wang Yu Chun	75
+10	27	Trinh Thi Ngoc Khanh	70
+10	29	Ve Dan	80
+10	30	Hien Hien	80
+10	31	Hong Tran	80
+11	1	https://www.facebook.com/Theanh28tv/videos/677091617114910/	80
+11	3	Ha Nhat Chu	80
+11	4	Thuong Ngo	75
+11	6	anna gau	65
+11	7	Do Khanh Linh	75
+11	8	Nguyen Thu Hang	75
+11	11	Kim Hoa	75
+11	12	Trinh Thi Ngoc Khanh	70
+11	15	Tran Thu Trang	80
+11	16	Ha Nhat Chu	80
+11	19	fb wall	65
+11	20	Hien Hien	70
+11	21	Do Khanh Linh	75
+11	22	Hong	80
+11	23	Ha Nhat Chu	80
+11	24	Mai Phuong	75
+11	25	Cao My Duyen	80
+11	26	Dang Huyen	80
+11	27	Nguyen Thu Hang	80
+11	27	Pham Thai Ha	75
+11	28	Kim Hoa	75
+11	30	Ve Dan	70
+12	1	Ha Phuong	65
+12	2	Trinh Thi Ngoc Khanh	75
+12	3	Tran Ngo Thien Trang	75
+12	4	Ha Nhat Chu	75
+12	5	Nguyen Thu Hang	80
+12	7	Share FB	70
+12	9	Ha Nhat Chu	75
+12	11	Hien Hien	75
+12	13	Do Khanh Linh	70
+12	14	Yen Nguyen	75
+12	16	Trinh Thi Ngoc Khanh	75
+12	18	Ha Nhat Chu	80
+12	19	Hien Hien	75
+12	21	Tran Thu Trang	80
+12	23		
+12	25	Le Doan Hai Anh	70
+12	27	Do Khanh Linh	80
+12	28	Ha Ngan	80
+12	29	Hien Hien	80
+12	31	Hang Nguyen	80
+1	1	Ha Nhat Chu	80
+1	2	Le Van Chi	70
+1	4	Wall	75
+1	6	Pham Thai Ha	75
+1	8	Ha Nhat Chu	80
+1	11	Dang Huyen	80
+1	12	Do Khanh Linh	75
+1	14	Nguyen Thu Hang	75
+1	16	Ayaka Miyoshi	80
+1	17	Chu Nhat Ha	70
+1	18	Mai Phuong	70
+1	19	Joyce Nguyen	75
+1	20	Do Khanh Linh	75
+1	22	Ha Nhat Chu	75
+1	24	Hien Hien	75
+1	25	Le Doan Hai Anh	75
+1	26	Dao Thuy Huong	75
+1	28	Trinh Thi Ngoc Khanh	75
+1	30	Ve Dan	75
+1	31	Trieu Minh Hang	75
+2	1	Nguyen Thu Hang	80
+2	2	Pham Thai Ha	75
+2	3	Ha Nhat Chu	80
+2	4	Do Khanh Linh	75
+2	6	Hien Hien	80
+2	7	Anounymous	
+2	8	Cao My Duyen	80
+2	9	Tran Ngo Thien Trang	75
+2	10	Dang Huyen	75
+2	11	Nu sinh Dong Thap	75
+2	12	Nguyen Thu Hang	80
+2	14	Pham Thai Ha	75
+2	15	Nguyen Thu Hang	75
+2	17	Anounymous	
+2	18	Chu Nhung	75
+2	19	Ve Dan	80
+2	20	Chu Nhat Ha	80
+2	21	Anounymous	75
+2	22	Hien Hien	75
+2	23	Trinh Thi Ngoc Khanh	75
+2	24	Anounymous	75
+2	25	Hien Hien	75
+2	26	Ha Nhat Chu	80
+2	27	Lam Anh	75
+2	28	Tran Huyen Chau	75
+3	1	Nguyen Thu Hang	80
+3	2	Tran Thu Trang	80
+3	4	Ha Nhat Chu	75
+3	6	Do Khanh Linh	75
+3	7	Tran Huyen Chau	80
+3	9	Nhung Chu	75
+3	10	Le Doan Hai Anh	75
+3	12	Uyen Phuong	80
+3	13	Hien Hien	80
+3	15		
+3	17	Le Van Chi	75
+3	19	Thuong Ngo	75
+3	20	Trinh Thi Ngoc Khanh	75
+3	22	Hien Hien	75
+3	24	Pham Thai Ha	75
+3	26	Do Khanh Linh	75
+3	26	Nguyen Thanh Hien	75
+3	27		
+3	28		
+4	1		
+4	2	Chu Nhat Ha	75
+4	3	Hien Hien	80
+4	4	Le Doan Hai Anh	75
+4	6	Nguyen Thuy Linh	75
+4	8	Chu Nhat Ha	75
+4	9	Do Khanh Linh	75
+4	10	Nhung Chu	75
+4	11	Thao Linh	75
+4	13		
+4	15	Hien Hien	75
+4	17	Ha Nhat Chu	80
+4	18	Hien Hien	75
+4	19	Mice Phuong	80
+4	21	Dang Huyen	75
+4	22	Zyry	75
+4	23	Dan Phuong	75
+4	24	MyHuyen	80
+4	26	Hien Hien	75
+4	28	Nguyen Thu Hang	80
+4	28	Bui Thi Huong Giang	75
+4	30	Thao Linh	75
+5	1	Hien Hien	75
+5	2	Trieu Minh Hang	75
+5	3		
+5	4	Do Khanh Linh	75
+5	5	Trinh Thi Ngoc Khanh	75
+5	6		
+5	7	Elly Tran	75
+5	9	Tran Thu Trang	80
+5	10	Hien Hien	75
+5	12	Ha Nhat Chu	80
+5	13	Kim Ngan Hoang	80
+5	15	Thuong Ngo	75
+5	16	Ve Dan	75
+5	17	Quynh Trang 	75
+5	19		
+5	20		
+5	21	Hang Kiu	75
+5	22	Dan Phuong	80
+5	23		
+5	25		
+5	26	Quynh Trang 	75
+5	28	Pham Thai Ha	75
+5	30	Hien Hien	75
+6	2	Nguyen Thu Hang	85
+6	3		
+6	5	Tran Thu Trang	80
+6	6	My Huyen	75
+6	7		
+6	8	Ha Phuong	75
+6	9	Hang Kiu	75
+6	10	Nancy	70
+6	12	Do Khanh Linh	75
+6	13	Mice Phuong	75
+6	14	Ha Nhat Chu	75
+6	15	Ve Dan	75
+6	16	Hang Nguyen	80
+6	17	Dan Phuong	75
+6	18	Nguyen Thi Thuy Trang	75
+6	18	Dang Huyen	75
+6	19	Ha Nhat Chu	80
+6	20	Kim Anh	70
+6	21	Nguyen Ngoc Thu Phuong	70
+6	23	Nhung Chu	75
+6	24	Anounymous	75
+6	25	Ha Nhat Chu	80
+6	25	Wall	80
+6	26	Do Khanh Linh	75
+6	27	Quynh Trang	75
+6	29	Kim Hoa	75
+7	1	Hong Tran	70
+7	2	Anounymous	75
+7	3	Vu Thuy Linh	80
+7	4	Ha Nhat Chu	80
+7	6	Anounymous	75
+7	7	Tran Thu Trang	80
+7	8	Le Doan Hai Anh	80
+7	9	Nguyen Thanh Hien	80
+7	11	Nguyen Khanh Linh	80
+7	12	Nguyen Thu Hang	80
+7	13	Nguyen Thi Thuy Trang	75
+7	14	Bui Thi Huong Giang	75
+7	15	Ha Phuong	75
+7	16	Qian princess	75
+7	18	Nhung Chu	75
+7	20	Tran Thu Trang	70
+7	23	Dang Huyen	75
+7	23	Hang Nguyen	75
+7	24	Dao Thuy Huong	75
+7	26	Hien Hien	80
+7	27	Dieu Anh	75
+7	28	Chu Nhat Ha	80
+7	29	Anh Tuyet	75
+7	29	Le Doan Hai Anh	70
+7	30	My Huyen	75
+7	30	Trinh Thi Ngoc Khanh	75
+8	2	Tran Thu Trang	75
+8	3	Thuong Ngo	75
+8	4	Diem Lien	75
+8	5	Mai Phuong	75
+8	6	Nguyen Thi Thuy Trang	75
+8	7	Anh Tuyet	75
+8	8		
+8	9	Hien Hien	75
+8	10	Tue Minh	75
+8	11	Viet Phuong	75
+8	12	Do Khanh Linh	75
+8	13	Chu Nhat Ha	80
+8	13	Nguyen Thu Hang	80
+8	14		
+8	15		
+8	16	Nguyen Thi Thuy Trang	75
+8	17	Mice Phuong	70
+8	18	Nhung Chu	75
+8	19	Hien Hien	80
+8	20	Chu Nhat Ha	80
+8	20	Le Van Chi	75
+8	21	Tran Huyen Chau	80
+8	22	Tran Thu Trang	70
+8	24	Tran Ngo Thien Trang	75
+8	25	Ve Dan	80
+8	27	Ha Nhat Chu	80
+8	28	Thuong Ngo	75
+8	29	Dang Huyen	80
+8	30	Vu Thuy Linh	75
+9	1		
+9	2		
+9	3	Chu Nhat Ha	75
+9	4	Do Khanh Linh	75
+9	5		
+9	6	Chu Nhat Ha	80
+9	8		
+9	9		
+9	10	My Huyen	80
+9	11	Hong	75
+9	12	Hien Hien	80
+9	13	Dang Huyen	75
+9	14	Nguyen Thu Hang	80
+9	15	Anh Tuyet	75
+9	16	Le Doan Hai Anh	75
+9	16	Ha Nhat Chu	80
+9	17	Cao Miho	75
+9	18	Phan Thi Le Hang	75
+9	19	Nguyen Thu Hang	80
+9	20	Mice Phuong	75
+9	21	Ha Nhat Chu	75
+9	23	Hien Hien	80
+9	24	Kim Hoa	75
+9	25	Nguyen Thanh Hien	80
+9	26	Hien Hien	80
+9	27	Pham Thai Ha	80
+9	28	Tran Huyen Chau	80
+9	29	Dao Hong Anh	75
+9	30	Nguyen Thu Hang	80
+10	1	Chu Nhat Ha	80
+10	2	Do Khanh Linh	80
+10	3	Nhung Chu	75
+10	4	Nanmuay	75
+10	6	Kim Anh	75
+10	7	Dang Huyen	75
+10	8	Nguyen Thu Hang	75
+10	10	Hien Hien	75
+10	10	Dieu Anh	70
+10	11		75
+10	12	Pham Thai Ha	75
+10	13	Viet Phuong	75
+10	14	Chu Nhat Ha	75
+10	16	Phan Thi Le Hang	80
+10	18	Hien Hien	75
+10	20	Le Doan Hai Anh	75
+10	21		75
+10	22	Cao My Duyen	75
+10	23	Chu Nhat Ha	75
+10	24	Ha Phuong	75
+10	25	Kwon Eunbi	75
+10	25	Tue Minh	80
+10	26		75
+10	28	Mice Phuong	80
+10	29	Phan Hai Yen	80
+10	31	Nha Girl Xinh	80
+11	1	Hien Hien	80
+11	2	Carnation Xuyen Chan Voi	80
+11	4		
+11	5	Le Van Chi	70
+11	5	Phan Thi Le Hang	80
+11	7	Linh Trang	80
+11	8	Mice Phuong	75
+11	10	Trang Anhh	75
+11	11	Dang Huyen	80
+11	12	Pham Thai Ha	75
+11	12	Women news	80
+11	13	Hang Nguyen	80
+11	14	My Huyen	75
+11	15	Dan Phuong	80
+11	16	Nhung Chu	80
+11	17	Chu Nhat Ha	80
+11	18	Hien Hien	80
+11	18	Ha Phuong	75
+11	19	Korean	75
+11	20	Phan Thi Le Hang	80
+11	21	Do Khanh Linh	80
+11	22	Kim Hoa	80
+11	23	Thuong Ngo	75
+11	24	Le Doan Hai Anh	75
+11	25	Hien Hien	80
+11	26	Dang Huyen	80
+11	27	Chu Nhat Ha	80
+11	28	Nhung Chu	80
+11	29	Quynh Trang	82
+12	1	Hang Nguyen	80
+12	3	Ha Nhat Chu	80
+12	4	Do Khanh Linh	76
+12	4	Mie	75
+12	5		
+12	6	Pham Quyen	80
+12	8	Pham Thai Ha	75
+12	9	Hien Hien	80
+12	10	Hong	75
+12	12	Hang Nguyen	80
+12	13	Chu Nhung	75
+12	14	Hien Hien	75
+12	15	Ha Nhat Chu	75
+12	16	Quynh Trang	80
+12	17	Hang Nguyen	75
+12	18	Mice Phuong	75
+12	18	Nha tu so 3	75
+12	19	Thuy Trang	70
+12	20	Tue Minh	70
+12	21	Nguyen Thuy Linh	80
+12	21	Hong	75
+12	22	Ao Dai	70
+12	23	Tran Thu Trang	75
+12	24	Do Khanh Linh	75
+12	25	Hien Hien	75
+12	26	Le Doan Hai Anh	75
+12	26	Anh Tuyet	70
+12	27	Ve Dan	80
+12	30	Quynh Trang	80
+1	1	Korean	75
+1	3	Ha Nhat Chu	75
+1	4	Do Khanh Linh	80
+1	5		
+1	6	Nhung Chu	75
+1	7	Nguyen Ngoc Diep	75
+1	9	Ha Phuong	75
+1	10	Trang Anhh	75
+1	11	Ha Nhat Chu	80
+1	12	Tran Thu Trang	80
+1	13	Nguyen Thu Hang	80
+1	13	Dao Thuy Huong	75
+1	14	Hien Hien	80
+1	15	Do Khanh Linh	80
+1	16		70
+1	17	Ha Nhat Chu	70
+1	18		
+1	19	Le Bong	75
+1	20	Kim Hoa	75
+1	21	Hong	75
+1	21	Kim Anh	80
+1	23	Korean	80
+1	24	Hien Hien	80
+1	25		
+1	27	Hang Nguyen	80
+1	28	Dang Huyen	75
+1	29	Linh Trang	80
+1	30	Chu Nhung	80
+1	31	Hong	75
+2	1		
+2	1	Korean	80
+2	2	Chu Nhat Ha	80
+2	3	Hang Kiu	80
+2	4	Tran Thu Trang	80
+2	4	Mice Phuong	80
+2	5	Nguyen Thuy Linh	80
+2	6	Nguyen Thu Hang	80
+2	6	Ao Dai	80
+2	7	Hien Hien	80
+2	8	Anh Tuyet	80
+2	9	Dieu Trinh	82
+2	11	Do Khanh Linh	80
+2	12	Tue Minh	80
+2	13	Nguyen Thanh Hien	80
+2	14	Ve Dan	80
+2	15	Pham Thai Ha	75
+2	15	Nhung Chu	80
+2	16	Ha Nhat Chu	80
+2	17	Hong	80
+2	18	Hoa Minzy	75
+2	19	Anh Tuyet	75
+2	20	Hien Hien	75
+2	21	Trang Anhh	75
+2	22	Chu Nhat Ha	80
+2	23	Trieu Minh Hang	75
+2	24	Pham Thai Ha	75
+2	25	Ha Phuong	75
+2	26	Nguyen Thu Hang	80
+2	27	Chu Nhat Ha	80
+2	28	Nhung Chu	78
+2	28	Vu Thuy Linh	75
+2	29	Nhung Chu	80
+3	1	Hoa Minzy	80
+3	1	Quynh Trang	82
+3	2	Dang Huyen	80
+3	3	Hien Hien	80
+3	4	Nguyen Thuy Linh	80
+3	5	Hang Kiu	75
+3	6	Chu Nhat Ha	82
+3	6	Chu Nhat Ha	80
+3	7	Pham Quyen	78
+3	8	Hang Nguyen	80
+3	9	Ve Dan	78
+3	10	Tue Minh	75
+3	11	Hong	75
+3	12	Phan Thi Le Hang	70
+3	13	Kim Hoa	80
+3	14	Ha Nhat Chu	80
+3	14	Mice Phuong	80
+3	16	Le Doan Hai Anh	78
+3	16	Do Khanh Linh	78
+3	17	Hang Nguyen	80
+3	18	Quynh Trang	80
+3	19	Ao Dai	80
+3	20	Mice Phuong	80
+3	21	Ha Phuong	78
+3	21	Trang Anhh	78
+3	22	Chu Nhat Ha	80
+3	23	Thuy Linh	75
+3	23	Thuy Trang	70
+3	24	Pham Quyen	70
+3	25	Bao Ngan	80
+3	26	Hang Nguyen	75
+3	26	Hien Hien	70
+3	27	Nhung Chu	75
+3	28	Kim Anh	78
+3	29	anonymous	75
+3	30	Nguyen Ngoc Diep	75
+3	30	Hoa Minzy	78
+3	31	Tue Minh	80
+4	1	Do Khanh Linh	80
+4	2	Bui Thi Huong Giang	75
+4	3	Chu Nhat Ha	78
+4	4	Hang Nguyen	78
+4	4	Ve Dan	75
+4	6	Nguyen Thuy Linh	65
+4	7	Le Doan Hai Anh	68
+4	7	Linh Trang	70
+4	9	Dang Huyen	75
+4	10	Kim Hoa	72
+4	11	Ha Phuong	75
+4	12	Thuy Trang	75
+4	13	Hong	78
+4	14	Hang Nguyen	80
+4	15	Trieu Minh Hang	80
+4	16	Anh Tuyet	78
+4	16	Chu Nhat Ha	78
+4	17	Quynh Trang	78
+4	18	Mice Phuong	80
+4	18	Bao Ngan	82
+4	19	Tue Minh	80
+4	20	Anounymous	80
+4	21	Thuong Ngo	80
+4	22	Chu Nhat Ha	82
+4	23	Ve Dan	80
+4	24	Phan Thi Le Hang	80
+4	25	Hien Hien	80
+4	26	Do Khanh Linh	80
+4	28	Dao Hong Anh	80
+4	29	Tue Minh	82
+4	30	Quynh Trang	80
+5	1	Dang Phuong Thao	80
+5	2	Thuong Ngo	78
+5	3	Vu Thuy Linh	78
+5	3	Nhung Chu	78
+5	4	Mice Phuong	75
+5	5	Hien Hien	80
+5	6	Anounymous	75
+5	7	Chu Nhat Ha	80
+5	8	Nguyen Thanh Hien	80
+5	8	Ha Phuong	75
+5	9	Pham Thai Ha	78
+5	9	Dang Huyen	78
+5	10	Kim Anh	78
+5	10	Nguyen Thu Hang	80
+5	11	Le Ngoc Anh	80
+5	12	Phan Thi Le Hang	80
+5	13	Nhung Chu	80
+5	14	Mice Phuong	75
+5	14	Hoa Minzy	80
+5	15	Diem Lien	80
+5	16	Chu Nhat Ha	80
+5	16	Nguyen Thuy Linh	78
+5	17	Anh Tuyet	78
+5	18	Pham Quyen	80
+5	19	Tue Minh	80
+5	19	Hang Nguyen	80
+5	21	Pham Quyen	78
+5	21	Quynh Trang	82
+5	22	Diem Lien	78
+5	23	Pham Quyen	78
+5	24	Phan Thi Le Hang	80
+5	25	Mai Phuong	75
+5	26	Hien Hien	80
+5	27	Pham Quyen	80
+5	28	Dang Huyen	80
+5	28	Tran Thu Trang	78
+5	29	Tue Minh	75
+5	30	Nguyen Thu Hang	82
+5	30	Vu Thuy Linh	81
+5	31	Nhung Chu	80
+5	31	Phan Thi Cam Tu	81
+6	1	Giang Shana	80
+6	2	Chu Nhat Ha	80
+6	3	Stella Day	79
+6	4	Thuy Trang	80
+6	5	Kim Hoa	80
+6	5	Phan Thi Le Hang	78
+6	6	Joyce Nguyen	79
+6	8	Quynh Trang	80
+6	9	Bao Ngan	78
+6	10	Hang Nguyen	80
+6	10	Le Doan Hai Anh	73
+6	11	Telegram	60
+6	12	Anh Tuyet	75
+6	13	Dang Huyen	76
+6	14	Nhung Chu	75
+6	15	Hien Hien	79
+6	16	Pham Quyen	80
+6	17	Do Khanh Linh	79
+6	18	Cao My Duyen	79
+6	19	Quynh Trang	81
+6	20	Chu Nhat Ha	80
+6	21	Tue Minh	79
+6	22	Ong Anh	79
+6	23	Tran Thu Trang	81
+6	25	Quynh Trang	78
+6	26	Ve Dan	82
+6	26	Nguyen Thanh Hien	80
+6	27	Chu Nhat Ha	81
+6	29	Ong Anh	77
+6	30	Mice Phuong	75
+7	1	Pham Ha My	79
+7	2	Hien Hien	79
+7	2	Ha Phuong	77
+7	3	Chu Nhat Ha	78
+7	4	Dang Huyen	78
+7	5	Hong	80
+7	5	Hang Nguyen	81
+7	7	Quynh Trang	80
+7	7	Thao Linh	80
+7	8	Chu Nhat Ha	82
+7	10	Chi Mai	81
+7	11	Thai Lan girl	78
+7	11	Kim Anh	79
+7	13	Hien Hien	80
+7	14	Chu Nhat Ha	82
+7	15	Tue Minh	80
+7	16	Pham Quyen	78
+7	17	Ong Anh	80
+7	18	Hang Nguyen	81
+7	19	Le Doan Hai Anh	80
+7	20	Chu Nhat Ha	82
+7	21	Trinh Thi Ngoc Khanh	79
+7	21	Nhung Chu	81
+7	22	Ao Dai	80
+7	23	Chi Mai	80
+7	24	Hien Hien	81
+7	25	Tue Minh	80
+7	26	Mice Phuong	79
+7	27	Do Khanh Linh	81
+7	28	Ha Nhat Chu	82
+7	29	Kim Hoa	77
+7	29	Le Bong	79
+7	30	Nguyen Thanh Hien	81
+7	30	Nhung Chu	79
+7	31	Anh Tuyet	81
+8	1	Pham Ha My	79
+8	2	Hong	80
+8	2	Chu Nhat Ha	80
+8	3	Phuong Nguyen	79
+8	4	Tue Minh	80
+8	5	Do Khanh Linh	80
+8	6	Ve Dan	79
+8	7	Nguyen Thu Hang	81
+8	8	Bao Ngan	78
+8	9	Chu Nhat Ha	80
+8	9	Pham Quyen	79
+8	10	Pham Mai Huong	80
+8	11	Ong Anh	80
+8	12	Ame	81
+8	13	Pham Thai Ha	81
+8	14	Phuong Anh Chivas	81
+8	15	Do Khanh Linh	83
+8	16	Thuy Trang	79
+8	16	Engfa	81
+8	17	Pham Mai Huong	80
+8	18	Tue Minh	79
+8	19	Chu Nhat Ha	80
+8	20	Huynh Thuy Duong	79
+8	21	Nguyen Thuy Linh	78
+8	22	Hien Hien	75
+8	22	Pham Quyen	79
+8	23	Hang Nguyen	82
+8	24	Anh Tuyet	78
+8	26	Nhung Chu	82
+8	27	Ha Nhat Chu	81
+8	27	Ve Dan	79
+8	28	Cao My Duyen	80
+8	29	Pham Mai Huong	80
+8	30	Nguyen Ngoc Diep	82
+8	30	Quynh Trang	79
+9	1	Le Doan Hai Anh	80
+9	2	Dao Thuy Huong	78
+9	2	Kim Hoa	79
+9	3	Dang Huyen	80
+9	5	Chu Nhat Ha	83
+9	8	Pham Quyen	84
+9	8	Hoang Khanh Ly	82
+9	9	Mice Phuong	81
+9	10	Ha Phuong	82
+9	10	Pham Thai Ha	82
+9	11	Ong Anh	79
+9	12	Nhung Chu	79
+9	13	Hang Nguyen	80
+9	14	Hien Hien	76
+9	15	Quynh Tram	80
+9	15	tngdkh	78
+9	16	Phan Thi Le Hang	78
+9	16	Dieu Trinh	78
+9	17	Chi Mai	77
+9	18	Chu Nhat Ha	78
+9	19	Do Khanh Linh	79
+9	19	Thuy Trang	78
+9	20	Tue Minh	81
+9	20	Dang Huyen	82
+9	21	Ve Dan	80
+9	22	Ietls Mentor	78
+9	23	Pham Quyen	78
+9	24	Anounymous	78
+9	25	Pham Mai Huong	78
+9	26	Hoa Minzy	80
+9	27	Do Khanh Linh	82
+9	28	To Anh	80
+9	29	Thuong Ngo	79
+9	30	Nguyen Thanh Hien	79
+9	31	Trieu Minh Hang	80
+10	1	Chu Nhat Ha	80
+10	1	Mai Phuong	80
+10	2	Trang Anhh	79
+10	3	Nhung Chu	78
+10	3	Kim Hoa	80
+10	4	Hang Nguyen	79
+10	4	Nguyen Ngoc Diep	78
+10	5	Tue Minh	80
+10	5	Cgdtqk	82
+10	6	Anh Tuyet	80
+10	7	Ha Nhat Chu	78
+10	7	Le Thi Minh Tam	80
+10	8	Hien Hien	79
+10	9	Do Khanh Linh	80
+10	9	Dang Huyen	79
+10	10	Phan Thi Le Hang	79
+10	11	Quynh Trang	81
+10	12	Anh Tuyet	81
+10	13	Thao Linh	78
+10	14	Ve Dan	83
+10	15	Quynh Tram	81
+10	16	Mice Phuong	80
+10	17	Chu Nhat Ha	80
+10	18	So Hee	80
+10	19	Do Khanh Linh	80
+10	19	Cao My Duyen	82
+10	21	Hao Nguyen	81
+10	22	Ong Anh	80
+10	23	Hang Nguyen	82
+10	23	Linh Trang	80
+10	24	Nhung Chu	81
+10	25	Ve Dan	81
+10	25	Anonymous	79
+10	26	Nguyen Thuy Linh	80
+10	27	Dang Huyen	79
+10	28	Chu Nhat Ha	82
+10	29	Hien Hien	80
+10	29	Quynh Trang	81
+10	30	Bao Ngan	80
+10	31	Tue Minh	81
+11	1	Pham Ha My	79
+11	2	Do Khanh Linh	81
+11	3	Vu Thuy Linh	78
+11	4	Chu Nhat Ha	79
+11	5	Pham Quyen	79
+11	6	Kim Hoa	78
+11	7	Nhung Chu	79
+11	7	Hoa Minzy	79
+11	8	Anh Tuyet	80
+11	8	Ha Phuong	80
+11	9	tuynnx	79
+11	10	Chu Nhat Ha	80
+11	11	Dang Huyen	78
+11	12	Quynh Trang	80
+11	13	Trinh Thi Ngoc Khanh	79
+11	14	Ly Phan	79
+11	15	Trang Anhh	79
+11	16	Thuy Trang	81
+11	17	My Huyen	82
+11	18	Chu Nhat Ha	82
+11	19	Hien Hien	80
+11	20	Hong	79
+11	20	Thuy Linh	78
+11	21	Trieu Minh Hang	79
+11	22	Hang Nguyen	80
+11	22	Tue Minh	80
+11	23	Do Khanh Linh	80
+11	24	Nguyen Ngoc Diep	82
+11	24	Quyen Pham	82
+11	25	Mice Phuong	80
+11	26	Pham Mai Huong	80
+11	27	Ong Anh	83
+11	28	el2a	81
+11	29	Nhung Chu	79
+11	29	Le Thi Minh Tam	80
+11	30	Chu Nhat Ha	79
+11	30	Do Thi Hong Van	82
+12	1	Nguyen Thanh Hien	82
+12	1	Hien Hien	80
+12	2	Hang Nguyen	82
+12	3	Dang Ngan	80
+12	4	Ve Dan	78
+12	5	My Huyen	80
+12	5	Le Doan Hai Anh	80
+12	6	Trinh Thi Ngoc Khanh	78
+12	7	Le Thi Minh Tam	79
+12	8	Chu Nhat Ha	81
+12	9	Nguyen Thuy Linh	79
+12	9	Kim Hoa	82
+12	10	Hong Pink	81
+12	11	Cem Studio	80
+12	12	Hang Nguyen	82
+12	13	Do Khanh Linh	80
+12	14	Hien Hien	80
+12	14	Anh Tuyet	81
+12	15	Phuong Nguyen	78
+12	16	Chu Nhat Ha	80
+12	17	Nhung Chu	80
+12	17	Tue Minh	79
+12	18	Pham Mai Huong	79
+12	19	Pham Quyen	79
+12	20	Cao My Duyen	79
+12	21	Hang Nguyen	80
+12	22	Dang Huyen	79
+12	23	Mammot	79
+12	24	Kim Hoa	80
+12	25	Mice Phuong	80
+12	25	Chu Nhat Ha	83
+12	26	Ve Dan	82
+12	27	Dang Phuong Thao	79
+12	27	Anh Tuyet	80
+12	27	Quynh Alee	82
+12	28	Do Khanh Linh	81
+12	29	Le Doan Hai Anh	80
+12	30	Ngo Lan Huong	78
+12	31	Hang Nguyen	81
+12	31	Ly Phan	80
+1	1	Thuy Trang	80
+1	1	Phan Thi Le Hang	82
+1	2	Hien Hien	80
+1	3	Chu Nhat Ha	80
+1	3	Ha Phuong	79
+1	4	Kim Hoa	80
+1	4	Trieu Minh Hang	82
+1	5	Tue Minh	80
+1	6	Quyen Pham	79
+1	7	Cgdtqk	80
+1	7	Trang Anhh	80
+1	8	Diem Lien	80
+1	8	Ly Phan	82
+1	9	Nguyen Thuy Linh	81
+1	12	Mice Phuong	79
+1	13	Dang Huyen	79
+1	14	Chu Nhat Ha	80
+1	14	Bao Ngan	80
+1	15	Nguyen Thuy Linh	80
+1	15	Ve Dan	81
+1	16	Hong	80
+1	16	Bui Anh Ngoc	82
+1	17	Anh Tuyet	80
+1	17	Dang Phuong Thao	79
+1	17	Ngoc Trinh	79
+1	18	Pham Thai Ha	77
+1	19	Kim Hoa	78
+1	19	Hien Hien	80
+1	20	Do Khanh Linh	79
+1	21	Hoa Minzy	79
+1	22	Trieu Minh Hang	78
+1	23	Nguyen Thu Hang	78
+1	23	Pham Mai Huong	78
+1	24	Nguyen Thuy Linh	80
+1	24	Chu Nhat Ha	80
+1	25	Tue Minh	81
+1	26	Kim Hoa	81
+1	27	Anounymous	79
+1	28	Phan Thi Le Hang	82
+1	29	Anounymous	79
+1	30	Hien Hien	79
+1	30	Nguyen Thanh Hien	79
+1	31	Le Doan Hai Anh	78
+1	31	Quynh Tram	79
+2	1	Dang Huyen	78
+2	1	Trang Anhh	79
+2	2	Chu Nhat Ha	79
+2	3	Do Khanh Linh	79
+2	3	Bui Anh Ngoc	80
+2	4	Cao Miho	79
+2	4	Linh Trang	79
+2	4	Quynh Trang	80
+2	5	Hong	79
+2	5	Ong Anh	78
+2	6	Ve Dan	79
+2	7	Chu Nhat Ha	81
+2	8	Ong Anh	80
+2	8	Bui Anh Ngoc	81
+2	9	Hang Nguyen	80
+2	10	Nhung Chu	79
+2	11	Ha Phuong	79
+2	12	Phan Thi Cam Tu	79
+2	12	Chu Nhat Ha	80
+2	13	Anh Tuyet	78
+2	14	Nguyen Thanh Hien	78
+2	15	Chi Mai	80
+2	16	Hien Hien	80
+2	17	Do Khanh Linh	80
+2	18	Jang Seo Hee	80
+2	19	Dang Huyen	79
+2	20	Anh Tuyet	79
+2	21	Ly Phan	81
+2	22	Chu Nhat Ha	81
+2	23	Quynh Trang	80
+2	23	Nguyen Thuy Linh	81
+2	24	Hong	81
+2	25	Tue Minh	80
+2	27	Ong Anh	80
+2	28	Thanh Hao	79
+3	1	Quyen Pham	80
+3	2	Hong	80
+3	3	Mice Phuong	80
+3	3	Seoulasuna	81
+3	4	Hong	81
+3	5	Do Khanh Linh	82
+3	6	Pham Mai Huong	80
+3	7	Anh Tuyet	80
+3	8	Trieu Minh Hang	81
+3	9	Tue Minh	82
+3	11	Hang Nguyen	79
+3	12	Chu Nhat Ha	82
+3	13	My Huyen	79
+3	15	Nhung Chu	80
+3	15	Hien Hien	81
+3	16	Ly Phan	81
+3	17	Sulyu	80
+3	18	Trieu Minh Hang	78
+3	19	Do Khanh Linh	80
+3	20	Chu Nhat Ha	82
+3	21	Nhung Chu	80
+3	21	Ong Anh	80
+3	22	Tuong Mong Tiep	79
+3	23	Hang Nguyen	79
+3	24	Thien Anh	80
+3	25	Tue Minh	79
+3	27	Kim Hoa	78
+3	27	Ha Phuong	79
+3	28	Vu Anh Tuyet	79
+3	29	Diem Lien	80
+3	29	Chu Nhat Ha	80
+3	30	Pham Thai Ha	79
+3	30	Hong	79
+3	31	Pham Mai Huong	79
+4	1	Nguyen Thanh Hien	79
+4	2	Thai Lan girl	80
+4	3	Mice Phuong	80
+4	4	Anounymous	79
+4	5	Hang Nguyen	80
+4	6	Ong Anh	81
+4	7	Chu Nhat Ha	80
+4	7	Do Khanh Linh	80
+4	8	Nhung Chu	80
+4	9	Anh Tuyet	80
+4	10	Phan Thi Le Hang	80
+4	11	Ha Phuong	80
+4	11	Nguyet Ha	81
+4	12	Hien Hien	80
+4	13	Chi Mai	79
+4	15	Ha Nhat Chu	80
+4	16	Pham Mai Huong	80
+4	17	Nguyen Thu Hang	80
+4	18	Trang Anhh	81
+4	18	Pham Thai Ha	80
+4	20	Do Khanh Linh	81
+4	21	Nhung Chu	80
+4	22	Nguyen Thi Thanh	80
+4	23	Ly Phan	80
+4	24	Sulyu	79
+4	25	Hong	79
+4	26	Hien Hien	80
+4	27	Phan Thi Le Hang	80
+4	28	Tue Minh	80
+4	28	Thien Anh	79
+4	29	Quynh Alee	77
+4	29	Ha Nhat Chu	81
+4	30	Nguyen Thuy Linh	80
+5	1	Nhung Chu	80
+5	2	Hang Nguyen	81
+5	2	Kim Hoa	80
+5	3	Trieu Minh Hang	81
+5	3	Le Doan Hai Anh	81
+5	4	Pham Quyen	80
+5	4	Do Khanh Linh	81
+5	5	Hong Pink	80
+5	6	Ha Nhat Chu	80
+5	6	Thuy Trang	82
+5	7	Phan Thi Le Hang	81
+5	8	Ha Phuong	80
+5	9	Mice Phuong	80
+5	10	Miyoshi	80
+5	10	Kim Hoa	80
+5	11	Hien Hien	80
+5	11	Nguyen Thuy Linh	80
+5	12	Ly Phan	80
+5	13	Chu Nhat Ha	81
+5	14	Do Khanh Linh	80
+5	15	HR Thanh Nga	80
+5	16	Nhung Chu	80
+5	17	Cem Studio	80
+5	18	Hoa Minzy	80
+5	18	Hong	80
+5	19	Binh An	81
+5	20	Pham Thi Cam Tu	81
+5	20	Nguyet Ha	80
+5	21	Dang Huyen	81
+5	22	Dang Phuong Thao	80
+5	23	Anh Tuyet	80
+5	24	Tue Minh	80
+5	24	Anounymous	97
+5	25	Chu Nhat Ha	80
+5	25	Nguyen Thanh Hien	80
+5	26	Pham Quyen	80
+5	27	Hien Hien	79
+5	27	Diem Lien	81
+5	29	Chu Nhat Ha	80
+5	29	Do Khanh Linh	80
+5	30	Quynh Tram	82
+5	31	Ve Dan	80
+6	1	Hao Nguyen	79
+6	2	Hien Hien	80
+6	4	Anounymous	80
+6	5	Chu Nhat Ha	81
+6	6	Bui Anh Ngoc	80
+6	7	Ong Anh	80
+6	7	Chu Tam	80
+6	8	Kim Hoa	82
+6	9	Do Khanh Linh	81
+6	9	Nguyen Thu Hang	82
+6	10	Chu Nhat Ha	80
+6	11	Dang Huyen	80
+6	12	Dang Ngan	80
+6	13	Pham Quyen	81
+6	14	Trieu Minh Hang	79
+6	15	Quynh Alee	79
+6	16	Cam Tu	80
+6	17	Nguyen Thuy Linh	81
+6	18	Le Thi Minh Tam	82
+6	19	Chu Nhat Ha	82
+6	20	Chu Nhung	80
+6	21	Hien Hien	81
+6	21	Ly Phan	82
+6	22	Ha Phuong	81
+6	22	Diem Lien	80
+6	23	Thanh Hao	80
+6	23	Pham Thai Ha	81
+6	24	Pham Quyen	80
+6	25	Kim Hoa	80
+6	26	Chu Nhat Ha	81
+6	27	Quynh Trang	79
+6	28	Dao Hong Anh	81
+6	29	Tran Thu Trang	81
+7	1	Pham Mai Huong	80
+7	1	Quynh Alee	80
+7	4	Nhung Chu	79
+7	5	Ve Dan	79
+7	5	Thanh Hao	80
+7	6	Nguyen Thu Hang	80
+7	6	Hien Hien	79
+7	6	Dang Huyen	80
+7	7	Tue Minh	80
+7	9	Le Doan Hai Anh	80
+7	10	Thien Anh	80
+7	11	Chu Nhat Ha	83
+7	12	Chi Mai	83
+7	12	Bui Anh Ngoc	82
+7	12	Hong	82
+7	13	Mice Phuong	82
+7	13	Ong Anh	83

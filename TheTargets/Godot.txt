@@ -1,0 +1,7 @@
+Godot project structure:
+    - project.godot
+    - scene.tscn : Các scene trong game, lưu các component trong scene và
+      cấu hình mỗi component
+    - main.tscn : Scene chính, chứa các scene khác
+    - main.gd : Script chính, chứa các hàm và biến
+    - ...

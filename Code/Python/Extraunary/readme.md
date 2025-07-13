@@ -1,0 +1,1 @@
+- Ghi lại các nhật ký cá nhân
