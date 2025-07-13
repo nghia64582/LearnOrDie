@@ -8,3 +8,8 @@
     + 
 - Todo:
     + 
+
+- host: localhost or nghia64582.online
+- db: qrucoqmt_nghia64582
+- user: qrucoqmt_nghia64582
+- pass: aSxPk09a@c
