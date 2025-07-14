@@ -45,19 +45,24 @@ def insert_data():
         password="Nghi@131299",
         database="qrucoqmt_nghia64582"
     )
-    # Insert data into the database, using batch insert for efficiency
+    # Insert data into the database one by one for easier debugging
     cursor = db.cursor()
-    insert_query = (
-        "INSERT INTO extraunary (year, month, day, name, score) VALUES (%s, %s, %s, %s, %s)"
-    )
-    data_to_insert = [
-        (entry["year"], entry["month"], entry["day"], entry["name"], entry["score"])
-        for entry in data
-    ]
-    cursor.executemany(insert_query, data_to_insert)
+    for entry in data:
+        insert_query = (
+            "INSERT INTO extraunary (created_at, name, score) "
+            f"VALUES ('{entry['year']}-{entry['month']:02d}-{entry['day']:02d}', "
+            f"'{entry['name']}', {entry['score']})"
+        )
+        try:
+            cursor.execute(insert_query)
+            print(f"Successfully inserted: {insert_query}")
+        except mysql.connector.Error as err:
+            print(f"Error inserting: {insert_query}")
+            print(f"Error message: {err}")
     db.commit()
     # Close the database connection
     cursor.close()
     db.close()
 
 get_data()
+insert_data()

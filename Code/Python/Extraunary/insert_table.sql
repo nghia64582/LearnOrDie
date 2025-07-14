@@ -1,10 +1,8 @@
 CREATE TABLE extraunary (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    month INTEGER NOT NULL,
-    day INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     name TEXT NOT NULL,
-    score INTEGER NOT NULL,
-    year INTEGER NOT NULL,
+    score INTEGER NOT NULL
     -- index for filter by time
-    CREATE INDEX idx_date ON extraunary (year, month, day)
 );
+CREATE INDEX idx_date ON extraunary (created_at)

@@ -5,7 +5,7 @@ import mysql.connector
 from mysql.connector import Error
 from tkcalendar import Calendar
 
-class StudentManagementApp:
+class ExtraunaryManager:
     def __init__(self, root):
         self.root = root
         self.root.title("Student Management System")
@@ -38,27 +38,27 @@ class StudentManagementApp:
 
     def setup_add_data_tab(self):
         # Configure font
-        custom_font = ("Times New Roman", 14)
+        self.custom_font = ("Times New Roman", 14)
 
         # Name Entry
-        tk.Label(self.add_tab, text="Name:", font=custom_font).grid(row=0, column=0, padx=10, pady=10)
-        self.name_entry = tk.Entry(self.add_tab, font=custom_font)
+        tk.Label(self.add_tab, text="Name:", font=self.custom_font).grid(row=0, column=0, padx=10, pady=10)
+        self.name_entry = tk.Entry(self.add_tab, font=self.custom_font)
         self.name_entry.grid(row=0, column=1, padx=10, pady=10)
 
         # Score Entry
-        tk.Label(self.add_tab, text="Score:", font=custom_font).grid(row=1, column=0, padx=10, pady=10)
-        self.score_entry = tk.Entry(self.add_tab, font=custom_font)
+        tk.Label(self.add_tab, text="Score:", font=self.custom_font).grid(row=1, column=0, padx=10, pady=10)
+        self.score_entry = tk.Entry(self.add_tab, font=self.custom_font)
         self.score_entry.grid(row=1, column=1, padx=10, pady=10)
 
         # Date Entry (Default to today)
-        tk.Label(self.add_tab, text="Date:", font=custom_font).grid(row=2, column=0, padx=10, pady=10)
+        tk.Label(self.add_tab, text="Date:", font=self.custom_font).grid(row=2, column=0, padx=10, pady=10)
         today = datetime.now().strftime('%Y-%m-%d')
-        self.date_entry = tk.Entry(self.add_tab, font=custom_font)
+        self.date_entry = tk.Entry(self.add_tab, font=self.custom_font)
         self.date_entry.insert(0, today)
         self.date_entry.grid(row=2, column=1, padx=10, pady=10)
 
         # Add Button
-        add_button = tk.Button(self.add_tab, text="Add Data", font=custom_font, command=self.add_data)
+        add_button = tk.Button(self.add_tab, text="Add Data", font=self.custom_font, command=self.add_data)
         add_button.grid(row=3, column=0, columnspan=2, pady=20)
 
     def connect_to_database(self):
@@ -85,6 +85,16 @@ class StudentManagementApp:
             messagebox.showwarning("Input Error", "Score must be a number")
             return
 
+        # Add confirmation dialog
+        confirm = messagebox.askyesno("Confirm", 
+            f"Are you sure you want to add the following data?\n\n" +
+            f"Name: {name}\n" +
+            f"Score: {score}\n" +
+            f"Date: {date}")
+        
+        if not confirm:
+            return
+
         connection = self.connect_to_database()
         if connection:
             try:
@@ -108,14 +118,19 @@ class StudentManagementApp:
                     connection.close()
 
     def setup_view_data_tab(self):
-        custom_font = ("Times New Roman", 14)
+        self.custom_font = ("Times New Roman", 14)
+
+        style = ttk.Style()
+        style.configure('Custom.TRadiobutton', font=self.custom_font)
+        style.configure('Custom.Treeview', font=self.custom_font)
+        style.configure('Custom.Treeview.Heading', font=self.custom_font)  # <-- Add this line
 
         # Period Selection Frame
         period_frame = ttk.Frame(self.view_tab)
         period_frame.pack(pady=10)
 
         # Period Selection
-        tk.Label(period_frame, text="Select Period:", font=custom_font).pack(side=tk.LEFT, padx=5)
+        tk.Label(period_frame, text="Select Period:", font=self.custom_font).pack(side=tk.LEFT, padx=5)
         self.period_var = tk.StringVar(value="week")
         ttk.Radiobutton(period_frame, text="Week", variable=self.period_var, 
                        value="week", style='Custom.TRadiobutton').pack(side=tk.LEFT, padx=5)
@@ -127,25 +142,23 @@ class StudentManagementApp:
         date_frame.pack(pady=10)
 
         # Date Picker
-        tk.Label(date_frame, text="Select Date:", font=custom_font).pack(side=tk.LEFT, padx=5)
+        tk.Label(date_frame, text="Select Date:", font=self.custom_font).pack(side=tk.LEFT, padx=5)
         self.cal = Calendar(date_frame, selectmode='day', date_pattern='yyyy-mm-dd',
-                          font=custom_font)
+                          font=self.custom_font)
         self.cal.pack(pady=10)
 
         # Search Button
         search_button = tk.Button(self.view_tab, text="Search Data", 
-                                font=custom_font, command=self.search_data)
+                                font=self.custom_font, command=self.search_data)
         search_button.pack(pady=10)
 
         # Result Treeview
-        self.tree = ttk.Treeview(self.view_tab, columns=("ID", "Name", "Score", "Year", "Month", "Day"), 
-                                show='headings')
+        self.tree = ttk.Treeview(self.view_tab, columns=("ID", "Name", "Score", "Date"), 
+                            show='headings', style='Custom.Treeview')
         self.tree.heading("ID", text="ID")
         self.tree.heading("Name", text="Name")
         self.tree.heading("Score", text="Score")
-        self.tree.heading("Year", text="Year")
-        self.tree.heading("Month", text="Month")
-        self.tree.heading("Day", text="Day")
+        self.tree.heading("Date", text="Date")
         self.tree.pack(pady=10, fill=tk.BOTH, expand=True)
 
         # Scrollbar for Treeview
@@ -160,6 +173,7 @@ class StudentManagementApp:
             elif period == "month":
                 return date.replace(day=1)
             return date
+
         def get_last_day_of_period(date, period):
             if period == "week":
                 return date + timedelta(days=6 - date.weekday())
@@ -172,22 +186,22 @@ class StudentManagementApp:
         selected_date = datetime.strptime(selected_date_st, '%Y-%m-%d')
         period = self.period_var.get()
         start_date = get_first_day_of_period(selected_date, period)
+        start_date_str = start_date.strftime('%Y-%m-%d')
         end_date = get_last_day_of_period(selected_date, period)
+        end_date_str = end_date.strftime('%Y-%m-%d')
         connection = self.connect_to_database()
         if connection:
             try:
                 cursor = connection.cursor()
-                query = "SELECT id, name, score, CONCAT(year, '-', LPAD(month, 2, '0'), '-', LPAD(day, 2, '0')) AS date FROM extraunary WHERE " \
-                    "(year, month, day) BETWEEN %s AND %s"
-                cursor.execute(query, (start_date, end_date))
+                query = "SELECT id, name, score, created_at FROM extraunary WHERE created_at BETWEEN %s AND %s;"
+                cursor.execute(query, (start_date_str, end_date_str))
                 rows = cursor.fetchall()
                 
                 # Clear previous results
-                self.clear_treeview()
+                self.tree.delete(*self.tree.get_children())
 
                 for row in rows:
                     self.tree.insert("", tk.END, values=row)
-                
                 if not rows:
                     messagebox.showinfo("No Results", "No data found for the selected period.")
             except Error as e:
@@ -196,11 +210,11 @@ class StudentManagementApp:
                 if connection.is_connected():
                     cursor.close()
                     connection.close()
-        # Clear previous results
-        for item in self.tree.get_children():
-            self.tree.delete(item)
+        # Remove these lines as they clear the tree after populating it
+        # for item in self.tree.get_children():
+        #     self.tree.delete(item)
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = StudentManagementApp(root)
+    app = ExtraunaryManager(root)
     root.mainloop()
