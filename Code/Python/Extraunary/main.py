@@ -99,8 +99,8 @@ class ExtraunaryManager:
         if connection:
             try:
                 cursor = connection.cursor()
-                query = "INSERT INTO extraunary (name, score, year, month, day) VALUES (%s, %s, %s, %s, %s)"
-                cursor.execute(query, (name, score, year, month, day))
+                query = "INSERT INTO extraunary (name, score, created_at) VALUES (%s, %s, %s)"
+                cursor.execute(query, (name, score, f"{year}-{month:02d}-{day:02d}"))
                 connection.commit()
                 messagebox.showinfo("Success", "Data added successfully")
                 

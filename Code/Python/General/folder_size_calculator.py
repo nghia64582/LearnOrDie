@@ -12,24 +12,27 @@ class FileFolderApp:
         master.configure(bg="#e0e0e0") # Light grey background for the main window
 
         self.current_directory = os.getcwd() # Start in current working directory
-        # Removed path_history and history_index as per request to simplify "Back" button behavior
 
         # --- Top Frame: Path Entry and Navigation Buttons ---
         self.top_frame = tk.Frame(master, padx=15, pady=15, bg="#f5f5f5", relief=tk.RAISED, bd=2)
         self.top_frame.pack(fill=tk.X, pady=(10, 5), padx=10)
 
-        self.path_label = tk.Label(self.top_frame, text="Current Path:", font=("Inter", 11, "bold"), bg="#f5f5f5", fg="#333333")
+        # Updated font to "Times New Roman", size 12
+        self.path_label = tk.Label(self.top_frame, text="Current Path:", font=("Times New Roman", 12, "bold"), bg="#f5f5f5", fg="#333333")
         self.path_label.pack(side=tk.LEFT, padx=(0, 10))
 
-        self.path_entry = tk.Entry(self.top_frame, width=60, font=("Inter", 11), bd=2, relief=tk.SUNKEN, bg="white", fg="#333333")
+        # Updated font to "Times New Roman", size 12
+        self.path_entry = tk.Entry(self.top_frame, width=60, font=("Times New Roman", 12), bd=2, relief=tk.SUNKEN, bg="white", fg="#333333")
         self.path_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 15))
         self.path_entry.insert(0, self.current_directory)
         self.path_entry.bind("<Return>", self.go_to_path_event) # Bind Enter key
 
-        self.go_button = tk.Button(self.top_frame, text="Go", command=self.go_to_path, font=("Inter", 10, "bold"), bg="#4CAF50", fg="white", relief=tk.RAISED, bd=2, activebackground="#45a049", cursor="hand2")
+        # Updated font to "Times New Roman", size 12
+        self.go_button = tk.Button(self.top_frame, text="Go", command=self.go_to_path, font=("Times New Roman", 12, "bold"), bg="#4CAF50", fg="white", relief=tk.RAISED, bd=2, activebackground="#45a049", cursor="hand2")
         self.go_button.pack(side=tk.LEFT, padx=(0, 8))
 
-        self.back_button = tk.Button(self.top_frame, text="Back", command=self.go_back, font=("Inter", 10, "bold"), bg="#2196F3", fg="white", relief=tk.RAISED, bd=2, activebackground="#0b7dda", cursor="hand2")
+        # Updated font to "Times New Roman", size 12
+        self.back_button = tk.Button(self.top_frame, text="Back", command=self.go_back, font=("Times New Roman", 12, "bold"), bg="#2196F3", fg="white", relief=tk.RAISED, bd=2, activebackground="#0b7dda", cursor="hand2")
         self.back_button.pack(side=tk.LEFT, padx=(0, 0))
 
         # --- Separator ---
@@ -60,27 +63,38 @@ class FileFolderApp:
         self.header_frame = tk.Frame(self.scrollable_frame, bg="#e0e0e0", bd=1, relief=tk.SOLID)
         self.header_frame.grid(row=0, column=0, columnspan=4, sticky="ew", pady=(0, 5))
 
-        tk.Label(self.header_frame, text="Name", font=("Inter", 12, "bold"), width=30, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=0, sticky="w")
-        tk.Label(self.header_frame, text="Size", font=("Inter", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=1, sticky="w")
-        tk.Label(self.header_frame, text="Action", font=("Inter", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=2, sticky="w")
-        tk.Label(self.header_frame, text="Delete", font=("Inter", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=3, sticky="w")
+        # Updated font to "Times New Roman", size 12
+        tk.Label(self.header_frame, text="Name", font=("Times New Roman", 12, "bold"), width=30, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=0, sticky="w")
+        # Updated font to "Times New Roman", size 12
+        tk.Label(self.header_frame, text="Size", font=("Times New Roman", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=1, sticky="w")
+        # Updated font to "Times New Roman", size 12
+        tk.Label(self.header_frame, text="Action", font=("Times New Roman", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=2, sticky="w")
+        # Updated font to "Times New Roman", size 12
+        tk.Label(self.header_frame, text="Delete", font=("Times New Roman", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=3, sticky="w")
 
         self.update_display()
 
     def get_folder_info(self, folder_path):
-        """Calculates the total size and file count of a given folder."""
+        """
+        Calculates the total size and file count of a given folder,
+        optimized for large numbers of files/directories.
+        """
         total_size = 0
         file_count = 0
         try:
-            for dirpath, dirnames, filenames in os.walk(folder_path):
-                for f in filenames:
-                    fp = os.path.join(dirpath, f)
-                    if os.path.isfile(fp):
-                        total_size += os.path.getsize(fp)
-                        file_count += 1
+            for entry in os.scandir(folder_path):
+                if entry.is_file():
+                    total_size += entry.stat().st_size
+                    file_count += 1
+                elif entry.is_dir():
+                    # Recursively call for subdirectories
+                    subdir_size, subdir_count = self.get_folder_info(entry.path)
+                    total_size += subdir_size
+                    file_count += subdir_count
             return total_size, file_count
         except OSError as e:
             # Handle permission errors or other OS-related issues
+            print(f"Error accessing {folder_path}: {e}")
             return 0, 0
 
     def get_size_readable(self, size_in_bytes):
@@ -133,21 +147,23 @@ class FileFolderApp:
                     except OSError:
                         size_str = "N/A" # Handle cases where file size cannot be accessed
 
-                # Name Label
-                tk.Label(self.scrollable_frame, text=name, anchor="w", font=("Inter", 12, "bold"), width=30, bg="#6ab370", fg="#333333", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=0, sticky="ew")
-                # Size Label
-                tk.Label(self.scrollable_frame, text=size_str, anchor="w", font=("Inter", 12, "bold"), width=10, bg="#ffffff", fg="#333333", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=1, sticky="ew")
+                # Name Label - Updated font to "Times New Roman", size 12
+                tk.Label(self.scrollable_frame, text=name, anchor="w", font=("Times New Roman", 12, "bold"), width=30, bg="#6ab370", fg="#333333", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=0, sticky="ew")
+                # Size Label - Updated font to "Times New Roman", size 12
+                tk.Label(self.scrollable_frame, text=size_str, anchor="w", font=("Times New Roman", 12, "bold"), width=10, bg="#ffffff", fg="#333333", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=1, sticky="ew")
 
                 # Action Button (Open for folders)
                 # show border
                 if is_dir:
-                    open_button = tk.Button(self.scrollable_frame, text="Open", command=lambda p=full_path: self.open_item(p), font=("Inter", 12, "bold"), width=10, bg="#8BC34A", fg="white", relief=tk.RAISED, bd=1, activebackground="#7cb342", cursor="hand2")
+                    # Updated font to "Times New Roman", size 12
+                    open_button = tk.Button(self.scrollable_frame, text="Open", command=lambda p=full_path: self.open_item(p), font=("Times New Roman", 12, "bold"), width=10, bg="#8BC34A", fg="white", relief=tk.RAISED, bd=1, activebackground="#7cb342", cursor="hand2")
                     open_button.grid(row=row_num, column=2, padx=2, pady=8, sticky="ew")
                 else:
-                    tk.Label(self.scrollable_frame, text="file", font=("Inter", 12, "bold"), width=10, bg="#ffffff", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=2, sticky="ew") # Placeholder for files
+                    # Updated font to "Times New Roman", size 12
+                    tk.Label(self.scrollable_frame, text="file", font=("Times New Roman", 12, "bold"), width=10, bg="#ffffff", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=2, sticky="ew") # Placeholder for files
 
-                # Delete Button
-                delete_button = tk.Button(self.scrollable_frame, text="Delete", command=lambda p=full_path, i_d=is_dir: self.delete_item(p, i_d), font=("Inter", 12, "bold"), width=10, bg="#F44336", fg="#f3d0d0", relief=tk.RAISED, bd=1, activebackground="#e53935", cursor="hand2")
+                # Delete Button - Updated font to "Times New Roman", size 12
+                delete_button = tk.Button(self.scrollable_frame, text="Delete", command=lambda p=full_path, i_d=is_dir: self.delete_item(p, i_d), font=("Times New Roman", 12, "bold"), width=10, bg="#F44336", fg="#f3d0d0", relief=tk.RAISED, bd=1, activebackground="#e53935", cursor="hand2")
                 delete_button.grid(row=row_num, column=3, padx=2, pady=8, sticky="ew")
 
                 row_num += 1
