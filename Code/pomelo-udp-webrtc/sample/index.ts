@@ -43,7 +43,6 @@ async function main() {
     console.log("Connect Result =", result);
 }
 
-
 main().catch(err => {
     console.error(err);
 });

@@ -17,7 +17,7 @@ class PyInstallerGUI:
         self.entries = {}
 
         # Configure font
-        self.default_font = tkFont.Font(family="Times New Roman", size=14)
+        self.default_font = tkFont.Font(family="Lucida Sans Typewriter", size=11)
 
         # Apply font to all widgets by default (optional, but good for consistency)
         master.option_add("*Font", self.default_font)
