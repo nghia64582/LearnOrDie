@@ -1,5 +1,6 @@
 import random as rd
 import stemming as stem
+import re
 
 def get_vocabulary():
     global words, to_learn_words
@@ -77,11 +78,119 @@ def group_words():
 
 def get_to_learn():
     group_words = open("to_learn.txt", "r", encoding="utf-8").readlines()
-    for i in range(100):
-        words = rd.choice(group_words).strip().split("-")
-        print(words[0])
+    print(len(group_words))
+
+def parse_dictionary_file(file_path):
+    global eng_dict
+    with open(file_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    eng_dict = {}
+    current_word = None
+    pronunciation = ""
+    word_type = ""
+    meanings = []
+    examples = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        # Detect new word entry
+        if line.startswith('@'):
+            # Save previous word
+            if current_word:
+                eng_dict[current_word] = {
+                    "pronunciation": pronunciation,
+                    "type": word_type,
+                    "meaning": meanings,
+                    "example": examples
+                }
+
+            # Reset all
+            current_word = line[1:].split(' ')[0]
+            pronunciation_match = re.search(r'/.*?/', line)
+            pronunciation = pronunciation_match.group(0) if pronunciation_match else ""
+            word_type = ""
+            meanings = []
+            examples = []
+        elif line.startswith('*'):
+            word_type = line.replace('*', '').strip()
+        elif line.startswith('-'):
+            meanings.append(line[1:].strip())
+        elif line.startswith('='):
+            examples.append(line[1:].strip())
+        else:
+            # Continuation of previous line (merge last meaning or example)
+            if meanings:
+                meanings[-1] += ' ' + line
+            elif examples:
+                examples[-1] += ' ' + line
+
+    # Save last word
+    if current_word and pronunciation:
+        eng_dict[current_word] = {
+            "pronunciation": pronunciation,
+            "type": word_type,
+            "meaning": meanings,
+            "example": examples
+        }
+
+    return eng_dict
+
+def process_dict():
+    lines = open("english-vietnamese.txt", "r", encoding="utf-8").readlines()
+    total_at = 0
+    total_star = 0
+    total_slash = 0
+    for line in lines:
+        if '@' in line:
+            total_at += 1
+        if '*' in line:
+            total_star += 1
+        if '/' in line:
+            total_slash += 1
+    print(f"Total @: {total_at}, Total *: {total_star}, Total /: {total_slash}")
+    print(f"Total characters: {sum([len(line) for line in lines])}")
+
+def process_dict_v2():
+    parse_dictionary_file("english-vietnamese.txt")
+    no_meaning_words = []
+    no_example_words = []
+    no_pronunciation_words = []
+    no_type_words = []
+    full_words = []
+    for key in eng_dict:
+        if not eng_dict[key]["meaning"]:
+            no_meaning_words.append(key)
+        if not eng_dict[key]["example"]:
+            no_example_words.append(key)
+        if not eng_dict[key]["pronunciation"]:
+            no_pronunciation_words.append(key)
+        if not eng_dict[key]["type"]:
+            no_type_words.append(key)
+        if eng_dict[key]["meaning"] and eng_dict[key]["example"] and eng_dict[key]["pronunciation"] and eng_dict[key]["type"]:
+            full_words.append(key)
+    for i in range(10):
+        print(f"No meaning word {i}: {rd.choice(no_meaning_words)}")
+    for i in range(10):
+        print(f"No example word {i}: {rd.choice(no_example_words)}")
+    for i in range(10):
+        print(f"No pronunciation word {i}: {rd.choice(no_pronunciation_words)}")
+    for i in range(10):
+        print(f"No type word {i}: {rd.choice(no_type_words)}")
+    for i in range(10):
+        print(f"Full word {i}: {rd.choice(full_words)}")
+
+    print(f"len(full_words): {len(full_words)}")
+    print(f"len(no_meaning_words): {len(no_meaning_words)}")
+    print(f"len(no_example_words): {len(no_example_words)}")
+    print(f"len(no_pronunciation_words): {len(no_pronunciation_words)}")
+    print(f"len(no_type_words): {len(no_type_words)}")
 
 if __name__ == "__main__":
     # get_vocabulary()
     # group_words()
-    get_to_learn()
+    # get_to_learn()
+    process_dict_v2()
