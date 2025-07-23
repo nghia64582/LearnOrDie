@@ -71,27 +71,49 @@ class DataTool:
         self.time_fields['hour'].insert(0, "0")
         self.time_fields['minute'].insert(0, "00")
         self.time_fields['second'].insert(0, "00")
-        self.time_fields['timestamp'].insert(0, "1696156800")
+        self.time_fields['timestamp'].insert(0, "1709200000")  # Default timestamp for 2025-10-01 00:00:00
 
         # Setup auto calculate timestamp after edit time
         for field in ['year', 'month', 'day', 'hour', 'minute', 'second']:
-            self.time_fields[field].bind("<KeyRelease>", self.update_timestamp)
+            self.time_fields[field].bind("<KeyRelease>", lambda event: self.update_timestamp(event, "timestamp"))
+        # Auto calculate datetime when the timestamp field is edited
+        self.time_fields['timestamp'].bind("<KeyRelease>", lambda event: self.update_timestamp(event, "datetime"))
 
-    def update_timestamp(self, event):
-        # If input is invalid, show timestamp as "invalid"
-        try:
-            year = int(self.time_fields['year'].get())
-            month = int(self.time_fields['month'].get())
-            day = int(self.time_fields['day'].get())
-            hour = int(self.time_fields['hour'].get())
-            minute = int(self.time_fields['minute'].get())
-            second = int(self.time_fields['second'].get())
-            timestamp = int(datetime.datetime(year, month, day, hour, minute, second).timestamp())
-            self.time_fields['timestamp'].delete(0, tk.END)
-            self.time_fields['timestamp'].insert(0, str(timestamp))
-        except ValueError:
-            self.time_fields['timestamp'].delete(0, tk.END)
-            self.time_fields['timestamp'].insert(0, "invalid")
+    def update_timestamp(self, event, type):
+        if type == "timestamp":
+            # If input is invalid, show timestamp as "invalid"
+            try:
+                year = int(self.time_fields['year'].get())
+                month = int(self.time_fields['month'].get())
+                day = int(self.time_fields['day'].get())
+                hour = int(self.time_fields['hour'].get())
+                minute = int(self.time_fields['minute'].get())
+                second = int(self.time_fields['second'].get())
+                timestamp = int(datetime.datetime(year, month, day, hour, minute, second).timestamp())
+                self.time_fields['timestamp'].delete(0, tk.END)
+                self.time_fields['timestamp'].insert(0, str(timestamp))
+            except ValueError:
+                self.time_fields['timestamp'].delete(0, tk.END)
+                self.time_fields['timestamp'].insert(0, "invalid")
+        elif type == "datetime":
+            # If timestamp is valid, update the date and time fields
+            try:
+                timestamp = int(self.time_fields['timestamp'].get())
+                dt = datetime.datetime.fromtimestamp(timestamp)
+                self.time_fields['year'].delete(0, tk.END)
+                self.time_fields['year'].insert(0, str(dt.year))
+                self.time_fields['month'].delete(0, tk.END)
+                self.time_fields['month'].insert(0, str(dt.month).zfill(2))
+                self.time_fields['day'].delete(0, tk.END)
+                self.time_fields['day'].insert(0, str(dt.day).zfill(2))
+                self.time_fields['hour'].delete(0, tk.END)
+                self.time_fields['hour'].insert(0, str(dt.hour).zfill(2))
+                self.time_fields['minute'].delete(0, tk.END)
+                self.time_fields['minute'].insert(0, str(dt.minute).zfill(2))
+                self.time_fields['second'].delete(0, tk.END)
+                self.time_fields['second'].insert(0, str(dt.second).zfill(2))
+            except ValueError:
+                pass
 
     def login(self):
         login()

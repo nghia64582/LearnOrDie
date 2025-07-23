@@ -17,7 +17,7 @@ class PyInstallerGUI:
         self.entries = {}
 
         # Configure font
-        self.default_font = tkFont.Font(family="Lucida Sans Typewriter", size=11)
+        self.default_font = tkFont.Font(family="JetBrains Mono NL SemiBold", size=11)
 
         # Apply font to all widgets by default (optional, but good for consistency)
         master.option_add("*Font", self.default_font)
@@ -26,44 +26,44 @@ class PyInstallerGUI:
 
         # Main File
         self.create_label_and_entry("Main Python File (.py):", 0, "main_file_path")
-        self.create_browse_button(self.browse_main_file, "Browse...", 0, 2)
+        self.create_browse_button(self.browse_main_file, "Browse", 0, 2)
 
         # Files/Folders to Bundle (--add-data)
-        tk.Label(master, text="Files/Folders to Bundle (--add-data, SOURCE;DEST, comma-separated):").grid(row=1, column=0, sticky="w", padx=10, pady=5)
+        tk.Label(master, text="Files/Folders to Bundle :").grid(row=1, column=0, sticky="w", padx=10, pady=5)
         self.add_data_entry = tk.Entry(master, width=60)
         self.add_data_entry.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
         self.add_data_entry.insert(0, "") # Removed default content
 
         # No Console Option
         self.no_console_var = tk.BooleanVar(value=True) # Default to True
-        tk.Checkbutton(master, text="No Console Window (--noconsole)", variable=self.no_console_var).grid(row=2, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+        tk.Checkbutton(master, text="No Console (--noconsole)", variable=self.no_console_var).grid(row=2, column=0, columnspan=2, sticky="w", padx=10, pady=5)
 
         # Auto-confirm Option
         self.noconfirm_var = tk.BooleanVar(value=True) # Default to True
-        tk.Checkbutton(master, text="Auto-confirm (overwrite existing spec/build) (--noconfirm)", variable=self.noconfirm_var).grid(row=3, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+        tk.Checkbutton(master, text="Auto-confirm (--noconfirm)", variable=self.noconfirm_var).grid(row=3, column=0, columnspan=2, sticky="w", padx=10, pady=5)
 
         # Tcl/Tk Base Path (for manual --add-data)
-        self.create_label_and_entry("Tcl/Tk Base Path (e.g., C:\\Python39\\tcl):", 4, "tcl_tk_base_path")
+        self.create_label_and_entry("Tcl/Tk Path (C:\\Python39\\tcl):", 4, "tcl_tk_base_path")
         # Pre-fill with a common default based on sys.base_prefix if available
         default_tcl_path = os.path.join(sys.base_prefix, 'tcl')
         if os.path.isdir(default_tcl_path):
             self.entries["tcl_tk_base_path"].insert(0, default_tcl_path)
-        self.create_browse_button(self.browse_tcl_tk_path, "Browse...", 4, 2)
+        self.create_browse_button(self.browse_tcl_tk_path, "Browse", 4, 2)
 
         # Manually Add Tcl/Tk Data Option
         self.manual_tcl_tk_var = tk.BooleanVar(value=False) # Default to False
-        tk.Checkbutton(master, text="Manually Add Tcl/Tk Data via --add-data", variable=self.manual_tcl_tk_var).grid(row=5, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+        tk.Checkbutton(master, text="Manually --add-data", variable=self.manual_tcl_tk_var).grid(row=5, column=0, columnspan=2, sticky="w", padx=10, pady=5)
 
         # Target Directory
         self.create_label_and_entry("Target Output Directory:", 6, "target_dir_path")
-        self.create_browse_button(self.browse_target_dir, "Browse...", 6, 2)
+        self.create_browse_button(self.browse_target_dir, "Browse", 6, 2)
 
         # Icon File
         self.create_label_and_entry("Icon File (.ico):", 7, "icon_file_path")
-        self.create_browse_button(self.browse_icon_file, "Browse...", 7, 2)
+        self.create_browse_button(self.browse_icon_file, "Browse", 7, 2)
 
         # Executable Name
-        self.create_label_and_entry("Executable Name (without .exe):", 8, "executable_name")
+        self.create_label_and_entry("Target name (no .exe):", 8, "executable_name")
         self.entries["executable_name"].insert(0, "main")  # Default name
 
         # Build Button

@@ -1,0 +1,5 @@
+Game Server Thường,/opt/sd/chan-log/smartfox.log
+Game Server C3,/opt/sd/chan-log-namnh/smartfox.log
+Api Thường,/opt/sd/api-log/api.log
+Api C3,/opt/sd/api-log-c3/api.log
+Game Server Quan,/opt/sd/chan-log-truongnx/smartfox.log

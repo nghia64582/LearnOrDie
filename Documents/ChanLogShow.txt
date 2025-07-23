@@ -1,0 +1,29 @@
+- Các tính năng cần có và quy trình:
+  - Hiển thị và theo dõi các file log chính.
+    + Mỗi file sẽ có 2 thông tin là tên file và đường dẫn, vd : log-game-server-dev-thuong - /opt/sd/logs/log-game-server-dev-thuong.log
+      Thông tin này sẽ lưu trong một file txt, viết thành nhiều dòng, mỗi dòng phân cách bởi ","
+    + Quy trình:
+      1. ssh vào server bằng lệnh `ssd <host>` với passphrase
+      2. truy cập vào thư mục bằng lệnh `cd <path>`
+      3. xem log bằng lệnh `tail -f <file>`
+      4. truyền các dòng log về bằng stdout và hiển thị trên giao diện tkinter.
+    + Các thành phần cần có:
+      - Một dropdown để chọn file log cần xem.
+      - Nút "Xem log" để thực hiện các bước trên.
+      - Nút "Xóa" để xóa textfield log.
+      - Nút "Copy" để sao chép 50 dòng mới nhất vào clipboard
+      - Một textfield để hiển thị log (có thể rất nhiều dòng).
+  - Lọc log dựa theo tên file và từ khóa.
+    + Quy trình:
+      1. Nhập file path và từ khóa vào các textfield.
+      2. Nhấn nút "Xem log" để thực hiện tìm kiếm.
+      3. Hiển thị kết quả tìm kiếm trong một textfield khác.
+    + Thư viện sử dụng: os, subprocess, paramiko, tkinter.
+    + Các thành phần cần có:
+      - Nút "Xem log" để thực hiện tìm kiếm.
+      - Nút "Xóa" để xóa textfield kết quả tìm kiếm.
+      - Một textfield để nhập file path.
+      - Một textfield để nhập từ khóa cần tìm.
+      - Một textfield để hiển thị kết quả tìm kiếm (có thể rất nhiều dòng).
+- Thư viện chính: tkinter, paramiko, os, subprocess.
+- Mỗi một tính năng là một tab trong giao diện tkinter.
