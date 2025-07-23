@@ -254,62 +254,47 @@
     <Greeting name="Bob" />
 4. 🧠 State
     State is data that changes over time and affects what the component renders.
-
     Use useState() to manage it in functional components.
 
     import { useState } from 'react';
 
     function Counter() {
-    const [count, setCount] = useState(0);
-
-    return <button onClick={() => setCount(count + 1)}>Count: {count}</button>;
+        const [count, setCount] = useState(0);
+        return <button onClick={() => setCount(count + 1)}>Count: {count}</button>;
     }
 5. 🔁 Hooks
     Hooks are functions that add stateful logic to function components.
-
     Common hooks:
-
-    useState() – for local state
-
-    useEffect() – for side effects (e.g., fetch data, set up a timer)
-
-    useContext() – consume context
-
-    useRef() – reference DOM or persist mutable values
-
-    useMemo() and useCallback() – performance optimizations
-
-    useEffect(() => {
-    console.log('Component mounted or updated');
-    }, [dependency]);
+        useState() – for local state
+        useEffect() – for side effects (e.g., fetch data, set up a timer)
+        useContext() – consume context
+        useRef() – reference DOM or persist mutable values
+        useMemo() and useCallback() – performance optimizations
+        useEffect(() => {
+            console.log('Component mounted or updated');
+        }, [dependency]);
 6. 🌐 Context
     A way to pass data globally without prop drilling.
-
     Useful for things like theme, user auth, language.
-
-    const ThemeContext = createContext();
-
-    <ThemeContext.Provider value="dark">
-    <MyComponent />
-    </ThemeContext.Provider>
+        const ThemeContext = createContext();
+        <ThemeContext.Provider value="dark">
+        <MyComponent />
+        </ThemeContext.Provider>
 7. 🌲 Virtual DOM & Reconciliation
     React uses a Virtual DOM — an in-memory representation of the real DOM.
-
     When state/props change, React updates only what’s necessary in the actual DOM (efficient!).
 
-8. 🔁 Rendering & Re-rendering
+8. 🔁 Rendering & Re-rendering - 60%
     A component re-renders when:
     Its state changes
     Its props change
     Its parent re-renders
 
-9. 🔀 Conditional Rendering
+9. 🔀 Conditional Rendering - 60%
     Show or hide components based on conditions.
-
     {isLoggedIn ? <Dashboard /> : <Login />}
 10. 🚦 Lifecycle (via hooks in functional components)
     useEffect replaces lifecycle methods like componentDidMount, componentDidUpdate, and componentWillUnmount.
-
     useEffect(() => {
     // on mount
     return () => {

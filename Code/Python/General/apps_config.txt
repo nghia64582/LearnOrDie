@@ -1,0 +1,3 @@
+Python Builder:::D:/Workspace/LearnOrDie/Code/Python/General/pyinstaller_builder.py
+Chan Couch Base:::D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase/main.py
+Card Shuffle:::D:/Workspace/LearnOrDie/Code/Python/CardShuffleCreator/main.py
