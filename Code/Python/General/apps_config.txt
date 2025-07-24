@@ -1,3 +1,7 @@
 Python Builder:::D:/Workspace/LearnOrDie/Code/Python/General/pyinstaller_builder.py
 Chan Couch Base:::D:/Workspace/LearnOrDie/Code/Python/ChanCouchBase/main.py
 Card Shuffle:::D:/Workspace/LearnOrDie/Code/Python/CardShuffleCreator/main.py
+Extraunary:::D:/Workspace/LearnOrDie/Code/Python/Extraunary/main.py
+Port Killer:::D:/Workspace/LearnOrDie/Code/Python/PortKiller/main.py
+Log Viewer:::D:/Workspace/LearnOrDie/Code/Python/LogViewer/main.py
+File Cleaner:::D:/Workspace/LearnOrDie/Code/Python/General/folder_size_calculator.py
