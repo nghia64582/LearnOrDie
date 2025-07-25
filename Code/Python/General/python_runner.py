@@ -8,7 +8,7 @@ class PythonAppRunner:
     def __init__(self, master):
         self.master = master
         master.title("Python App Runner")
-        master.geometry("531x610") # Set an initial size
+        master.geometry("450x610") # Set an initial size
         master.configure(bg="white") # White background for the master window
 
         # Define the custom font
@@ -146,7 +146,7 @@ class PythonAppRunner:
         # App Name Label and Entry
         name_label = tk.Label(app_frame, text="App Name:", bg="white", fg="black", font=self.custom_font)
         name_label.grid(row=0, column=0, sticky="w", pady=2, padx=1)
-        name_entry = tk.Entry(app_frame, width=30, bg="white", fg="black", font=self.custom_font, insertbackground='black', textvariable=app_frame.name_var)
+        name_entry = tk.Entry(app_frame, width=20, bg="white", fg="black", font=self.custom_font, insertbackground='black', textvariable=app_frame.name_var)
         name_entry.grid(row=0, column=1, sticky="ew", pady=2, padx=1)
 
         # Buttons in a single row
@@ -251,18 +251,20 @@ class PythonAppRunner:
                 # CREATE_NO_WINDOW prevents a console window from appearing
                 creation_flags = subprocess.CREATE_NO_WINDOW
             
-            # Use subprocess.Popen to run the script without blocking the GUI
-            # stdin, stdout, stderr are set to PIPE to prevent a console from opening
-            # even if creation_flags is not fully supported or effective on a specific system/Python version.
-            # The 'cwd' argument sets the current working directory for the subprocess.
+            env = os.environ.copy()
+            env['PYTHONIOENCODING'] = 'utf-8'
             subprocess.Popen(
-                [sys.executable, script_filename], # Run the script by its filename
+                ["py", script_filename],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=subprocess.PIPE,
-                text=True, # Decode output as text
+                shell=False,
+                env=env, # Pass the modified environment
+                universal_newlines=True,
+                text=True,
+                encoding="utf-8",
                 creationflags=creation_flags,
-                cwd=script_directory # Set the working directory for the subprocess
+                cwd=script_directory
             )
             
             # Removed messagebox.showinfo("App Started", ...) as requested.

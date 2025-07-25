@@ -24,6 +24,7 @@ def get_data(model_key: str, user_id: int, bucket: str) -> dict:
     key = model_key + to_base36(user_id) if bucket == "acc" else model_key
     # http://128.199.246.136:8091/pools/default/buckets/acc/docs/qt1njw4t
     url = f"http://128.199.246.136:8091/pools/default/buckets/{bucket}/docs/{key}"  # Customize
+    # handle utf-8
     response = requests.get(url, headers=HEADERS, auth=HTTPBasicAuth("vinhbt", "nguyenthelinh"))
     return response.json()
 

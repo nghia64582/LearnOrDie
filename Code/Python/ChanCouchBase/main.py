@@ -137,13 +137,13 @@ class DataTool:
         try:
             response = get_data(model_key, int(uid), bucket)
             data = response.get("json", {})
-            data_json = json.dumps(data, indent=4)
+            data_json = json.dumps(data, indent=4, ensure_ascii=False)
             self.raw_text.delete("1.0", tk.END)
             self.raw_text.insert(tk.END, data_json)
             # If you have a mapping, normalize here
             normalized = normalize_json(data, model_key)  # Supply a real mapping if needed
             self.normalized_text.delete("1.0", tk.END)
-            self.normalized_text.insert(tk.END, json.dumps(normalized, indent=4))
+            self.normalized_text.insert(tk.END, json.dumps(normalized, indent=4, ensure_ascii=False))
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
