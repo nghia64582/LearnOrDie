@@ -189,8 +189,29 @@ def process_dict_v2():
     print(f"len(no_pronunciation_words): {len(no_pronunciation_words)}")
     print(f"len(no_type_words): {len(no_type_words)}")
 
+def process_dict_v3():
+    # Count the line by first character
+    # With each character, print first 5 lines
+    lines = open("english-vietnamese.txt", "r", encoding="utf-8").readlines()
+    char_count = {}
+    for line in lines:
+        if not line.strip():
+            continue
+        first_char = line[0]
+        if first_char not in char_count:
+            char_count[first_char] = []
+        char_count[first_char].append(line.strip())
+
+    for first_char in char_count:
+        if first_char.isalpha():
+            continue
+        print(f"Lines starting with '{first_char}':")
+        for i, line in enumerate(char_count[first_char][:5]):
+            print(line)
+        print()
+
 if __name__ == "__main__":
     # get_vocabulary()
     # group_words()
     # get_to_learn()
-    process_dict_v2()
+    process_dict_v3()
