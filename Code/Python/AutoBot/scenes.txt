@@ -1,0 +1,10 @@
+ - Main scenes:
+  + 1. All scenarios:
+    + List all scenarios with their details (name, description, steps count, etc.)
+    + Each scenario can be clicked to view its details.
+    + Each scenario can be edited or deleted.
+  + 2. Scenarios details:
+    + Show scenario details (name, description, steps list, etc.)
+    + Each step can be clicked to view its details.
+    + Each step can be edited or deleted.
+    + A start button to perform the scenario.
