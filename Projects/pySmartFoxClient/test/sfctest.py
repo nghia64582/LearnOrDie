@@ -18,10 +18,10 @@ from it.gotoandplay.smartfoxclient import SmartFoxClient
 from it.gotoandplay.smartfoxclient.sfsevent import SFSEvent
 
 class SFSClient(object):
-    _sfs_host = "122.147.45.134"
-    _sfs_port = 9339
+    _sfs_host = "dev.sandinhstudio.com"
+    _sfs_port = 9013
     _api_url = "http://web.thpoker.snsplus.com"
-    _user_id = "bot1835554439"
+    _user_id = "100025451"
     _session_value = "de29331d96b60c6793924d2df6884e47"
     _event_handles = (SFSEvent.onLogin, SFSEvent.onRandomKey, SFSEvent.onExtensionResponse, SFSEvent.onConnection, 
                       SFSEvent.onRoomListUpdate,)
@@ -53,9 +53,10 @@ class SFSClient(object):
         return
     
     def onRandomKey(self, evt):
+        return
         self.random_key = evt.getParams().get("key")
         hash_key = hashlib.md5(self.random_key+"23njkcdp9u8").hexdigest()
-        passwd = "_".join([hash_key,'9339',self._session_value, self._api_url,])
+        passwd = "_".join([hash_key,'9013',self._session_value, self._api_url,])
         self.sfc.login('texas', self._user_id, passwd)
         return
     

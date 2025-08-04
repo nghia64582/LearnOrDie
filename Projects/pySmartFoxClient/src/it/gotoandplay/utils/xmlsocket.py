@@ -22,7 +22,11 @@ class XMLSocket(object):
         return
     
     def sendXMLObj(self, xml_obj):
-        self.send(str(xml_obj.to_string())+"\0")
+        try:
+            xml_string = xml_obj.decode('utf-8')
+            self.send((xml_string + "\0").encode('utf-8'))
+        except Exception as e:
+            print(f"Error sending XML object: {e}")
         return
     
     def onConnection(self, socket_client):

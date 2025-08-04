@@ -10,18 +10,24 @@ from twisted.internet import reactor
 
 class SocketClientProtocol(protocol.Protocol):
 
-    received_data = ""
+    received_data = b""
 
     def connectionMade(self):
+        """
+        Called when a connection is made.
+        """
         self.factory.handleEvent("onConnection", self)
         return
 
     def dataReceived(self, data):
         self.received_data += data
-        datas = self.received_data.split("\0")
+        
+        datas = self.received_data.split(b"\0")
+        
         self.received_data = datas[-1]
-        for data in datas[:-1]:
-            self.factory.handleEvent("onDataReceived", data)
+        
+        for data_bytes in datas[:-1]:
+            self.factory.handleEvent("onDataReceived", data_bytes.decode('utf-8'))
         return
 
 class SocketClientFactory(protocol.ClientFactory):
@@ -43,3 +49,4 @@ def build_connect(event_obj, server_host, server_port):
     reactor.connectTCP(server_host, server_port, socket_client_factory)
     reactor.run()
     return
+
