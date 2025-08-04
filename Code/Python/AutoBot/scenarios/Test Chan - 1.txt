@@ -1,0 +1,12 @@
+{
+    "name": "Test Chan - 1",
+    "description": "M\u1ed9t game play b\u00ecnh th\u01b0\u1eddng",
+    "steps": [
+        {
+            "step_id": 1,
+            "name": "Click Start",
+            "step_type": "Click image",
+            "content": "C:/Users/LaptopKhanhTran/Desktop/Workspace/ShootingBattle/code/sb-fe/asset/button/button_200_150.png"
+        }
+    ]
+}
