@@ -197,4 +197,4 @@ class ScenarioDetails(ttk.Frame):
         
         # Move to the next step after a delay (e.g., 2000 milliseconds)
         self.current_step_index += 1
-        self.after(2000, self._execute_next_step)
+        self.after(200, self._execute_next_step)
