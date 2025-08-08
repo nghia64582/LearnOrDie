@@ -51,7 +51,7 @@ def delete_data(model_key: str, user_id: int, bucket: str) -> dict:
     return response.json()
 
 def login():
-    url = "http://{URL}/uilogin"
+    url = f"http://{URL}/uilogin"
     payload = {
         "user": "vinhbt",
         "password": "nguyenthelinh"

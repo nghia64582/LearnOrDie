@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from model_keys import load_model_keys
-from api_client import get_data, put_data, login
+from api_client import get_data, put_data, login, delete_data
 from utils import *
 from tkinter import font
 import json
@@ -20,63 +20,80 @@ class DataTool:
         self.login()
 
     def create_widgets(self):
-        # Configure column and row weights
-        tk.Button(self.root, text="Login", command=self.login, font=self.custom_font, bd=2, relief="solid").grid(row=0, column=0, columnspan=2, sticky="ew")
+        # Allow all columns to expand equally
+        for col in range(3):
+            self.root.grid_columnconfigure(col, weight=1)
+        # Allow key rows to expand vertically (raw_text, normalized_text)
+        self.root.grid_rowconfigure(5, weight=1)
+        self.root.grid_rowconfigure(7, weight=1)
 
-        # Row 0: Bucket Label and Entry
+        tk.Button(self.root, text="Login", command=self.login, font=self.custom_font,
+                bd=2, relief="solid").grid(row=0, column=0, columnspan=3, sticky="nsew")
+
+        # Bucket selector
         tk.Label(self.root, text="Bucket:", font=self.custom_font).grid(row=1, column=0, sticky="ew")
         self.bucket_entry = ttk.Combobox(self.root, values=["acc", "fodi"], font=self.custom_font)
-        self.bucket_entry.grid(row=1, column=1, sticky="ew")
-        self.bucket_entry.set("acc")  # Default bucket
+        self.bucket_entry.grid(row=1, column=1, columnspan=2, sticky="nsew")
+        self.bucket_entry.set("acc")
 
-        # Then move User ID and below down one row
+        # User ID selector
         tk.Label(self.root, text="User ID:", font=self.custom_font).grid(row=2, column=0, sticky="ew")
         self.uid_entry = ttk.Combobox(self.root, values=list(self.users.keys()), font=self.custom_font)
-        self.uid_entry.grid(row=2, column=1, sticky="ew")
+        self.uid_entry.grid(row=2, column=1, columnspan=2, sticky="nsew")
 
+        # Model selector
         tk.Label(self.root, text="Model:", font=self.custom_font).grid(row=3, column=0, sticky="ew")
         self.model_dropdown = ttk.Combobox(self.root, values=list(self.model_keys.keys()), font=self.custom_font)
-        self.model_dropdown.grid(row=3, column=1, sticky="ew")
-        # set callback when model_dropdown changes
+        self.model_dropdown.grid(row=3, column=1, columnspan=2, sticky="nsew")
         self.model_dropdown.bind("<<ComboboxSelected>>", lambda event: self.raw_text.delete("1.0", tk.END))
 
-        tk.Button(self.root, text="Read", command=self.read_data, font=self.custom_font, bd=2, relief="solid").grid(row=4, column=0, sticky="ew")
-        tk.Button(self.root, text="Write", command=self.write_data, font=self.custom_font, bd=2, relief="solid").grid(row=4, column=1, sticky="ew")
+        # Action buttons
+        tk.Button(self.root, text="Read", command=self.read_data, font=self.custom_font, bd=2,
+                relief="solid").grid(row=4, column=0, sticky="nsew")
+        tk.Button(self.root, text="Write", command=self.write_data, font=self.custom_font, bd=2,
+                relief="solid").grid(row=4, column=1, sticky="nsew")
+        tk.Button(self.root, text="Delete", command=self.delete_selected_data, font=self.custom_font, bd=2,
+                relief="solid", fg="red").grid(row=4, column=2, sticky="nsew")
 
+        # Shortcuts
         self.root.bind('<Control-z>', lambda event: self.raw_text.edit_undo())
         self.root.bind('<Control-Return>', lambda event: self.write_data())
         self.root.bind('<Return>', lambda event: self.read_data())
 
-        self.raw_text = tk.Text(self.root, height=10, font=self.custom_font)
-        self.raw_text.grid(row=5, column=0, columnspan=2, sticky="nsew")
-        tk.Button(self.root, text="Copy Raw", command=lambda: self.copy_to_clipboard(self.raw_text), font=self.custom_font, bd=2, relief="solid").grid(row=6, column=0, columnspan=1, sticky="ew")
+        # Raw text area
+        self.raw_text = tk.Text(self.root, height=10, font=self.custom_font, wrap="none")
+        self.raw_text.grid(row=5, column=0, columnspan=3, sticky="nsew")
+        tk.Button(self.root, text="Copy Raw", command=lambda: self.copy_to_clipboard(self.raw_text),
+                font=self.custom_font, bd=2, relief="solid").grid(row=6, column=0, columnspan=3, sticky="nsew")
 
-        self.normalized_text = tk.Text(self.root, height=10, font=self.custom_font)
-        self.normalized_text.grid(row=7, column=0, columnspan=2, sticky="nsew")
-        tk.Button(self.root, text="Copy Normalized", command=lambda: self.copy_to_clipboard(self.normalized_text), font=self.custom_font, bd=2, relief="solid").grid(row=8, column=0, columnspan=1, sticky="ew")
+        # Normalized text area
+        self.normalized_text = tk.Text(self.root, height=10, font=self.custom_font, wrap="none")
+        self.normalized_text.grid(row=7, column=0, columnspan=3, sticky="nsew")
+        tk.Button(self.root, text="Copy Normalized", command=lambda: self.copy_to_clipboard(self.normalized_text),
+                font=self.custom_font, bd=2, relief="solid").grid(row=8, column=0, sticky="nsew")
+        tk.Button(self.root, text="Convert Normalized to Raw", command=lambda: self.convert_normal_to_raw(),
+                font=self.custom_font, bd=2, relief="solid").grid(row=8, column=1, columnspan=2, sticky="nsew")
 
-        tk.Button(self.root, text="Convert Normalized to Raw", command=lambda: self.convert_normal_to_raw(), font=self.custom_font, bd=2, relief="solid").grid(row=8, column=1, columnspan=1, sticky="ew")
-
-        # Add 7 text fields, 6 for time numbers (year, month, day, hour, minute, second) and 1 for timestamp in second
+        # Time fields
         self.time_fields = {}
         time_labels = ["Year", "Month", "Day", "Hour", "Minute", "Second", "Timestamp"]
         for i, label in enumerate(time_labels):
             tk.Label(self.root, text=label + ":", font=self.custom_font).grid(row=9 + i, column=0, sticky="ew")
             self.time_fields[label.lower()] = tk.Entry(self.root, font=self.custom_font)
-            self.time_fields[label.lower()].grid(row=9 + i, column=1, sticky="ew")
-        # Set default values for time fields
+            self.time_fields[label.lower()].grid(row=9 + i, column=1, columnspan=2, sticky="nsew")
+
+        # Defaults
         self.time_fields['year'].insert(0, "2025")
         self.time_fields['month'].insert(0, "10")
         self.time_fields['day'].insert(0, "01")
         self.time_fields['hour'].insert(0, "0")
         self.time_fields['minute'].insert(0, "00")
         self.time_fields['second'].insert(0, "00")
-        self.time_fields['timestamp'].insert(0, "1709200000")  # Default timestamp for 2025-10-01 00:00:00
+        self.time_fields['timestamp'].insert(0, "1709200000")
 
-        # Setup auto calculate timestamp after edit time
+        # Auto update timestamp
         for field in ['year', 'month', 'day', 'hour', 'minute', 'second']:
             self.time_fields[field].bind("<KeyRelease>", lambda event: self.update_timestamp(event, "timestamp"))
-        # Auto calculate datetime when the timestamp field is edited
         self.time_fields['timestamp'].bind("<KeyRelease>", lambda event: self.update_timestamp(event, "datetime"))
 
     def update_timestamp(self, event, type):
@@ -174,6 +191,26 @@ class DataTool:
         except FileNotFoundError:
             messagebox.showerror("Error", "uids.txt file not found.")
     
+    def delete_selected_data(self):
+        uid = self.uid_entry.get()
+        uid = self.users.get(uid, uid)
+        model = self.model_dropdown.get()
+        model = self.model_keys.get(model, model)
+        bucket = self.bucket_entry.get()
+
+        if not uid or not model:
+            messagebox.showwarning("Warning", "Please select both User ID and Model before deleting.")
+            return
+
+        if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete data for UID: {uid}, Model: {model}?"):
+            try:
+                delete_data(model, int(uid), bucket)
+                self.raw_text.delete("1.0", tk.END)
+                self.normalized_text.delete("1.0", tk.END)
+                messagebox.showinfo("Success", "Data deleted successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = DataTool(root)
