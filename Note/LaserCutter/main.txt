@@ -1,0 +1,5 @@
+- Cắt fomex 2 ly cần công suất 100%, tốc độ 600mm, pass 1
+  tốt nhất không nên cắt vì sản sinh khí độc 
+- Cắt gỗ 2 ly, kích thước 100mmX100mm, 
+  công suất 100% tốc độ 350mm pass 1
+  hoặc tốc độ 600mm pass 2

@@ -1,0 +1,12 @@
+Các bước để cắt một file:
+   - Chuẩn bị:
+      + File cắt: thường là svg
+      + Tốc độ và công suất phù hợp
+      + Mẫu vật liệu: gỗ, formex, ...
+      + 
+      + Máy cắt
+      + Dây tín hiệu nối laptop-máy, dây nguồn nối máy
+   - Mang ra nơi phù hợp
+   - Cắm điện, bật công tắc.
+   - Cắt
+   - Tắt nguồn, 

@@ -1,0 +1,38 @@
+TODO app:
+ - Vấn đề xử lý: Trong cuộc sống cần quản lý rất nhiều thứ như:
+   + công việc: (dự án 1, dự án 2, đồng nghiệp, ăn trưa, nợ nần, ...)
+   + đam mê, thú vui (học công nghệ, cơ khí, học kĩ năng, ngoại ngữ, ...)
+   + gia đình (cha mẹ, con cái, họ hàng, ...)
+   + hoạt động hàng ngày (việc nhà, thể dục thể thao)
+ - Mốc thời gian:  
+   + ngắn hạn (trong ngày)
+   + trung hạn (trong tuần)
+   + vừa hạn (1-3 tháng, trong tháng, quý)
+   + dài hạn (3 tháng - 1 năm) 
+   + sự nghiệp (1 năm trở lên)
+ - Các phần cần làm để quản lý tốt: 
+   + Chia việc (từ việc lớn, VD đạt 7.5 IELTS) thành các việc nhỏ
+     (VD hôm nay học 10 từ tiếng anh, 1 thì mới, 10 cụm động từ)
+     để đảm bảo việc thực hiện xác suất thành công rất cao
+   + Xem kế hoạch (trong ngày, tuần, tháng, quý, năm)
+   + Đánh dấu các hoạt động, mục tiêu đã hoàn thành.
+   + Xem lại thành tựu ngày, tuần, tháng, năm vừa qua, ...
+   + Các task được chia cần ước lượng thời gian, đảm bảo khả năng 
+     hoàn thành trong mốc là 99%, khoảng thời gian hiệu quả tầm 15-25 phút 
+     <=> 1 promodo
+ - Công nghệ:
+   + Be: Flask, Node, làm trước
+   + Db: SQL
+   + Fe: React cho web, Python Tkinter cho PC
+ - Vấn đề giải pháp:
+   + Cần phân biệt task, goal, note
+      + Task : 
+      + Goal : 
+   + Cần thêm task mới rất nhanh
+ - Các thực thể quản lý trong database
+ - Các view cần có:
+   + Cơ bản : ...
+   + Thêm task mới
+   + 
+ - Pha lợi ích:
+   + 
