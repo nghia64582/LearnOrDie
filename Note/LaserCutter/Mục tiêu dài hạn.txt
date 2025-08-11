@@ -1,0 +1,9 @@
+MỤC TIÊU:
+ + Ngắn hạn:
+   + Làm quen với máy cắt laser
+   + Gia công các chi tiết cơ bản của hệ thống như bánh răng, bánh xe, pulleys, lưỡi răng trượt, 
+     khớp động
+ + Trung hạn:
+   + Xây dựng các module (khối nhiều chi tiết) cho các mục đích khác nhau
+ + Dài hạn:
+   + Làm một số mô hình thiết kế, máy móc kết hợp với motor, pin, nút bấm và các thiết bị đã sử dụng

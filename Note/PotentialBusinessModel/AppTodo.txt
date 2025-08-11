@@ -26,8 +26,8 @@ TODO app:
    + Fe: React cho web, Python Tkinter cho PC
  - Vấn đề giải pháp:
    + Cần phân biệt task, goal, note
-      + Task : 
-      + Goal : 
+      + Task : Có input, output, thời gian
+      + Goal : Có output
    + Cần thêm task mới rất nhanh
  - Các thực thể quản lý trong database
  - Các view cần có:

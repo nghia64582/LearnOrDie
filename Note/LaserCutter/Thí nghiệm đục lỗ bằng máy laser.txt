@@ -1,0 +1,18 @@
+* MÔ TẢ: Thử nghiệm lỗ khớp trục 5mm và tấm 2mm
+Chiều dày tấm đo được 1.970mm
+ + Các lỗ tròn thử nghiệm 5.0, 4.9, 4.8 (trên tinkercad)
+ + Các lỗ chữ nhật thử nghiệm 1.95mm 1.90, 1.85, 1.80
+
+* KẾT QUẢ:
+ - Với trục 4.7mm
+   + lỗ 4.7 không nhét được
+   + lỗ 4.8 nhét trật
+   + lỗ 4.9 nhét vừa
+   + lỗ 5.0 thoáng
+ - Với tấm 2mm
+   + lỗ chữ nhật 1.95mm vừa
+   + 1.90 trật
+   + 1.85, 1.80 không nhét được, dễ gây hỏng
+
+* KẾT LUẬN:
+ => nên làm lỗ nhỏ hơn khoảng 0.05-0.1mm để đảm bảo vừa khít hơn với trục và tấm.
