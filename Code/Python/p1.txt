@@ -1,90 +1,906 @@
-707940944
-706856005
-707263530
-706982102
-707576536
-707380569
-707129397
-707129397
-707471029
-707498686
-707655773
-707945882
-707634014
-706999818
-707767658
-5553256
-1647996
-707917422
-707486003
-707910661
-707860229
-707788106
-707749069
-707483320
-707920462
-5537449
-707919373
-707717507
-707488731
-4676039
-707938686
-707791746
-707945204
-707913520
-707548595
-3472816
-1109057
-707950774
-5289816
-707932096
-706980777
-707370119
-4798458
-5928556
-707921539
-707602935
-707451073
-706856005
-707934914
-707896724
-707923298
-707915919
-5808563
-707942484
-254484
-5854210
-707939823
-6267523
-707686839
-707908942
-707943882
-5986033
-5808563
-3799361
-5758087
-3799361
-707751734
-707896640
-707912282
-707547965
-707615912
-707912691
-707525478
-5273850
-707711237
-707914950
-707137622
-707137622
-707950737
-5141414
-707932651
-707920462
-707412113
-707282261
-707747282
-706991222
-707647863
-707945024
-706980314
-4743526
+	True	Algo ALM-22BD (22W)	Basswood	Cut	3	100%	700 mm/min	1	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	5	100%	300 mm/min	1	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	6	100%	300 mm/min	1	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	8	100%	200 mm/min	1	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	10	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	12	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	13	100%	100 mm/min	2	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	14	100%	100 mm/min	2	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	15	100%	100 mm/min	2	
+	True	Algo ALM-22BD (22W)	Basswood	Cut	20	100%	200 mm/min	15	Drop the focal length by 1mm
+	True	Algo ALM-22BD (22W)	Pine_Board	Cut	5	100%	200 mm/min	1	
+	True	Algo ALM-22BD (22W)	Pine_Board	Cut	10	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Pine_Board	Cut	12	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Pine_Board	Cut	15	100%	100 mm/min	2	
+	True	Algo ALM-22BD (22W)	Pine_Board	Cut	19	100%	100 mm/min	3	
+	True	Algo ALM-22BD (22W)	Pine_Board	Cut	20	100%	100 mm/min	3	
+	True	Algo ALM-22BD (22W)	Pine_Board	Cut	30	100%	100 mm/min	10	
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	5	100%	100 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	6	100%	100 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	8	100%	100 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	10	100%	60 mm/min	2	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	15	100%	100 mm/min	4	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	20	100%	100 mm/min	4	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	25	100%	100 mm/min	10	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	30	100%	100 mm/min	10	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Acrylic	Cut	45	100%	100 mm/min	15	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Poly_Vinyl_Chloride	Cut	3	100%	1600 mm/min	1	
+	True	Algo ALM-22BD (22W)	Poly_Vinyl_Chloride	Cut	5	100%	900 mm/min	1	
+	True	Algo ALM-22BD (22W)	Poly_Vinyl_Chloride	Cut	15	100%	300 mm/min	2	The bottom of the cut is slightly burnt
+	True	Algo ALM-22BD (22W)	Paperboard	Cut	1	100%	1200 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paperboard	Cut	2	100%	500 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paperboard	Cut	3	100%	300 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paperboard	Cut	6	100%	300 mm/min	2	
+	True	Algo ALM-22BD (22W)	Paperboard	Cut	5	100%	1000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Leather	Cut	1,5	100%	600 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Leather	Cut	2	100%	600 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	Colored_A4_Paper	Cut	0,2	100%	10000 mm/min	1	-
+	True	Algo ALM-22BD (22W)	Non_Woven_Fabrics	Cut	0,6	100%	2000 mm/min	1	Cut edges neatly, but slight burn marks can be seen
+	True	Algo ALM-22BD (22W)	Bamboo	Cut	8,5	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Basswood	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Pine_Board	Engrave	-	100%	15000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Acrylic	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Poly_Vinyl_Chloride	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paperboard	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Leather	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Colored_A4_Paper	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Non-Woven Fabrics (dark color)	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Denim	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	ABS	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Bamboo	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Stainless Steel	Engrave	-	100%	3000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Coated_Metal_Card	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Birch Plywood	Cut	4	100%	400 mm/min	1	
+	True	Algo ALM-22BD (22W)	Birch Plywood	Cut	6	100%	300 mm/min	1	
+	True	Algo ALM-22BD (22W)	Birch Plywood	Cut	9	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Birch Plywood	Cut	12	100%	100 mm/min	3	The bottom of the cut is slightly burnt
+	True	Algo ALM-22BD (22W)	Eucalyptus Plywood	Cut	5	100%	300 mm/min	1	
+	True	Algo ALM-22BD (22W)	Eucalyptus Plywood	Cut	10	100%	200 mm/min	2	
+	True	Algo ALM-22BD (22W)	Eucalyptus Plywood	Cut	12	100%	200 mm/min	4	
+	True	Algo ALM-22BD (22W)	Eucalyptus Plywood	Cut	15	100%	300 mm/min	6	The bottom of the cut is slightly burnt
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Cut	3	100%	1000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Cut	5	100%	700 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Cut	8	100%	500 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Cut	10	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Cut	12	100%	100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Cut	15	100%	200 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Cut	20	100%	200 mm/min	3	
+	True	Algo ALM-22BD (22W)	MDF	Cut	3	100%	200 mm/min	1	
+	True	Algo ALM-22BD (22W)	MDF	Cut	5	100%	200 mm/min	2	
+	True	Algo ALM-22BD (22W)	MDF	Cut	12	100%	300 mm/min	6	
+	True	Algo ALM-22BD (22W)	Green Acrylic	Cut	3	100%	300 mm/min	2	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Green Acrylic	Cut	5	100%	100 mm/min	2	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Green Acrylic	Cut	8	100%	100 mm/min	4	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Yellow Acrylic	Cut	3	100%	100 mm/min	1	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Yellow Acrylic	Cut	5	100%	100 mm/min	2	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Red Acrylic	Cut	3	100%	100 mm/min	1	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Red Acrylic	Cut	5	100%	100 mm/min	1	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Red Acrylic	Cut	10	100%	200 mm/min	6	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	White Cardboard	Cut	1	100%	1100 mm/min	1	
+	True	Algo ALM-22BD (22W)	White Cardboard	Cut	2,5	100%	600 mm/min	1	There is a slight yellowing next to the cutting path
+	True	Algo ALM-22BD (22W)	White Cardboard	Cut	3	100%	600 mm/min	1	There is a slight yellowing next to the cutting path
+	True	Algo ALM-22BD (22W)	Black Cardboard	Cut	1	100%	1100 mm/min	1	There is a slight yellowing next to the cutting path
+	True	Algo ALM-22BD (22W)	Black Cardboard	Cut	2,5	100%	600 mm/min	1	
+	True	Algo ALM-22BD (22W)	Coated Duplex Board	Cut	1	100%	1100 mm/min	1	
+	True	Algo ALM-22BD (22W)	Coated Duplex Board	Cut	2	100%	600 mm/min	1	
+	True	Algo ALM-22BD (22W)	Rubber	Cut	1	100%	400 mm/min	3	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	Birch Plywood	Engrave	-	100%	10000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Eucalyptus Plywood	Engrave	-	100%	10000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Paulownia Plank	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	MDF	Engrave	-	100%	15000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Green Acrylic	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Orange Acrylic	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Yellow Acrylic	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Red Acrylic	Engrave	-	100%	20000 mm/min	1	
+	True	Algo ALM-22BD (22W)	White Cardboard	Engrave	-	100%	15000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Black Cardboard	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Coated Duplex Board	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Rubber	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Cold Rolled Sheet	Engrave	-	100%	2000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Dry Leaves	Engrave	-	100%	30000 mm/min	1	
+	True	Algo ALM-22BD (22W)	Denim	Cut	0,7	100%	1800 mm/min	1	Cut edges neatly, but slight burn marks can be seen
+	True	Algo ALM-22BD (22W)	Denim	Cut	0,8	100%	1800 mm/min	1	Cut edges neatly, but slight burn marks can be seen
+	True	Algo ALM-22BD (22W)	ABS	Cut	1	100%	200 mm/min	2	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Algo ALM-22BD (22W)	ABS	Cut	0,8	100%	1200 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	ABS	Cut	2	100%	700 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	ABS	Cut	3	100%	400 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	ABS	Cut	4	100%	300 mm/min	1	There is an irritating odor when cutting, so cut with caution
+	True	Algo ALM-22BD (22W)	ABS	Cut	6	100%	200 mm/min	2	There are burn marks along the cutting path and a pungent odor is emitted during the cutting process. Cut with caution
+	True	Atomstack A5 20W (5W)	Basswood	Engrave	-	28%	1000 mm/min	1	
+	True	Atomstack A5 20W (5W)	Hardwood	Engrave	-	28%	1000 mm/min	1	
+	True	Atomstack A5 20W (5W)	Bamboo	Engrave	-	28%	1000 mm/min	1	
+	True	Atomstack A5 20W (5W)	Acrylic	Engrave	-	28%	1000 mm/min	1	
+	True	Atomstack A5 20W (5W)	Kraft paper	Engrave	-	18%	1000 mm/min	1	
+	True	Atomstack A5 20W (5W)	Mirrors	Engrave	-	28%	1000 mm/min	1	
+	True	Atomstack A5 20W (5W)	Aluminium alloy	Engrave	-	100%	1000 mm/min	1	
+	True	Atomstack A5 20W (5W)	Basswood	Cut	1.8mm	100%	400 mm/min	3	
+	True	Atomstack A5 20W (5W)	Hardwood	Cut	6mm	100%	400 mm/min	15	
+	True	Atomstack A5 20W (5W)	Bamboo	Cut	1.8mm	100%	400 mm/min	3	
+	True	Atomstack A5 20W (5W)	Acrylic	Cut	2.8mm	100%	400 mm/min	12	
+	True	Atomstack A5 PRO	Basswood	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	Atomstack A5 PRO	Hardwood	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	Atomstack A5 PRO	Bamboo	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	Atomstack A5 PRO	Acrylic	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	Atomstack A5 PRO	Kraft paper	Engrave	-	20%	3000 mm/min	1	suggested 8 lines/mm
+	True	Atomstack A5 PRO	Mirrors	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	Atomstack A5 PRO	Leather	Engrave	-	20%	1000 mm/min	1	suggested 8 lines/mm
+	True	Atomstack A5 PRO	Stainless Steel	Engrave	-	100%	100 mm/min	3	suggested 15 lines/mm
+	True	Atomstack A5 PRO	Basswood	Cut	2.5mm	100%	450 mm/min	3	
+	True	Atomstack A5 PRO	Hardwood	Cut	6mm	100%	150 mm/min	3	
+	True	Atomstack A5 PRO	Bamboo	Cut	2mm	100%	460 mm/min	3	
+	True	Atomstack A5 PRO	Acrylic	Cut	2.8mm	100%	310 mm/min	3	
+	True	Atomstack A5 PRO	Kraft paper	Cut	0.2mm	100%	1200 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Basswood	Engrave	-	30%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Hardwood	Engrave	-	40%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Bamboo	Engrave	-	40%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Acrylic	Engrave	-	30%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Kraft Paper	Engrave	-	15%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Mirrors	Engrave	-	25%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Leather	Engrave	-	18%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Ceramics	Engrave	-	80%	400 mm/min	1	Color with dark paint before engrave
+	True	Atomstack M50 10W (A10/S10/X7)	Glass	Engrave	-	80%	1000 mm/min	1	Color with dark paint before engrave
+	True	Atomstack M50 10W (A10/S10/X7)	Denim	Engrave	-	20%	3000 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Stainless Steel	Engrave	-	100%	400 mm/min	1	Color with dark paint before engrave
+	True	Atomstack M50 10W (A10/S10/X7)	Basswood	Cut	2.5mm	100%	700 mm/min	2	
+	True	Atomstack M50 10W (A10/S10/X7)	Hardwood	Cut	5.5mm	100%	250 mm/min	2	
+	True	Atomstack M50 10W (A10/S10/X7)	Bamboo	Cut	1.5mm	100%	1400 mm/min	2	
+	True	Atomstack M50 10W (A10/S10/X7)	Acrylic	Cut	2.8mm	100%	180 mm/min	1	
+	True	Atomstack M50 10W (A10/S10/X7)	Kraft Paper	Cut	0.2mm	100%	5000 mm/min	1	
+	True	Atomstack X20 Pro	Basswood	Engrave	-	20%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Yellow peach wood	Engrave	-	20%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Mahogany	Engrave	-	30%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Pine	Engrave	-	20%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Paulownia wood	Engrave	-	35%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Bamboo 	Engrave	-	50%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Leather	Engrave	-	20%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Denim	Engrave	-	20%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Ceramics	Engrave	-	80%	1000 mm/min	1	
+	True	Atomstack X20 Pro	Ceramic tile	Engrave	-	80%	1000 mm/min	1	
+	True	Atomstack X20 Pro	Alumina	Engrave	-	60%	1000 mm/min	1	
+	True	Atomstack X20 Pro	Glass	Engrave	-	50%	1000 mm/min	1	
+	True	Atomstack X20 Pro	Acrylic	Engrave	-	50%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Two color plate	Engrave	-	10%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Plastic	Engrave	-	20%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Resin	Engrave	-	15%	1000 mm/min	1	
+	True	Atomstack X20 Pro	Artificial beef bone	Engrave	-	24%	1000 mm/min	1	
+	True	Atomstack X20 Pro	High density foam board	Engrave	-	12%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Rubber	Engrave	-	50%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Kraft Paper	Engrave	-	14%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Office paper	Engrave	-	12%	1500 mm/min	1	
+	True	Atomstack X20 Pro	Oil painting paper	Engrave	-	25%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Carton	Engrave	-	12%	3000 mm/min	1	
+	True	Atomstack X20 Pro	MDF	Engrave	-	18%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Mirrors	Engrave	-	30%	3000 mm/min	1	paint black for better result
+	True	Atomstack X20 Pro	Rock	Engrave	-	60%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Cobblestone	Engrave	-	60%	3000 mm/min	1	
+	True	Atomstack X20 Pro	PCB Board	Engrave	-	65%	2000 mm/min	1	
+	True	Atomstack X20 Pro	Mirror Stainless Steel	Engrave	-	80%	600 mm/min	1	
+	True	Atomstack X20 Pro	Brushed Stainless Steel	Engrave	-	80%	1000 mm/min	1	
+	True	Atomstack X20 Pro	Galvanized iron	Engrave	-	80%	500 mm/min	1	paint black for better result
+	True	Atomstack X20 Pro	Iron sheet	Engrave	-	50%	1000 mm/min	1	paint black for better result
+	True	Atomstack X20 Pro	Artificial agate	Engrave	-	80%	100 mm/min	1	
+	True	Atomstack X20 Pro	Basswood	Cut	10mm	80%	600 mm/min	5	
+	True	Atomstack X20 Pro	Basswood	Cut	8mm	100%	200 mm/min	1	
+	True	Atomstack X20 Pro	Pine	Cut	14mm	80%	300 mm/min	7	
+	True	Atomstack X20 Pro	Pine	Cut	9mm	100%	120 mm/min	1	
+	True	Atomstack X20 Pro	Paulownia wood	Cut	18mm	80%	400 mm/min	6	
+	True	Atomstack X20 Pro	Paulownia wood	Cut	12mm	100%	220 mm/min	1	
+	True	Atomstack X20 Pro	Cork wood	Cut	15mm	85%	700 mm/min	2	
+	True	Atomstack X20 Pro	Cork wood	Cut	10mm	100%	420 mm/min	1	
+	True	Atomstack X20 Pro	Bamboo 	Cut	6mm	80%	400 mm/min	3	
+	True	Atomstack X20 Pro	Bamboo 	Cut	5mm	100%	360 mm/min	1	
+	True	Atomstack X20 Pro	Leather	Cut	4mm	100%	200 mm/min	1	
+	True	Atomstack X20 Pro	Kraft Paper	Cut	0.2mm	80%	3000 mm/min	1	
+	True	Atomstack X20 Pro	Acrylic	Cut	15mm	60%	100 mm/min	8	
+	True	Atomstack X20 Pro	Acrylic	Cut	5mm	100%	100 mm/min	1	
+	True	Atomstack X20 Pro	MDF	Cut	8mm	100%	400 mm/min	7	
+	True	Atomstack X20 Pro	MDF	Cut	5mm	100%	160 mm/min	1	
+	True	Atomstack X20 Pro	Stainless Steel Sheet	Cut	0.05mm	80%	600 mm/min	1	
+	True	Comgo Z1 10W	Wood board	Engrave	-	100%	5000 mm/min	1	
+	True	Comgo Z1 10W	Bamboo	Engrave	-	100%	5000 mm/min	1	
+	True	Comgo Z1 10W	Solid wood	Engrave	-	100%	5000 mm/min	1	
+	True	Comgo Z1 10W	Leather	Engrave	-	100%	4500 mm/min	1	
+	True	Comgo Z1 10W	Glass	Engrave	-	100%	1200 mm/min	1	Surface needs to be painted black
+	True	Comgo Z1 10W	Ceramic	Engrave	-	100%	1200 mm/min	1	Surface needs to be painted black
+	True	Comgo Z1 10W	Acrylic	Engrave	-	100%	2500 mm/min	1	Transparent acrylic needs to be painted black
+	True	Comgo Z1 10W	Stainless Steel	Engrave	-	100%	600 mm/min	1	
+	True	Comgo Z1 10W	Anodized metal	Engrave	-	100%	1500 mm/min	1	
+	True	Comgo Z1 10W	Fabric	Engrave	-	40%	5000 mm/min	1	
+	True	Comgo Z1 10W	Plywood	Cut	2mm	100%	300 mm/min	1	
+	True	Comgo Z1 10W	Plywood	Cut	3mm	100%	250 mm/min	1	
+	True	Comgo Z1 10W	Plywood	Cut	4mm	100%	200 mm/min	1	
+	True	Comgo Z1 10W	Plywood	Cut	7mm	100%	90 mm/min	1	
+	True	Comgo Z1 10W	Cardboard	Cut		100%	2500 mm/min	1	
+	True	Comgo Z1 10W	Leather	Cut		100%	2000 mm/min	1	
+	True	Comgo Z1 10W	Fabric	Cut		100%	2500 mm/min	1	
+	True	Comgo Z1 5W	Wood board	Engrave	-	100%	2500 mm/min	1	
+	True	Comgo Z1 5W	Bamboo	Engrave	-	100%	2500 mm/min	1	
+	True	Comgo Z1 5W	Solid wood	Engrave	-	100%	2500 mm/min	1	
+	True	Comgo Z1 5W	Leather	Engrave	-	100%	2000 mm/min	1	
+	True	Comgo Z1 5W	Glass	Engrave	-	100%	700 mm/min	1	Surface needs to be painted black
+	True	Comgo Z1 5W	Ceramic	Engrave	-	100%	700 mm/min	1	Surface needs to be painted black
+	True	Comgo Z1 5W	Acrylic	Engrave	-	100%	1500 mm/min	1	Transparent acrylic needs to be painted black
+	True	Comgo Z1 5W	Stainless Steel	Engrave	-	100%	300 mm/min	1	
+	True	Comgo Z1 5W	Anodized metal	Engrave	-	100%	800 mm/min	1	
+	True	Comgo Z1 5W	Fabric	Engrave	-	40%	2500 mm/min	1	
+	True	Comgo Z1 5W	Plywood	Cut	2mm	100%	180 mm/min	1	
+	True	Comgo Z1 5W	Plywood	Cut	3mm	100%	120 mm/min	1	
+	True	Comgo Z1 5W	Plywood	Cut	4mm	100%	90 mm/min	1	
+	True	Comgo Z1 5W	Cardboard	Cut		100%	1500 mm/min	1	
+	True	Comgo Z1 5W	Leather	Cut		100%	1000 mm/min	1	
+	True	Comgo Z1 5W	Fabric	Cut		100%	1500 mm/min	1	
+	True	LEON3D L40 (5.5W)	Madera contrachapada	Engrave	-	50%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Madera contrachapada	Cut	1.5mm	100%	200 mm/min	1	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Madera contrachapada	Cut	3mm	100%	240 mm/min	3	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Madera contrachapada	Cut	5 mm	100%	240 mm/min	5	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Cartón	Engrave	-	20%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Cartón	Cut	-	100%	1000 mm/min	3	
+	True	LEON3D L40 (5.5W)	Papel kraft	Engrave	-	20%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Tablero KT (color oscuro)	Cut	5mm	100%	2000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Telas no tejidas (color oscuro)	Cut	0.5mm	100%	1600 mm/min	1	
+	True	LEON3D L40 (5.5W)	Tela de algodón (color oscuro)	Cut	-	100%	1200 mm/min	1	
+	True	LEON3D L40 (5.5W)	Cuero	Engrave	-	30%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Cuero	Cut	0.7mm	100%	500 mm/min	1	
+	True	LEON3D L40 (5.5W)	Hoja de plástico (color oscuro)	Engrave	-	80%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Madera maciza	Engrave	-	70%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Acrílico	Engrave	-	80%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Metal lacado o pintado con spray	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Metal bañado	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Aluminio anodizado	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Piedra mate (Canto rodado)	Engrave	-	100%	100 mm/min	1	
+	True	LEON3D L40 (5.5W)	Acero INOX crudo	Engrave	-	100%	100 mm/min	1	
+	True	LEON3D L40 (5.5W)	FOAM / EVA	Cut	2 mm	100%	1200 mm/min	1	
+	True	LEON3D L40 (5.5W)	MDF	Engrave	-	35%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	MDF	Cut	3mm	100%	240 mm/min	4	
+	True	LEON3D L40 (5.5W)	MDF	Cut	5mm	100%	240 mm/min	6	
+	True	LEON3D L40 (5.5W)	Neopreno	Cut	5mm	100%	6000 mm/min	3	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Barro Crudo/Horneado	Engrave	-	80%	2400 mm/min	1	
+	True	LEON3D L40 (5.5W)	Plywood	Engrave	-	50%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Plywood	Cut	1.5mm	100%	200 mm/min	1	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Plywood	Cut	3mm	100%	240 mm/min	3	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Plywood	Cut	5 mm	100%	240 mm/min	5	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Paperboard	Engrave	-	20%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Paperboard	Cut	-	100%	1000 mm/min	3	
+	True	LEON3D L40 (5.5W)	Kraft Paper	Engrave	-	20%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	KT Board (dark color)	Cut	5mm	100%	2000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Non-woven fabrics (dark color)	Cut	0.5mm	100%	1600 mm/min	1	
+	True	LEON3D L40 (5.5W)	Cotton Cloth (dark color)	Cut	-	100%	1200 mm/min	1	
+	True	LEON3D L40 (5.5W)	Leather	Engrave	-	30%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Leather	Cut	0.7mm	100%	500 mm/min	1	
+	True	LEON3D L40 (5.5W)	Plastic Sheet (dark color)	Engrave	-	80%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Solid Wood	Engrave	-	70%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Acrylic	Engrave	-	80%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Powder Coated Metal	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Paint Sprayed Metal	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Plated Metal	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Anodised Aluminium	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L40 (5.5W)	Cobblestone	Engrave	-	100%	100 mm/min	1	
+	True	LEON3D L40 (5.5W)	Stainless Steel Crude	Engrave	-	100%	100 mm/min	1	
+	True	LEON3D L40 (5.5W)	Foam sheet	Cut	2 mm	100%	1200 mm/min	1	
+	True	LEON3D L40 (5.5W)	Neoprene	Cut	5mm	100%	6000 mm/min	3	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L40 (5.5W)	Clay Oven	Engrave	-	80%	2400 mm/min	1	
+	True	LEON3D L60 (10w)	Plywood	Engrave	-	20%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Plywood	Cut	1.5mm	100%	200 mm/min	1	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L60 (10w)	Plywood	Cut	3mm	100%	240 mm/min	2	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L60 (10w)	Plywood	Cut	5 mm	100%	240 mm/min	3	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L60 (10w)	Paperboard	Engrave	-	12%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Paperboard	Cut	-	100%	1000 mm/min	2	
+	True	LEON3D L60 (10w)	Kraft Paper	Engrave	-	12%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	KT Board (dark color)	Cut	5mm	100%	2000 mm/min	1	
+	True	LEON3D L60 (10w)	Non-woven fabrics (dark color)	Cut	0.5mm	100%	1600 mm/min	1	
+	True	LEON3D L60 (10w)	Cotton Cloth (dark color)	Cut	-	100%	1200 mm/min	1	
+	True	LEON3D L60 (10w)	Leather	Engrave	-	12%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Leather	Cut	0.7mm	100%	500 mm/min	1	
+	True	LEON3D L60 (10w)	Plastic Sheet (dark color)	Engrave	-	45%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Solid Wood	Engrave	-	38%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Acrylic	Engrave	-	40%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Powder Coated Metal	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Paint Sprayed Metal	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Plated Metal	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Anodised Aluminium	Engrave	-	100%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	Cobblestone	Engrave	-	100%	100 mm/min	1	
+	True	LEON3D L60 (10w)	Stainless Steel Crude	Engrave	-	100%	100 mm/min	1	
+	True	LEON3D L60 (10w)	Foam sheet	Cut	2 mm	100%	1200 mm/min	1	
+	True	LEON3D L60 (10w)	MDF	Engrave	-	20%	3000 mm/min	1	
+	True	LEON3D L60 (10w)	MDF	Cut	3mm	100%	240 mm/min	2	
+	True	LEON3D L60 (10w)	MDF	Cut	5mm	100%	240 mm/min	3	
+	True	LEON3D L60 (10w)	Neoprene	Cut	5mm	100%	6000 mm/min	2	Importante: reducir la velocidad puede provocar llama
+	True	LEON3D L60 (10w)	Clay Oven	Engrave	-	45%	2400 mm/min	1	
+	True	Longer B1 30W	Bamboo	Engrave	-	55%	7000 mm/min	1	
+	True	Longer B1 30W	Cardboard (carton)	Engrave	-	15%	3000 mm/min	1	
+	True	Longer B1 30W	Hardwood	Engrave	-	30%	4500 mm/min	1	
+	True	Longer B1 30W	Eraser	Engrave	-	65%	3000 mm/min	1	
+	True	Longer B1 30W	Ceramic	Engrave	-	80%	1000 mm/min	1	
+	True	Longer B1 30W	Pine wood	Engrave	-	45%	7000 mm/min	1	
+	True	Longer B1 30W	Leather	Engrave	-	30%	6000 mm/min	1	
+	True	Longer B1 30W	Denim	Engrave	-	20%	6000 mm/min	1	
+	True	Longer B1 30W	Kraft paper	Engrave	-	5%	1300 mm/min	1	
+	True	Longer B1 30W	Mirror	Engrave	-	40%	5000 mm/min	1	
+	True	Longer B1 30W	High density foam	Engrave	-	4%	1000 mm/min	1	
+	True	Longer B1 30W	Black Powder Coated Metal	Engrave	-	90%	500 mm/min	1	
+	True	Longer B1 30W	Cobblestone	Engrave	-	60%	4000 mm/min	1	
+	True	Longer B1 30W	Basswood	Engrave	-	20%	5000 mm/min	1	
+	True	Longer B1 30W	Electroplated aluminum	Engrave	-	50%	2000 mm/min	1	Purple or pink color.
+	True	Longer B1 30W	Stainless Steel	Engrave	-	80%	1500 mm/min	1	
+	True	Longer B1 30W	Glass	Engrave	-	30%	1500 mm/min	1	Paint blue.
+	True	Longer B1 30W	black acrylic	Engrave	-	25%	4500 mm/min	1	
+	True	Longer B1 30W	Orange Translucent Acrylic	Engrave	-	25%	2500 mm/min	1	
+	True	Longer B1 30W	PCB copper plate	Engrave	-	60%	4000 mm/min	1	
+	True	Longer B1 30W	MDF	Engrave	-	17%	4000 mm/min	1	
+	True	Longer B1 30W	Cardboard (carton)	Cut	3mm	100%	3000 mm/min	1	
+	True	Longer B1 30W	Acrylic	Cut	10mm	100%	100 mm/min	1	Defocus 2mm.
+	True	Longer B1 30W	Acrylic acid	Cut	3mm	100%	360 mm/min	1	
+	True	Longer B1 30W	Non-woven fabric	Cut	0.18mm	100%	3200 mm/min	1	
+	True	Longer B1 30W	Pine wood	Cut	15mm	100%	100 mm/min	1	Defocus 2mm.
+	True	Longer B1 30W	Leather	Cut	0.5mm	100%	4000 mm/min	1	
+	True	Longer B1 30W	Paulownia wood	Cut	20mm	100%	120 mm/min	1	Defocus 2mm.
+	True	Longer B1 30W	Denim	Cut	0.5mm	100%	2100 mm/min	1	
+	True	Longer B1 30W	Kraft paper	Cut	0.1mm	100%	9000 mm/min	1	
+	True	Longer B1 30W	Basswood	Cut	2mm	100%	1000 mm/min	1	
+	True	Longer B1 30W	Basswood	Cut	3mm	100%	800 mm/min	1	
+	True	Longer B1 30W	Basswood	Cut	5mm	100%	480 mm/min	1	
+	True	Longer B1 30W	Basswood	Cut	6mm	100%	320 mm/min	1	
+	True	Longer B1 30W	Basswood	Cut	8mm	100%	210 mm/min	1	
+	True	Longer B1 30W	Basswood	Cut	10mm	100%	160 mm/min	1	
+	True	Longer B1 30W	Hardwood	Cut	11mm	100%	100 mm/min	1	
+	True	Longer B1 30W	Stainless Steel	Cut	0.05mm	100%	1800 mm/min	1	
+	True	Longer B1 30W	Stainless Steel	Cut	0.1mm	100%	400 mm/min	1	
+	True	Longer B1 30W	MDF	Cut	5mm	100%	360 mm/min	1	
+	True	Longer B1 30W	MDF	Cut	8.5mm	100%	160 mm/min	3	
+	True	Longer B1 30W	MDF	Cut	10mm	100%	320 mm/min	7	
+	True	Longer B1 30W	MDF	Cut	12mm	100%	240 mm/min	10	
+	True	Longer B1 30W	Acrylic	Cut	15mm	100%	100 mm/min	3	
+	True	Longer B1 30W	Basswood	Cut	25mm	100%	240 mm/min	10	Defocus 10mm
+	True	Longer B1 30W	Acrylic	Cut	50mm	100%	240 mm/min	25	Defocus 10mm
+	True	Longer B1 40W	Bamboo	Engrave	-	50%	10000 mm/min	1	
+	True	Longer B1 40W	Cardboard (carton)	Engrave	-	40%	10000 mm/min	1	
+	True	Longer B1 40W	Hardwood	Engrave	-	40%	10000 mm/min	1	
+	True	Longer B1 40W	Eraser	Engrave	-	70%	5000 mm/min	1	
+	True	Longer B1 40W	Ceramic	Engrave	-	80%	4000 mm/min	1	
+	True	Longer B1 40W	Pine wood	Engrave	-	50%	10000 mm/min	1	
+	True	Longer B1 40W	Leather	Engrave	-	30%	10000 mm/min	1	
+	True	Longer B1 40W	Denim	Engrave	-	30%	10000 mm/min	1	
+	True	Longer B1 40W	Kraft paper	Engrave	-	10%	6000 mm/min	1	
+	True	Longer B1 40W	Mirror	Engrave	-	60%	10000 mm/min	1	
+	True	Longer B1 40W	High density foam	Engrave	-	15%	10000 mm/min	1	
+	True	Longer B1 40W	Black Powder Coated Metal	Engrave	-	100%	300 mm/min	1	
+	True	Longer B1 40W	Cobblestone	Engrave	-	60%	5000 mm/min	1	
+	True	Longer B1 40W	Basswood	Engrave	-	30%	10000 mm/min	1	
+	True	Longer B1 40W	Electroplated aluminum	Engrave	-	60%	6000 mm/min	1	Purple or pink color.
+	True	Longer B1 40W	Stainless Steel	Engrave	-	80%	10000 mm/min	1	
+	True	Longer B1 40W	Glass	Engrave	-	50%	3000 mm/min	1	Paint blue
+	True	Longer B1 40W	Black acrylic	Engrave	-	30%	10000 mm/min	1	
+	True	Longer B1 40W	Translucent Acrylic	Engrave	-	25%	2500 mm/min	1	Orange color.
+	True	Longer B1 40W	PCB copper plate	Engrave	-	90%	5000 mm/min	1	
+	True	Longer B1 40W	MDF	Engrave	-	35%	10000 mm/min	1	
+	True	Longer B1 40W	Cardboard (carton)	Cut	3mm	100%	6000 mm/min	1	
+	True	Longer B1 40W	Acrylic	Cut	3mm	100%	500 mm/min	1	
+	True	Longer B1 40W	Acrylic	Cut	10mm	100%	130 mm/min	2	
+	True	Longer B1 40W	Acrylic	Cut	15mm	100%	100 mm/min	2	Defocus 10mm
+	True	Longer B1 40W	Non-woven fabric	Cut	0.18mm	100%	6000 mm/min	1	
+	True	Longer B1 40W	Pine wood	Cut	15mm	100%	150 mm/min	1	Defocus 2mm
+	True	Longer B1 40W	Pine wood	Cut	20mm	100%	200 mm/min	1	Defocus 2mm
+	True	Longer B1 40W	Leather	Cut	0.5mm	100%	7000 mm/min	1	
+	True	Longer B1 40W	Paulownia wood	Cut	15mm	100%	350 mm/min	1	Defocus 2.5mm
+	True	Longer B1 40W	Paulownia wood	Cut	20mm	100%	300 mm/min	1	Defocus 2.5mm
+	True	Longer B1 40W	Paulownia wood	Cut	25mm	100%	200 mm/min	1	Defocus 10mm
+	True	Longer B1 40W	Denim	Cut	0.5mm	100%	3500 mm/min	1	
+	True	Longer B1 40W	Kraft paper	Cut	0.1mm	100%	18000 mm/min	1	
+	True	Longer B1 40W	Basswood	Cut	2mm	100%	1800 mm/min	1	
+	True	Longer B1 40W	Basswood	Cut	3mm	100%	1400 mm/min	1	
+	True	Longer B1 40W	Basswood	Cut	5mm	100%	900 mm/min	1	
+	True	Longer B1 40W	Basswood	Cut	6mm	100%	600 mm/min	1	
+	True	Longer B1 40W	Basswood	Cut	8mm	100%	270 mm/min	1	Defocus 2.5mm
+	True	Longer B1 40W	Basswood	Cut	9.5mm	100%	450 mm/min	1	Defocus 2.5mm
+	True	Longer B1 40W	Basswood	Cut	15mm	100%	150 mm/min	1	Defocus 2.5mm
+	True	Longer B1 40W	Basswood	Cut	20mm	100%	100 mm/min	1	Defocus 10mm
+	True	Longer B1 40W	Hardwood	Cut	11mm	100%	250 mm/min	1	Defocus 2.5mm
+	True	Longer B1 40W	Stainless Steel	Cut	0.05mm	100%	3000 mm/min	1	
+	True	Longer B1 40W	Stainless Steel	Cut	0.1mm	100%	500 mm/min	1	
+	True	Longer B1 40W	Stainless Steel	Cut	0.15mm	100%	100 mm/min	1	
+	True	Longer B1 40W	MDF	Cut	5mm	100%	700 mm/min	1	Defocus 2.5mm
+	True	Longer B1 40W	MDF	Cut	12mm	100%	500 mm/min	5	Defocus 2.5mm
+	True	Longer B1 40W	Basswood	Cut	40mm	100%	300 mm/min	20	Defocus 10mm
+	True	Longer B1 40W	Acrylic	Cut	50mm	100%	300 mm/min	22	Defocus 10mm
+	True	Longer B1 40W	Pine wood	Cut	30mm	100%	100 mm/min	3	Defocus 10mm
+	True	Longer Nano	Basswood	Engrave	-	70%	5000 mm/min	1	
+	True	Longer Nano	Rock	Engrave	-	80%	6000 mm/min	1	
+	True	Longer Nano	Leather	Engrave	-	50%	7000 mm/min	1	grey. You need to adjust according to different colors.
+	True	Longer Nano	Pearl paper	Engrave	-	80%	10000 mm/min	1	White, the rest of the color needs to be adjusted
+	True	Longer Nano	kraft paper	Engrave	-	70%	5000 mm/min	1	Earthy, the rest of the color needs to be adjusted
+	True	Longer Nano	Transparent silicone	Engrave	-	90%	3000 mm/min	1	Transparent, the remaining colors need to be adjusted according to the existing parameters
+	True	Longer Nano	Red Cardboard	Engrave	-	50%	8000 mm/min	1	
+	True	Longer Nano	Purple Business Card	Engrave	-	80%	7000 mm/min	1	
+	True	Longer Nano	Golden Business Card	Engrave	-	80%	7000 mm/min	1	
+	True	Longer Nano	Black Alumina	Engrave	-	100%	10000 mm/min	1	
+	True	Longer Nano	Paulownia wood	Engrave	-	50%	8000 mm/min	1	
+	True	Longer Nano	Stainless Steel	Engrave	-	80%	1000 mm/min	1	
+	True	Longer Nano	Leather	Cut	0.1mm	100%	2000 mm/min	1	
+	True	Longer Nano	Iridescent paper	Cut	0.5mm	100%	200 mm/min	1	
+	True	Longer Nano	Acrylic (black)	Cut	2.0mm	100%	100 mm/min	1	
+	True	Longer Nano	Acrylic (black)	Cut	3.0mm	100%	100 mm/min	3	
+	True	Longer Nano	Basswood	Cut	2.0mm	100%	150 mm/min	1	
+	True	Longer Nano	Basswood	Cut	3.0mm	100%	100 mm/min	1	
+	True	Longer Nano Pro	Basswood	Engrave		60%	6500 mm/min	1	
+	True	Longer Nano Pro	Paulownia wood	Engrave		60%	10000 mm/min	1	
+	True	Longer Nano Pro	Solid wood	Engrave		80%	10000 mm/min	1	It needs to be adjusted based on different woods
+	True	Longer Nano Pro	Stainless Steel	Engrave		80%	6000 mm/min	1	
+	True	Longer Nano Pro	Black Alumina	Engrave		100%	5000 mm/min	1	
+	True	Longer Nano Pro	Rock	Engrave		80%	6500 mm/min	1	
+	True	Longer Nano Pro	Leather	Engrave		40%	6000 mm/min	1	Grey. It needs to adjust according to different colors.
+	True	Longer Nano Pro	Pearl paper	Engrave		35%	7000 mm/min	1	White. It needs to adjust according to different colors.
+	True	Longer Nano Pro	Kraft paper	Engrave		40%	5500 mm/min	1	Earthy. It needs to adjust according to different colors.
+	True	Longer Nano Pro	Transparent silicone	Engrave		80%	3500 mm/min	1	Transparent. It needs to adjust according to different colors.
+	True	Longer Nano Pro	Purple Business Card	Engrave		50%	6000 mm/min	1	
+	True	Longer Nano Pro	Golden Business Card	Engrave		50%	6000 mm/min	1	
+	True	Longer Nano Pro	Red Cardboard	Engrave		30%	7000 mm/min	1	
+	True	Longer Nano Pro	Basswood	Cut	3mm	100%	200 mm/min	1	
+	True	Longer Nano Pro	Basswood	Cut	5mm	100%	2000 mm/min	14	
+	True	Longer Nano Pro	Basswood	Cut	8mm	100%	2000 mm/min	22	
+	True	Longer Nano Pro	Paulownia wood	Cut	8mm	100%	100 mm/min	1	
+	True	Longer Nano Pro	Pine wood	Cut	5mm	100%	100 mm/min	1	
+	True	Longer Nano Pro	Black Acrylic	Cut	2.5mm	100%	100 mm/min	1	
+	True	Longer Nano Pro	Black Acrylic	Cut	4.5mm	100%	500 mm/min	7	
+	True	Longer Nano Pro	Pearl paper	Cut	0.1	70%	2000 mm/min	1	
+	True	Longer Nano Pro	Leather	Cut	0.5	100%	600 mm/min	1	
+	True	Longer RAY5 10W	Basswood	Engrave	-	35%	3000 mm/min	1	
+	True	Longer RAY5 10W	Hardwood	Engrave		40%	2000 mm/min	1	
+	True	Longer RAY5 10W	Bamboo	Engrave	-	35%	3000 mm/min	1	
+	True	Longer RAY5 10W	Acrylic	Engrave	-	35%	3000 mm/min	1	
+	True	Longer RAY5 10W	KraftPaper	Engrave	-	20%	3000 mm/min	1	
+	True	Longer RAY5 10W	Mirror	Engrave	-	35%	2500 mm/min	1	
+	True	Longer RAY5 10W	Leather	Engrave	-	20%	3000 mm/min	1	Light color. It need to be adjusted based on different colors.
+	True	Longer RAY5 10W	Denim	Engrave	-	25%	2000 mm/min	1	
+	True	Longer RAY5 10W	Powder Coated Metal	Engrave	-	100%	100 mm/min	1	
+	True	Longer RAY5 10W	Anodised Aluminium	Engrave	-	100%	200 mm/min	1	
+	True	Longer RAY5 10W	Ceramic	Engrave		70%	400 mm/min	1	Paint dark.
+	True	Longer RAY5 10W	Glass	Engrave	-	70%	1000 mm/min	1	Paint dark.
+	True	Longer RAY5 10W	Stainless Steel	Engrave	-	100%	400 mm/min	1	Matte surface.
+	True	Longer RAY5 10W	Basswood	Cut	2mm	100%	500 mm/min	1	
+	True	Longer RAY5 10W	Basswood	Cut	3mm	100%	350 mm/min	1	
+	True	Longer RAY5 10W	Basswood	Cut	4mm	100%	180 mm/min	1	
+	True	Longer RAY5 10W	Basswood	Cut	8mm	100%	120 mm/min	1	Defoucs by 1~3 mm.
+	True	Longer RAY5 10W	Basswood	Cut	10mm	100%	100 mm/min	2	Defoucs by 1~3 mm.
+	True	Longer RAY5 10W	Pinewood	Cut	14mm	100%	100 mm/min	2	Defoucs by 1~3 mm.
+	True	Longer RAY5 10W	Pinewood	Cut	15mm	100%	100 mm/min	3	Defoucs by 1~3 mm.
+	True	Longer RAY5 10W	Acrylic	Cut	3mm	100%	180 mm/min	1	
+	True	Longer RAY5 10W	KraftPaper	Cut	0.1mm	100%	5000 mm/min	1	
+	True	Longer RAY5 10W	Leather	Cut	0.5mm	70%	1500 mm/min	1	Light color. It need to be adjusted based on different colors.
+	True	Longer RAY5 10W	Denim	Cut	0.5mm	100%	1000 mm/min	1	
+	True	Longer RAY5 5W	Basswood	Engrave	-	100%	2000 mm/min	1	
+	True	Longer RAY5 5W	Plywood	Engrave	-	100%	2000 mm/min	1	
+	True	Longer RAY5 5W	Pine	Engrave	-	100%	2000 mm/min	1	
+	True	Longer RAY5 5W	Stainless steel	Engrave	-	100%	200 mm/min	1	color with dark paint before engrave
+	True	Longer RAY5 5W	Basswood	Cut	2mm	100%	300 mm/min	1	
+	True	Longer RAY5 5W	Plywood	Cut	4mm	100%	100 mm/min	1	
+	True	Longer RAY5 5W	Pine	Cut	6mm	100%	120 mm/min	2	
+	True	Longer RAY5 5W	Acrylic	Cut	2mm	100%	120 mm/min	2	
+	True	Longer RAY5 5W	Anodised Aluminium	Engrave	-	100%	3000 mm/min	1	dark color. It need to be adjusted based on different colors
+	True	Longer RAY5 5W	Cotton Cloth	Engrave	-	100%	1000 mm/min	1	white color. It need to be adjusted based on different colors.
+	True	Longer RAY5 5W	Leather	Engrave	-	100%	3000 mm/min	1	
+	True	Longer RAY5 5W	Powder Coated Metal	Engrave	-	100%	500 mm/min	1	dark color.It need to be adjusted based different colors.
+	True	Longer RAY5 5W	Solid Wood	Engrave	-	80%	3000 mm/min	1	It need to be adjusted based on different woods.
+	True	Longer RAY5 5W	Glass	Engrave	-	100%	700 mm/min	1	color with dark paint before engrave.
+	True	Longer RAY5 5W	Paperboard	Cut	2mm	100%	1000 mm/min	2	
+	True	Longer RAY5 5W	Kraft Paper	Cut	0.15mm	80%	3000 mm/min	1	
+	True	Longer RAY5 5W	KT Board	Cut	5mm	100%	300 mm/min	2	white color.It need to be adjusted based on different colors.
+	True	Longer RAY5 5W	Non-woven fabrics	Cut	0.5mm	100%	800 mm/min	1	white color.It need to be adjusted based on different colors.
+	True	Longer RAY5 5W	Cotton Cloth	Cut	1mm	100%	400 mm/min	1	
+	True	Longer RAY5 5W	Leather	Cut	0.7mm	100%	500 mm/min	1	
+	True	Longer RAY5 5W	Stainless Steel	Engrave		100%	200 mm/min	1	Paint dark.
+	True	Longer RAY5 or B1 20W	Basswood	Engrave	-	20%	4000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Cork Wood	Engrave		15%	3500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Bamboo	Engrave	-	20%	4000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Translucent Acrylic	Engrave		15%	3000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Acrylic	Engrave	-	20%	4000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Kraft Paper	Engrave	-	20%	4500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Rubber	Engrave		50%	3000 mm/min	1	
+	True	Longer RAY5 or B1 20W	High Density Foam	Engrave		15%	3000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Mirror	Engrave	-	30%	4500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Leather	Engrave	-	20%	4500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Carton	Engrave		15%	3000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Denim	Engrave	-	25%	4500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Powder Coated Metal	Engrave	-	100%	400 mm/min	1	
+	True	Longer RAY5 or B1 20W	PCB Borad	Engrave	-	60%	1500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Anodized Aluminum	Engrave	-	60%	500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Rock	Engrave		60%	3500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Pebble	Engrave		60%	3500 mm/min	1	
+	True	Longer RAY5 or B1 20W	White Ceramic	Engrave	-	70%	1000 mm/min	1	Paint dark.
+	True	Longer RAY5 or B1 20W	Glass	Engrave	-	75%	4000 mm/min	1	Paint dark.
+	True	Longer RAY5 or B1 20W	Stainless Steel	Engrave	-	75%	1500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Basswood	Cut	2mm	100%	800 mm/min	1	
+	True	Longer RAY5 or B1 20W	Basswood	Cut	3mm	100%	700 mm/min	1	
+	True	Longer RAY5 or B1 20W	Basswood	Cut	5mm	100%	450 mm/min	1	
+	True	Longer RAY5 or B1 20W	Basswood	Cut	6mm	100%	300 mm/min	1	
+	True	Longer RAY5 or B1 20W	Basswood	Cut	8mm	100%	200 mm/min	1	
+	True	Longer RAY5 or B1 20W	Basswood	Cut	10mm	100%	100 mm/min	1	
+	True	Longer RAY5 or B1 20W	Pine	Cut	10mm	100%	120 mm/min	1	
+	True	Longer RAY5 or B1 20W	Pine	Cut	15mm	100%	100 mm/min	1	Defocus by 3mm..
+	True	Longer RAY5 or B1 20W	Acrylic	Cut	3mm	100%	300 mm/min	1	
+	True	Longer RAY5 or B1 20W	Acrylic	Cut	8mm	100%	100 mm/min	1	
+	True	Longer RAY5 or B1 20W	Kraft Paper	Cut	0.1mm	40%	5000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Leather	Cut	0.5mm	70%	2500 mm/min	1	
+	True	Longer RAY5 or B1 20W	Denim	Cut	0.5mm	100%	2000 mm/min	1	
+	True	Longer RAY5 or B1 20W	Acrylic	Cut	10mm	100%	120 mm/min	2	
+	True	Longer RAY5 or B1 20W	Stainless Steel	Cut	0.05mm	100%	120 mm/min	1	
+	True	Longer RAY5 or B1 20W	Acrylic	Cut	15mm	70%	100 mm/min	5	
+	True	Longer RAY5 or B1 20W	MDF	Cut	5mm	100%	160 mm/min	1	
+	True	Longer RAY5 or B1 20W	MDF	Cut	10mm	100%	300 mm/min	6	Defocus by 3mm. Be aware that the material  is flammable during cutting.
+	True	Longer RAY5 or B1 20W	Paulownia Wood	Cut	15mm	70%	300 mm/min	3	Be aware that the material  is flammable during cutting.
+	True	Longer RAY5 or B1 20W	Cork Wood	Cut	5mm	100%	500 mm/min	1	
+	True	MECOLOUR M10W	Basswood	Engrave	-	50%	6000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	MECOLOUR M10W	Hardwood	Engrave	-	50%	6000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	MECOLOUR M10W	Bamboo	Engrave	-	50%	6000 mm/min	1	
+	True	MECOLOUR M10W	Acrylic	Engrave	-	20%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	MECOLOUR M10W	Kraft paper	Engrave	-	50%	6000 mm/min	1	
+	True	MECOLOUR M10W	Cobblestone	Engrave	-	100%	3000 mm/min	1	
+	True	MECOLOUR M10W	Anodised Aluminium	Engrave	-	20%	6000 mm/min	1	
+	True	MECOLOUR M10W	Plastic Sheet (dark color)	Engrave	-	40%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	MECOLOUR M10W	Leather	Engrave	-	20%	6000 mm/min	1	
+	True	MECOLOUR M10W	Powder Coated Metal	Engrave	-	50%	6000 mm/min	1	
+	True	MECOLOUR M10W	Plated Metal	Engrave	-	100%	1000 mm/min	1	
+	True	MECOLOUR M10W	Stainless Steel	Engrave	-	100%	3000 mm/min	1	Suggested 8 lines.Stainless steel will bend and warp when heated.
+	True	MECOLOUR M10W	Basswood	Cut	7	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	MECOLOUR M10W	Hardwood	Cut	6	100%	150 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	MECOLOUR M10W	Bamboo	Cut	4	100%	150 mm/min	1	
+	True	MECOLOUR M10W	Acrylic	Cut	3	100%	150 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	MECOLOUR M10W	Kraft paper	Cut	2	100%	2000 mm/min	1	
+	True	MECOLOUR M10W	Leather	Cut	0.7	100%	2000 mm/min	1	
+	True	MECOLOUR M10W	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	MECOLOUR M10W	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	MECOLOUR M6W	Basswood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	MECOLOUR M6W	Hardwood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	MECOLOUR M6W	Bamboo	Engrave	-	30%	2000 mm/min	1	
+	True	MECOLOUR M6W	Acrylic	Engrave	-	20%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	MECOLOUR M6W	Kraft paper	Engrave	-	100%	2000 mm/min	1	
+	True	MECOLOUR M6W	Cobblestone	Engrave	-	100%	3000 mm/min	1	
+	True	MECOLOUR M6W	Anodised Aluminium	Engrave	-	60%	4000 mm/min	1	
+	True	MECOLOUR M6W	Plastic Sheet (dark color)	Engrave	-	70%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	MECOLOUR M6W	Leather	Engrave	-	80%	6000 mm/min	1	
+	True	MECOLOUR M6W	Powder Coated Metal	Engrave	-	50%	5000 mm/min	1	
+	True	MECOLOUR M6W	Plated Metal	Engrave	-	100%	300 mm/min	1	
+	True	MECOLOUR M6W	Stainless Steel	Engrave	-	100%	2000 mm/min	1	suggested 8 lines.Stainless steel will bend and warp when heated.
+	True	MECOLOUR M6W	Basswood	Cut	5	100%	100 mm/min	2	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	MECOLOUR M6W	Hardwood	Cut	4	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	MECOLOUR M6W	Acrylic	Cut	3	100%	150 mm/min	2	Pay attention to toxic gases!Choose pure black opaque.
+	True	MECOLOUR M6W	Kraft paper	Cut	2	100%	1500 mm/min	1	
+	True	MECOLOUR M6W	Leather	Cut	0.7	100%	700 mm/min	1	
+	True	MECOLOUR M6W	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	MECOLOUR M6W	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	NASUM A5 PRO	Basswood	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	NASUM A5 PRO	Hardwood	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	NASUM A5 PRO	Bamboo	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	NASUM A5 PRO	Acrylic	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	NASUM A5 PRO	Kraft paper	Engrave	-	20%	3000 mm/min	1	suggested 8 lines/mm
+	True	NASUM A5 PRO	Mirrors	Engrave	-	80%	3000 mm/min	1	suggested 8 lines/mm
+	True	NASUM A5 PRO	Leather	Engrave	-	20%	1000 mm/min	1	suggested 8 lines/mm
+	True	NASUM A5 PRO	Stainless Steel	Engrave	-	100%	100 mm/min	3	suggested 15 lines/mm
+	True	NASUM A5 PRO	Basswood	Cut	2.5mm	100%	450 mm/min	3	
+	True	NASUM A5 PRO	Hardwood	Cut	6mm	100%	150 mm/min	3	
+	True	NASUM A5 PRO	Bamboo	Cut	2mm	100%	460 mm/min	3	
+	True	NASUM A5 PRO	Acrylic	Cut	2.8mm	100%	310 mm/min	3	
+	True	NASUM A5 PRO	Kraft paper	Cut	0.2mm	100%	1200 mm/min	1	
+	True	Ortur LU15W (4.5W)	Plywood	Engrave	-	100%	3000 mm/min	1	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU15W (4.5W)	Plywood	Cut	1.5mm	100%	200 mm/min	2	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU15W (4.5W)	Plywood	Cut	3mm	100%	100 mm/min	3	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU15W (4.5W)	Paperboard	Engrave	-	30%	3000 mm/min	1	It need to be adjusted based on different thickness paperboards, different colors.
+	True	Ortur LU15W (4.5W)	Paperboard	Cut	-	100%	1000 mm/min	4	It need to be adjusted based on different thickness paperboards, different colors.
+	True	Ortur LU15W (4.5W)	Kraft Paper	Engrave	-	30%	3000 mm/min	1	It need to be adjusted based on different colors.
+	True	Ortur LU15W (4.5W)	Kraft Paper	Cut	250 g/mq	100%	800 mm/min	1	It need to be adjusted based on different colors.
+	True	Ortur LU15W (4.5W)	KT Board (dark color)	Cut	5mm	100%	2000 mm/min	1	Pay attention to toxic gases! It need to be adjusted based on different colors. There will be black edges after cutting.
+	True	Ortur LU15W (4.5W)	Cotton Cloth (dark color)	Cut	-	100%	1000 mm/min	1	Some cotton blended fabrics may be melt. It need to be adjusted based on different colors. There will be black edges after cutting.
+	True	Ortur LU15W (4.5W)	Leather	Engrave	-	40%	3000 mm/min	1	It need to be adjusted based on different leathers, different colors.
+	True	Ortur LU15W (4.5W)	Leather	Cut	0.7mm	100%	300 mm/min	1	It need to be adjusted based on different leathers, different colors.
+	True	Ortur LU15W (4.5W)	Plastic Sheet (dark color)	Engrave	-	100%	3000 mm/min	1	Some plastic sheets may be melt. It need to be adjusted based on different colors,different colors.
+	True	Ortur LU15W (4.5W)	Solid Wood	Engrave	-	100%	3000 mm/min	1	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU15W (4.5W)	Acrylic	Engrave	-	100%	3000 mm/min	1	Pay attention to toxic gases! Cannot engrave transparent Acrylic directly, need to paste Kraft paper film on the surface.
+	True	Ortur LU15W (4.5W)	Powder Coated Metal	Engrave	-	100%	3000 mm/min	1	Engraved on powder coating. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU15W (4.5W)	Paint Sprayed Metal	Engrave	-	100%	3000 mm/min	1	Engraved on powder coating. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU15W (4.5W)	Plated Metal	Engrave	-	100%	3000 mm/min	1	It's the surface color turned to be other color. Need to use Marker to balck the finishing first. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU15W (4.5W)	Anodised Aluminium	Engrave	-	100%	3000 mm/min	1	It's the surface color turned to be other color. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU15W (4.5W)	Cobblestone	Engrave	-	100%	100 mm/min	1	The surface should be coated with acrylic dye heat transfer film.
+	True	Ortur LU15W (4.5W)	Stainless Steel	Engrave	-	100%	100 mm/min	1	The surface should be painted black by Marker Pen.
+	True	Ortur LU20W (5.5W)	Plywood	Engrave	-	80%	3000 mm/min	1	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU20W (5.5W)	Plywood	Cut	1.5mm	100%	200 mm/min	1	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU20W (5.5W)	Plywood	Cut	3mm	100%	100 mm/min	2	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU20W (5.5W)	Paperboard	Engrave	-	20%	3000 mm/min	1	It need to be adjusted based on different thickness paperboards, different colors.
+	True	Ortur LU20W (5.5W)	Paperboard	Cut	-	100%	1000 mm/min	3	It need to be adjusted based on different thickness paperboards, different colors.
+	True	Ortur LU20W (5.5W)	Kraft Paper	Engrave	-	20%	3000 mm/min	1	It need to be adjusted based on different colors.
+	True	Ortur LU20W (5.5W)	KT Board (dark color)	Cut	5mm	100%	2000 mm/min	1	Pay attention to toxic gases! It need to be adjusted based on different colors. There will be black edges after cutting.
+	True	Ortur LU20W (5.5W)	Non-woven fabrics (dark color)	Cut	0.5mm	100%	1600 mm/min	1	It need to be adjusted based on different colors. There will be black edges after cutting
+	True	Ortur LU20W (5.5W)	Cotton Cloth (dark color)	Cut	-	100%	1200 mm/min	1	Some cotton blended fabrics may be melt. It need to be adjusted based on different colors. There will be black edges after cutting
+	True	Ortur LU20W (5.5W)	Leather	Engrave	-	40%	3000 mm/min	1	It need to be adjusted based on different leathers, different colors.
+	True	Ortur LU20W (5.5W)	Leather	Cut	0.7mm	100%	500 mm/min	1	It need to be adjusted based on different leathers, different colors.
+	True	Ortur LU20W (5.5W)	Plastic Sheet (dark color)	Engrave	-	80%	3000 mm/min	1	Some plastic sheets may be melt. It need to be adjusted based on different colors,different colors.
+	True	Ortur LU20W (5.5W)	Solid Wood	Engrave	-	80%	3000 mm/min	1	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU20W (5.5W)	Acrylic	Engrave	-	80%	3000 mm/min	1	Pay attention to toxic gases! Cannot engrave transparent Acrylic directly, need to paste Kraft paper film on the surface.
+	True	Ortur LU20W (5.5W)	Powder Coated Metal	Engrave	-	100%	3000 mm/min	1	Engraved on powder coating. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU20W (5.5W)	Paint Sprayed Metal	Engrave	-	100%	3000 mm/min	1	Engraved on powder coating. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU20W (5.5W)	Plated Metal	Engrave	-	100%	3000 mm/min	1	It's the surface color turned to be other color. Need to use Marker to balck the finishing first. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU20W (5.5W)	Anodised Aluminium	Engrave	-	100%	3000 mm/min	1	It's the surface color turned to be other color. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU20W (5.5W)	Cobblestone	Engrave	-	100%	100 mm/min	1	The surface should be coated with acrylic dye heat transfer film.
+	True	Ortur LU20W (5.5W)	Stainless Steel	Engrave	-	100%	100 mm/min	1	The surface should be painted black by Marker Pen.
+	True	Ortur LU7W (1.5W)	Plywood	Engrave	-	100%	2000 mm/min	1	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU7W (1.5W)	Paperboard	Engrave	-	100%	3000 mm/min	1	It need to be adjusted based on different thickness paperboards, different colors.
+	True	Ortur LU7W (1.5W)	Paperboard	Cut	-	100%	200 mm/min	2	It need to be adjusted based on different thickness paperboards, different colors.
+	True	Ortur LU7W (1.5W)	Kraft Paper	Engrave	-	100%	3000 mm/min	1	It need to be adjusted based on different colors.
+	True	Ortur LU7W (1.5W)	Kraft Paper	Cut	250 g/mq	100%	200 mm/min	1	It need to be adjusted based on different colors.
+	True	Ortur LU7W (1.5W)	KT Board (dark color)	Cut	5mm	100%	600 mm/min	1	Pay attention to toxic gases! It need to be adjusted based on different colors. There will be black edges after cutting.
+	True	Ortur LU7W (1.5W)	Non-woven fabrics (dark color)	Cut	0.5mm	100%	500 mm/min	1	Cannot cut Non-woven in white color. It need to be adjusted based on different colors. There will be black edges after cutting
+	True	Ortur LU7W (1.5W)	Cotton Cloth (dark color)	Cut	-	100%	500 mm/min	1	Some cotton blended fabrics may be melt. It need to be adjusted based on different colors. There will be black edges after cutting
+	True	Ortur LU7W (1.5W)	Leather	Engrave	-	100%	3000 mm/min	1	It need to be adjusted based on different leathers, different colors.
+	True	Ortur LU7W (1.5W)	Leather	Cut	0.7mm	100%	100 mm/min	1	It need to be adjusted based on different leathers, different colors.
+	True	Ortur LU7W (1.5W)	Plastic Sheet (dark color)	Engrave	-	100%	2000 mm/min	1	Pay attention to toxic gases! Some plastic sheets may be melt. It need to be adjusted based on different colors, different colors.
+	True	Ortur LU7W (1.5W)	Solid Wood	Engrave	-	100%	2000 mm/min	1	It need to be adjusted based on different woods, different colors.
+	True	Ortur LU7W (1.5W)	Acrylic	Engrave	-	100%	2000 mm/min	1	Pay attention to toxic gases! Cannot engrave transparent Acrylic directly, need to paste Kraft paper film on the surface.
+	True	Ortur LU7W (1.5W)	Powder Coated Metal	Engrave	-	100%	2000 mm/min	1	Engraved on powder coating. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU7W (1.5W)	Paint Sprayed Metal	Engrave	-	100%	2000 mm/min	1	Engraved on Paint layer. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU7W (1.5W)	Plated Metal	Engrave	-	100%	2000 mm/min	1	It's the surface color turned to be other color. Need to use Marker to black the finishing first. It need to be adjusted based on different finishings and colors.
+	True	Ortur LU7W (1.5W)	Anodised Aluminium	Engrave	-	100%	2000 mm/min	1	It's the surface color turned to be other color. It need to be adjusted based on different finishings and colors.
+	True	SculpFun S9	Solid Wood	Engrave	-	40%	1500 mm/min	1	
+	True	SculpFun S9	Bamboo	Engrave	-	30%	1500 mm/min	1	
+	True	SculpFun S9	Mirrors (back)	Engrave	-	30%	1500 mm/min	1	On the back of mirrors
+	True	SculpFun S9	Kraft Paper	Engrave	-	20%	1500 mm/min	1	
+	True	SculpFun S9	Anodised Aluminium	Engrave	-	100%	900 mm/min	1	Preferably dark color
+	True	SculpFun S9	Acrilyc (dark)	Engrave	-	50%	1500 mm/min	1	Preferably dark color
+	True	SculpFun S9	Leather	Engrave	-	30%	1500 mm/min	1	Preferably dark color
+	True	SculpFun S9	Solid Wood	Cut	3.0mm	100%	900 mm/min	2	Reference value, adjust according to the actual engraving situation
+	True	SculpFun S9	Acrylic	Cut	2mm	100%	200 mm/min	2	Reference value, adjust according to the actual engraving situation
+	True	SculpFun S9	Kraft Paper	Cut	0.2mm	50%	1500 mm/min	1	
+	True	ScuplFun S6	Solid Wood	Engrave	-	50%	1500 mm/min	1	
+	True	ScuplFun S6	Bamboo	Engrave	-	30%	1500 mm/min	1	
+	True	ScuplFun S6	Mirrors (back)	Engrave	-	35%	1500 mm/min	1	On the back of Mirrors
+	True	ScuplFun S6	Kraft Paper	Engrave	-	25%	1500 mm/min	1	
+	True	ScuplFun S6	Anodised Aluminium	Engrave	-	100%	1000 mm/min	1	better on dark colors
+	True	ScuplFun S6	Acrylic(dark)	Engrave	-	50%	1500 mm/min	1	better on dark colors
+	True	ScuplFun S6	Leather	Engrave	-	30%	1500 mm/min	1	better on dark colors
+	True	ScuplFun S6	Solid Wood	Cut	3mm	100%	400 mm/min	6	reference value, adjust according to the actual engraving situation
+	True	ScuplFun S6	Acrylic (dark)	Cut	2mm	100%	400 mm/min	4	reference value, adjust according to the actual engraving situation
+	True	ScuplFun S6	Kraft Paper	Cut		80%	800 mm/min	1	
+	True	Two Trees TS2-10	Basswood	Engrave	-	50%	6000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS2-10	Hardwood	Engrave	-	50%	6000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS2-10	Bamboo	Engrave	-	50%	6000 mm/min	1	
+	True	Two Trees TS2-10	Acrylic	Engrave	-	20%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque
+	True	Two Trees TS2-10	Kraft paper	Engrave	-	50%	6000 mm/min	1	
+	True	Two Trees TS2-10	Cobblestone	Engrave	-	100%	3000 mm/min	1	
+	True	Two Trees TS2-10	Anodised Aluminium	Engrave	-	20%	6000 mm/min	1	
+	True	Two Trees TS2-10	Plastic Sheet (dark color)	Engrave	-	40%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TS2-10	Leather	Engrave	-	20%	6000 mm/min	1	
+	True	Two Trees TS2-10	Powder Coated Metal	Engrave	-	50%	6000 mm/min	1	
+	True	Two Trees TS2-10	Plated Metal	Engrave	-	100%	1000 mm/min	1	
+	True	Two Trees TS2-10	Stainless Steel	Engrave	-	100%	3000 mm/min	1	suggested 8 lines/mm.Stainless steel will bend and warp when heated.8/mm
+	True	Two Trees TS2-10	Basswood	Cut	7mm	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS2-10	Hardwood	Cut	6mm	100%	150 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS2-10	Bamboo	Cut	4mm	100%	150 mm/min	1	
+	True	Two Trees TS2-10	Acrylic	Cut	3mm	100%	150 mm/min	1	Pay attention to toxic gases!Choose pure black opaque
+	True	Two Trees TS2-10	Kraft paper	Cut	2mm	100%	2000 mm/min	1	
+	True	Two Trees TS2-10	Leather	Cut	0.7mm	100%	2000 mm/min	1	
+	True	Two Trees TS2-10	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TS2-10	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	Two Trees TS2-55	Basswood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS2-55	Hardwood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS2-55	Bamboo	Engrave	-	30%	2000 mm/min	1	
+	True	Two Trees TS2-55	Acrylic	Engrave	-	20%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque
+	True	Two Trees TS2-55	Kraft paper	Engrave	-	100%	2000 mm/min	1	
+	True	Two Trees TS2-55	Cobblestone	Engrave	-	100%	3000 mm/min	1	
+	True	Two Trees TS2-55	Anodised Aluminium	Engrave	-	60%	4000 mm/min	1	
+	True	Two Trees TS2-55	Plastic Sheet (dark color)	Engrave	-	70%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TS2-55	Leather	Engrave	-	80%	6000 mm/min	1	
+	True	Two Trees TS2-55	Powder Coated Metal	Engrave	-	50%	5000 mm/min	1	
+	True	Two Trees TS2-55	Plated Metal	Engrave	-	100%	300 mm/min	1	
+	True	Two Trees TS2-55	Stainless Steel	Engrave	-	100%	2000 mm/min	1	suggested 8 lines/mm.Stainless steel will bend and warp when heated.8/mm
+	True	Two Trees TS2-55	Basswood	Cut	5mm	100%	100 mm/min	2	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS2-55	Hardwood	Cut	4mm	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS2-55	Acrylic	Cut	3mm	100%	150 mm/min	2	Pay attention to toxic gases!Choose pure black opaque
+	True	Two Trees TS2-55	Kraft paper	Cut	2mm	100%	1500 mm/min	1	
+	True	Two Trees TS2-55	Leather	Cut	0.7mm	100%	700 mm/min	1	
+	True	Two Trees TS2-55	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TS2-55	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	Two Trees TS3-10	Basswood	Engrave	-	50%	6000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS3-10	Hardwood	Engrave	-	50%	6000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS3-10	Bamboo	Engrave	-	50%	6000 mm/min	1	
+	True	Two Trees TS3-10	Acrylic	Engrave	-	20%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TS3-10	Kraft paper	Engrave	-	50%	6000 mm/min	1	
+	True	Two Trees TS3-10	Cobblestone	Engrave	-	100%	3000 mm/min	1	
+	True	Two Trees TS3-10	Anodised Aluminium	Engrave	-	20%	6000 mm/min	1	
+	True	Two Trees TS3-10	Plastic Sheet (dark color)	Engrave	-	40%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TS3-10	Leather	Engrave	-	20%	6000 mm/min	1	
+	True	Two Trees TS3-10	Powder Coated Metal	Engrave	-	50%	6000 mm/min	1	
+	True	Two Trees TS3-10	Plated Metal	Engrave	-	100%	1000 mm/min	1	
+	True	Two Trees TS3-10	Stainless Steel	Engrave	-	100%	3000 mm/min	1	suggested 8 lines/mm.Stainless steel will bend and warp when heated.
+	True	Two Trees TS3-10	Basswood	Cut	7mm	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS3-10	Hardwood	Cut	6mm	100%	150 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS3-10	Bamboo	Cut	4mm	100%	150 mm/min	1	
+	True	Two Trees TS3-10	Acrylic	Cut	3mm	100%	150 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TS3-10	Kraft paper	Cut	2mm	100%	2000 mm/min	1	
+	True	Two Trees TS3-10	Leather	Cut	0.7mm	100%	2000 mm/min	1	
+	True	Two Trees TS3-10	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TS3-10	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	Two Trees TS3-55	Basswood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS3-55	Hardwood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TS3-55	Bamboo	Engrave	-	30%	2000 mm/min	1	
+	True	Two Trees TS3-55	Acrylic	Engrave	-	20%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TS3-55	Kraft paper	Engrave	-	100%	2000 mm/min	1	
+	True	Two Trees TS3-55	Cobblestone	Engrave	-	100%	3000 mm/min	1	
+	True	Two Trees TS3-55	Anodised Aluminium	Engrave	-	60%	4000 mm/min	1	
+	True	Two Trees TS3-55	Plastic Sheet (dark color)	Engrave	-	70%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TS3-55	Leather	Engrave	-	80%	6000 mm/min	1	
+	True	Two Trees TS3-55	Powder Coated Metal	Engrave	-	50%	5000 mm/min	1	
+	True	Two Trees TS3-55	Plated Metal	Engrave	-	100%	300 mm/min	1	
+	True	Two Trees TS3-55	Stainless Steel	Engrave	-	100%	2000 mm/min	1	suggested 8 lines/mm.Stainless steel will bend and warp when heated.
+	True	Two Trees TS3-55	Basswood	Cut	5mm	100%	100 mm/min	2	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS3-55	Hardwood	Cut	4mm	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TS3-55	Acrylic	Cut	3mm	100%	150 mm/min	2	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TS3-55	Kraft paper	Cut	2mm	100%	1500 mm/min	1	
+	True	Two Trees TS3-55	Leather	Cut	0.7mm	100%	700 mm/min	1	
+	True	Two Trees TS3-55	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TS3-55	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	Two Trees TT-25	Basswood	Engrave	-	80%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TT-25	Hardwood	Engrave	-	80%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TT-25	Bamboo	Engrave	-	80%	2000 mm/min	1	
+	True	Two Trees TT-25	Acrylic	Engrave	-	30%	7000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TT-25	Kraft paper	Engrave	-	80%	2000 mm/min	1	
+	True	Two Trees TT-25	Leather	Engrave	-	70%	5000 mm/min	1	
+	True	Two Trees TT-25	Anodised Aluminium	Engrave	-	100%	5000 mm/min	1	
+	True	Two Trees TT-25	Plastic Sheet (dark color)	Engrave	-	100%	3000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TT-25	Basswood	Cut	1.8mm	100%	100 mm/min	2	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TT-25	Hardwood	Cut	1mm	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TT-25	Acrylic	Cut	1mm	100%	100 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TT-25	Kraft paper	Cut	1mm	100%	300 mm/min	1	
+	True	Two Trees TT-25	Leather	Cut	0.7mm	100%	200 mm/min	2	
+	True	Two Trees TT-25	Non-woven fabrics (dark color)	Cut	-	100%	200 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TT-25	Cotton Cloth (dark color)	Cut	-	100%	150 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	Two Trees TT-50	Basswood	Engrave	-	80%	4000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TT-50	Hardwood	Engrave	-	80%	4000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TT-50	Bamboo	Engrave	-	80%	4000 mm/min	1	
+	True	Two Trees TT-50	Acrylic	Engrave	-	40%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TT-50	Kraft paper	Engrave	-	80%	4000 mm/min	1	
+	True	Two Trees TT-50	Cobblestone	Engrave	-	100%	2000 mm/min	1	
+	True	Two Trees TT-50	Anodised Aluminium	Engrave	-	100%	5000 mm/min	1	
+	True	Two Trees TT-50	Plastic Sheet (dark color)	Engrave	-	60%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TT-50	Basswood	Cut	1.8mm	100%	100 mm/min	2	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TT-50	Hardwood	Cut	2mm	100%	70 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TT-50	Acrylic	Cut	3mm	100%	100 mm/min	2	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TT-50	Kraft paper	Cut	1mm	100%	400 mm/min	1	
+	True	Two Trees TT-50	Leather	Cut	0.7mm	100%	200 mm/min	2	
+	True	Two Trees TT-50	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TT-50	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	Two Trees TTS-25	Basswood	Engrave	-	80%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TTS-25	Hardwood	Engrave	-	80%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TTS-25	Bamboo	Engrave	-	80%	2000 mm/min	1	
+	True	Two Trees TTS-25	Acrylic	Engrave	-	30%	7000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TTS-25	Kraft paper	Engrave	-	80%	2000 mm/min	1	
+	True	Two Trees TTS-25	Leather	Engrave	-	70%	5000 mm/min	1	
+	True	Two Trees TTS-25	Anodised Aluminium	Engrave	-	100%	5000 mm/min	1	
+	True	Two Trees TTS-25	Plastic Sheet (dark color)	Engrave	-	100%	3000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TTS-25	Basswood	Cut	1.8mm	100%	100 mm/min	2	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TTS-25	Hardwood	Cut	1mm	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TTS-25	Acrylic	Cut	1mm	100%	100 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TTS-25	Kraft paper	Cut	1mm	100%	300 mm/min	1	
+	True	Two Trees TTS-25	Leather	Cut	0.7mm	100%	200 mm/min	2	
+	True	Two Trees TTS-25	Non-woven fabrics (dark color)	Cut	-	100%	200 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TTS-25	Cotton Cloth (dark color)	Cut	-	100%	150 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	Two Trees TTS-55	Basswood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TTS-55	Hardwood	Engrave	-	30%	2000 mm/min	1	The generation of yellow edges can be reduced by adding auxiliary tools.
+	True	Two Trees TTS-55	Bamboo	Engrave	-	30%	2000 mm/min	1	
+	True	Two Trees TTS-55	Acrylic	Engrave	-	20%	6000 mm/min	1	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TTS-55	Kraft paper	Engrave	-	100%	2000 mm/min	1	
+	True	Two Trees TTS-55	Cobblestone	Engrave	-	100%	3000 mm/min	1	
+	True	Two Trees TTS-55	Anodised Aluminium	Engrave	-	60%	4000 mm/min	1	
+	True	Two Trees TTS-55	Plastic Sheet (dark color)	Engrave	-	70%	6000 mm/min	1	Some plastic sheets may be melt.
+	True	Two Trees TTS-55	Leather	Engrave	-	80%	6000 mm/min	1	
+	True	Two Trees TTS-55	Powder Coated Metal	Engrave	-	50%	5000 mm/min	1	
+	True	Two Trees TTS-55	Plated Metal	Engrave	-	100%	300 mm/min	1	
+	True	Two Trees TTS-55	Stainless Steel	Engrave	-	100%	2000 mm/min	1	suggested 8 lines/mm.Stainless steel will bend and warp when heated.
+	True	Two Trees TTS-55	Basswood	Cut	5mm	100%	100 mm/min	2	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TTS-55	Hardwood	Cut	4mm	100%	100 mm/min	1	The focus before cutting needs to be in the middle of the object to be cut, and the focus is different for different thicknesses.
+	True	Two Trees TTS-55	Acrylic	Cut	3mm	100%	150 mm/min	2	Pay attention to toxic gases!Choose pure black opaque.
+	True	Two Trees TTS-55	Kraft paper	Cut	2mm	100%	1500 mm/min	1	
+	True	Two Trees TTS-55	Leather	Cut	0.7mm	100%	700 mm/min	1	
+	True	Two Trees TTS-55	Non-woven fabrics (dark color)	Cut	-	100%	300 mm/min	1	Easy to burn through, pay attention to protection!
+	True	Two Trees TTS-55	Cotton Cloth (dark color)	Cut	-	100%	200 mm/min	1	Easy to catch fire, pay attention to protection!
+	True	YoraHome 15 (6.5W optical)	Brown Craft Board	Engrave	-	20%	300 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Plywood	Engrave	-	30%	300 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	White Card	Engrave	-	50%	300 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Cork	Engrave	-	10%	300 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Mirror	Engrave	-	60%	100 mm/min	1	When engraving mirrors, engrave from the rear.
+	True	YoraHome 15 (6.5W optical)	Tile	Engrave	-	75%	300 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Slate	Engrave	-	60%	100 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Cherry Wood	Engrave	-	20%	300 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Pine	Engrave	-	20%	150 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Bamboo	Engrave	-	20%	150 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Black Card	Engrave	-	10%	500 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Blue Acrylic	Engrave	-	30%	50 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Translucent Red Acrylic	Engrave	-	30%	50 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Solid Pink Acrylic	Engrave	-	30%	50 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Clear Acrylic	Engrave	-	50%	50 mm/min	1	When engraving clear acrylic, mask it first and leave a 2mm gap under it.
+	True	YoraHome 15 (6.5W optical)	Real Leather	Engrave	-	30%	500 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Faux Leather	Engrave	-	20%	500 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Glass	Engrave	-	50%	50 mm/min	1	When engraving glass, paint it with black acrylic.
+	True	YoraHome 15 (6.5W optical)	Anodized Aluminum	Engrave	-	40%	100 mm/min	1	
+	True	YoraHome 15 (6.5W optical)	Coated Stainless Steel	Engrave	-	60%	100 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Brown Craft Board	Engrave	-	40%	300 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Plywood	Engrave	-	50%	200 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	White Card	Engrave	-	50%	200 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Cork	Engrave	-	20%	300 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Mirror	Engrave	-	80%	100 mm/min	1	When engraving mirrors, engrave from the rear.
+	True	YoraHome 3.5 (2.2W optical)	Tile	Engrave	-	95%	250 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Cherry Wood	Engrave	-	40%	300 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Pine	Engrave	-	60%	150 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Bamboo	Engrave	-	60%	300 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Black Card	Engrave	-	30%	500 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Blue Acrylic	Engrave	-	70%	50 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Translucent Red Acrylic	Engrave	-	70%	50 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Solid Pink Acrylic	Engrave	-	70%	50 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Real Leather	Engrave	-	60%	300 mm/min	1	
+	True	YoraHome 3.5 (2.2W optical)	Faux Leather	Engrave	-	50%	300 mm/min	1	
+	True	YoraHome 40 (7W optical)	Brown Craft Board	Engrave	-	5%	300 mm/min	1	
+	True	YoraHome 40 (7W optical)	Plywood	Engrave	-	8%	300 mm/min	1	
+	True	YoraHome 40 (7W optical)	White Card	Engrave	-	8%	300 mm/min	1	
+	True	YoraHome 40 (7W optical)	Cork	Engrave	-	5%	400 mm/min	1	
+	True	YoraHome 40 (7W optical)	Mirror	Engrave	-	8%	100 mm/min	1	When engraving mirrors, engrave from the rear.
+	True	YoraHome 40 (7W optical)	Tile	Engrave	-	75%	500 mm/min	1	
+	True	YoraHome 40 (7W optical)	Slate	Engrave	-	15%	100 mm/min	1	
+	True	YoraHome 40 (7W optical)	Cherry Wood	Engrave	-	8%	400 mm/min	1	
+	True	YoraHome 40 (7W optical)	Pine	Engrave	-	8%	200 mm/min	1	
+	True	YoraHome 40 (7W optical)	Bamboo	Engrave	-	8%	200 mm/min	1	
+	True	YoraHome 40 (7W optical)	Black Card	Engrave	-	5%	550 mm/min	1	
+	True	YoraHome 40 (7W optical)	Blue Acrylic	Engrave	-	10%	50 mm/min	1	
+	True	YoraHome 40 (7W optical)	Translucent Red Acrylic	Engrave	-	10%	50 mm/min	1	
+	True	YoraHome 40 (7W optical)	Solid Pink Acrylic	Engrave	-	10%	50 mm/min	1	
+	True	YoraHome 40 (7W optical)	Clear Acrylic	Engrave	-	20%	50 mm/min	1	When engraving clear acrylic, mask it first and leave a 2mm gap under it.
+	True	YoraHome 40 (7W optical)	Real Leather	Engrave	-	10%	1000 mm/min	1	
+	True	YoraHome 40 (7W optical)	Faux Leather	Engrave	-	8%	1000 mm/min	1	
+	True	YoraHome 40 (7W optical)	Glass	Engrave	-	50%	300 mm/min	1	When engraving glass, paint it with black acrylic.
+	True	YoraHome 40 (7W optical)	Anodized Aluminum	Engrave	-	10%	300 mm/min	1	
+	True	YoraHome 40 (7W optical)	Coated Stainless Steel	Engrave	-	30%	100 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Brown Craft Board	Engrave	-	40%	300 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Plywood	Engrave	-	50%	200 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	White Card	Engrave	-	50%	100 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Cork	Engrave	-	20%	300 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Mirror	Engrave	-	80%	100 mm/min	1	When engraving mirrors, engrave from the rear.
+	True	YoraHome 5.5 (3.5W optical)	Tile	Engrave	-	85%	250 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Slate	Engrave	-	100%	25 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Cherry Wood	Engrave	-	40%	300 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Pine	Engrave	-	60%	150 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Bamboo	Engrave	-	60%	300 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Black Card	Engrave	-	30%	500 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Blue Acrylic	Engrave	-	70%	50 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Translucent Red Acrylic	Engrave	-	70%	50 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Solid Pink Acrylic	Engrave	-	70%	50 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Clear Acrylic	Engrave	-	100%	10 mm/min	1	When engraving clear acrylic, mask it first and leave a 2mm gap under it.
+	True	YoraHome 5.5 (3.5W optical)	Real Leather	Engrave	-	50%	500 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Faux Leather	Engrave	-	40%	500 mm/min	1	
+	True	YoraHome 5.5 (3.5W optical)	Glass	Engrave	-	80%	100 mm/min	1	When engraving glass, paint it with black acrylic.
+	True	YoraHome 80 (10W optical)	Brown Craft Board	Engrave	-	5%	1250 mm/min	1	
+	True	YoraHome 80 (10W optical)	Plywood	Engrave	-	15%	1250 mm/min	1	
+	True	YoraHome 80 (10W optical)	White Card	Engrave	-	15%	1000 mm/min	1	
+	True	YoraHome 80 (10W optical)	Cork	Engrave	-	5%	1450 mm/min	1	
+	True	YoraHome 80 (10W optical)	Mirror	Engrave	-	10%	1000 mm/min	1	When engraving mirrors, engrave from the rear.
+	True	YoraHome 80 (10W optical)	Tile	Engrave	-	18%	900 mm/min	1	
+	True	YoraHome 80 (10W optical)	Slate	Engrave	-	10%	3000 mm/min	1	
+	True	YoraHome 80 (10W optical)	Cherry Wood	Engrave	-	10%	2000 mm/min	1	
+	True	YoraHome 80 (10W optical)	Pine	Engrave	-	15%	1000 mm/min	1	
+	True	YoraHome 80 (10W optical)	Bamboo	Engrave	-	15%	1250 mm/min	1	
+	True	YoraHome 80 (10W optical)	Black Card	Engrave	-	5%	1500 mm/min	1	
+	True	YoraHome 80 (10W optical)	Blue Acrylic	Engrave	-	10%	400 mm/min	1	
+	True	YoraHome 80 (10W optical)	Translucent Red Acrylic	Engrave	-	10%	400 mm/min	1	
+	True	YoraHome 80 (10W optical)	Solid Pink Acrylic	Engrave	-	10%	400 mm/min	1	
+	True	YoraHome 80 (10W optical)	Clear Acrylic	Engrave	-	20%	400 mm/min	1	When engraving clear acrylic, mask it first and leave a 2mm gap under it.
+	True	YoraHome 80 (10W optical)	Real Leather	Engrave	-	20%	1000 mm/min	1	
+	True	YoraHome 80 (10W optical)	Faux Leather	Engrave	-	20%	1500 mm/min	1	
+	True	YoraHome 80 (10W optical)	Glass	Engrave	-	20%	500 mm/min	1	When engraving glass, paint it with black acrylic.
+	True	YoraHome 80 (10W optical)	Anodized Aluminum	Engrave	-	15%	400 mm/min	1	
+	True	YoraHome 80 (10W optical)	Coated Stainless Steel	Engrave	-	25%	500 mm/min	1	
+	True	YoraHome 80 (10W optical)	Brown Craft Board	Cut		45%	500 mm/min	1	
+	True	YoraHome 80 (10W optical)	Plywood	Cut	3mm	65%	200 mm/min	1	
+	True	YoraHome 80 (10W optical)	Plywood	Cut	5mm	75%	175 mm/min	1	
+	True	YoraHome 80 (10W optical)	MDF	Cut	3mm	60%	230 mm/min	1	
+	True	YoraHome 80 (10W optical)	MDF	Cut	5mm	75%	100 mm/min	1	
+	True	YoraHome 80 (10W optical)	White Card	Cut		40%	800 mm/min	1	
+	True	YoraHome 80 (10W optical)	Black Card	Cut		32%	500 mm/min	1	
+	True	YoraHome 80 (10W optical)	Translucent Red Acrylic	Cut	3mm	65%	100 mm/min	1	
+	True	YoraHome 80 (10W optical)	Solid Pink Acrylic	Cut	3mm	85%	100 mm/min	1	
+	True	YoraHome 80 (10W optical)	Black Acrylic	Cut	3mm	70%	100 mm/min	1	
+	True	YoraHome 80 (10W optical)	Real Leather	Cut		55%	500 mm/min	1	
+	True	YoraHome 80 (10W optical)	Faux Leather	Cut		40%	750 mm/min	1	
