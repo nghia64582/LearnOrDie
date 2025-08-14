@@ -1,0 +1,3 @@
+ - Một số kết quả test:
+   + Qwen 1.5B tóm tắt hội thoại 2 người 10 câu trong ~ 4 phút
+   

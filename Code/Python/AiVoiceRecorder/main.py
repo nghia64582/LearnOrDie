@@ -1,25 +1,40 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2-7B-Instruct", trust_remote_code=True)
-model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2-7B-Instruct", device_map="auto", trust_remote_code=True)
+model_id = "Qwen/Qwen2-7B-Instruct"
 
-# Inference
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = "left"
+
+# Load on CPU only (no Accelerate sharding/offload)
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    torch_dtype=torch.float32,   # CPU-safe dtype
+    trust_remote_code=True
+).to("cpu")                      # ensure CPU
+
+# 3) Build inputs WITH attention_mask and padding
 prompt = "Hello, what is your name?"
-inputs = tokenizer(prompt, return_tensors='pt').to(model.device)
+inputs = tokenizer(
+    prompt,
+    return_tensors="pt",
+    padding=True,                 # ensures attention_mask is created
+    truncation=True,
+    max_length=2048
+).to(model.device)
 
-# --- Correct way to generate text ---
-# The 'generate' method handles past_key_values internally.
-# Ensure 'use_cache=True' is either default or explicitly set.
+# 4) Generate (pass attention_mask explicitly; set pad_token_id)
 outputs = model.generate(
-    inputs.input_ids,
-    max_new_tokens=100,
+    input_ids=inputs.input_ids,
+    attention_mask=inputs.attention_mask,   # <-- fixes the warning
+    max_new_tokens=300,
     do_sample=True,
     temperature=0.7,
     top_p=0.9,
-    use_cache=True, # Ensure this is True
-    pad_token_id=tokenizer.eos_token_id # Good practice for text generation
+    use_cache=True,
+    pad_token_id=tokenizer.pad_token_id
 )
 
-response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-print(response)
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
