@@ -1,0 +1,195 @@
+Nô đùa cùng Gemini API 🥳
+KhaiButDauXuan
+Giới thiệu
+Ở bài viết trước, tôi đã giới thiệu về mô hình Gemma, một bước tiến mới trong xây dựng mô hình lớn được phát triển bởi Google. Trong bài viết này, tôi muốn giới thiệu về Gemini, cũng là một sản phẩm của Google. Sau đó, ta sẽ cùng tìm hiểu và sử dụng Gemini API cung cấp bởi Google.
+
+image.png
+
+Gemini 🤖
+Gemini là một mô hình ngôn ngữ lớn của Google AI. Nó được đào tạo trên một tập dữ liệu văn bản và mã khổng lồ, cho phép nó giao tiếp và tạo ra văn bản giống con người để đáp lại các câu hỏi và yêu cầu của con người. Hãy coi nó như một công cụ ngôn ngữ mạnh mẽ có thể giúp mọi người thực hiện nhiều nhiệm vụ khác nhau, chẳng hạn như:
+
+Trả lời các câu hỏi một cách giàu thông tin, ngay cả khi chúng có kết thúc mở, mang tính thử thách hoặc lạ lùng.
+Tạo các định dạng văn bản sáng tạo khác nhau, như thơ, mã, kịch bản, bản nhạc, email, thư, v.v.
+Trả lời các câu hỏi của bạn một cách giàu thông tin, ngay cả khi chúng có kết thúc mở, mang tính thử thách hoặc lạ lùng.
+Bạn có thể thử Gemini trên web hoặc điện thoại của mình. image.png
+
+Gemini API 👾
+Ngoài việc đưojwc sử dụng trên web hoặc điện thoại, Google cung cấp SDK để sử dụng Gemini API để nhà phát triển có thể sử dụng nó một cách linh hoạt. Bây giờ, ta sẽ thử sử dụng tính năng mà Google đã cung cấp. Ta sẽ đi qua các bước như sau:
+
+Cài đặt môi trường và cách lấy token để truy cập vào API.
+Tạo phản hồi chữ từ yêu cầu chữ (Generate **text from text **input).
+Tạo phản hồi chữ từ yêu cầu hình (Generate text from image input).
+Cài đặt môi trường
+Để cài đặt Python SDK để sử dụng GeminiAPI thông qua gói google-generativeai. Ta thực hiện điều này bằng cú pháp:
+
+pip install -q -U google-generativeai
+
+Để lấy token có thể truy cập vào Gemini, ta truy cập vào đây để thực hiện việc lấy mã. Sau khi đã truy cập vào Studio, ta nhìn về phía tay trái sẽ thấy một nút để tạo API token. image.png Ta gọi các thư viện và xây dựng các hàm cần thiết
+
+import pathlib
+import textwrap
+
+import google.generativeai as genai
+
+from IPython.display import display
+from IPython.display import Markdown
+
+
+def to_markdown(text):
+  text = text.replace('•', '  *')
+  return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
+
+Ta nhập API token vừa tạo để khai thác mô hình
+
+GOOGLE_API_KEY = "Các bạn nhập API Token vào đây"
+
+genai.configure(api_key=GOOGLE_API_KEY)
+
+Thực nghiệm
+Trong bài viết này, chúng ta sẽ thực hiện 2 thí nghiệm sau:
+
+Thực hiện text from text: yêu cầu Gemini trả về kết quả chữ khi nhận yêu cầu chữ của ta. Ví dụ như, hỏi-đáp, yêu cầu truy xuất thông tin, yêu cầu tóm tắm, ... Ta có thể liên tưởng đến ứng dụng nổi tiếng như ChatGPT.
+Thực hiện text from img: yêu cầu Gemini trả về kết quả chữ khi nhận yêu cầu hình của ta. Cụ thể hơn, khi ta đưa Gemini một hình ảnh, nó sẽ mô tả nội dung của bức ảnh ấy.
+Trước hết, ta sẽ xem các mô hình khác mà Gemini cung cấp:
+
+for m in genai.list_models():
+  if 'generateContent' in m.supported_generation_methods:
+    print(m.name)
+    """
+            Kết quả   
+            models/gemini-1.0-pro
+            models/gemini-1.0-pro-001
+            models/gemini-1.0-pro-latest
+            models/gemini-1.0-pro-vision-latest
+            models/gemini-pro
+            models/gemini-pro-vision
+      """
+
+Text from text
+Ta sử dụng mô hình models/gemini-1.0-pro trong bài viết này.
+
+model = genai.GenerativeModel('gemini-1.0-pro')
+model
+
+Phương thức generate_content có thể xử lý nhiều trường hợp sử dụng khác nhau, bao gồm trò chuyện nhiều lượt (multi-turn) và đầu vào đa phương thức (multimodal), tùy thuộc vào những gì mô hình cơ bản hỗ trợ. Các kiểu máy hiện có chỉ hỗ trợ văn bản và hình ảnh làm đầu vào và văn bản làm đầu ra.
+
+Theo mặc định, mô hình trả về phản hồi sau khi hoàn thành toàn bộ quá trình tạo. Bạn cũng có thể truyền phát phản hồi khi nó được tạo và mô hình sẽ trả về các phần phản hồi ngay khi chúng được tạo.
+
+Để stream 1 phản hồi, sử dụng cú pháp GenerativeModel.generate_content(..., stream=True)
+
+Ví dụ: Phản hồi ngay lập tức
+
+%%time
+response = model.generate_content("Tại sao Trái Đất quay xung quanh mặt trời?")
+response
+
+"""
+CPU times: user 117 ms, sys: 8.24 ms, total: 126 ms
+Wall time: 6.74 s
+response:
+GenerateContentResponse(
+    done=True,
+    iterator=None,
+    result=glm.GenerateContentResponse({'candidates': [{'content': {'parts': [{'text': 'Trái Đất quay quanh Mặt Trời vì lực hấp dẫn.\n\nKhi Mặt Trời hình thành, một đĩa vật chất bồi tụ xung quanh nó. Đĩa này chứa chủ yếu là hydro và heli, cùng với một lượng nhỏ các nguyên tố nặng hơn. Khi đĩa bồi tụ, các hạt vật chất va chạm với nhau, giải phóng năng lượng và làm nóng đĩa.\n\nỞ trung tâm của đĩa, vật chất trở nên đủ nóng để phản ứng hạt nhân diễn ra. Các phản ứng này giải phóng một lượng năng lượng khổng lồ, khiến Mặt Trời trở thành một ngôi sao.\n\nKhi Mặt Trời hình thành, phần vật chất còn lại trong đĩa bồi tụ bắt đầu tích tụ lại với nhau, hình thành nên các hành tinh, bao gồm cả Trái Đất. Trái Đất được tạo thành từ các vật liệu nặng hơn trong đĩa bồi tụ, bao gồm sắt, silic và oxy.\n\nKhi Trái Đất hình thành, nó bắt đầu quay quanh Mặt Trời vì lực hấp dẫn. Lực hấp dẫn là lực mà bất kỳ hai vật thể nào có khối lượng cũng tác động lên nhau. Khối lượng của Mặt Trời rất lớn, vì vậy nó tạo ra một lực hấp dẫn rất mạnh tác động lên Trái Đất. Lực này giữ cho Trái Đất quay quanh Mặt Trời theo quỹ đạo hình elip.'}], 'role': 'model'}, 'finish_reason': 1, 'index': 0, 'safety_ratings': [{'category': 9, 'probability': 1, 'blocked': False}, {'category': 8, 'probability': 1, 'blocked': False}, {'category': 7, 'probability': 1, 'blocked': False}, {'category': 10, 'probability': 1, 'blocked': False}], 'token_count': 0, 'grounding_attributions': []}], 'prompt_feedback': {'safety_ratings': [{'category': 9, 'probability': 1, 'blocked': False}, {'category': 8, 'probability': 1, 'blocked': False}, {'category': 7, 'probability': 1, 'blocked': False}, {'category': 10, 'probability': 1, 'blocked': False}], 'block_reason': 0}}),
+)
+"""
+
+Phản hồi với stream
+
+%%time
+response_st = model.generate_content("Tại sao Trái Đất quay xung quanh mặt trời?", stream=True)
+
+for chunk in response_st:
+  print(chunk.text)
+  print("_"*50)
+  
+ """
+ Trái Đất quay xung quanh Mặt Trời chủ yếu là do hai
+__________________________________________________
+ lý do:
+
+**1. Lực hấp dẫn:**
+
+* Mặt Trời là ngôi sao có khối lượng rất lớn.
+* Theo định luật
+__________________________________________________
+ hấp dẫn của Newton, hai vật thể có khối lượng càng lớn thì lực hấp dẫn giữa chúng càng mạnh.
+* Mặt Trời có khối lượng lớn hơn Trái Đất rất nhiều, tạo ra lực hấp dẫn mạnh mẽ.
+
+**2. Bảo toàn động lượng góc:**
+
+* Hệ Mặt Tr
+__________________________________________________
+ời ban đầu là một đám mây khí và bụi đang quay.
+* Khi đám mây này sụp đổ để tạo thành Mặt Trời, vật chất ở bên ngoài đám mây phải di chuyển nhanh hơn để bảo toàn động lượng góc.
+* Vật chất này cuối cùng tạo thành các hành tinh, bao gồm Trái Đất, chuyển động xung quanh Mặt Trời trên cùng một mặt phẳng và cùng hướng.
+
+Vì vậy, sự kết hợp giữa lực hấp dẫn của Mặt Trời và động lượng góc bảo toàn đã khiến Trái Đất và các hành tinh khác quay quanh Mặt Trời trong
+__________________________________________________
+ quỹ đạo của chúng.
+__________________________________________________
+CPU times: user 152 ms, sys: 11.8 ms, total: 164 ms
+Wall time: 8.28 s
+ """
+
+Sử dụng hàm to_markdown vừa định nghĩa để kết quả trông đẹp mắt hợp:
+
+to_markdown(response.text)
+
+Ngoài ra, ta có thể xem độ an toàn về nội dung ta vừa nhập vào thông qua:
+
+response.prompt_feedback
+
+"""
+safety_ratings {
+  category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+  probability: NEGLIGIBLE
+}
+safety_ratings {
+  category: HARM_CATEGORY_HATE_SPEECH
+  probability: NEGLIGIBLE
+}
+safety_ratings {
+  category: HARM_CATEGORY_HARASSMENT
+  probability: NEGLIGIBLE
+}
+safety_ratings {
+  category: HARM_CATEGORY_DANGEROUS_CONTENT
+  probability: NEGLIGIBLE
+}
+
+"""
+
+Text from img
+Gemini cung cấp một mô hình đa phương thức (gemini-pro-vision) chấp nhận cả văn bản, hình ảnh và đầu vào. GenerativeModel.generate_content được thiết kế để xử lý các lời nhắc đa phương thức (multimodal prompts) và trả về kết quả văn bản.
+
+Trong thử nghiệm này, ta tải một ảnh lên Colab để thử chức năngimage.png
+
+Ta cài đặt mô hình gemini-pro-vision
+
+v_model = genai.GenerativeModel('gemini-pro-vision')
+v_model
+
+Để mô hình mô tả nội dung của bức hình, ta thực hiện như sau
+
+response = v_model.generate_content(img)
+
+to_markdown(response.text)
+
+"""
+A Turkish breakfast is a feast of delicious dishes that are meant to be shared with family and friends. The table is typically laden with a variety of breads, cheeses, olives, tomatoes, cucumbers, and other fresh vegetables. There are also often eggs, sausage, and other meat dishes. The meal is typically rounded out with tea or coffee and a sweet dessert.
+
+Turkish breakfast is a social occasion, and it is often enjoyed at a leisurely pace. It is a time to catch up with loved ones and to enjoy the simple pleasures of life.
+
+If you are ever lucky enough to be invited to a Turkish breakfast, be sure to come hungry! You will be treated to a delicious and unforgettable meal.
+"""
+
+Note: Các chức năng khác cũng được nêu ra và hướng dẫn tại [2].
+
+Cảm ơn các bạn đã đọc tới đây, tôi mong rằng bài viết này sẽ là một phần trong kho kiến thức của bạn. Trước khi rời đi:
+
+👉 Cho mình xin một upvote và một follow. Điều này sẽ giúp ích cho mình rất nhiều.
+
+👉 Chi tiết về triển khai của mình để tại đây: Colab
+
+👉 Các bạn có thể theo dõi mình thêm tại đây: Linkedin | Github

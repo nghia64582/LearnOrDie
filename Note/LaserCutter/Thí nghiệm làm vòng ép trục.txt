@@ -1,0 +1,7 @@
+Mô tả:
+  - Làm vòng ép trục có dạng một tấm trụ tròn dẹt rỗng ruột
+Công dụng:
+  - Vòng sẽ ép trục lại, giúp truyền moment xoắn giữa các thành phần trong cấu trúc
+Kết quả:
+  - Vòng ép lỗ rỗng 4.8mm ép khít trục 4.72mm, chặt, không có dấu hiệu vỡ
+  - Vòng ép trục motor vàng có kích thước 3.30mm x 5.08mm, hơi chặt, có dấu hiệu nứt
