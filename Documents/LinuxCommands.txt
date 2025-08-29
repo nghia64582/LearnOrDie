@@ -124,6 +124,10 @@
     - ls: Hiển thị danh sách file.
     - ls -l: Chi tiết từng file.
     - ls -a: Bao gồm file ẩn.
+    - ls -lh: Hiển thị kích thước file dễ đọc.
+    - du -h: Hiển thị kích thước thư mục dễ đọc.
+    - du -h --max-depth=1 . : Hiển thị kích thước thư mục cấp 1.
+    - df -h : Hiển thị dung lượng ổ đĩa ở định dạng dễ đọc.
 
 - mkdir:
     - mkdir <dir_name>: Tạo thư mục.
@@ -143,3 +147,11 @@
 
 - touch:
     - touch <file>: Tạo file rỗng mới.
+
+- lsof:
+    - lsof -i :<port> : Hiển thị các tiến trình đang sử dụng cổng
+    - lsof <file> : Hiển thị các tiến trình đang sử dụng file
+
+- uvicorn:
+    - uvicorn main:app --host <host> --port <port> --reload: Chạy ứng dụng FastAPI với Uvicorn.
+    - --reload : Tự động tải lại ứng dụng khi có thay đổi trong mã nguồn (hot reload).
