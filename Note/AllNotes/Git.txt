@@ -1,0 +1,4 @@
+Để xóa file/folder khỏi git nhưng vẫn giữ lại trên máy local:
+  - git rm --cached <file/folder>
+  - Commit và push lên remote
+  

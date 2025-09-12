@@ -173,3 +173,5 @@
     - Khi tạo thêm feature cho mod bị lỗi [Future.filter predicate is not satisfied] => Là do Async function throw 
       exception, do lỗi trong future sequence 
     - IP máy namnhdev: 117.0.95.121
+    - Hạn chế thêm thông tin vào InitGameCmd
+    - Acc GPT cty: sandinhgpt@gmail.com<Sandinh@2024>
