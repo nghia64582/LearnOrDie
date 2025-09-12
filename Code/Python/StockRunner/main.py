@@ -16,7 +16,10 @@ def save_main_symbols_prices():
     from vnstock import Quote, Listing
     for symbol in main_symbols:
         quote = Quote(symbol=symbol, source='VCI')
-        df = pd.DataFrame(quote.history(start='2021-01-01', end='2025-08-30'))
+        # set end_date to yesterday with format YYYY-MM-DD
+        end_date = dt.datetime.now().date() - dt.timedelta(days=1)
+        end_date_str = end_date.strftime("%Y-%m-%d")
+        df = pd.DataFrame(quote.history(start='2021-01-01', end=end_date_str))
         path = f"{STOCK_PRICE_DIR}/{symbol}.csv"
         df.to_csv(path, index=False)
 
@@ -65,8 +68,6 @@ def process(start_date: dt.datetime, end_date: dt.datetime) -> list[dict]:
             'increased_rate': data['percentage_change']
         })
     list_data.sort(key=lambda x: x['increased_rate'], reverse=True)
-    for item in list_data:
-        print(f"Symbol: {item['symbol']}, Start Price: {item['start_price']}, End Price: {item['end_price']}, Increased Rate: {item['increased_rate']:.2f}%")
     return list_data
 
 # save_main_symbols_prices()
