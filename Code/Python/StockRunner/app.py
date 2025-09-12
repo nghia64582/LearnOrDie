@@ -40,13 +40,17 @@ class StockApp:
         # End Date Picker
         ttk.Label(controls_frame, text="End Date:").pack(side=tk.LEFT, padx=(0, 5))
         self.end_date_picker = DateEntry(controls_frame, date_pattern='yyyy-mm-dd', locale='en_US')
-        self.end_date_picker.set_date(datetime.datetime.now().date())
+        self.end_date_picker.set_date(datetime.datetime.now().date() - datetime.timedelta(days=1))
         self.end_date_picker.pack(side=tk.LEFT, padx=(0, 10))
         
         # Calculate Button
         self.calculate_button = ttk.Button(controls_frame, text="Calculate", command=self.calculate_and_display)
         self.calculate_button.pack(side=tk.LEFT, padx=(0, 10))
         
+        # Update price button
+        self.update_price_button = ttk.Button(controls_frame, text="Update Prices", command=self.update_prices)
+        self.update_price_button.pack(side=tk.LEFT, padx=(0, 10))
+
         # A simple label to indicate loading state
         self.status_label = ttk.Label(controls_frame, text="")
         self.status_label.pack(side=tk.LEFT, padx=(0, 10))
@@ -84,6 +88,18 @@ class StockApp:
         
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
+    def update_prices(self):
+        # Disable the button and show a loading message
+        self.update_price_button.config(state="disabled")
+        self.status_label.config(text="Updating Prices (up to 30s)...", foreground="blue")
+
+        from main import save_main_symbols_prices
+        save_main_symbols_prices()
+
+        self.status_label.config(text="Prices Updated.", foreground="green")
+        self.update_price_button.config(state="normal")
+
+
     def calculate_and_display(self):
         try:
             start_date_str = self.start_date_picker.get()
