@@ -2,8 +2,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-import datetime
+import datetime as dt
 import threading
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+import pandas as pd
 
 # Import the external data handler module
 from main import process
@@ -20,6 +23,11 @@ class StockApp:
         self.highest_increase_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(self.highest_increase_tab, text="Highest Increase")
         
+        # Tab Single Symbol
+        self.single_symbol_tab = ttk.Frame(self.tab_control)
+        self.tab_control.add(self.single_symbol_tab, text="Single Symbol")
+        self.setup_single_symbol()
+
         # Placeholder for other tabs
         self.other_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(self.other_tab, text="Other Tab")
@@ -34,13 +42,13 @@ class StockApp:
         # Start Date Picker
         ttk.Label(controls_frame, text="Start Date:").pack(side=tk.LEFT, padx=(0, 5))
         self.start_date_picker = DateEntry(controls_frame, date_pattern='yyyy-mm-dd', locale='en_US')
-        self.start_date_picker.set_date(datetime.datetime(2025, 1, 1))
+        self.start_date_picker.set_date(dt.datetime(2025, 1, 1))
         self.start_date_picker.pack(side=tk.LEFT, padx=(0, 10))
 
         # End Date Picker
         ttk.Label(controls_frame, text="End Date:").pack(side=tk.LEFT, padx=(0, 5))
         self.end_date_picker = DateEntry(controls_frame, date_pattern='yyyy-mm-dd', locale='en_US')
-        self.end_date_picker.set_date(datetime.datetime.now().date() - datetime.timedelta(days=1))
+        self.end_date_picker.set_date(dt.datetime.now().date() - dt.timedelta(days=1))
         self.end_date_picker.pack(side=tk.LEFT, padx=(0, 10))
         
         # Calculate Button
@@ -99,14 +107,13 @@ class StockApp:
         self.status_label.config(text="Prices Updated.", foreground="green")
         self.update_price_button.config(state="normal")
 
-
     def calculate_and_display(self):
         try:
             start_date_str = self.start_date_picker.get()
             end_date_str = self.end_date_picker.get()
             
-            start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d")
-            end_date = datetime.datetime.strptime(end_date_str, "%Y-%m-%d")
+            start_date = dt.datetime.strptime(start_date_str, "%Y-%m-%d")
+            end_date = dt.datetime.strptime(end_date_str, "%Y-%m-%d")
 
             if start_date >= end_date:
                 messagebox.showerror("Invalid Dates", "End date must be after start date.")
@@ -157,7 +164,146 @@ class StockApp:
     
     def _enable_button(self):
         self.calculate_button.config(state="normal")
+    
+    def setup_single_symbol(self):
+        frame = ttk.Frame(self.single_symbol_tab)
+        frame.pack(pady=20, padx=20, anchor="nw")
 
+        # Stock symbol
+        ttk.Label(frame, text="Stock Symbol:").grid(row=0, column=0, sticky="w")
+        self.symbol_entry = ttk.Entry(frame, width=15)
+        self.symbol_entry.grid(row=0, column=1, padx=5)
+
+        # End date (default = hôm qua)
+        default_end = (dt.datetime.today() - dt.timedelta(days=1)).strftime("%Y-%m-%d")
+        ttk.Label(frame, text="End Date (YYYY-MM-DD):").grid(row=1, column=0, sticky="w")
+        self.end_date_entry = ttk.Entry(frame, width=15)
+        self.end_date_entry.insert(0, default_end)
+        self.end_date_entry.grid(row=1, column=1, padx=5)
+
+        # Start date (default = 7 ngày trước end_date)
+        default_start = (dt.datetime.today() - dt.timedelta(days=8)).strftime("%Y-%m-%d")
+        ttk.Label(frame, text="Start Date (YYYY-MM-DD):").grid(row=2, column=0, sticky="w")
+        self.start_date_entry = ttk.Entry(frame, width=15)
+        self.start_date_entry.insert(0, default_start)
+        self.start_date_entry.grid(row=2, column=1, padx=5)
+
+        # Time ranges
+        ttk.Label(frame, text="Time Range:").grid(row=3, column=0, sticky="w")
+
+        self.range_var = tk.StringVar(value="1W")
+        ranges = {
+            "1 Week": "1W",
+            "1 Month": "1M",
+            "3 Months": "3M",
+            "6 Months": "6M",
+            "1 Year": "1Y",
+            "2 Years": "2Y",
+            "Custom": "C"
+        }
+
+        col = 1
+        for label, value in ranges.items():
+            rb = ttk.Radiobutton(
+                frame,
+                text=label,
+                variable=self.range_var,
+                value=value,
+                command=self.update_dates_from_range
+            )
+            rb.grid(row=3, column=col, padx=5, sticky="w")
+            col += 1
+
+        # Khi user thay đổi start_date hoặc end_date -> set Custom
+        self.start_date_entry.bind("<KeyRelease>", lambda e: self.range_var.set("C"))
+        self.end_date_entry.bind("<KeyRelease>", lambda e: self.range_var.set("C"))
+
+        # Button
+        self.plot_btn = ttk.Button(frame, text="Show Chart", command=self.plot_single_symbol)
+        self.plot_btn.grid(row=4, column=0, columnspan=2, pady=10)
+
+        # Chart area
+        self.chart_frame = ttk.Frame(self.single_symbol_tab)
+        self.chart_frame.pack(fill="both", expand=True)
+
+    def update_dates_from_range(self):
+        """Cập nhật start_date dựa trên end_date khi chọn radio button"""
+        if self.range_var.get() == "C":
+            return  # Custom thì không động tới
+        try:
+            end_date = dt.datetime.strptime(self.end_date_entry.get().strip(), "%Y-%m-%d")
+        except ValueError:
+            return
+
+        if self.range_var.get() == "1W":
+            start_date = end_date - dt.timedelta(weeks=1)
+        elif self.range_var.get() == "1M":
+            start_date = end_date - dt.timedelta(days=30)
+        elif self.range_var.get() == "3M":
+            start_date = end_date - dt.timedelta(days=90)
+        elif self.range_var.get() == "6M":
+            start_date = end_date - timedelta(days=180)
+        elif self.range_var.get() == "1Y":
+            start_date = end_date - dt.timedelta(days=365)
+        elif self.range_var.get() == "2Y":
+            start_date = end_date - dt.timedelta(days=730)
+        else:
+            return
+
+        self.start_date_entry.delete(0, tk.END)
+        self.start_date_entry.insert(0, start_date.strftime("%Y-%m-%d"))
+
+    def plot_single_symbol(self):
+        symbol = self.symbol_entry.get().strip().upper()
+        start_date_str = self.start_date_entry.get().strip()
+        end_date_str = self.end_date_entry.get().strip()
+
+        if not symbol or not end_date_str or not start_date_str:
+            messagebox.showerror("Error", "Please enter stock symbol, start date and end date")
+            return
+
+        try:
+            start_date = dt.datetime.strptime(start_date_str, "%Y-%m-%d")
+            end_date = dt.datetime.strptime(end_date_str, "%Y-%m-%d")
+        except ValueError:
+            messagebox.showerror("Error", "Invalid date format. Use YYYY-MM-DD")
+            return
+
+        if start_date > end_date:
+            messagebox.showerror("Error", "Start date must be before end date")
+            return
+
+        file_path = f"stock_prices/{symbol}.csv"
+
+        try:
+            df = pd.read_csv(file_path, parse_dates=["time"])
+        except FileNotFoundError:
+            messagebox.showerror("Error", f"CSV file for {symbol} not found")
+            return
+
+        # Filter date range
+        df_filtered = df[(df["time"] >= start_date) & (df["time"] <= end_date)]
+        if df_filtered.empty:
+            messagebox.showinfo("No Data", "No data in the selected range")
+            return
+
+        # Clear old chart
+        for widget in self.chart_frame.winfo_children():
+            widget.destroy()
+
+        # Create matplotlib figure
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(df_filtered["time"], df_filtered["close"], label="Close Price", color="blue")
+        ax.set_title(f"{symbol} Stock Prices")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Close Price")
+        ax.legend()
+        ax.grid(True)
+
+        # Embed in tkinter
+        canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
 
 if __name__ == '__main__':
     root = tk.Tk()

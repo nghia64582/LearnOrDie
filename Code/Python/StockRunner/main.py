@@ -68,8 +68,6 @@ def process(start_date: dt.datetime, end_date: dt.datetime) -> list[dict]:
             'increased_rate': data['percentage_change']
         })
     list_data.sort(key=lambda x: x['increased_rate'], reverse=True)
-    for item in list_data:
-        print(f"Symbol: {item['symbol']}, Start Price: {item['start_price']}, End Price: {item['end_price']}, Increased Rate: {item['increased_rate']:.2f}%")
     return list_data
 
 # save_main_symbols_prices()
