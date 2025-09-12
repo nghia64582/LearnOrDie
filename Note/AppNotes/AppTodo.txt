@@ -58,6 +58,8 @@ Example:
     móc thiết bị cơ bản.
   - TH4: Target: Làm một ứng dụng ghi chú + học từ vựng ngoại ngữ, be (flask, 
     ...), fe (tkinter-pc-nội bộ, ...)
+  - TH5: Target: Thành thạo kỹ năng tạo web fe app bằng AI (cấu trúc, phụ thuộc
+    , ...) trong thời gian ngắn 
 Slogan:
   - Những thành tựu lớn không đến từ việc làm được những việc lớn lao mà đến từ 
     việc làm những việc nhỏ bé một cách đều đặn, liên tục, có tính kỉ luật, ...
