@@ -1,0 +1,101 @@
+=== CÁC LOẠI BẢNG VI XỬ LÝ ===
+
+🔹 Arduino Uno R3 (ATmega328P)
+    - Điện áp hoạt động: 5V
+    - Nguồn cấp (VIN): 7–12V khuyến nghị (giới hạn 6–20V)
+    - Chân Digital I/O: 14 (trong đó 6 hỗ trợ PWM)
+    - Chân Analog Input: 6 (10-bit ADC)
+    - Dòng tối đa trên mỗi chân I/O: 20mA (tối đa 40mA nhưng không khuyến nghị)
+    - Dòng tối đa qua 5V pin: ~500mA (nếu cấp qua USB)
+    - Dòng tối đa qua 3.3V pin: ~50mA (từ chip regulator trên board)
+    - Bộ nhớ: 32 KB Flash, 2 KB SRAM, 1 KB EEPROM
+    - Xung nhịp: 16 MHz
+
+🔹 Arduino Nano (ATmega328P – tương tự Uno)
+    - Điện áp hoạt động: 5V
+    - Nguồn cấp (VIN): 7–12V (giới hạn 6–20V)
+    - Chân Digital I/O: 14 (6 PWM)
+    - Chân Analog Input: 8 (10-bit ADC)
+    - Dòng tối đa mỗi chân I/O: 20mA (40mA max)
+    - Dòng tối đa qua 5V pin: ~500mA (qua USB)
+    - Dòng tối đa qua 3.3V pin: ~50mA
+    - Bộ nhớ: 32 KB Flash, 2 KB SRAM, 1 KB EEPROM
+    - Xung nhịp: 16 MHz
+    - Ưu điểm: nhỏ gọn hơn Uno, dễ nhét vào sản phẩm.
+
+🔹 ESP8266 (NodeMCU – ESP-12E module)
+    - Điện áp hoạt động: 3.3V (không chịu được 5V trực tiếp vào GPIO)
+    - Nguồn cấp (VIN): 5V (có regulator hạ xuống 3.3V)
+    - Chân Digital I/O: ~11 GPIO khả dụng (tùy board)
+    - Chân Analog Input: 1 (10-bit ADC, 0–1V chuẩn, một số board có mạch chia áp để đo đến 3.3V)
+    - Dòng tối đa mỗi chân GPIO: ~12mA an toàn (tối đa 20mA)
+    - Dòng tối đa qua 3.3V pin: ~500mA (tùy regulator trên board, thường AMS1117-3.3)
+    - Bộ nhớ: Flash 4 MB (trên module), SRAM ~50 KB usable
+    - Xung nhịp: 80 MHz (có thể lên 160 MHz)
+    - Kết nối Wi-Fi: chuẩn 802.11 b/g/n, tích hợp TCP/IP stack.
+
+🔑 Một số lưu ý chung
+    - Uno & Nano: dễ dùng, an toàn cho người mới học, chạy 5V → tương thích nhiều cảm biến.
+    - ESP8266: mạnh về Wi-Fi, giá rẻ, nhưng chỉ 3.3V → phải chú ý khi nối với thiết bị 5V (cần level shifter).
+    - Dòng tối đa trên 5V/3.3V pin phụ thuộc vào nguồn bạn cấp (USB, adapter, hay VIN). Nếu lấy nhiều dòng (servo, LED, động cơ) → nên dùng nguồn ngoài riêng.
+
+=== CÁC LINH KIỆN THƯỜNG DÙNG ===
+* 1. LED
+    - Chân dài (anode) nối với nguồn (+), chân ngắn (cathode) nối với GND (-).
+    - Dùng điện trở hạn dòng (220–330Ω) nối tiếp với LED để tránh cháy.
+    - Chức năng: báo trạng thái, trang trí, tín hiệu.
+* 2. Nút nhấn
+    - Có 2 chân: khi nhấn, chân nối với GND.
+    - Dùng điện trở kéo lên (pull-up) để giữ chân ở mức HIGH khi không nhấn.
+    - Chức năng: nhập lệnh, điều khiển.
+* 3. Biến trở
+    - Có 3 chân: 2 chân ngoài nối với nguồn và GND, chân giữa (wiper) cho điện áp thay đổi.
+    - Dùng để điều chỉnh giá trị (âm lượng, độ sáng).
+    - Chức năng: điều chỉnh tham số, giao diện người dùng.
+* 4. Công tắc hành trình
+    - Có 2 chân: khi nhấn, chân nối với GND.
+    - Dùng điện trở kéo lên (pull-up) để giữ chân ở mức HIGH khi không nhấn.
+    - Chức năng: nhập lệnh, điều khiển.
+* 5. Dây jump, dây cá sấu, breadboard
+    - Dây jump: dùng để nối các chân trên board mạch với nhau hoặc với linh kiện.
+    - Dây cá sấu: dùng để nối tạm thời, dễ dàng tháo lắp.
+    - Breadboard: bảng mạch thử nghiệm, không cần hàn, dễ thay đổi mạch.
+=== CÁC LOẠI CHÂN ===
+
+🔹 1. Chân Digital I/O
+    Digital (số): chỉ có 2 trạng thái HIGH (1) hoặc LOW (0).
+        Trên Arduino Uno/Nano → giá trị:
+            HIGH = 5V,
+            LOW = 0V.
+        Trên ESP8266 → giá trị:
+            HIGH = 3.3V,
+            LOW = 0V.
+    Chức năng chính:
+        Input (đọc tín hiệu):
+            Nút nhấn (ON/OFF).
+            Cảm biến digital (PIR, limit switch, encoder A/B).
+            Giao tiếp với IC khác qua digital (I²C, SPI, UART).
+        Output (xuất tín hiệu):
+            Bật/tắt LED.
+            Điều khiển relay, transistor, MOSFET.
+            Xuất xung PWM (nếu chân hỗ trợ).
+    Đặc biệt: PWM (Pulse Width Modulation)
+    Một số chân digital có chức năng PWM → mô phỏng tín hiệu analog (dùng analogWrite() trong Arduino).
+    Ví dụ: điều khiển độ sáng LED, tốc độ động cơ DC.
+
+🔹 2. Chân Analog Input
+    Chân analog kết nối với bộ ADC (Analog to Digital Converter).
+    Dùng để đọc tín hiệu liên tục (0 → max Vref) thay vì chỉ 0/1.
+
+    Trên Arduino Uno/Nano:
+        ADC độ phân giải 10-bit (0–1023).
+        Điện áp tham chiếu mặc định = 5V (có thể chỉnh sang 1.1V hoặc AREF).
+
+    Trên ESP8266:
+        Chỉ có 1 chân analog (0–1V hoặc 0–3.3V tùy board).
+    Chức năng chính:
+        Đọc cảm biến analog:
+            Nhiệt độ (NTC, LM35).
+            Cảm biến ánh sáng (LDR).
+            Biến trở (potentiometer).
+        Đọc giá trị điện áp (giám sát pin, nguồn).

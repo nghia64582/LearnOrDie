@@ -242,7 +242,7 @@ class StockApp:
         elif self.range_var.get() == "3M":
             start_date = end_date - dt.timedelta(days=90)
         elif self.range_var.get() == "6M":
-            start_date = end_date - timedelta(days=180)
+            start_date = end_date - dt.timedelta(days=180)
         elif self.range_var.get() == "1Y":
             start_date = end_date - dt.timedelta(days=365)
         elif self.range_var.get() == "2Y":
