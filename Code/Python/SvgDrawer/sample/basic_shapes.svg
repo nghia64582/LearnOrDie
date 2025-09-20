@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="400" height="300" viewBox="-200.0 -150.0 400 300">
+<defs>
+</defs>
+<rect x="-200" y="-150" width="400" height="300" fill="#f0f0f0" stroke="black" stroke-width="2" />
+<rect x="-100" y="50" width="80" height="80" fill="lightblue" stroke="blue" stroke-width="3" />
+<text x="-100" y="100" font-size="20" fill="black">Square</text>
+<circle cx="0" cy="0" r="60" fill="lightcoral" stroke="red" stroke-width="4" />
+<text x="-20" y="20" font-size="20" fill="black">Circle</text>
+<rect x="50" y="-120" width="150" height="70" fill="lightgreen" stroke="darkgreen" stroke-width="5" rx="10" ry="10" />
+<text x="70" y="-130" font-size="20" fill="black">Rounded Rectangle</text>
+</svg>

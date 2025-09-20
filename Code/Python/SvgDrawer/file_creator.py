@@ -136,6 +136,8 @@ class SVGCutterApp:
         self.canvas = tk.Canvas(canvas_frame, bg="white", relief=tk.GROOVE, borderwidth=1)
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.canvas.bind("<Configure>", self.redraw_canvas)
+        self.master.bind("<Return>", lambda e: self._add_shape_dialog())
+
 
     def _on_shape_select(self, event):
         pass
@@ -146,6 +148,7 @@ class SVGCutterApp:
         dialog.title("Add Shape")
         dialog.transient(self.master)
         dialog.grab_set()
+        dialog.focus_force()
 
         shape_type_var = tk.StringVar(value="line")
 
@@ -203,6 +206,8 @@ class SVGCutterApp:
             except Exception as e:
                 messagebox.showerror("Error", f"An unexpected error occurred: {e}", parent=dialog)
 
+        dialog.bind("<Return>", lambda e: add_shape_action())
+
         ttk.Button(dialog, text="Add", command=add_shape_action).pack(pady=10, ipadx=5, ipady=5)
         self.master.wait_window(dialog)
 
@@ -218,6 +223,7 @@ class SVGCutterApp:
             ttk.Label(dialog.input_frame, text="Point 2 (x, y) [mm]:").grid(row=1, column=0, sticky=tk.W, pady=2)
             dialog.entries["x2"] = ttk.Entry(dialog.input_frame, width=15); dialog.entries["x2"].grid(row=1, column=1, padx=5, pady=2)
             dialog.entries["y2"] = ttk.Entry(dialog.input_frame, width=15); dialog.entries["y2"].grid(row=1, column=2, padx=5, pady=2)
+            dialog.entries["x1"].focus_set()
         elif shape_type == "circle":
             ttk.Label(dialog.input_frame, text="Center (cx, cy) [mm]:").grid(row=0, column=0, sticky=tk.W, pady=2)
             dialog.entries["cx"] = ttk.Entry(dialog.input_frame, width=15); dialog.entries["cx"].grid(row=0, column=1, padx=5, pady=2)
