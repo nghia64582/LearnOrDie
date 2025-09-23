@@ -55,6 +55,9 @@ class ExtraunaryManager:
         tk.Label(self.add_tab, text="Name:", font=self.custom_font).grid(row=0, column=0, padx=10, pady=10)
         self.name_entry_add = tk.Entry(self.add_tab, font=self.custom_font)
         self.name_entry_add.grid(row=0, column=1, padx=10, pady=10)
+        # Focus on name entry and add tab
+        self.add_tab.bind("<Visibility>", lambda e: self.name_entry_add.focus())
+        self.name_entry_add.focus_set()
 
         # Score Entry
         tk.Label(self.add_tab, text="Score:", font=self.custom_font).grid(row=1, column=0, padx=10, pady=10)
@@ -71,6 +74,7 @@ class ExtraunaryManager:
         # Add Button
         add_button = tk.Button(self.add_tab, text="Add Data", font=self.custom_font, command=self.add_data)
         add_button.grid(row=3, column=0, columnspan=2, pady=20)
+        self.root.bind('<Return>', lambda event: self.add_data())
 
     def connect_to_database(self):
         try:
