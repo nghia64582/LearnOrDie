@@ -25,6 +25,19 @@ class PythonAppRunner:
         self.create_widgets()
         self.load_apps()
 
+    def bring_to_front(self, root: tk.Tk):
+        root.update_idletasks()
+        # cho lên top tạm thời
+        root.attributes('-topmost', True)
+        root.lift()
+        root.iconify()
+        root.update()
+        root.deiconify()
+        root.focus_force()
+        # Hạ top sau 1200ms
+        root.after(1200, lambda: root.attributes('-topmost', False))
+        root.geometry("+300+300")
+
     def create_widgets(self):
         # Main frame for scrollable content
         self.main_frame = tk.Frame(self.master, bg="white") # White background
@@ -313,4 +326,5 @@ class PythonAppRunner:
 if __name__ == "__main__":
     root = tk.Tk()
     app = PythonAppRunner(root)
+    app.bring_to_front(root)
     root.mainloop()

@@ -17,14 +17,6 @@ class ExtraunaryManager:
         self.root.title("Extraunary")
         self.root.geometry("800x600")
 
-        # MySQL Configuration
-        self.db_config = {
-            'host': 'nghia64582.online',
-            'user': 'qrucoqmt_nghia64582',
-            'password': 'Nghi@131299',
-            'database': 'qrucoqmt_nghia64582'
-        }
-
         # Create tabs
         self.tab_control = ttk.Notebook(root)
         
@@ -75,14 +67,6 @@ class ExtraunaryManager:
         add_button = tk.Button(self.add_tab, text="Add Data", font=self.custom_font, command=self.add_data)
         add_button.grid(row=3, column=0, columnspan=2, pady=20)
         self.root.bind('<Return>', lambda event: self.add_data())
-
-    def connect_to_database(self):
-        try:
-            connection = mysql.connector.connect(**self.db_config)
-            return connection
-        except Error as e:
-            messagebox.showerror("Database Error", f"Error connecting to database: {e}")
-            return None
 
     def add_data(self):
         name = self.name_entry_add.get()
