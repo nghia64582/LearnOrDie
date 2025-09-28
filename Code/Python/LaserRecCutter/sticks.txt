@@ -1,0 +1,5 @@
+# Format: name,length_mm,width_mm
+Classic,100,10,100
+Slim,90,8,80
+Long,150,12,90
+Short,70,10,120

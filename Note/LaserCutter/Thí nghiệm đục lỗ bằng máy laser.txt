@@ -16,3 +16,5 @@ Chiều dày tấm đo được 1.970mm
 
 * KẾT LUẬN:
  => nên làm lỗ nhỏ hơn khoảng 0.05-0.1mm để đảm bảo vừa khít hơn với trục và tấm.
+
+- Vít 2.5 mm nên đục lỗ 2.8 mm để vừa
