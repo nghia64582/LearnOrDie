@@ -32,3 +32,9 @@ Code/Python/General/apps_config.txt
 /Code/Python/StockRunner/stock_prices
 /Code/Python/AiVoiceRecorder
 /Code/Python/SvgDrawer/sample
+Code/Pomelo/pomelo-udp-native/
+Code/Pomelo/pomelo-udp-node/
+Code/Pomelo/pomelo-udp-quickjs-gd/
+Code/Pomelo/pomelo-udp-quickjs/
+Code/Pomelo/pomelo-udp-webrtc-plugin/
+Code/Pomelo/pomelo-udp-webrtc/
