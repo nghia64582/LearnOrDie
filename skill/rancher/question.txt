@@ -1,0 +1,14 @@
+Khi nào gọi là “Pod chết”?
+    Một Pod chết (terminated) khi:
+    Tất cả container bên trong ngừng chạy (exit)
+    Hoặc bị Kubernetes xóa (do chính sách, scaling, hoặc node chết)
+    Hoặc bị CrashLoopBackOff (chết – restart liên tục)
+    Trạng thái Pod có thể là:
+        Trạng thái             :	Ý nghĩa
+        Pending                :	Đang đợi scheduler chọn node
+        Running                :	Container đang hoạt động
+        Succeeded              :	Container đã chạy xong (Job thành công)
+        Failed                 :	Container thoát với lỗi
+        CrashLoopBackOff       :	Container khởi động rồi chết lặp lại
+        Terminating            :	Đang bị xóa
+        Unknown                :	Node mất kết nối, không biết trạng thái

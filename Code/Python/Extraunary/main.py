@@ -1,8 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime, timedelta
-import mysql.connector
-from mysql.connector import Error
 from tkcalendar import Calendar
 import requests
 import threading

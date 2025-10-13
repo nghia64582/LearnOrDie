@@ -1,0 +1,97 @@
+1. Workloads
+    👉 Là phần cốt lõi — nơi ứng dụng thực sự chạy.
+    Workload trong Rancher (và Kubernetes) là bất kỳ thứ gì chạy container trong cluster, ví dụ:
+        Deployment:**Đây là loại workload phổ biến nhất.**
+            * Dùng để chạy **ứng dụng dài hạn**, có thể **tự động nhân bản (scale)** và **tự cập nhật (rolling update)**.
+            * Khi một pod chết, hệ thống **tự tạo lại pod mới**.
+        StatefulSet:Dùng cho **ứng dụng có trạng thái (stateful)** — ví dụ như database, message queue.
+            Khác với Deployment:
+            * Mỗi pod có **tên định danh cố định** (`mydb-0`, `mydb-1`, …)
+            * Có **volume riêng biệt** (mỗi pod giữ dữ liệu riêng)
+            * **Khởi động và tắt theo thứ tự** (đảm bảo thứ tự an toàn dữ liệu)
+        DaemonSet:Dùng để đảm bảo **mỗi node trong cluster đều có 1 pod chạy**.
+        CronJob
+        Job
+2. Ingress
+    👉 Cách ứng dụng trong cluster được truy cập từ bên ngoài (Internet).
+    Ingress là một đối tượng định nghĩa luồng truy cập HTTP/HTTPS vào các dịch vụ trong cluster 
+      thông qua Ingress Controller (thường là Nginx hoặc Traefik).
+      VD: yaml
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+            name: myapp-ingress
+        spec:
+            rules:
+            - host: myapp.example.com
+                http:
+                paths:
+                - path: /
+                    pathType: Prefix
+                    backend:
+                    service:
+                        name: myapp-service
+                        port:
+                        number: 80
+3. Secret
+    👉 Nơi lưu trữ dữ liệu nhạy cảm (password, API key, token...).
+    Secret là đối tượng trong Kubernetes để lưu các giá trị bí mật dưới dạng Base64-encoded
+    VD: yaml
+      apiVersion: v1
+      kind: Secret
+      metadata:
+      name: db-secret
+      type: Opaque
+      data:
+      username: YWRtaW4=
+      password: c2VjcmV0
+4. ConfigMap
+    👉 Lưu trữ cấu hình không nhạy cảm (giống file .env, config.json).
+    ConfigMap lưu các cấu hình dạng key–value để container đọc khi chạy.
+    VD: yaml
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+            name: app-config
+        data:
+            APP_MODE: production
+            APP_PORT: "8080"
+5. Cluster – Cụm máy chủ Kubernetes
+    👉 Cluster là một cụm (group) gồm nhiều node (máy) chạy Kubernetes, được Rancher quản lý.
+        Rancher có thể quản lý nhiều cluster:
+        cluster của chính Rancher (local cluster)
+        cluster import từ bên ngoài (EKS, GKE, AKS, v.v.)
+        cluster tự dựng (RKE, K3s, v.v.)
+        💡 Mỗi cluster là một môi trường Kubernetes độc lập, có control plane, nodes, workloads, storage, network riêng.
+    Ví dụ:
+        Cluster A: Dành cho môi trường dev
+        Cluster B: Dành cho production
+        Cluster C: Cluster edge cho IoT
+6. Node – Máy chủ trong cluster
+    👉 Node là một máy vật lý hoặc ảo (VM) trong cluster.
+    Có 2 loại chính:
+        Loại node
+            Control Plane / Master Node	
+            Chạy các thành phần điều phối của Kubernetes (API server, scheduler, controller-manager, etcd)	
+            Quản lý toàn cluster
+        Worker Node	
+            Nơi thực thi container (Pod)
+        	Chạy app, API, service
+    💡 Trong Rancher UI, bạn có thể thấy mỗi node có trạng thái, tài nguyên (CPU, RAM), labels và roles.
+7. Namespace – Không gian tên trong cluster
+    👉 Namespace là cách Kubernetes chia nhỏ tài nguyên trong 1 cluster để tránh xung đột tên và giới hạn quyền.
+    💡 Mỗi workload, service, secret, configmap, pod... đều nằm trong một namespace.
+    Ví dụ:
+        namespace/frontend → chứa app web
+        namespace/backend → chứa microservice
+        namespace/monitoring → chứa Prometheus, Grafana
+    Lợi ích:
+        Phân tách môi trường (dev/test/prod)
+        Quản lý quyền (RBAC)
+        Giới hạn tài nguyên (ResourceQuota)
+8. App – Ứng dụng được triển khai (từ Catalog hoặc YAML)
+    👉 Trong Rancher, App là một gói ứng dụng được triển khai vào cluster qua Helm chart hoặc Rancher Catalog.
+    💡 Tức là Rancher gọi “App” = “Helm release”.
+    Ví dụ:
+        Bạn deploy “WordPress” từ Catalog → Rancher tạo một “App”
+        App này bao gồm Deployment, Service, ConfigMap, PVC... tất cả theo gói Helm

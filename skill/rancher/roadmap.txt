@@ -1,0 +1,102 @@
+Rất hay — nếu bạn **đã biết Docker**, thì học **Rancher** sẽ khá tự nhiên, vì Rancher là một **công cụ quản lý nhiều Docker host hoặc cluster Kubernetes**, giúp bạn triển khai, giám sát và điều phối container ở quy mô lớn.
+Dưới đây là **lộ trình học Rancher thực tế + bài tập theo cấp độ**, được chia từ **dễ → nâng cao** (giống như một kế hoạch 2–4 tuần).
+## 🧭 I. Tổng quan lộ trình
+    | Cấp độ      | Mục tiêu                                     | Kiến thức chính                                                 |
+    | ----------- | -------------------------------------------- | --------------------------------------------------------------- |
+    | **Level 1** | Làm quen Rancher, giao diện, khái niệm chính | Cluster, Node, Project, Namespace, App, Catalog                 |
+    | **Level 2** | Quản lý Docker host, stack, container        | Rancher UI + CLI, stack YAML (docker-compose / rancher-compose) |
+    | **Level 3** | Làm việc với Rancher Kubernetes              | Deploy cluster, workload, ingress, secret, storage              |
+    | **Level 4** | Tự động hóa & CI/CD                          | Rancher CLI, GitOps, pipeline, backup/restore                   |
+    | **Level 5** | Thực hành dự án mini                         | Deploy ứng dụng thực tế (VD: web + database + monitoring)       |
+## 🧩 II. Level 1 – Làm quen Rancher (1–2 ngày)
+    ### 🎯 Mục tiêu:
+        * Hiểu Rancher là gì, dùng để làm gì.
+        * Cài Rancher server.
+        * Hiểu khái niệm **Cluster**, **Node**, **Project**, **Namespace**.
+    ### 📘 Học:
+        1. Đọc docs chính thức: [https://ranchermanager.docs.rancher.com/](https://ranchermanager.docs.rancher.com/)
+        2. Cài Rancher trên máy (bằng Docker):
+        ```bash
+        docker run -d --restart=unless-stopped \
+            -p 80:80 -p 443:443 \
+            rancher/rancher:latest
+        ```
+        3. Mở `https://localhost` → đăng nhập → tạo cluster test.
+        ### 🧠 Bài tập:
+            * [ ] Cài và đăng nhập vào Rancher UI.
+            * [ ] Tạo 1 **Custom cluster** có 1 node local (bằng Docker).
+            * [ ] Tạo 1 **Namespace** và 1 **Project** tên `test`.
+            * [ ] Xem mục **Cluster Explorer** và xác định thành phần: Node, Pod, Deployment.
+        ---
+## ⚙️ III. Level 2 – Rancher với Docker host (2–3 ngày)
+    > Rancher 1.x và Rancher 2.x hơi khác nhau; bản 2.x hiện nay chủ yếu quản lý **Kubernetes cluster**, nhưng bạn vẫn có thể thực hành mô hình “single node local”.
+    ### 🎯 Mục tiêu:
+        * Hiểu cách Rancher điều phối container.
+        * Sử dụng stack và compose file.
+        * Quản lý dịch vụ container qua Rancher UI.
+    ### 🧠 Bài tập:
+        1. Tạo 2 host Docker (VD: dùng 2 VM hoặc 2 máy thật).
+        2. Thêm cả 2 vào Rancher cluster (RKE2 hoặc K3s).
+        3. Deploy 1 ứng dụng nhỏ:
+        * `nginx` (frontend)
+        * `mysql` (backend)
+        4. Thiết lập load balancing, kiểm tra Rancher có tự phân phối workload không.
+        5. Xem metrics (CPU, memory) từng container trong UI.
+    ---
+## 🧱 IV. Level 3 – Rancher Kubernetes (3–5 ngày)
+    > Đây là phần quan trọng nhất: Rancher thực ra là một lớp quản lý **Kubernetes cluster**.
+    ### 🎯 Mục tiêu:
+        * Làm chủ các khái niệm K8s trong Rancher (workload, ingress, secret, configmap).
+        * Biết deploy ứng dụng thật trong cluster.
+    ### 📘 Học:
+        * Cluster provisioning (RKE2 hoặc K3s)
+        * Namespace, Project, Workload
+        * Volume, Secret, ConfigMap
+        * Ingress (expose HTTP service)
+        * Monitoring, Logging
+    ### 🧠 Bài tập:
+        1. Tạo 1 cluster RKE2 với 2 node (worker + control plane).
+        2. Deploy app `myapp` gồm:
+        * `frontend` (React app chạy nginx)
+        * `backend` (Spring Boot hoặc FastAPI)
+        * `db` (PostgreSQL)
+        3. Tạo ingress trỏ đến `frontend`.
+        4. Dùng ConfigMap để truyền config.
+        5. Dùng Secret để chứa DB password.
+        6. Kiểm tra logs và scale `frontend` từ 1 → 3 replicas.
+## 🚀 V. Level 4 – Tự động hóa & CI/CD (4–5 ngày)
+    ### 🎯 Mục tiêu:
+        * Làm việc với Rancher CLI và API.
+        * Triển khai ứng dụng bằng GitOps.
+        * Backup / Restore cluster cấu hình.
+    ### 📘 Học:
+        * Rancher CLI: [[https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/cli](https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/cli)]
+        * Rancher Pipeline (tích hợp Git)
+        * Backup & Restore CRDs
+        * Helm chart và Catalog
+    ### 🧠 Bài tập:
+        1. Cài `rancher-cli` → đăng nhập bằng token.
+        2. Viết script deploy 1 workload từ CLI.
+        3. Tạo 1 pipeline tự động build + deploy app khi commit code.
+        4. Tạo Helm chart cho app riêng (frontend + backend + db).
+        5. Backup toàn bộ cấu hình Rancher cluster, restore trên môi trường khác.
+## 🧰 VI. Level 5 – Dự án thực tế (tuần 2–3)
+    > Mục tiêu: vận hành một ứng dụng hoàn chỉnh bằng Rancher.
+    ### Đề xuất bài tập dự án:
+    * **Ứng dụng:** Website bán hàng mini (frontend React, backend Spring Boot, DB MySQL).
+    * **Yêu cầu:**
+        1. Deploy bằng Rancher (frontend, backend, DB).
+        2. Dùng ConfigMap + Secret.
+        3. Dùng Ingress để truy cập qua tên miền nội bộ.
+        4. Thêm Grafana/Prometheus giám sát.
+        5. Backup DB bằng volume snapshot hoặc CronJob.
+## 🧩 VII. Lời khuyên học nhanh
+    1. Khi học, **tập trung vào UI Rancher trước**, đừng vội nhảy vào CLI.
+    2. Dùng **K3s (lightweight Kubernetes)** để test nhanh.
+    3. Nếu đã quen K8s, bạn có thể đi tắt bằng cách chỉ học **phần Rancher quản lý cluster**.
+    4. Kết hợp với **Docker Compose → Helm → Rancher** để hiểu dần sự nâng cấp khái niệm.
+Nếu bạn nói rõ hơn mục đích học Rancher (VD: quản lý server nội bộ, deploy microservice, hay dùng làm dev platform), mình có thể **tùy biến lộ trình chi tiết theo hướng đó** – vì Rancher có 3 hướng khác nhau:
+    * **DevOps quản lý cluster**,
+    * **Lập trình viên triển khai ứng dụng**,
+    * **Người vận hành hệ thống (SysOps)**.
+    👉 Bạn muốn mình soạn lộ trình theo hướng nào trong ba hướng đó?

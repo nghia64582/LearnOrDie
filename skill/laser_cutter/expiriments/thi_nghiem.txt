@@ -1,0 +1,9 @@
+Thí nghiệm đo độ lệch Kerf
+Mục tiêu: Đo độ lệch kerf khi cắt vật liệu bằng laser cutter.
+Kích thước cắt trên file:
+   - Lần lượt là 40mm, 80mm, 100mm
+Kích thước thực tế đo được:
+    - 39.5mm, 79.5mm, 99.5mm
+Kết luận tạm thời:
+    - Độ lệch kerf khoảng 0.5mm
+    - Cần hiệu chỉnh kích thước thiết kế lớn hơn 0.5mm để bù trừ kerf

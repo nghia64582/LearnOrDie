@@ -1,0 +1,99 @@
+Tổng quan
+    Docker → quản lý container cá nhân
+    Kubernetes → quản lý cả hệ thống container (hàng trăm/thousands)
+    Nói cách khác:
+    Docker là "unit", Kubernetes là "manager" của các unit đó.
+
+Giai đoạn 1: Làm quen & khái niệm cốt lõi
+    Mục tiêu: Hiểu cách Kubernetes tổ chức hệ thống và vòng đời ứng dụng.
+    🔑 Học:
+        Chủ đề	Giải thích ngắn
+        Kubernetes là gì	So sánh với Docker Compose, Swarm
+        Kiến trúc tổng thể	Master (Control Plane) & Node
+        Pod	Đơn vị nhỏ nhất (chứa 1+ container)
+        ReplicaSet	Đảm bảo số lượng pod ổn định
+        Deployment	Quản lý version & rolling update
+        Service	Expose pod, load balancing nội bộ
+        Namespace	Phân chia tài nguyên trong cluster
+    🧠 Bài tập:
+        Cài Minikube hoặc K3s
+        Tạo 1 pod chạy nginx
+        Expose port 80 bằng Service
+        Scale pod từ 1 → 3 replicas
+        Cập nhật image version và rollback
+Giai đoạn 2: Quản lý cấu hình và môi trường
+    Mục tiêu: Tách biệt code – config – secret để dễ triển khai.
+    🔑 Học:
+        Chủ đề	Giải thích
+        ConfigMap	Lưu cấu hình không nhạy cảm
+        Secret	Lưu dữ liệu nhạy cảm (password, token)
+        Volume	Lưu trữ dữ liệu trong Pod
+        PersistentVolume (PV)	Vùng lưu trữ dùng chung
+        PersistentVolumeClaim (PVC)	“Yêu cầu” lấy vùng lưu trữ
+    🧠 Bài tập:
+        Tạo ConfigMap và mount vào container
+        Tạo Secret chứa mật khẩu DB
+        Tạo PVC gắn vào pod để giữ dữ liệu nginx logs
+        Quan sát pod restart vẫn giữ được file log
+Giai đoạn 3: Triển khai & mở rộng ứng dụng
+    Mục tiêu: Quản lý app thực tế có nhiều service và traffic thật.
+    🔑 Học:
+        Chủ đề	Giải thích
+        Ingress	Route HTTP/HTTPS từ ngoài vào cluster
+        Service types	ClusterIP, NodePort, LoadBalancer
+        DaemonSet	Chạy pod trên mọi node
+        StatefulSet	Chạy app cần lưu trạng thái (DB, Kafka, Redis)
+        CronJob & Job	Chạy task định kỳ hoặc 1 lần
+    🧠 Bài tập:
+        Dựng app 3 tầng (frontend, backend, database)
+        Dùng Ingress map domain:
+        frontend.local → FE service
+        api.local → BE service
+        Thêm CronJob chạy “backup” DB mỗi ngày
+        Quan sát logs và restart policy
+Giai đoạn 4: Quản lý cluster và scaling
+    Mục tiêu: Làm chủ tài nguyên, giám sát, tự động phục hồi.
+    🔑 Học:
+        Chủ đề	Giải thích
+        Node, taint, affinity	Điều phối pod lên node phù hợp
+        Horizontal Pod Autoscaler (HPA)	Tự động scale theo CPU/memory
+        Resource Requests/Limits	Giới hạn tài nguyên từng pod
+        Liveness/Readiness Probe	Kiểm tra sức khỏe container
+        Rolling Update / Rollback	Cập nhật không downtime
+    🧠 Bài tập:
+        Thêm resources.requests và limits vào deployment
+        Dùng kubectl top pods xem tài nguyên
+        Cấu hình HPA scale tự động khi CPU > 70%
+        Tạo Liveness Probe kiểm tra /health
+Giai đoạn 5: Môi trường thực tế & DevOps
+    Mục tiêu: Đưa ứng dụng thực tế lên cluster và quản trị hiệu quả.
+    🔑 Học:
+        Chủ đề	Giải thích
+        Helm	Quản lý ứng dụng bằng template (giống package manager)
+        Rancher	Giao diện quản lý multi-cluster dễ dùng
+        RBAC	Phân quyền người dùng
+        NetworkPolicy	Giới hạn mạng giữa namespaces
+        Monitoring (Prometheus, Grafana)	Theo dõi sức khỏe cluster
+        Logging (ELK, Loki)	Thu thập log
+        CI/CD	Tự động build & deploy lên cluster
+    🧠 Bài tập:
+        Dùng Helm deploy WordPress hoặc Redis
+        Cài Rancher → import cluster local
+        Cấu hình RBAC: chỉ cho phép 1 user xem logs
+        Cài Prometheus + Grafana để xem metrics
+Giai đoạn 6 (chuyên sâu, ops level):
+    Dành cho khi bạn muốn đi sâu về vận hành:
+        Cluster Federation (multi-cluster)
+        Backup/Restore (Velero)
+        Service Mesh (Istio/Linkerd)
+        Security & Pod Policy
+        Custom Resource Definition (CRD)
+        Operator pattern
+Công cụ nên cài sẵn
+    Mục đích	Tool
+    Cluster local	Minikube / K3s / Kind
+    CLI chính	kubectl
+    Template & app	helm
+    Dashboard	Rancher / K9s
+    Monitoring	Prometheus + Grafana
+    Logs	Loki hoặc EFK (Elasticsearch + Fluentd + Kibana)
