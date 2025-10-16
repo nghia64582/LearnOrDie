@@ -175,3 +175,4 @@
     - IP máy namnhdev: 117.0.95.121
     - Hạn chế thêm thông tin vào InitGameCmd
     - Acc GPT cty: sandinhgpt@gmail.com<Sandinh@2024>
+    - Thay đổi mức cược trong webtool chỉ cần chỉnh stake ở trong Fee.scala

@@ -1,0 +1,14 @@
+Quy trình làm cấu trúc dạng tấm:
+  + Chọn 2 que 17 mm 2 bên và các que ở giữ với độ dài thích hợp
+  + Cắt 2 que giằng với độ dài tầm chiều rộng cần cắt -6mm
+  + Dán 2 que giằng vào đảm bảo cách nền 3mm dùng keo 502
+  + Đánh dấu vị trí cắt, chú ý chỉnh file tăng 0.5 mm dài rộng để bù độ rộng tia laser
+  + Trước khi cắt tinh chỉnh điểm khởi đầu và cắt
+  + Enjoy the moment thôi
+Quy trình làm cấu trúc dạng thanh:
+Quy trình làm cấu trúc dạng hộp:
+  + Với hộp kích thước x*y*z thì cần cắt 6 tấm với kích thước (trừ độ dày vật liệu):
+    - 2 tấm x*y
+    - 2 tấm (x-2d)*z
+    - 2 tấm (y-2d)*(z-2d)
+  + Dán các tấm lại với nhau, chú ý canh thẳng góc

@@ -1,0 +1,92 @@
+- Các lệnh trong Docker:
+  
+  Nhóm lệnh cơ bản – thao tác với container
+    docker run      :	Tạo và chạy container mới từ image	
+      + Tham số: 
+        -d (chạy nền)
+        -it (tương tác)
+        --name (tên container)
+        -p (map port)
+        -v (mount volume)
+        --env (biến môi trường)	
+      + Cấu trúc: docker run -<tên_tham_số_1> <giá_trị_1> -<tên_tham_số_2> <giá_trị_2> ... <tên_image> <lệnh_tùy_chọn>
+        VD: docker run -d -p 8080:80 --name web nginx
+      + Giải thích: 
+        -d => Chạy container ở chế độ nền (detached)
+        -it => Mở terminal tương tác (interactive + TTY)
+        --name web => Đặt tên container là "web"
+        -p 8080:80 => Map port 8080 trên host vào port 80 trong container (để truy cập nginx)
+        -v mysql_data:/var/lib/mysql => Tạo volume tên mysql_data trên host, gắn vào /var/lib/mysql trong container (để lưu dữ liệu MySQL)
+        -e MYSQL_ROOT_PASSWORD=rootpass => Thiết lập biến môi trường MYSQL_ROOT_PASSWORD trong container (đặt mật khẩu root cho MySQL)
+        -e MYSQL_DATABASE=mydb => Thiết lập biến môi trường MYSQL_DATABASE trong container (tạo database mydb khi khởi động)
+
+    docker ps       :	Liệt kê container đang chạy	-a (hiện cả container đã dừng), -q (chỉ ID)	
+      VD: docker ps -a
+    docker stop     :	Dừng container		
+      VD: docker stop web
+    docker start    :	Khởi động lại container đã dừng	-a (attach output)	
+      VD: docker start web
+    docker restart  :	Khởi động lại container		
+      VD: docker restart web
+    docker rm       :	Xóa container	-f (ép xóa kể cả khi đang chạy)	
+      VD: docker rm -f web
+    docker logs     :	Xem log container	-f (theo dõi realtime), --tail (giới hạn dòng cuối)	
+      VD: docker logs -f web
+    docker exec     :	Chạy lệnh bên trong container	-it (mở shell tương tác)	
+      VD: docker exec -it web bash
+    docker attach   :	Gắn lại terminal vào container đang chạy		
+      VD: docker attach web
+    docker kill     :	Dừng container ngay lập tức (gửi SIGKILL)		
+      VD: docker kill web
+
+  Nhóm thao tác với image
+    docker pull         :	Tải image từ Docker Hub hoặc registry		
+      VD: docker pull ubuntu:22.04
+    docker images       :	Liệt kê image đã tải	-a (hiện cả intermediate images)	
+      VD: docker images
+    docker rmi          :	Xóa image	-f (ép xóa)	
+      VD: docker rmi nginx:latest
+    docker build        : Build image từ Dockerfile	-t (đặt tag), --no-cache (bỏ cache)	
+      VD: docker build -t myapp:v1 .
+    docker tag          :	Gán tên/tag mới cho image		
+      VD: docker tag myapp:v1 myrepo/myapp:latest
+    docker push	        : Đẩy image lên registry		
+      VD: docker push myrepo/myapp:latest
+    docker history      :	Xem lịch sử build của image		
+      VD: docker history myapp:v1
+    docker save         :	Xuất image ra file .tar		
+      VD: docker save -o myapp.tar myapp:v1
+    docker load         :	Nạp image từ file .tar		
+      VD: docker load -i myapp.tar
+
+  Nhóm về volume và file
+    docker volume ls:	Liệt kê volume		
+      VD: docker volume ls
+    docker volume create:	Tạo volume mới		
+      VD: docker volume create mydata
+    docker volume rm:	Xóa volume		
+      VD: docker volume rm mydata
+    docker cp:	Copy file giữa host và container		
+      VD: docker cp web:/etc/nginx/nginx.conf ./nginx.conf
+
+  Nhóm về mạng (network)
+    docker network ls	      : Liệt kê network		
+      VD: docker network ls
+    docker network create	  : Tạo network	--driver (bridge, host, overlay)	
+      VD: docker network create --driver bridge mynet
+    docker network connect	: Kết nối container vào network		
+      VD: docker network connect mynet web
+    docker network inspect	: Xem chi tiết network		
+      VD: docker network inspect mynet
+
+  Nhóm nâng cao (Compose, context, login)
+    docker login            :	Đăng nhập vào Docker Hub hoặc registry riêng	
+      VD: docker login -u myuser
+    docker compose up       :	Khởi chạy nhiều container từ docker-compose.yml	
+      VD: docker compose up -d
+    docker compose down     :	Dừng & xoá toàn bộ service	
+      VD: docker compose down
+    docker context ls       :	Liệt kê context (VD: Docker Desktop, remote engine)	
+      VD: docker context ls
+    docker context use      :	Chuyển đổi giữa các context	
+      VD: docker context use default

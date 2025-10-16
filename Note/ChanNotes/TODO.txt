@@ -351,3 +351,16 @@
             + cb: Mở AI cho user bằng mod
 
     - Auto reset Quan của user sau một khoảng thời gian
+    - Xóa cộng gói heo 200 trong tool mod
+    - Cộng heo 200 đang bị lỗi
+    - Triển khai tính năng Trở về cố đô
+        - Game Server:
+            + Msg: 
+                + Cmd: OldCapitalConfigCmd, OldCapitalDataCmd
+                + Req: OldCapitalConfigReq, 
+            + OldCapitalActor
+        - sd-cb:
+            + OldCapitalCfg
+            + OldCapitalCfgCAO
+        - phe-bao-tool:
+        - web-tool
