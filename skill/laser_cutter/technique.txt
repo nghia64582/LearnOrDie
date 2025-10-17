@@ -1,4 +1,6 @@
 Quy trình làm cấu trúc dạng tấm:
+  * Yêu cầu kĩ thuật:
+    - Vật liệu cần phẳng
   + Chọn 2 que 17 mm 2 bên và các que ở giữ với độ dài thích hợp
   + Cắt 2 que giằng với độ dài tầm chiều rộng cần cắt -6mm
   + Dán 2 que giằng vào đảm bảo cách nền 3mm dùng keo 502

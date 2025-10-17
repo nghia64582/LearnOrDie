@@ -1,0 +1,24 @@
+Đặc điểm 
+   Docker Compose
+   Kubernetes
+Mục tiêu chính
+   Dành cho môi trường **phát triển, test, local**
+   Dành cho **triển khai production, cluster, cloud**
+Đơn vị triển khai
+   Container (service)
+   Pod (1 hoặc nhiều container)
+Quản lý vòng đời
+   Đơn giản: start/stop/restart container
+   Tự động scale, restart, rollout, self-heal
+Networking**
+   Mặc định 1 bridge network, container nói chuyện qua service 
+   Có hẳn **Service, ClusterIP, Ingress, DNS nội bộ**
+Storage
+   Mount volume đơn giản
+   Có PersistentVolume (PV) + PersistentVolumeClaim (PVC)
+Orchestration
+   Không có (Compose chỉ start/stop tuần tự)
+   Có scheduler, replica, rolling update, health check
+Cách build image
+   Compose có thể `build: ./folder`
+   Kubernetes **chỉ dùng image có sẵn** (không build được)
