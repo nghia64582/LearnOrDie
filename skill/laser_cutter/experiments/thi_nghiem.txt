@@ -1,0 +1,25 @@
+Thí nghiệm đo độ lệch Kerf
+    Mục tiêu: Đo độ lệch kerf khi cắt vật liệu bằng laser cutter.
+    Kích thước cắt trên file:
+    - Lần lượt là 40mm, 80mm, 100mm
+    Kích thước thực tế đo được:
+        - 39.5mm, 79.5mm, 99.5mm
+    Kết luận tạm thời:
+        - Độ lệch kerf khoảng 0.5mm
+        - Cần hiệu chỉnh kích thước thiết kế lớn hơn 0.5mm để bù trừ kerf
+
+Thí nghiệm làm khe cho vít
+    + Đường kính vít đo được 2.50mm
+    + Kích thước khớp trên file: 2.90mm (R = 1.45mm)
+
+Thí nghiệm làm mộng âm cho que kem
+    + Kích thước tiết diện que kem đo được:
+
+Thí nghiệm làm mộng âm tròn cho que tre
+    + Que tre đường kính 2.6-3 mm (đường kính không đều)
+    + Kích thước khớp trên file: 3mm (R = 1.5mm)
+
+Thí nghiệm làm mộng âm dương tấm-cạnh
+    + Cắt cạnh theo cấu trúc răng cưa: 
+    + Cắt tấm theo cấu trúc mộng âm là các hình chữ nhật có kích thước 2mm(phù hợp với độ dày tấm) * 10mm
+    + 
