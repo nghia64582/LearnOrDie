@@ -3,3 +3,5 @@ u-SDAcc
 f-SDFriend
 qt-ThienThu
 lt-Letter
+oc-OldCapital
+st-StickerTicket

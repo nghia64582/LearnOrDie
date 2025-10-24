@@ -176,3 +176,7 @@
     - Hạn chế thêm thông tin vào InitGameCmd
     - Acc GPT cty: sandinhgpt@gmail.com<Sandinh@2024>
     - Thay đổi mức cược trong webtool chỉ cần chỉnh stake ở trong Fee.scala
+    - Cập nhật model ForeignCurrency (ca) phải cập nhật image trong khu quan, tránh mất data
+    - Chú ý hàm SuccessChangeCurrency trong pay-api phải dùng tiền của gói 
+      Cái này để cộng điểm công thần cho user
+    - 

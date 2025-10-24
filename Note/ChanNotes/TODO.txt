@@ -353,7 +353,7 @@
     - Auto reset Quan của user sau một khoảng thời gian
     - Xóa cộng gói heo 200 trong tool mod
     - Cộng heo 200 đang bị lỗi
-    - Triển khai tính năng Trở về cố đô
+    - Triển khai tính năng Thượng Kinh
         - Game Server:
             + Msg: 
                 + Cmd: OldCapitalConfigCmd, OldCapitalDataCmd
@@ -364,3 +364,26 @@
             + OldCapitalCfgCAO
         - phe-bao-tool:
         - web-tool
+        - Các test case:
+            + Lấy config old capital: done
+            + Lấy data oc: done
+            + Cộng trừ match:
+                + Dưới 10 chơi dưới lý (hạ, thượng): done
+                + Dưới 10 chơi từ lý trở lên: done
+                + Trên 10 chơi ở các khu    : done
+                + Chơi khi chưa qua mốc nạp : done
+            + Nhận:
+        - Pull request:
+            + Tách ra OldCapitalData - done
+            + Tách các logic phức tạp vào trong config cho tường minh - done
+            + Dùng filter với find thay cho while - done
+            + Dùng unit test kết hợp với log trong cb cho tiện - done
+            + Cài đặt expiry cho document cho oc, sau 1 khoảng thời gian từ lần tạo đầu tiên - done
+    - Tính năng túi mù 2:
+        + Các tính năng chính cần cài đặt:
+            + Config gacha - done
+            + Mua túi mù (theo giá tiền nạp)
+            + Mở túi mù (giảm túi mù đi và tặng bảo và cây tài lộc) - done
+        + Sửa Pull Request Comment: 
+            + Update With Cas
+            + Dùng foreach thay cho vòng lặp      
