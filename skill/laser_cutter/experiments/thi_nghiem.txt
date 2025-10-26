@@ -22,4 +22,4 @@ Thí nghiệm làm mộng âm tròn cho que tre
 Thí nghiệm làm mộng âm dương tấm-cạnh
     + Cắt cạnh theo cấu trúc răng cưa: 
     + Cắt tấm theo cấu trúc mộng âm là các hình chữ nhật có kích thước 2mm(phù hợp với độ dày tấm) * 10mm
-    + 
+    + Kết quả độ khớp phù hợp

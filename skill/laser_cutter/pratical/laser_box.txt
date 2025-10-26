@@ -1,0 +1,20 @@
+Thí nghiệm làm hộp chữ nhật 10x10x10cm
+- Phân tích:
+  + Cần làm 6 mặt với răng 1cm 
+  + Với độ dày 2mm, kích thước cần cắt là 100.5x100.5mm (độ lệch kerf 0.5mm đã được tính trước)
+  + Cần làm 6 tấm bằng nhau (do dùng mối kết nối răng cưa, không phải trừ cạnh (2d))
+  + Chuẩn bị:
+    + 6 tấm kích thước 100x100mm
+    + Thiết kế file trên TinkerCAD 
+  + Quá trình:
+    + B1: Tạo 12 thanh giằng để tạo tấm
+      - Mỗi thanh giằng nên có chiều dài = chiều dài giằng - 2 * độ dày - 2mm ~ 94mm
+      - Có thể dùng máy cắt laser tăng tốc độ
+    + B2: Tạo lên 6 tấm
+      - Dùng làm phôi để sau này Cắt
+      - Cần dùng các que to ở 2 biên để tăng giữ bởi thanh giằng
+      - 
+    + B3: Tạo hình cắt trên TinkerCAD
+    + B4: Cắt ra 6 tấm
+    + B5: Dán lại bằng keo
+ 
