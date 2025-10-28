@@ -17,4 +17,7 @@ Thí nghiệm làm hộp chữ nhật 10x10x10cm
     + B3: Tạo hình cắt trên TinkerCAD
     + B4: Cắt ra 6 tấm
     + B5: Dán lại bằng keo
- 
+  + Kết quả sơ bộ:
+    + Cần tỉa bớt các răng bằng máy mài => Không cần trừ Kerf khi làm các file thiết kế răng
+    + CHÚ Ý TỌA ĐỘ GỐC TRÊN PHẦN MỀM VỚI TỌA ĐỘ TINH CHỈNH THỰC
+    + Kết nối răng tương đối phức tạp nhưng có độ bền cao
