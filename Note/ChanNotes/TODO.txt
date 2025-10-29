@@ -386,4 +386,20 @@
             + Mở túi mù (giảm túi mù đi và tặng bảo và cây tài lộc) - done
         + Sửa Pull Request Comment: 
             + Update With Cas
-            + Dùng foreach thay cho vòng lặp      
+            + Dùng foreach thay cho vòng lặp  
+    - Làm bảo cấp ra cho thượng kinh
+        + Cập nhật phebao-tool: done
+        + Cập nhật web-tool tính năng thượng kinh: done
+    - Làm tool tự động hoàn 
+    - Làm tính năng test nạp trên sd api:
+        + Mục đích: Test nạp trên server dev
+        + Yêu cầu: 
+            + Đúng logic: Số bảo tăng thêm, gói phải mất đi (hoặc cập nhật tiến trình tương ứng), thời gian phải đúng
+        + Ý tưởng:
+            + Client gửi uid + packId + vnd lên
+            + Server match case packId với từng gói để ra các Future tương ứng trong FcOps
+            + Mỗi Future Map lại sang Future mới gồm các dữ liệu 
+                + isSuccess: có nạp được gói không
+                + change: tiền thừa
+                + price: giá gói là bao nhiêu
+                + amount : nạp được bao nhiêu gói

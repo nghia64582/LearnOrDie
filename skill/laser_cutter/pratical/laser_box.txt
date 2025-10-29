@@ -18,6 +18,8 @@ Thí nghiệm làm hộp chữ nhật 10x10x10cm
     + B4: Cắt ra 6 tấm
     + B5: Dán lại bằng keo
   + Kết quả sơ bộ:
-    + Cần tỉa bớt các răng bằng máy mài => Không cần trừ Kerf khi làm các file thiết kế răng
+    + Cần tỉa bớt các răng bằng máy mài => Không cần trừ Kerf khi làm các file kết nối răng
     + CHÚ Ý TỌA ĐỘ GỐC TRÊN PHẦN MỀM VỚI TỌA ĐỘ TINH CHỈNH THỰC
     + Kết nối răng tương đối phức tạp nhưng có độ bền cao
+    + Các thanh giằng nên cách xa các cạnh để tránh bị chạm vào nhau khi dán, nên là từ 4-5 mm tính từ cạnh của hình vuông bao
+    + Hộp dán tương đối khít, hiệu quả ¬90%, vẫn có một số khe hở nhỏ

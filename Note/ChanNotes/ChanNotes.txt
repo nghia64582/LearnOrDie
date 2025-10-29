@@ -177,6 +177,8 @@
     - Acc GPT cty: sandinhgpt@gmail.com<Sandinh@2024>
     - Thay đổi mức cược trong webtool chỉ cần chỉnh stake ở trong Fee.scala
     - Cập nhật model ForeignCurrency (ca) phải cập nhật image trong khu quan, tránh mất data
-    - Chú ý hàm SuccessChangeCurrency trong pay-api phải dùng tiền của gói 
+    - Chú ý hàm SuccessChangeCurrency trong pay-api với tham số vndPackOpt phải dùng tiền của gói 
       Cái này để cộng điểm công thần cho user
-    - 
+    - Dùng JsCao thay cho JsCao1 để có thể set expiration
+    - Bản chất gói extra sale sẽ giống nạp gói 300.000 bảo với giá 200.000
+    - Ip CuongNM: 707549164
