@@ -1,0 +1,19 @@
+Thí nghiệm nâng tấm
+    - Mô tả:
+        + Việc liên kết một tấm này lên một tấm khác với chiều cao nhất định khá quan trọng
+        + Ở thí nghiệm này sẽ thử nghiệm 4 phương pháp 
+        + Các dạng thanh nâng chính:
+            + Thanh nâng dính kết nối dính (dùng keo)
+            + Thanh nâng dính kết nối răng
+    - Mục đích:
+    - Chuẩn bị:
+        + Tổng cộng: 1 tấm 10~x10 cm, 4 tấm 4~x4cm (kí hiệu 4~x4 cm có nghĩa là một chiều là 4cm, 
+          1 chiều ~ 4cm (có thể từ 3.8-4.2cm))
+        + Nguyên liệu:
+    - Quy trình làm thanh nâng dính kết nối dính
+    - Quy trình làm thanh nâng kết nối răng
+        + Thiết kế răng âm ở 2 tấm dưới và trên
+        + 
+    - Yếu tố cần cân nhắc:
+        + CHI PHÍ THIẾT KẾ VÀ TRIỂN KHAI (chủ yếu là thời gian, cần làm nhanh nhất có thể)
+        
