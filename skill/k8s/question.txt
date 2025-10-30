@@ -22,3 +22,19 @@ Orchestration
 Cách build image
    Compose có thể `build: ./folder`
    Kubernetes **chỉ dùng image có sẵn** (không build được)
+Cấu trúc của hệ thống k8s file
+   k8s/
+   ├── namespace.yaml # Tạo namespace
+   ├── configmap.yaml # Tạo configmap
+   ├── secret.yaml # Tạo secret
+   ├── deployment.yaml # Tạo deployment
+   ├── service.yaml # Tạo service
+   └── ingress.yaml # Tạo ingress
+   Mỗi file có thể tạo một hoặc nhiều resource (nhiều resource cách nhau ---)
+   Hoặc cũng có thể gom tất cả vào một file duy nhất (all-in-one.yaml)
+Quy trình triển khai một cụm k8s
+   Như vậy quy trình triển khai một k8s cluster sẽ là 
+      B1: Tạo các image cần thiết (có sẵn trên docker hub hoặc tự build (dùng framework + language + Dockerfile))
+      B2: Xây dựng các config yaml tương ứng (Service, Deployment, Ingress, ConfigMap, ...) 
+      B3: Apply các config này 
+      B4: Nếu cần thêm/xóa/sửa thì build lại image, thay đổi các config yaml và apply lại

@@ -1,0 +1,52 @@
+apiVersion: apps/v1                # API version cho Deployment
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  namespace: myapp
+  labels:
+    app: myapp
+spec:
+  replicas: 3                      # Số lượng Pod muốn chạy song song
+  selector:                        # K8s dùng selector để tìm Pod cần quản lý
+    matchLabels:
+      app: myapp
+  template:                        # Mẫu (template) để tạo các Pod
+    metadata:
+      labels:
+        app: myapp                 # Nhãn trùng với selector
+    spec:                          # Mô tả chi tiết Pod
+      containers:
+        - name: myapp-container
+          image: myregistry/myapp:latest     # Image của container
+          imagePullPolicy: IfNotPresent       # Chính sách pull image
+          ports:
+            - containerPort: 8080             # Cổng ứng dụng chạy bên trong container
+          envFrom:                            # Load env từ ConfigMap và Secret
+            - configMapRef:
+                name: myapp-config
+            - secretRef:
+                name: myapp-secret
+          resources:                           # Giới hạn tài nguyên
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:                       # Health check: pod còn sống?
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:                      # Pod sẵn sàng nhận traffic?
+            httpGet:
+              path: /actuator/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+# imagePullPolicy có thể là:
+# Always :	Luôn pull image mới nhất
+# IfNotPresent :	Chỉ pull nếu chưa có local
+# Never :	Không bao giờ pull image

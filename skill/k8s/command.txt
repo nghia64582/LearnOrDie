@@ -1,0 +1,10 @@
+1. Các lệnh với kubectl:
+    - kubectl get pods: Liệt kê tất cả các Pod trong namespace hiện tại.
+    - kubectl get services: Liệt kê tất cả các Service.
+    - kubectl get deployments: Liệt kê tất cả các Deployment.
+    - kubectl describe pod <pod-name>: Hiển thị chi tiết về một Pod cụ thể.
+    - kubectl logs <pod-name>: Xem log của một Pod.
+    - kubectl apply -f <file.yaml>: Tạo hoặc cập nhật tài nguyên từ file YAML.
+    - kubectl delete -f <file.yaml>: Xóa tài nguyên được định nghĩa trong file YAML.
+    - kubectl exec -it <pod-name> -- /bin/bash: Truy cập vào shell của một Pod.
+    - kubectl scale deployment <deployment-name> --replicas=<number>: Thay đổi số lượng bản sao của một Deployment.

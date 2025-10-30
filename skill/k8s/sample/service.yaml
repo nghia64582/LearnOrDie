@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+  namespace: myapp
+spec:
+  selector:                        # Kết nối đến Pod có nhãn tương ứng
+    app: myapp
+  ports:
+    - port: 8080                   # Cổng Service expose ra bên ngoài namespace
+      targetPort: 8080             # Cổng container thực tế trong Pod
+      nodePort: 30080              # (tùy chọn) cổng vật lý của node (chỉ dùng với NodePort)
+  type: ClusterIP                  # Loại Service
+
+# type có thể là:
+# ClusterIP	Mặc định — chỉ truy cập trong cluster
+# NodePort	Mở cổng Node ra ngoài (qua IP node + cổng 30000–32767)
+# LoadBalancer	Tạo IP public (nếu có cloud provider hỗ trợ, như AWS/GCP)
+# ExternalName	Map đến DNS bên ngoài

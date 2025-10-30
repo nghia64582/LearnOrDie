@@ -1,0 +1,7 @@
+apiVersion: v1                     # Phiên bản API của K8s (Namespace thuộc nhóm core API v1)
+kind: Namespace                    # Loại resource là Namespace
+metadata:                          # Thông tin mô tả (metadata)
+  name: myapp                      # Tên namespace — duy nhất trong cluster
+  labels:                          # Nhãn giúp nhóm/tìm kiếm các resource
+    environment: dev               # Ví dụ: dev, staging, prod
+# Namespace giúp cô lập tài nguyên: các pod, configmap, secret… trong namespace này không ảnh hưởng namespace khác.

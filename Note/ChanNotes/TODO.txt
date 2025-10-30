@@ -403,3 +403,11 @@
                 + change: tiền thừa
                 + price: giá gói là bao nhiêu
                 + amount : nạp được bao nhiêu gói
+
+    - Trigger 2 lần extraSale: done
+    - Sửa Unknown: done
+    - Cộng thừa 2 lần (nạp 1 thừa + 1 gói nhưng long hiện 2 thừa + 4 sai): 
+        + Hôm qua test: 1 addVndNew + 1 successChangeCurreny => 1 thừa + 2 bảo
+        + Hôm nay test: 1 addBao => 2 thừa + 4 bảo
+        + Giờ test    : 1 
+    - Sửa log: Đúng 100k mới log trigger extra sale

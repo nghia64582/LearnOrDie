@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  namespace: myapp
+  annotations:                      # Thêm thông tin cho ingress controller (ví dụ nginx)
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: myapp.example.com        # Domain public
+      http:
+        paths:
+          - path: /                  # Đường dẫn (path)
+            pathType: Prefix         # Kiểu path (Exact | Prefix | ImplementationSpecific)
+            backend:
+              service:
+                name: myapp-service   # Service nội bộ
+                port:
+                  number: 8080
+  tls:                               # (Tuỳ chọn) cấu hình HTTPS
+    - hosts:
+        - myapp.example.com
+      secretName: myapp-tls-secret   # Secret chứa certificate (type: kubernetes.io/tls)
+
+# pathType có thể là:
+# Exact	Khớp chính xác đường dẫn
+# Prefix	Khớp theo tiền tố đường dẫn
+# ImplementationSpecific	Phụ thuộc vào ingress controller

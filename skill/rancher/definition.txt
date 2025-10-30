@@ -12,13 +12,22 @@
         DaemonSet:Dùng để đảm bảo **mỗi node trong cluster đều có 1 pod chạy**.
         CronJob
         Job
+
 2. Ingress
     👉 Cách ứng dụng trong cluster được truy cập từ bên ngoài (Internet).
     Ingress là một đối tượng định nghĩa luồng truy cập HTTP/HTTPS vào các dịch vụ trong cluster 
       thông qua Ingress Controller (thường là Nginx hoặc Traefik).
+    - Vấn đề: 
+        + Nếu dùng type ClusterIP (mặc định) service chỉ truy cập được từ cluster
+        + Nếu dùng type NodePort:
+            + Nếu một Node mở một port (VD: 3000)
+            => Có thể truy cập <node-ip>:3000
+    - Ingress không phải container mà là cấu hình
+
       VD: yaml
         apiVersion: networking.k8s.io/v1
         kind: Ingress
+        type: ClusterIP
         metadata:
             name: myapp-ingress
         spec:
@@ -33,6 +42,7 @@
                         name: myapp-service
                         port:
                         number: 80
+
 3. Secret
     👉 Nơi lưu trữ dữ liệu nhạy cảm (password, API key, token...).
     Secret là đối tượng trong Kubernetes để lưu các giá trị bí mật dưới dạng Base64-encoded
@@ -45,6 +55,7 @@
       data:
       username: YWRtaW4=
       password: c2VjcmV0
+
 4. ConfigMap
     👉 Lưu trữ cấu hình không nhạy cảm (giống file .env, config.json).
     ConfigMap lưu các cấu hình dạng key–value để container đọc khi chạy.
@@ -56,6 +67,7 @@
         data:
             APP_MODE: production
             APP_PORT: "8080"
+
 5. Cluster – Cụm máy chủ Kubernetes
     👉 Cluster là một cụm (group) gồm nhiều node (máy) chạy Kubernetes, được Rancher quản lý.
         Rancher có thể quản lý nhiều cluster:
@@ -67,6 +79,7 @@
         Cluster A: Dành cho môi trường dev
         Cluster B: Dành cho production
         Cluster C: Cluster edge cho IoT
+
 6. Node – Máy chủ trong cluster
     👉 Node là một máy vật lý hoặc ảo (VM) trong cluster.
     Có 2 loại chính:
@@ -78,6 +91,7 @@
             Nơi thực thi container (Pod)
         	Chạy app, API, service
     💡 Trong Rancher UI, bạn có thể thấy mỗi node có trạng thái, tài nguyên (CPU, RAM), labels và roles.
+
 7. Namespace – Không gian tên trong cluster
     👉 Namespace là cách Kubernetes chia nhỏ tài nguyên trong 1 cluster để tránh xung đột tên và giới hạn quyền.
     💡 Mỗi workload, service, secret, configmap, pod... đều nằm trong một namespace.
@@ -89,6 +103,7 @@
         Phân tách môi trường (dev/test/prod)
         Quản lý quyền (RBAC)
         Giới hạn tài nguyên (ResourceQuota)
+
 8. App – Ứng dụng được triển khai (từ Catalog hoặc YAML)
     👉 Trong Rancher, App là một gói ứng dụng được triển khai vào cluster qua Helm chart hoặc Rancher Catalog.
     💡 Tức là Rancher gọi “App” = “Helm release”.
