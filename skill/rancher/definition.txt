@@ -10,8 +10,9 @@
             * Có **volume riêng biệt** (mỗi pod giữ dữ liệu riêng)
             * **Khởi động và tắt theo thứ tự** (đảm bảo thứ tự an toàn dữ liệu)
         DaemonSet:Dùng để đảm bảo **mỗi node trong cluster đều có 1 pod chạy**.
-        CronJob
-        Job
+        CronJob:Dùng để chạy **các tác vụ định kỳ** (theo lịch) — giống như cron trên Linux.
+        Job:Dùng để chạy **các tác vụ ngắn hạn**, chạy xong là dừng lại.
+            Ví dụ: Chạy script backup database một lần, sau đó kết thúc
 
 2. Ingress
     👉 Cách ứng dụng trong cluster được truy cập từ bên ngoài (Internet).
@@ -42,6 +43,9 @@
                         name: myapp-service
                         port:
                         number: 80
+        Như trong cấu hình trên:
+            Khi truy cập `myapp.example.com/`
+            → Yêu cầu được chuyển đến `myapp-service` trên port 80
 
 3. Secret
     👉 Nơi lưu trữ dữ liệu nhạy cảm (password, API key, token...).

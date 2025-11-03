@@ -8,3 +8,33 @@
     - kubectl delete -f <file.yaml>: Xóa tài nguyên được định nghĩa trong file YAML.
     - kubectl exec -it <pod-name> -- /bin/bash: Truy cập vào shell của một Pod.
     - kubectl scale deployment <deployment-name> --replicas=<number>: Thay đổi số lượng bản sao của một Deployment.
+
+2. Lệnh theo mục đích:
+    - Quản lý namespace:
+        + kubectl get namespaces
+        + kubectl create namespace <namespace-name>
+        + kubectl delete namespace <namespace-name>
+    - Quản lý ConfigMap:
+        + kubectl create configmap <configmap-name> --from-literal=key=value
+        + kubectl get configmaps
+        + kubectl delete configmap <configmap-name>
+    - Quản lý Secret:
+        + kubectl create secret generic
+            <secret-name> --from-literal=username=admin --from-literal=password=secret
+        + kubectl get secrets
+        + kubectl delete secret <secret-name>
+    - Quản lý PersistentVolumeClaim (PVC):
+        + kubectl get pvc
+        + kubectl describe pvc <pvc-name>
+        + kubectl delete pvc <pvc-name>
+3. Lệnh nâng cao:
+    - kubectl rollout status deployment/<deployment-name>: Kiểm tra trạng thái triển khai của
+        một Deployment.
+    - kubectl rollout undo deployment/<deployment-name>: Quay lại phiên bản trước của một Deployment.
+    - kubectl top pod: Xem tài nguyên (CPU, memory) sử dụng của các Pod.
+    - kubectl port-forward <pod-name> <local-port>:<pod-port>: Chuyển tiếp cổng từ máy local đến Pod.
+    - kubectl cp <pod-name>:<path-in-pod> <local-path>: Sao chép file từ Pod về máy local.
+    - kubectl annotate pod <pod-name> <key>=<value>: Thêm chú thích vào một Pod.
+    - kubectl label pod <pod-name> <key>=<value>: Thêm nhãn vào một Pod.
+    - kubectl get events: Xem các sự kiện xảy ra trong cluster.
+    

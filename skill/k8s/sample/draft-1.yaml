@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: ingress
+namespace: sh-sample
+metadata:
+  name: sh-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sh-fe
+                port:
+                  number: 3000
+    - host: localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sh-be
+                port:
+                  number: 8080
