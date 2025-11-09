@@ -1,29 +1,69 @@
-apiVersion: networking.k8s.io/v1
-kind: ingress
-namespace: sh-sample
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: sh-ingress
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
+  name: database
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: database
+type: Opaque
+data:
+  # echo -n 'rootpassword' | base64
+  mysql-root-password: cm9vdHBhc3N3b3Jk
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: database
 spec:
-  rules:
-    - host: localhost
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: sh-fe
-                port:
-                  number: 3000
-    - host: localhost
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: sh-be
-                port:
-                  number: 8080
+  type: NodePort   # Cho phép truy cập từ ngoài cụm (bạn có thể đổi thành LoadBalancer)
+  ports:
+    - port: 3306
+      targetPort: 3306
+      nodePort: 30306   # Port ngoài (DataGrip connect vào đây)
+  selector:
+    app: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: database
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+              name: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+      restartPolicy: Always
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

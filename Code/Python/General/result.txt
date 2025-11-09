@@ -1,0 +1,289 @@
+[DIR] .gradle - 287.63 MB
+	[DIR] caches - 287.63 MB
+		[DIR] 8.9 - 287.63 MB
+			[DIR] generated-gradle-jars - 170.18 MB
+				gradle-api-8.9.jar (170.18 MB)
+			[DIR] transforms - 117.45 MB
+				[DIR] cae2d2e073197cddc77ea3718e999aa9 - 117.45 MB
+					[DIR] transformed - 117.45 MB
+						[DIR] instrumented - 117.45 MB
+							instrumented-kotlin-compiler-embeddable-1.5.10.jar (117.45 MB)
+[DIR] .javacpp - 327.14 MB
+	[DIR] cache - 327.14 MB
+		[DIR] nd4j-native-1.0.0-M2.1-windows-x86_64.jar - 327.14 MB
+			[DIR] org - 327.14 MB
+				[DIR] nd4j - 327.14 MB
+					[DIR] linalg - 327.14 MB
+						[DIR] cpu - 327.14 MB
+							[DIR] nativecpu - 327.14 MB
+								[DIR] bindings - 327.14 MB
+									[DIR] windows-x86_64 - 327.14 MB
+										libnd4jcpu.dll (327.14 MB)
+[DIR] .jdks - 129.07 MB
+	[DIR] corretto-19.0.2 - 129.07 MB
+		[DIR] lib - 129.07 MB
+			modules (129.07 MB)
+[DIR] AppData - 45401.49 MB
+	[DIR] Local - 43282.09 MB
+		[DIR] Android - 4420.07 MB
+			[DIR] Sdk - 4420.07 MB
+				[DIR] ndk - 313.07 MB
+					[DIR] 26.3.11579264 - 313.07 MB
+						[DIR] toolchains - 313.07 MB
+							[DIR] llvm - 313.07 MB
+								[DIR] prebuilt - 313.07 MB
+									[DIR] windows-x86_64 - 313.07 MB
+										[DIR] bin - 313.07 MB
+											clang++.exe (104.36 MB)
+											clang-cl.exe (104.36 MB)
+											clang.exe (104.36 MB)
+				[DIR] system-images - 4107.00 MB
+					[DIR] android-34 - 4107.00 MB
+						[DIR] google_apis - 4107.00 MB
+							[DIR] x86_64 - 4107.00 MB
+								system.img (4107.00 MB)
+		[DIR] arduino-ide-updater - 286.02 MB
+			installer.exe (143.01 MB)
+			[DIR] pending - 143.01 MB
+				arduino-ide_2.3.1_Windows_64bit.exe (143.01 MB)
+		[DIR] Coursier - 304.27 MB
+			[DIR] cache - 304.27 MB
+				[DIR] arc - 122.57 MB
+					[DIR] https - 122.57 MB
+						[DIR] github.com - 122.57 MB
+							[DIR] adoptium - 122.57 MB
+								[DIR] temurin17-binaries - 122.57 MB
+									[DIR] releases - 122.57 MB
+										[DIR] download - 122.57 MB
+											[DIR] jdk-17.0.16%252B8 - 122.57 MB
+												[DIR] OpenJDK17U-jdk_x64_windows_hotspot_17.0.16_8.zip - 122.57 MB
+													[DIR] jdk-17.0.16+8 - 122.57 MB
+														[DIR] lib - 122.57 MB
+															modules (122.57 MB)
+				[DIR] v1 - 181.69 MB
+					[DIR] https - 181.69 MB
+						[DIR] github.com - 181.69 MB
+							[DIR] adoptium - 181.69 MB
+								[DIR] temurin17-binaries - 181.69 MB
+									[DIR] releases - 181.69 MB
+										[DIR] download - 181.69 MB
+											[DIR] jdk-17.0.16%252B8 - 181.69 MB
+												OpenJDK17U-jdk_x64_windows_hotspot_17.0.16_8.zip (181.69 MB)
+		[DIR] Docker - 18729.00 MB
+			[DIR] wsl - 18729.00 MB
+				[DIR] disk - 18612.00 MB
+					docker_data.vhdx (18612.00 MB)
+				[DIR] main - 117.00 MB
+					ext4.vhdx (117.00 MB)
+		[DIR] GitHubDesktop - 570.20 MB
+			[DIR] app-3.5.2 - 191.56 MB
+				GitHubDesktop.exe (191.56 MB)
+			[DIR] app-3.5.3 - 201.46 MB
+				GitHubDesktop.exe (201.46 MB)
+			[DIR] packages - 177.18 MB
+				GitHubDesktop-3.5.3.nupkg (177.18 MB)
+		[DIR] Google - 4321.19 MB
+			[DIR] Chrome - 4321.19 MB
+				[DIR] User Data - 4321.19 MB
+					[DIR] component_crx_cache - 106.41 MB
+						ad2e208a97c2d6de09062ee591d0e80ffe8f9fc2adb1a233c4aa7f75f134b5ba (106.41 MB)
+					[DIR] Default - 140.01 MB
+						[DIR] Cache - 140.01 MB
+							[DIR] Cache_Data - 140.01 MB
+								data_3 (140.01 MB)
+					[DIR] OptGuideOnDeviceModel - 4074.77 MB
+						[DIR] 2025.8.21.1028 - 4074.77 MB
+							cache.bin (1344.47 MB)
+							weights.bin (2730.29 MB)
+		[DIR] Microsoft - 1148.50 MB
+			[DIR] Edge - 525.48 MB
+				[DIR] User Data - 525.48 MB
+					[DIR] component_crx_cache - 189.78 MB
+						6491842ec14d2ae193d59dedd02ba5ad3eb8aa2a52c4221f2d7606c8a9f8409d (189.78 MB)
+					[DIR] ProvenanceData - 335.70 MB
+						[DIR] 2024.10.16.4 - 335.70 MB
+							vti-b-p32-visual.quant.ort (335.70 MB)
+			[DIR] PowerToys - 382.72 MB
+				[DIR] Updates - 382.72 MB
+					powertoysusersetup-0.90.1-x64.exe (382.72 MB)
+			[DIR] vscode-cpptools - 135.30 MB
+				[DIR] d1952dc304c8abd6649e917f22446113 - 135.30 MB
+					.BROWSE.VC.DB (135.30 MB)
+			[DIR] Windows - 105.00 MB
+				[DIR] Explorer - 105.00 MB
+					thumbcache_96.db (105.00 MB)
+		[DIR] Nox - 536.75 MB
+			[DIR] rom_update - 536.75 MB
+				base8-disk_temp (536.75 MB)
+		[DIR] npm-cache - 147.16 MB
+			[DIR] _npx - 147.16 MB
+				[DIR] 8b377f6eec906bc4 - 147.16 MB
+					[DIR] node_modules - 147.16 MB
+						[DIR] @next - 147.16 MB
+							[DIR] swc-win32-x64-msvc - 147.16 MB
+								next-swc.win32-x64-msvc.node (147.16 MB)
+		[DIR] pip - 193.66 MB
+			[DIR] cache - 193.66 MB
+				[DIR] http-v2 - 193.66 MB
+					[DIR] 7 - 193.66 MB
+						[DIR] 9 - 193.66 MB
+							[DIR] f - 193.66 MB
+								[DIR] 6 - 193.66 MB
+									[DIR] 8 - 193.66 MB
+										79f689bd5d38d6e0f516037d466f46d93fbd57f267828fc76932507d.body (193.66 MB)
+		[DIR] Postman - 1026.44 MB
+			[DIR] app-11.62.7 - 288.00 MB
+				Postman.exe (183.75 MB)
+				[DIR] resources - 104.25 MB
+					app.asar (104.25 MB)
+			[DIR] app-11.69.5 - 299.28 MB
+				Postman.exe (183.75 MB)
+				[DIR] resources - 115.53 MB
+					app.asar (115.53 MB)
+			[DIR] app-11.69.6 - 299.42 MB
+				Postman.exe (183.75 MB)
+				[DIR] resources - 115.68 MB
+					app.asar (115.68 MB)
+			[DIR] packages - 139.73 MB
+				Postman-x64-11.69.6-full.nupkg (139.73 MB)
+		[DIR] Programs - 3305.70 MB
+			[DIR] Arduino IDE - 164.66 MB
+				Arduino IDE.exe (164.66 MB)
+			[DIR] bluestacks-services - 154.70 MB
+				BlueStacksServices.exe (154.70 MB)
+			[DIR] cursor - 182.03 MB
+				Cursor.exe (182.03 MB)
+			[DIR] mattermost-desktop - 190.04 MB
+				Mattermost.exe (190.04 MB)
+			[DIR] Microsoft VS Code - 376.55 MB
+				[DIR] _ - 188.27 MB
+					Code.exe (188.27 MB)
+				Code.exe (188.27 MB)
+			[DIR] MQTT-Explorer - 168.16 MB
+				MQTT Explorer.exe (168.16 MB)
+			[DIR] Python - 861.04 MB
+				[DIR] Python312 - 861.04 MB
+					[DIR] Lib - 861.04 MB
+						[DIR] site-packages - 861.04 MB
+							[DIR] torch - 861.04 MB
+								[DIR] lib - 861.04 MB
+									dnnl.lib (623.27 MB)
+									torch_cpu.dll (237.76 MB)
+			[DIR] SanDinhGameDesktop - 146.85 MB
+				SanDinhGameDesktop.exe (146.85 MB)
+			[DIR] Trae - 181.80 MB
+				Trae.exe (181.80 MB)
+			[DIR] Windsurf - 345.22 MB
+				[DIR] resources - 167.48 MB
+					[DIR] app - 167.48 MB
+						[DIR] extensions - 167.48 MB
+							[DIR] windsurf - 167.48 MB
+								[DIR] bin - 167.48 MB
+									language_server_windows_x64.exe (167.48 MB)
+				Windsurf.exe (177.74 MB)
+			[DIR] Zalo - 534.65 MB
+				[DIR] Zalo-25.10.3 - 268.31 MB
+					[DIR] resources - 138.00 MB
+						app.asar (138.00 MB)
+					Zalo.exe (130.32 MB)
+				[DIR] Zalo-25.8.3 - 266.34 MB
+					[DIR] resources - 136.02 MB
+						app.asar (136.02 MB)
+					Zalo.exe (130.32 MB)
+		[DIR] staruml-updater - 190.94 MB
+			installer.exe (190.94 MB)
+		[DIR] Temp - 942.14 MB
+			[DIR] 77D96EF7-F8D4-487C-9347-A22992F1B724 - 132.00 MB
+				swap.vhdx (132.00 MB)
+			[DIR] 7922A105-2667-48CC-8C5C-5FB608121999 - 100.00 MB
+				swap.vhdx (100.00 MB)
+			[DIR] DiagOutputDir - 600.00 MB
+				[DIR] RdClientAutoTrace - 600.00 MB
+					RdClientAutoTrace-WppAutoTrace-20251105-024953-538.etl (100.00 MB)
+					RdClientAutoTrace-WppAutoTrace-20251105-143006-160.etl (100.00 MB)
+					RdClientAutoTrace-WppAutoTrace-20251105-163308-566.etl (100.00 MB)
+					RdClientAutoTrace-WppAutoTrace-20251106-153912-687.etl (100.00 MB)
+					RdClientAutoTrace-WppAutoTrace-20251109-060738-558.etl (100.00 MB)
+					RdClientAutoTrace-WppAutoTrace-20251109-153827-912.etl (100.00 MB)
+			[DIR] vscode-stable-user-x64 - 110.14 MB
+				CodeSetup-stable-7d842fb85a0275a4a8e4d7e040d2625abbf7f084.exe (110.14 MB)
+		[DIR] TheLastWar - 131.28 MB
+			[DIR] packages - 131.28 MB
+				TheLastWar-1.0.110-full.nupkg (131.28 MB)
+		[DIR] Unity - 1822.74 MB
+			[DIR] cache - 1822.74 MB
+				[DIR] npm - 1698.14 MB
+					[DIR] packages.unity.com - 1698.14 MB
+						[DIR] com.unity.burst - 1422.99 MB
+							[DIR] 1.3.4 - 291.30 MB
+								package.tgz (291.30 MB)
+							[DIR] 1.6.4 - 350.87 MB
+								package.tgz (350.87 MB)
+							[DIR] 1.6.6 - 382.05 MB
+								package.tgz (382.05 MB)
+							[DIR] 1.8.13 - 398.76 MB
+								package.tgz (398.76 MB)
+						[DIR] com.unity.render-pipelines.high-definition - 161.97 MB
+							[DIR] 10.10.0 - 161.97 MB
+								package.tgz (161.97 MB)
+						[DIR] com.unity.visualeffectgraph - 113.18 MB
+							[DIR] 10.10.0 - 113.18 MB
+								package.tgz (113.18 MB)
+				[DIR] packages - 124.60 MB
+					[DIR] packages.unity.com - 124.60 MB
+						[DIR] com.unity.burst@1.8.13 - 124.60 MB
+							[DIR] .Runtime - 124.60 MB
+								libburst-llvm-16.dylib (124.60 MB)
+		[DIR] unityhub-updater - 301.45 MB
+			installer.exe (150.73 MB)
+			[DIR] pending - 150.73 MB
+				UnityHubSetup.exe (150.73 MB)
+		[DIR] wsl - 4773.00 MB
+			[DIR] {5137734e-a94f-4a32-9ae7-1d6fa58ad84d} - 4773.00 MB
+				ext4.vhdx (4773.00 MB)
+		[DIR] zalo-updater - 131.61 MB
+			installer.exe (131.61 MB)
+	[DIR] LocalLow - 669.84 MB
+		[DIR] FirstFun - 669.84 MB
+			[DIR] Last War-Survival Game - 669.84 MB
+				[DIR] AssetBundles - 261.58 MB
+					pcpatch_hotupdatepatch_hotupdatepatch__thelastwar-1_0_103-full_9737c6ed2dcf1f310f1f030f64a942ab.bundle (130.58 MB)
+					pcpatch_hotupdatepatch_hotupdatepatch__thelastwar-1_0_110-full_da4834398c343a4b16d9513c1e5cf25d.bundle (131.00 MB)
+				[DIR] PCPatch - 131.28 MB
+					TheLastWar-1.0.110-full.nupkg (131.28 MB)
+				[DIR] warmup - 276.98 MB
+					pcpatch_hotupdatepatch_hotupdatepatch__thelastwar-1_0_113-full_46c2dd242340351c4e9a8ffa4ef74e1f.bundle (140.66 MB)
+					pcpatch_hotupdatepatch_hotupdatepatch__thelastwar-1_0_95-full_74fc2444934e2b91c5bf9c1810245c6f.bundle (136.33 MB)
+	[DIR] Roaming - 1449.56 MB
+		[DIR] Godot - 604.43 MB
+			[DIR] export_templates - 604.43 MB
+				[DIR] 4.2.1.stable - 302.02 MB
+					android_source.zip (154.96 MB)
+					ios.zip (147.06 MB)
+				[DIR] 4.2.2.stable - 302.41 MB
+					android_source.zip (155.14 MB)
+					ios.zip (147.27 MB)
+		[DIR] Telegram Desktop - 175.05 MB
+			Telegram.exe (175.05 MB)
+		[DIR] ZaloData - 567.50 MB
+			[DIR] media - 567.50 MB
+				[DIR] temp - 326.75 MB
+					af3f72b6fa7106261b4a19f4025cbecc (146.58 MB)
+					ed8182f7da657e7a00f57d8ded503e62 (180.18 MB)
+				[DIR] update - 240.75 MB
+					ZaloModule-25.10.3_Full-RC4.zip (240.75 MB)
+		[DIR] Zoom - 102.58 MB
+			[DIR] 6.2.7.49583 - 102.58 MB
+				Zoom.msi (102.58 MB)
+[DIR] Desktop - 1311.53 MB
+	[DIR] Applications - 854.19 MB
+		[DIR] Godot 4.2 - 103.19 MB
+			Godot_v4.2.1-stable_win64.exe (103.19 MB)
+		[DIR] warcraft-3 - 751.00 MB
+			war3.mpq (420.40 MB)
+			War3x.mpq (330.60 MB)
+	[DIR] Godot - 457.34 MB
+		godot-4.2-4.2.2-stable-mono.exe (101.67 MB)
+		Godot_v4.2.1-stable_win64.exe (103.19 MB)
+		Godot_v4.2.2-stable_win64.exe (103.38 MB)
+		Godot_v4.4.1-stable_win64.exe (149.11 MB)
