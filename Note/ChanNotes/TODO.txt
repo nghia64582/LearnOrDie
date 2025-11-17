@@ -411,3 +411,31 @@
         + Hôm nay test: 1 addBao => 2 thừa + 4 bảo
         + Giờ test    : 1 
     - Sửa log: Đúng 100k mới log trigger extra sale
+    - Thông báo trả thưởng - done
+    - Test case Đại Khoa:
+        + Chơi Dân/ Lý có thắng thua và tăng điểm - done
+        + Chơi Thượng có thắng thua và tăng điểm
+        + Chơi Dân/ Lý hòa - done
+        + Sau khi chơi kết quả ở ngoài bảng xếp hạng
+        + Sau khi chơi kết quả từ ngoài bảng xếp hạng vào bảng xếp hạng
+        + Sau khi chơi kết quả ở trong bảng xếp hạng tăng lên
+    - Cần sửa:
+        + Top ranking cần fix và test lại:
+            + Thử trường hợp có 10 nick trong top - check tiếp
+        + Các thông tin trong bảng xếp hạng và thành tích của người chơi 
+          cần hiện thị kể cả sự kiện kết thúc - done
+        + Thời gian còn lại nếu < 0 thị đổi lại là "sự kiện đã kết thúc" - done
+        + Nút chơi ngay biến mất khi sự kiện kết thúc - done
+        + Cộng trophy cho user khi trao giải - server làm
+        + Hiển thị đúng rank trong lịch sử cho thành "+ 1" - done
+        + Xử lý lại reload config big tour - done
+
+    Yêu cầu dev-test
+        + Dùng luôn code sd-pay-api (đảm bảo code cùng 1 logic)
+        + Tạo 1 end-point mới: /pay/test và chọc vào CardSuccessHandler
+        + Client gửi packId, uid, giá gói lên và server
+        + Kiểm tra logic của các gói luôn
+    - Tìm cách mang logic tank event sang event logic
+    - Xử lý vụ ads của Duy
+    - 
+
