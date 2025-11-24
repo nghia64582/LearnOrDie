@@ -1,32 +1,81 @@
-import subprocess
-import re
+import serial
+import tkinter as tk
+from tkinter import ttk
 
-def get_line_commit_times(file_path):
-    # Lệnh git blame với định dạng có thời gian UNIX timestamp
-    cmd = ["git", "blame", "--line-porcelain", file_path]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    
-    lines = result.stdout.splitlines()
-    commits = []
-    current_commit = {}
+# ====== Serial Setup ======
+PORT = "COM10"
+BAUD = 115200
 
-    for line in lines:
-        if re.match(r"^[0-9a-f]{8,}", line):  # dòng bắt đầu bằng hash
-            if current_commit:
-                commits.append(current_commit)
-            current_commit = {"hash": line.split()[0]}
-        elif line.startswith("author-time "):
-            current_commit["timestamp"] = int(line.split()[1])
-        elif line.startswith("author "):
-            current_commit["author"] = line.split(" ", 1)[1]
-        elif line.startswith("\t"):  # dòng thực tế của file
-            current_commit["content"] = line[1:]
-    if current_commit:
-        commits.append(current_commit)
-    return commits
+ser = serial.Serial(PORT, BAUD, timeout=1)
 
-if __name__ == "__main__":
-    file = "C:/Users/LaptopKhanhTran/Desktop/Workspace/LearnOrDie/Code/Python/p2.py"
-    info = get_line_commit_times(file)
-    for i, line in enumerate(info, 1):
-        print(f"Line {i}: {line['hash'][:8]} {line['author']} {line['timestamp']} -> {line['content']}")
+def send(cmd):
+    ser.write((cmd + "\n").encode())
+    log_box.insert(tk.END, ">> " + cmd + "\n")
+    log_box.see(tk.END)
+
+    resp = ser.readline().decode(errors="ignore").strip()
+    if resp:
+        log_box.insert(tk.END, "<< " + resp + "\n")
+        log_box.see(tk.END)
+
+
+# ====== Command functions ======
+
+def move_delta():
+    try:
+        dx = float(entry_dx.get())
+        dy = float(entry_dy.get())
+    except:
+        log_box.insert(tk.END, "Lỗi: dx/dy không hợp lệ!\n")
+        return
+
+    cmd = f"G91\nG1 X{dx} Y{dy} F2000\nG90"
+    for line in cmd.split("\n"):
+        send(line)
+
+def set_power():
+    try:
+        p = int(entry_power.get())
+        p = max(0, min(100, p))   # clamp 0–100
+    except:
+        log_box.insert(tk.END, "Lỗi: công suất không hợp lệ!\n")
+        return
+
+    s_value = int(p * 10)        # GRBL S0–1000
+    send(f"M3 S{s_value}")        # bật laser với công suất p%
+
+
+# ====== UI ======
+
+root = tk.Tk()
+root.title("Laser Controller (G-code)")
+
+frm = ttk.Frame(root, padding=10)
+frm.grid()
+
+# --- Move section ---
+ttk.Label(frm, text="ΔX:").grid(column=0, row=0)
+entry_dx = ttk.Entry(frm, width=10)
+entry_dx.grid(column=1, row=0)
+
+ttk.Label(frm, text="ΔY:").grid(column=2, row=0)
+entry_dy = ttk.Entry(frm, width=10)
+entry_dy.grid(column=3, row=0)
+
+btn_move = ttk.Button(frm, text="Move", command=move_delta)
+btn_move.grid(column=4, row=0, padx=5)
+
+# --- Laser power ---
+ttk.Label(frm, text="Laser Power (%):").grid(column=0, row=1)
+entry_power = ttk.Entry(frm, width=10)
+entry_power.grid(column=1, row=1)
+
+btn_power = ttk.Button(frm, text="Set Power", command=set_power)
+btn_power.grid(column=2, row=1, padx=5)
+
+# --- Log box ---
+log_box = tk.Text(frm, width=70, height=15)
+log_box.grid(column=0, row=2, columnspan=5, pady=10)
+
+root.mainloop()
+ser.close()

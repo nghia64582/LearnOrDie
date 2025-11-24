@@ -1,0 +1,133 @@
+Dưới đây là bảng tổng hợp các mã G-code phổ biến nhất cho máy CNC Laser (GRBL, Smoothieware, Marlin).
+Mỗi mã có chức năng - tham số - ví dụ - giải thích rõ ràng.
+---
+# I. NHÓM G-CODE (G) - CHUYỂN ĐỘNG & THIẾT LẬP HỆ TỌA ĐỘ
+    ## G0 - Rapid Move (di chuyển nhanh, không cắt)
+    * Chức năng: di chuyển nhanh đến vị trí X/Y/Z, laser *tắt*.
+    * Tham số: X, Y, Z, F (tốc độ)
+    * Ví dụ:
+    ```
+    G0 X10 Y20
+    ```
+    * Giải thích: Di chuyển đầu laser tới (10,20) với tốc độ nhanh nhất.
+---
+## G1 - Linear Interpolation (di chuyển cắt theo đường thẳng)
+    * Chức năng: di chuyển có tốc độ xác định, laser *bật* với công suất M3 trước đó.
+    * Tham số: X Y Z F
+    * Ví dụ:
+    ```
+    G1 X50 Y50 F800
+    ```
+    * Giải thích: Cắt đường thẳng tới (50,50) với feedrate = 800 mm/min.
+---
+## G2, G3 - Cut Arc (cắt cung tròn theo chiều kim đồng hồ / ngược lại)
+    * G2: cắt cung theo chiều kim đồng hồ (CW)
+    * G3: cắt cung ngược chiều kim đồng hồ (CCW)
+    * Tham số:
+    * X, Y: điểm kết thúc cung
+    * I, J: offset từ điểm bắt đầu tâm cung
+    * Ví dụ:
+    ```
+    G2 X40 Y40 I10 J0
+    ```
+    * Giải thích: Cắt cung CW, tâm nằm cách điểm bắt đầu 10mm theo trục X.
+---
+## G4 - Dwell (tạm dừng)
+    * Tham số: P (ms)
+    * Ví dụ:
+    ```
+    G4 P500
+    ```
+    * Giải thích: Dừng 0.5 giây (dùng để đốt điểm sâu).
+---
+## G20 / G21 - Đơn vị đo
+    * G20: inch
+    * G21: mm
+    * Ví dụ:
+    ```
+    G21
+    ```
+    * Giải thích: Tất cả lệnh dùng mm (chuẩn trong laser).
+---
+## G90 / G91 - Chế độ tọa độ
+    * G90: Tuyệt đối
+    * G91: Tương đối
+    * Ví dụ:
+    ```
+    G91
+    G1 X10 Y0
+    ```
+    * Giải thích: Di chuyển thêm 10mm theo X từ vị trí hiện tại.
+---
+## G28 - Go Home (đưa về gốc máy)
+    * Ví dụ:
+    ```
+    G28
+    ```
+    * Giải thích: Máy chạy về công tắc limit để xác định 0,0,0.
+---
+## G92 - Set Position (đặt lại vị trí hiện tại thành tọa độ tùy chọn)
+    * Ví dụ:
+    ```
+    G92 X0 Y0
+    ```
+    * Giải thích: Đặt vị trí hiện tại thành (0,0), không di chuyển.
+---
+# II. NHÓM M-CODE (M) - BẬT / TẮT LASER
+    ## M3 - Laser On (Bật laser theo PWM)
+    * Tham số: S = công suất (0 1000 tùy firmware)
+    * Ví dụ:
+    ```
+    M3 S500
+    ```
+    * Giải thích: Bật laser với 50% công suất.
+---
+## M4 - Laser On Dynamic (tự giảm công suất khi chậm lại)
+    * Ví dụ:
+    ```
+    M4 S800
+    ```
+    * Giải thích: Laser công suất điều biến tùy tốc độ thực đẹp hơn khi khắc ảnh.
+---
+## M5 - Laser Off
+    * Ví dụ:
+    ```
+    M5
+    ```
+    * Giải thích: Tắt laser ngay lập tức.
+---
+## M8 / M9 - Bật/tắt Air Assist (nếu có)
+    * Ví dụ:
+    ```
+    M8 ; bật quạt hoặc air pump
+    M9 ; tắt
+    ```
+---
+# III. NHÓM $ (CẤU HÌNH GRBL) - Không phải G-code nhưng dùng với laser
+    * $H - Home
+    * $X - Unlock (mở khóa để chạy khi lỗi)
+    * $G - Xem trạng thái modal G-code
+    * $110, $111 - tốc độ tối đa X/Y
+    * $30 - công suất laser tối đa (ví dụ 1000)
+---
+# IV. BỘ G-CODE THƯỜNG GẶP CHO LASER (Template)
+    ```
+    G21 ; mm
+    G90 ; absolute pos
+    M4 S1000 ; laser dynamic max power
+    G1 X50 Y0 F2000
+    G1 X50 Y50
+    G1 X0 Y50
+    G1 X0 Y0
+    M5
+    G0 X0 Y0
+    ```
+---
+# Nếu bạn muốn, tôi có thể:
+Tạo bộ G-code mẫu để:
+* Cắt hình tròn
+* Khắc chữ
+* Khắc logo
+* Test laser power 1-100%
+* Test focus
+Hoặc tôi có thể viết script Python tự sinh G-code cho mọi hình.

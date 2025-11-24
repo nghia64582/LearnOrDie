@@ -1,0 +1,144 @@
+Đây là bản hướng dẫn thực tế đầy đủ theo đúng quy trình mà các công ty SaaS và studio game indie đang dùng để đưa sản phẩm tới người dùng, kể cả khi bạn bắt đầu từ con số 0.
+---
+# Tư duy cốt lõi trước khi marketing
+Bạn cần trả lời 3 câu:
+    1. Sản phẩm giải quyết vấn đề gì?
+    2. Người dùng mục tiêu là ai?
+    3. Họ đang ở đâu? (Facebook? TikTok? Google? Reddit? App Store?)
+    Toàn bộ chiến lược phía sau sẽ xoay quanh 3 câu này.
+---
+# Toàn bộ chiến lược tiếp cận người dùng (cho SaaS và Game)
+    Mình chia thành 7 giai đoạn, bạn có thể áp dụng ngay.
+---
+# 1 GIAI ĐOẠN 0: Xác định rõ User Acquisition Channel
+    Không phải dùng tất cả. Hầu như startup thất bại vì làm lan man.
+    SaaS nên ưu tiên:
+        * Google SEO
+        * Google Ads
+        * Content marketing
+        * Product Hunt / Hacker News
+        * Email Automation
+        * LinkedIn outreach
+        * YouTube tutorial
+    Game nên ưu tiên:
+        * TikTok + Reels
+        * YouTube Shorts
+        * Facebook gaming groups
+        * Game press
+        * Influencer review
+        * App Store Optimization (ASO)
+---
+# 2 GIAI ĐOẠN 1: Tạo *Landing Page* mạnh
+    Công cụ cần dùng:
+        * Webflow / Wix / Framer
+        * Google Analytics
+        * Hotjar (theo dõi hành vi người dùng)
+        * Mailchimp / Brevo (thu email)
+    Landing page phải có:
+        Sản phẩm làm gì
+        Video/ảnh demo
+        Lời chứng thực (testimonial)
+        Nút đăng ký dùng thử / wishlist / download
+        Nút thu email Join early-access
+---
+# 3 GIAI ĐOẠN 2: Làm content marketing
+    Đây là chiến lược rẻ nhất mà hiệu quả lâu dài nhất.
+    ## SaaS tạo nội dung:
+        * Blog hướng dẫn
+        * So sánh A vs B
+        * Case study
+        * Video YouTube demo
+        * Ebook miễn phí
+    ## Game tạo nội dung:
+        * Video gameplay ngắn (510 giây)
+        * Devlog trên YouTube
+        * TikTok trends (nhạc trending)
+        * Meme về gameplay
+    Công cụ dùng:
+        * Notion (plan nội dung)
+        * Canva (ảnh)
+        * CapCut (video)
+        * ChatGPT (ý tưởng + copywriting)
+---
+# 4 GIAI ĐOẠN 3: Social Media Strategy
+Bạn có thể dùng một hoặc nhiều nền tảng sau:
+    ### SaaS:
+        * Twitter (X)
+        * LinkedIn
+        * Facebook Page
+        * Groups chuyên ngành
+    ### Game:
+        * TikTok (mạnh nhất 20242025)
+        * Instagram Reels
+        * Discord community
+        * Reddit (sub game, devlog)
+    Công cụ hỗ trợ:
+        * Buffer / Hootsuite (lên lịch post)
+        * Discord bot (quản lý cộng đồng)
+        * Taplink / Linktree (tổng hợp link)
+---
+# 5 GIAI ĐOẠN 4: Paid Ads chạy quảng cáo có kiểm soát
+    Khi có lượng nhỏ user thực sự, bạn bắt đầu quảng cáo nhỏ:
+    ### Với SaaS:
+        * Google Ads theo keyword (Search Ads)
+        * Facebook Ads (target nhân khẩu học)
+        * LinkedIn Ads (nếu B2B)
+    ### Với Game:
+        * TikTok Ads cực hiệu quả
+        * Meta ads (Facebook & IG)
+        * Unity Ads (cho mobile game)
+        Không bao giờ đốt tiền ads trước khi có data nhỏ (MVP feedback).
+---
+# 6 GIAI ĐOẠN 5: Sử dụng các kênh Launch lớn
+    ### SaaS:
+        * Product Hunt (cực mạnh)
+        * Hacker News Show HN
+        * Reddit r/startups, r/saas
+        * IndieHackers
+    ### Game:
+        * Steam Next Fest
+        * itch.io
+        * Game dev communities
+        * Game press: Kotaku, IGN Indie, Game World Observer
+---
+# 7 GIAI ĐOẠN 6: Thu thập Đo lường Tối ưu
+    Công cụ bắt buộc:
+    * Google Analytics traffic
+    * Mixpanel hoặc Amplitude hành vi user
+    * Hotjar heatmap
+    * Firebase (cho game/mobile)
+    * Mailchimp retarget email
+    Báo cáo quan trọng nhất:
+    * Cost per acquisition (CPA)
+    * Retention D1, D7, D30
+    * Conversion rate
+    * Churn rate (SaaS)
+    * LTV (lifetime value)
+    Nếu chỉ tối ưu 4 thứ trên, bạn đã hơn 90% startup khác.
+---
+# 8 GIAI ĐOẠN 7: Xây community để tăng trưởng bền vững
+    Bạn có thể tạo:
+    * Discord server
+    * Facebook group
+    * Forum riêng
+    * Kênh Telegram
+    Tại sao rất quan trọng?
+    Người dùng cũ giới thiệu người mới (viral)
+    Tạo cảm giác thuộc về
+    Feedback nhanh
+    Không tốn tiền marketing dài hạn
+    Các game idle/mobile hiện nay thành công nhờ việc duy trì cộng đồng mạnh, update liên tục.
+---
+# Chiến lược tổng hợp cho người mới bắt đầu
+    Nếu bạn có *ít tiền ít người ít kinh nghiệm*, hãy làm:
+    ## 1. Làm landing page + video demo
+    ## 2. Tạo TikTok / YouTube Shorts (game) hoặc blog (SaaS)
+    ## 3. Tham gia cộng đồng Reddit, Discord
+    ## 4. Chạy ads nhỏ 50-100k/ngày để test phản ứng
+    ## 5. Thu email và follow-up bằng automation
+    ## 6. Build community
+    ## 7. Launch trên kênh lớn (Product Hunt / Steam Next Fest)
+    Nếu làm đều đặn 13 tháng bạn sẽ có user thật.
+---
+# Bạn đang làm sản phẩm gì? SaaS hay Game?
+Mình có thể đề xuất chiến lược chuẩn chỉnh và cụ thể theo loại sản phẩm của bạn (bao gồm nền tảng quảng cáo, lịch nội dung, công cụ, và roadmap 30 ngày).

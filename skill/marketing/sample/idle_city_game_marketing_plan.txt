@@ -1,0 +1,156 @@
+Dưới đây là chiến lược marketing + tăng trưởng người chơi dành riêng cho một idle game xây dựng nhà hàng/cửa hàng/dịch vụ trên bản đồ thành phố thật, với nhiều người chơi cùng tham gia trên cùng bản đồ một concept rất có tiềm năng viral.
+Mình sẽ chia làm:
+    (A) Điểm mạnh để khai thác
+    (B) Chiến lược marketing 3 giai đoạn
+    (C) Công cụ cần dùng
+    (D) Tối ưu ASO + Ads
+    (E) Viral loop trong game
+    (F) Lộ trình 60 ngày để launch
+---
+# . Điểm mạnh (USP) của game để khai thác marketing
+Với concept của bạn, bạn có 5 USP rất mạnh:
+    1. Bản đồ thành phố thật cảm giác thị trường thật, giống SimCity + Pokemon Go + Idle.
+    2. Người chơi xây nhà hàng/cửa hàng trên vị trí thật trong thành phố.
+    3. Idle gameplay dễ chơi, phù hợp để scale thành phố, quận, khu vực.
+    4. Nhiều người chơi cạnh tranh hoặc hợp tác mở cửa hàng tạo social interaction.
+    5. Dễ tạo nội dung video dạng trướcsau, mở rộng cửa hàng, mở tiệm ở landmark.
+    => Đây là concept rất dễ viral nếu triển khai đúng.
+---
+# . Chiến lược marketing 3 giai đoạn (tối ưu cho game idle)
+## 1 Giai đoạn 1: Pre-launch (chuẩn bị trước ra mắt)
+    Mục tiêu: Tạo hype + thu cộng đồng 5002000 người đầu tiên
+        ### Những việc phải làm:
+        #### Làm video demo dạng Short/ TikTok
+        * Tôi mở nhà hàng đầu tiên ở đường X
+        * Biến quận Y thành phố Z thành thành phố dịch vụ lớn nhất!
+        * Khi cả thành phố hợp tác xây siêu trung tâm thương mại
+        > Loại video này cực viral (nhiều game city-builder đã dùng).
+        #### Mở Discord cộng đồng trước khi game ra
+    Channel đề xuất:
+        * #vị-trí-xây-dựng
+        * #thiết-kế-cửa-hàng
+        * #mẹo-tăng-thu-nhập
+        * #báo-bug
+        * #gợi-ý-tính-năng
+    #### Đăng devlog mỗi tuần
+        * TikTok
+        * YouTube Short
+        * Facebook Gaming Group (Việt Nam rất mạnh)
+    * Reddit (r/idle_games, r/androidgaming, r/gamedev)
+---
+## 2 Giai đoạn 2: Soft-launch tại 12 khu vực
+Mục tiêu: Test retention & DAU trước khi mở rộng
+### Chọn 12 thành phố để test:
+    * Hà Nội
+    * TP.HCM
+    * Đà Nẵng
+    Bạn chỉ cần ~300-500 người chơi để test ổn.
+### Dùng chiến lược local-first
+    * Ví dụ dùng TikTok ads:
+        Bạn thử mở cửa hàng ở đường Nguyễn Huệ xem?
+    * Người chơi sẽ thấy vị trí thật họ quen chuyển đổi cao.
+### In-game event địa phương
+    * Tuần lễ Bánh Mì Sài Gòn
+    * Mở chuỗi Cà phê tại Quận 1
+    * Ai xây được nhiều cơ sở nhất đường X sẽ nhận badge vĩnh viễn
+    Điều này khơi gợi cảm giác địa phương rất viral.
+---
+## 3 Giai đoạn 3: Global launch
+    Khi retention ổn:
+        * D1 35%
+        * D7 10%
+        * D30 3%
+    Bạn mở rộng marketing lớn hơn:
+### Chạy TikTok ads toàn cầu (không target Việt Nam)
+Các thị trường mạnh:
+    * US
+    * Brazil
+    * Indonesia
+    * Mexico
+    * India
+    * Turkey
+### Hợp tác micro-influencer
+    * 10-50k follower giá rẻ
+    * Kiểu nội dung:
+    Tôi đã chiếm được cả trung tâm thành phố của tôi!
+    Đây là cửa hàng của tôi đặt ngay trước trường đại học tôi học.
+### Hệ thống referral in-game
+    Mời 1 bạn mở được 1 mảnh đất miễn phí
+    Mời 5 bạn mở tiệm mới
+    Mời 20 bạn mở landmark đặc biệt (VD: tòa nhà Bitexco)
+---
+# . Bộ công cụ cần dùng
+### 1. Quảng cáo
+    * TikTok Ads (mạnh nhất cho game idle)
+    * Meta Ads (FB/IG)
+    * Google UAC (Universal App Campaigns)
+### 2. Thu dữ liệu
+    * Firebase
+    * Appsflyer / Adjust (tracking install)
+    * Google Analytics 4
+    * Mixpanel
+### 3. Nội dung
+    * CapCut (video)
+    * Canva (ảnh)
+    * ChatGPT (script video, caption, content)
+### 4. Community
+    * Discord
+    * TikTok
+    * Facebook Group
+    * Reddit
+---
+# . ASO (App Store Optimization)
+    Tối ưu từ khóa liên quan:
+        * city builder idle
+        * restaurant idle game
+        * shop tycoon
+        * build your own city
+        * idle map game
+    Dùng icon có:
+        * Nhà hàng hoặc cửa hàng
+        * Màu sáng, nhân vật cute
+        * Nét vẽ rõ, đơn giản
+    Screenshot phải thể hiện:
+        * Bản đồ thật
+        * Cửa hàng đang xây
+        * Màn hình thu tiền idle
+        * Sự cạnh tranh giữa người chơi
+---
+# . Viral loop trong game
+    Đối với game thành phố, viral loop rất quan trọng:
+    ### 1. Leaderboard theo khu vực
+        Top nhà hàng Quận 1
+        Khu vực thương mại phát triển nhất
+    ### 2. Cơ chế mời bạn bè
+        Mời bạn mở shop mới
+        Mời nhóm mở trung tâm thương mại
+    ### 3. Event theo địa danh thật
+        * Landmark challenge
+        * Quận/Phường war
+        * Event theo đường/phố
+    ### 4. Screenshot/Video share
+        * Cho phép share ảnh tiệm của mình lên TikTok/FB dễ dàng
+        * Có watermark Made in *YourGame*
+---
+# . Lộ trình Marketing 60 ngày (Bạn chỉ cần làm theo)
+## Tuần 1-2
+    * Làm trailer 1520 giây
+    * Mở Discord
+    * Đăng game concept lên TikTok + YouTube Short
+    * Thu 100300 người follow
+## Tuần 3-4
+    * Soft-launch 1 thành phố
+    * Chạy ads nhẹ (50k200k/ngày)
+    * Tối ưu retention
+    * Update 1 bản ổn định
+## Tuần 5-6
+    * Bắt đầu chạy ads mạnh hơn
+    * Hợp tác micro-influencer
+    * Tổ chức event địa phương
+    * Mời bạn bè để mở shop đặc biệt
+---
+# Nếu bạn muốn, mình có thể giúp bạn theo 3 hướng:
+    ### 1. Viết kịch bản 10 video TikTok cho game của bạn
+    ### 2. Thiết kế chiến dịch pre-launch hoàn chỉnh
+    ### 3. Viết landing page + mô tả ASO giúp game nổi bật
+    Bạn muốn xây dựng chiến lược theo hướng địa phương Việt Nam trước hay nhắm global ngay từ đầu?
