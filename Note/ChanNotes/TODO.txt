@@ -437,5 +437,15 @@
         + Kiểm tra logic của các gói luôn
     - Tìm cách mang logic tank event sang event logic
     - Xử lý vụ ads của Duy
-    - 
-
+    - Check vụ không data của o1 của mấy ông top100 - done
+        + Thử test case: User không có data o1 và trao thưởng trên dev - done
+        + Lấy danh sách các ông không có data top100 - done
+        + Check code xem tại sao không lấy default rồi update và lưu - done
+        + Update code mới - done
+    - Gói nạp Quay Trở Lại:
+        + Logic trigger gói nạp - done
+        + Logic mua gói nạp
+        + Load config động
+    - Các logic cần test:
+        + Tạo một số payment cho user trong lịch sử, xóa dữ liệu cb và trigger gói nạp
+        + Logic mua gói nạp

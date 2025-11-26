@@ -9,8 +9,12 @@
         + Create new thread, set up Runnable, start, join, ...
     
 - Spring Core:
-    + Spring Core
+    + Spring Core :
+        + IoC (Inversion of Control) Container
+        + Beans & Bean Lifecycle
+        + ApplicationContext vs BeanFactory
     + Dependency Injection - 
+        
     + Inversion of Control: 
     + Bean: 
         + The objects are managed by Spring IoC

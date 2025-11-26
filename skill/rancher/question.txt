@@ -12,3 +12,15 @@ Khi nào gọi là “Pod chết”?
         CrashLoopBackOff       :	Container khởi động rồi chết lặp lại
         Terminating            :	Đang bị xóa
         Unknown                :	Node mất kết nối, không biết trạng thái
+
+Có phải khi tăng/giảm scale trong pod là thay đổi số container tương ứng trong pod
+    🔍 Minh họa dễ hiểu
+        Mức scale	Số Pod	Container mỗi Pod	Tổng số container
+        replicas: 1	1	1	1
+        replicas: 3	3	1	3
+        replicas: 3 (với 2 container/pod)	3	2	6
+    🧠 Tóm lại
+        Khái niệm	Giải thích
+        Pod	Đơn vị chứa 1 hoặc nhiều container, luôn được tạo/xóa nguyên cụm.
+        Scale (replicas)	Là tăng/giảm số Pod, không phải số container trong Pod.
+        Containers trong Pod	Cố định theo định nghĩa Pod Template, không thay đổi khi scale.

@@ -17,7 +17,7 @@ Dưới đây là **lộ trình học Rancher thực tế + bài tập theo cấ
         1. Đọc docs chính thức: [https://ranchermanager.docs.rancher.com/](https://ranchermanager.docs.rancher.com/)
         2. Cài Rancher trên máy (bằng Docker):
         ```bash
-        docker run -d --restart=unless-stopped -p 80:80 --privileged -p 443:443 rancher/rancher:latest
+        docker run -d --restart=unless-stopped -p 80:80 --privileged -p 443:443 -p 8080:8080 -p 30306:30306 rancher/rancher:latest
         ```
         3. Mở `https://localhost` → đăng nhập → tạo cluster test.
         ### 🧠 Bài tập:
