@@ -1,0 +1,64 @@
+Q:
+Như vậy mô hình của các agency sẽ chủ yếu là B2B? Nếu sản phẩm của khách hàng của agency có chất 
+lượng không tốt, năng lượng cạnh tranh thấp, thông thường agency sẽ tư vấn như nào để có hợp đồng 
+tốt nhất?
+
+A:
+Đúng, đa số agency marketing hoạt động theo mô hình B2B (họ bán dịch vụ cho doanh nghiệp khác). Tuy 
+nhiên, mỗi agency sẽ có cách xử lý *tế nhị* khi gặp khách hàng có sản phẩm yếu hoặc khó cạnh tranh. 
+Dưới đây là cách các agency chuyên nghiệp thường làm:
+---
+# Khi sản phẩm/ dịch vụ của khách hàng *kém cạnh tranh*, agency sẽ tư vấn thế nào?
+## 1. Không nói thẳng sản phẩm anh yếu mà dùng cách tiếp cận dựa trên dữ liệu
+Agency sẽ dùng *data* để tránh làm mất lòng:
+    * Theo khảo sát thị trường, nhu cầu nhóm khách hàng này không cao.
+    * Dựa trên phân tích đối thủ, sản phẩm đang thiếu một số điểm mà khách hàng mong đợi.
+    * Chi phí quảng cáo sẽ phải cao hơn để bù cho tỉ lệ chuyển đổi thấp.
+Điều này giúp khách hàng nhận ra vấn đề một cách khách quan, không cảm xúc.
+---
+## 2. Tư vấn cải thiện *Value Proposition* trước khi chạy quảng cáo
+Agency uy tín sẽ không nhận chạy ngay vì biết chắc chạy sẽ fail.
+Họ sẽ đề xuất:
+    * Cải thiện USP (Unique Selling Point)
+    * Điều chỉnh giá
+    * Thay đổi gói sản phẩm
+    * Cải thiện bao bì, hình ảnh
+    * Thêm khuyến mãi combo
+Với câu nói quen thuộc:
+Marketing không sửa được một sản phẩm tệ nhưng chúng ta có thể làm nó hấp dẫn hơn với một số điều chỉnh.
+---
+## 3. Chỉ nhận hợp đồng khi đã chốt *phạm vi trách nhiệm* (Scope of Work)
+Agency cần bảo vệ mình bằng:
+    * KPI rõ ràng và *có điều kiện*
+    (Ví dụ: KPI lead nhưng khách hàng phải đảm bảo chất lượng tư vấn bán hàng.)
+    * Điều khoản Agency không chịu trách nhiệm về doanh số nếu không được quyền can thiệp vào chiến lược.
+    * Bản *Assumption List*:
+    * khách hàng phải cung cấp sản phẩm tốt, kho hàng đủ
+    * hỗ trợ CSKH trong X giờ
+    * phản hồi nội dung đúng timeline
+Đây là cách agency tránh bị đổ lỗi.
+---
+## 4. Nếu sản phẩm quá yếu, agency sẽ chuyển hướng tư vấn sang branding
+Thay vì quảng cáo trực tiếp:
+    * Xây dựng nhận diện thương hiệu
+    * Tăng trust: review, PR, KOLs
+    * Content giáo dục thị trường
+    * Social media để nuôi khách
+Mục tiêu: tăng sự tin tưởng trước khi làm quảng cáo chuyển đổi.
+---
+## 5. Nếu vẫn không thể cứu agency sẽ từ chối nhưng theo cách đẹp
+Các agency lớn thường nói:
+    * Thời điểm này thị trường và ngân sách chưa phù hợp để tối ưu hiệu quả.
+    * Chúng tôi e rằng không thể đảm bảo hiệu suất kỳ vọng của anh/chị.
+    * Khi sản phẩm được cải thiện ABC, chúng tôi rất sẵn lòng hợp tác.
+Từ chối nhưng vẫn để *cửa mở* cho hợp đồng tương lai.
+---
+# Mục tiêu của agency khi gặp sản phẩm yếu:
+    Giữ quan hệ
+    Ký hợp đồng nhưng phải đảm bảo khả năng thành công
+    Không để bị khách hàng đổ lỗi Agency chạy không hiệu quả
+    Giúp khách hàng nhận ra vấn đề mà không phải *chê bai trực tiếp*
+---
+Nếu bạn muốn, mình có thể mô phỏng:
+*Một bản tư vấn mẫu mà agency gửi cho doanh nghiệp có sản phẩm kém cạnh tranh.*
+Hoặc *luồng hội thoại mẫu giữa Account Manager và khách hàng*.

@@ -1,197 +1,236 @@
-Dưới đây là **bảng tổng hợp các mã G-code phổ biến nhất** cho máy **CNC Laser** (GRBL, Smoothieware, Marlin…).
-Mỗi mã có **chức năng – tham số – ví dụ – giải thích rõ ràng**.
+Dưới đây là **giải thích rõ ràng – dễ hiểu – đầy đủ** về mảng **ERP (Enterprise Resource Planning)**, các **nghiệp vụ phổ biến / ít phổ biến**, và những **thử thách đặc trưng** khi xây dựng phần mềm ERP.
 
 ---
 
-# 🔥 **I. NHÓM G-CODE (G) – CHUYỂN ĐỘNG & THIẾT LẬP HỆ TỌA ĐỘ**
+# ✅ **1. ERP là gì?**
 
-## **G0 – Rapid Move (di chuyển nhanh, không cắt)**
+**ERP (Enterprise Resource Planning)** là hệ thống phần mềm tích hợp giúp doanh nghiệp quản lý **toàn bộ hoạt động** trong một nền tảng duy nhất.
 
-* **Chức năng:** di chuyển nhanh đến vị trí X/Y/Z, laser *tắt*.
-* **Tham số:** X, Y, Z, F (tốc độ)
-* **Ví dụ:**
+Ví dụ:
 
-  ```
-  G0 X10 Y20
-  ```
-* **Giải thích:** Di chuyển đầu laser tới (10,20) với tốc độ nhanh nhất.
+* Quản lý bán hàng → tự động sinh đơn hàng → cập nhật kho → tạo hóa đơn → cập nhật kế toán → cập nhật dự báo mua hàng.
+
+ERP giống như **bộ não trung tâm**, nối tất cả quy trình của doanh nghiệp thành một hệ sinh thái thống nhất.
 
 ---
 
-## **G1 – Linear Interpolation (di chuyển cắt theo đường thẳng)**
+# ✅ **2. Một số module / nghiệp vụ phổ biến trong ERP**
 
-* **Chức năng:** di chuyển có tốc độ xác định, laser *bật* với công suất M3 trước đó.
-* **Tham số:** X Y Z F
-* **Ví dụ:**
+Các module phổ biến (gần như hệ thống ERP nào cũng có):
 
-  ```
-  G1 X50 Y50 F800
-  ```
-* **Giải thích:** Cắt đường thẳng tới (50,50) với feedrate = 800 mm/min.
+### **2.1. Sales & CRM (Quản lý khách hàng + bán hàng)**
 
----
+* Quản lý khách hàng (LEAD → DEAL → CONTRACT)
+* Quản lý báo giá, đơn hàng
+* Theo dõi công nợ
+* Hóa đơn
 
-## **G2, G3 – Cut Arc (cắt cung tròn theo chiều kim đồng hồ / ngược lại)**
+### **2.2. Inventory (Quản lý kho)**
 
-* **G2:** cắt cung theo chiều kim đồng hồ (CW)
-* **G3:** cắt cung ngược chiều kim đồng hồ (CCW)
-* **Tham số:**
+* Theo dõi tồn kho theo từng kho, từng vị trí (bin location)
+* FIFO / LIFO / FEFO
+* Nhập kho, xuất kho, điều chuyển
+* Kiểm kê
 
-  * **X, Y:** điểm kết thúc cung
-  * **I, J:** offset từ điểm bắt đầu → tâm cung
-* **Ví dụ:**
+### **2.3. Purchasing (Mua hàng)**
 
-  ```
-  G2 X40 Y40 I10 J0
-  ```
-* **Giải thích:** Cắt cung CW, tâm nằm cách điểm bắt đầu 10mm theo trục X.
+* Đề xuất mua hàng (PR)
+* Đặt hàng nhà cung cấp (PO)
+* Nhập hàng – đối chiếu PO
+* Quản lý NCC
 
----
+### **2.4. Accounting (Kế toán)**
 
-## **G4 – Dwell (tạm dừng)**
+* General Ledger (sổ cái)
+* Accounts Payable
+* Accounts Receivable
+* Fixed Assets
+* Báo cáo tài chính
 
-* **Tham số:** P (ms)
-* **Ví dụ:**
+### **2.5. Manufacturing (Sản xuất)**
 
-  ```
-  G4 P500
-  ```
-* **Giải thích:** Dừng 0.5 giây (dùng để đốt điểm sâu).
+* Định mức nguyên vật liệu (BOM)
+* Routing (quy trình sản xuất)
+* Kế hoạch sản xuất (MRP)
+* Theo dõi tiến độ sản xuất
+* QC (kiểm tra chất lượng)
 
----
+### **2.6. HRM & Payroll (Nhân sự – tính lương)**
 
-## **G20 / G21 – Đơn vị đo**
+* Tuyển dụng
+* Chấm công
+* Tính lương
+* Quản lý nhân sự
 
-* **G20:** inch
-* **G21:** mm
-* **Ví dụ:**
+### **2.7. Project Management (Quản lý dự án)**
 
-  ```
-  G21
-  ```
-* **Giải thích:** Tất cả lệnh dùng mm (chuẩn trong laser).
-
----
-
-## **G90 / G91 – Chế độ tọa độ**
-
-* **G90:** Tuyệt đối
-* **G91:** Tương đối
-* **Ví dụ:**
-
-  ```
-  G91
-  G1 X10 Y0
-  ```
-* **Giải thích:** Di chuyển thêm 10mm theo X từ vị trí hiện tại.
+* Lên kế hoạch
+* Theo dõi tiến độ
+* Chi phí – lợi nhuận theo dự án
 
 ---
 
-## **G28 – Go Home (đưa về gốc máy)**
+# ⭐ **2. Các module ít phổ biến nhưng vẫn gặp trong ERP lớn**
 
-* **Ví dụ:**
+Những module phức tạp, chỉ các ERP lớn như SAP, Oracle, Odoo Enterprise… mới có:
 
-  ```
-  G28
-  ```
-* **Giải thích:** Máy chạy về công tắc limit để xác định 0,0,0.
+### **2.8. WMS (Warehouse Management System) nâng cao**
 
----
+– Quản lý kho theo barcode / QR / RFID
+– Wave picking / batch picking
+– Tối ưu hóa sơ đồ kho
 
-## **G92 – Set Position (đặt lại vị trí hiện tại thành tọa độ tùy chọn)**
+### **2.9. TMS (Transportation Management)**
 
-* **Ví dụ:**
+– Lên kế hoạch vận tải
+– Tối ưu tuyến đường
+– Follow GPS xe giao hàng
 
-  ```
-  G92 X0 Y0
-  ```
-* **Giải thích:** Đặt vị trí hiện tại thành (0,0), không di chuyển.
+### **2.10. SCM (Supply Chain Management)**
 
----
+– Dự báo nhu cầu
+– Quản lý chuỗi cung ứng
+– Kế hoạch cung—cầu
 
-# 🔥 II. NHÓM M-CODE (M) – BẬT / TẮT LASER
+### **2.11. E-Commerce Integration**
 
-## **M3 – Laser On (Bật laser theo PWM)**
+– Đồng bộ ERP với Shopee / Lazada / TikTokShop
+– Đồng bộ POS tại cửa hàng
 
-* **Tham số:** S = công suất (0 → 1000 tùy firmware)
-* **Ví dụ:**
+### **2.12. EDI (Điện tử hóa giao dịch doanh nghiệp)**
 
-  ```
-  M3 S500
-  ```
-* **Giải thích:** Bật laser với 50% công suất.
+– Tích hợp với hải quan, thuế, đối tác lớn
+– Nhận PO tự động qua EDI
 
----
+### **2.13. PLM (Product Lifecycle Management)**
 
-## **M4 – Laser On Dynamic (tự giảm công suất khi chậm lại)**
-
-* **Ví dụ:**
-
-  ```
-  M4 S800
-  ```
-* **Giải thích:** Laser công suất điều biến tùy tốc độ thực → đẹp hơn khi khắc ảnh.
+– Quản lý vòng đời sản phẩm
+– Thiết kế – Version BOM
+– Thay đổi kỹ thuật (ECO – Engineering Change Order)
 
 ---
 
-## **M5 – Laser Off**
+# 🔥 **3. Các đặc điểm và thử thách khi xây dựng hệ thống ERP**
 
-* **Ví dụ:**
-
-  ```
-  M5
-  ```
-* **Giải thích:** Tắt laser ngay lập tức.
+ERP là một trong những loại hệ thống **phức tạp nhất** vì nhiều lý do:
 
 ---
 
-## **M8 / M9 – Bật/tắt Air Assist (nếu có)**
+## **3.1. Quy trình nghiệp vụ mỗi doanh nghiệp mỗi khác**
 
-* **Ví dụ:**
+2 doanh nghiệp cùng sản xuất đồ gỗ nhưng:
 
-  ```
-  M8   ; bật quạt hoặc air pump
-  M9   ; tắt
-  ```
+* bên A muốn QC đầu vào + giữa chuyền + cuối
+* bên B chỉ QC cuối
+* bên C không QC nhưng theo dõi độ ẩm
 
----
-
-# 🔥 III. NHÓM $ (CẤU HÌNH GRBL) – Không phải G-code nhưng dùng với laser**
-
-* **$H** – Home
-* **$X** – Unlock (mở khóa để chạy khi lỗi)
-* **$G** – Xem trạng thái modal G-code
-* **$110, $111** – tốc độ tối đa X/Y
-* **$30** – công suất laser tối đa (ví dụ 1000)
+→ Quy trình sai khác cực lớn → phần mềm phải **highly customizable**.
 
 ---
 
-# 🔥 IV. BỘ G-CODE THƯỜNG GẶP CHO LASER (Template)
+## **3.2. Tính liên kết rất cao giữa các module**
 
-```
-G21        ; mm
-G90        ; absolute pos
-M4 S1000   ; laser dynamic max power
+Một thao tác nhỏ ảnh hưởng nhiều chỗ:
 
-G1 X50 Y0 F2000
-G1 X50 Y50
-G1 X0 Y50
-G1 X0 Y0
+Ví dụ: Bán hàng tạo đơn → trừ kho → tạo bút toán → cập nhật công nợ → cập nhật sản xuất dự báo → ảnh hưởng báo cáo lợi nhuận.
 
-M5
-G0 X0 Y0
-```
+Nếu thiết kế không chặt → **lỗi domino** toàn hệ thống.
 
 ---
 
-# Nếu bạn muốn, tôi có thể:
+## **3.3. Vấn đề phân quyền phức tạp**
 
-✅ Tạo **bộ G-code mẫu** để:
+ERP thường có:
 
-* Cắt hình tròn
-* Khắc chữ
-* Khắc logo
-* Test laser power 1–100%
-* Test focus
+* hàng chục vai trò
+* hàng trăm permission
+* phân quyền theo phòng ban, theo chi nhánh
+* phân quyền theo từng trường (field-level)
+* phân quyền trên từng record (record-level)
 
-Hoặc tôi có thể **viết script Python tự sinh G-code** cho mọi hình.
+→ Rất khó thiết kế và maintain.
+
+---
+
+## **3.4. Yêu cầu audit log cực kỳ chi tiết**
+
+ERP luôn phải biết:
+
+* ai sửa
+* ai xem
+* sửa gì
+* sửa lúc nào
+* rollback ra sao
+
+---
+
+## **3.5. Dữ liệu cực lớn và tăng liên tục**
+
+Ví dụ doanh nghiệp bán lẻ:
+
+* 10.000 đơn/ngày
+* 50.000 dòng tồn kho
+* hàng triệu bản ghi lịch sử giá
+
+→ phải xử lý tốt **hiệu năng + indexing + caching + cleaning**.
+
+---
+
+## **3.6. Tính ổn định ưu tiên tuyệt đối**
+
+ERP mà chết 5 phút = doanh nghiệp **không làm việc được**.
+
+→ yêu cầu:
+
+* HA
+* Backup
+* DR (Disaster Recovery)
+* DB replication
+
+---
+
+## **3.7. Migration dữ liệu từ hệ thống cũ**
+
+Rất nhiều doanh nghiệp dùng:
+
+* Excel
+* phần mềm cũ
+* dữ liệu sai lung tung
+
+Việc migrate và làm sạch data là cơn ác mộng với bất kỳ dự án ERP nào.
+
+---
+
+## **3.8. Training – user adoption**
+
+Nhân viên đã quen Excel, Viber, Zalo → ép dùng ERP là họ… phản kháng.
+
+→ ERP cần UI thân thiện, đào tạo nhiều vòng, hỗ trợ liên tục.
+
+---
+
+# 🧠 **4. Tổng kết**
+
+**ERP** là phần mềm tích hợp toàn bộ hoạt động doanh nghiệp: bán hàng, kho, mua, kế toán, sản xuất, nhân sự…
+
+**Nghiệp vụ phổ biến:** Sales, Inventory, Purchasing, Accounting, Production, HR
+**Ít phổ biến nhưng có ở các ERP lớn:** SCM, PLM, WMS nâng cao, TMS, EDI, thương mại điện tử…
+
+**Thử thách chính:**
+
+* Nghiệp vụ khác nhau giữa từng doanh nghiệp
+* Module liên kết chặt chẽ
+* Phân quyền phức tạp
+* Yêu cầu ổn định cao
+* Dữ liệu khổng lồ
+* Migration khó
+* User khó thích nghi
+
+---
+
+Nếu bạn muốn, tôi có thể tiếp tục với:
+
+* So sánh SAP / Oracle / Odoo / Base / Misa ERP
+* Kiến trúc microservice cho ERP
+* Gợi ý bạn nên học nghiệp vụ nào trước (Sales → Inventory → Accounting → Production)
+  Bạn muốn phần nào tiếp theo không?
