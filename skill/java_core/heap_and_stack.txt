@@ -1,0 +1,95 @@
+Dưới đây là cách giải thích rõ - dễ hiểu - thực tế về heap và stack trong Java:
+---
+# 1. Stack Memory (Bộ nhớ ngăn xếp)
+    ### Đặc điểm
+    * Lưu biến cục bộ, tham chiếu đến object trong heap, frame của hàm.
+    * Quản lý theo cơ chế LIFO (Last In - First Out).
+    * Tốc độ rất nhanh.
+    * Kích thước giới hạn (thường vài MB).
+    * Tự động giải phóng khi phương thức kết thúc.
+### Ví dụ
+    ```java
+    public void foo() {
+    int x = 10; // biến nguyên x nằm trên stack
+    Person p = new Person(); // p nằm ở stack nhưng object Person nằm ở heap
+    }
+    ```
+    * `x` nằm trên stack.
+    * `p` là biến tham chiếu nằm trên stack.
+    * Object `new Person()` nằm trên heap.
+### Khi nào stack giải phóng?
+Khi hàm `foo()` kết thúc frame của hàm bị xóa xóa luôn `x` và `p`.
+---
+# 2. Heap Memory (Bộ nhớ đống)
+    ### Đặc điểm
+    * Lưu các object, array, String pool, các instance variable.
+    * Kích thước lớn hơn rất nhiều (vài trăm MB đến vài GB).
+    * Được quản lý bởi Garbage Collector (GC).
+    * Tốc độ chậm hơn stack.
+    ### Ví dụ
+    ```java
+    Person p = new Person(); // Object Person nằm ở heap
+    ```
+    ### Tại sao object nằm trong heap?
+    Vì object cần tồn tại nhiều hơn phạm vi của một hàm, hoặc được sử dụng bởi nhiều thread heap là bộ nhớ dùng chung.
+---
+# 3. So sánh Stack vs Heap
+| Tiêu chí       |      Stack                                  |                   Heap            |
+| -------------- | ------------------------------------------- | --------------------------------- |
+| Chứa gì?       | Biến cục bộ, tham chiếu, call stack của hàm | Object, array, String pool        |
+| Tốc độ         | Nhanh                                       | Chậm hơn                          |
+| Quản lý        | Tự hủy khi ra khỏi scope                    | GC thu dọn                        |
+| Kích thước     | Nhỏ                                         | Rất lớn                           |
+| Lỗi thường gặp | StackOverflowError                          | OutOfMemoryError: Java heap space |
+| Thread         | Mỗi thread có stack riêng                   | Heap dùng chung cho tất cả thread |
+---
+# 4. Ví dụ trực quan: Stack gọi hàm
+```java
+public void a() {
+int x = 5;
+b();
+}
+public void b() {
+int y = 10;
+}
+```
+Stack hoạt động như sau:
+```
+| b(): y=10 | <- gọi b()
+| a(): x=5 | <- gọi a()
+```
+Khi `b()` xong pop ra khỏi stack frame của `a()` còn lại.
+---
+# 5. Ví dụ trực quan: Heap chứa object
+```java
+Person p = new Person("Nghia");
+```
+Heap:
+```
+Person(name="Nghia")
+```
+Stack:
+```
+p (trỏ vào object Person trong heap)
+```
+---
+# 6. Khi nào gặp lỗi?
+### StackOverflowError
+Gọi đệ quy vô hạn:
+```java
+public void foo() {
+foo();
+}
+```
+### OutOfMemoryError: Java heap space
+Tạo quá nhiều object:
+```java
+List<int[]> list = new ArrayList<>();
+while (true) list.add(new int[1000000]);
+```
+---
+# Tóm tắt nhanh
+* Stack: Nhanh, nhỏ, chứa biến cục bộ + frame hàm tự giải phóng.
+* Heap: Lớn, chậm hơn, chứa object do GC dọn dẹp.
+---
+Nếu bạn muốn mình vẽ sơ đồ minh họa bằng ASCII (hoặc tạo hình ảnh), chỉ cần bảo mình nhé.

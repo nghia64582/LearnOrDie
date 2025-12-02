@@ -1,0 +1,105 @@
+Dưới đây là giải thích dễ hiểu - ngắn gọn - kèm ví dụ Spring + MySQL để bạn phân biệt Optimistic Locking và Pessimistic Locking.
+---
+# 1. Optimistic Lock (Khóa lạc quan)
+	### Tư tưởng:
+        * Không khóa record ngay lập tức.
+        * Giả định rằng *không có ai sửa cùng lúc*.
+        * Chỉ khi update, hệ thống mới kiểm tra xem dữ liệu có bị ai sửa trước không.
+	### Cách dùng:
+	    Sử dụng @Version trong JPA.
+	### Cách hoạt động:
+1. Lúc đọc dữ liệu, bạn lấy thêm version (số nguyên).
+2. Lúc update:
+	    UPDATE ... WHERE id=? AND version=?
+3. Nếu version không trùng không update được ném lỗi OptimisticLockException.
+	### Ưu điểm:
+        * Không tốn tài nguyên MySQL (không gây khóa row).
+        * Tốc độ cao, phù hợp với nhiều đọc - ít ghi.
+	### Nhược điểm:
+	    * Update sẽ *thất bại* nếu có xung đột (phải retry).
+---
+## Ví dụ Spring Boot + JPA + MySQL (Optimistic Lock)
+### Entity:
+	@Entity
+	public class Product {
+		@Id
+		private Long id;
+		@Version
+		private Integer version;
+		private int quantity;
+	}
+### Cách JPA update:
+	UPDATE product
+	SET quantity = ?, version = version + 1
+	WHERE id = ? AND version = ?;
+Nếu không update được Spring ném `OptimisticLockException`.
+---
+# 2. Pessimistic Lock (Khóa bi quan)
+	### Tư tưởng:
+        * Luôn khóa record ngay khi đọc hoặc khi chuẩn bị ghi.
+        * Giả định rằng *có khả năng xung đột*, nên phải khóa trước.
+	### Cách dùng:
+	    Dùng @Lock(LockModeType.PESSIMISTIC_WRITE) hoặc PESSIMISTIC_READ.
+	### Cách hoạt động:
+        * MySQL sử dụng SELECT ... FOR UPDATE khóa row cho tới khi transaction kết thúc.
+        * Các transaction khác phải đợi hoặc timeout.
+	### Ưu điểm:
+        * Không xảy ra xung đột version.
+        * Hợp với các thao tác ghi nhiều - cạnh tranh cao (ví dụ đặt chỗ, mua vé).
+	### Nhược điểm:
+        * Có thể gây deadlock, lock wait timeout.
+        * Tốn tài nguyên MySQL.
+---
+## Ví dụ Spring Boot + JPA + MySQL (Pessimistic Lock)
+### Repository:
+	public interface ProductRepository extends JpaRepository<Product, Long> {
+		@Lock(LockModeType.PESSIMISTIC_WRITE)
+		@Query("SELECT p FROM Product p WHERE p.id = :id")
+		Product findByIdForUpdate(@Param("id") Long id);
+	}
+### SQL MySQL sinh ra:
+	SELECT *
+	FROM product
+	WHERE id = ?
+	FOR UPDATE;
+Transaction 1 đọc khóa row.
+Transaction 2 đợi cho tới khi T1 commit hoặc timeout.
+---
+	# So sánh nhanh: Optimistic vs Pessimistic
+	| Tiêu chí       | Optimistic Lock           | Pessimistic Lock            |
+	| -------------- | ------------------------- | --------------------------- |
+	| Cơ chế         | Dùng `@Version`           | Dùng `SELECT FOR UPDATE`    |
+	| Khi khóa       | Chỉ kiểm tra lúc update   | Khóa ngay khi đọc           |
+	| Tốc độ         | Nhanh hơn                 | Chậm hơn                    |
+	| Dùng khi       | Ít xung đột               | Ghi nhiều, xung đột cao     |
+	| Lỗi thường gặp | `OptimisticLockException` | Deadlock, lock wait timeout |
+---
+# Dùng thế nào cho từng trường hợp?
+### Nên dùng Optimistic Lock khi:
+    * CRUD bình thường
+    * API đọc nhiều, update ít
+    * Hệ thống thương mại điện tử, giá sản phẩm, hồ sơ người dùng
+### Nên dùng Pessimistic Lock khi:
+    * Đặt vé (vé máy bay, rạp chiếu phim)
+    * Đặt chỗ, giữ chỗ
+    * Đấu giá real-time
+    * Trừ tồn kho có tính cạnh tranh
+---
+	# Ví dụ thực tế dễ hiểu
+	### Bạn có bảng `product` với `quantity=1`.
+	#### T1 và T2 đều mua cùng lúc:
+	### Optimistic lock:
+	    * cả hai đọc `quantity = 1, version = 0`
+	    * T1 update thành công version = 1
+	    * T2 update thất bại vì version mismatch rollback retry
+	### Pessimistic lock:
+	    * T1 `SELECT FOR UPDATE` khóa row
+	    * T2 chờ
+	    * T1 update commit
+	    * T2 được chạy tiếp (nhưng lúc này quantity đã thay đổi)
+---
+Nếu bạn muốn, tôi có thể viết giúp:
+    * Code hoàn chỉnh cho 2 loại lock
+    * Demo tình huống xung đột
+    * Hướng dẫn tránh deadlock trong MySQL
+    * Hướng dẫn chọn lock phù hợp cho dự án của bạn (ví dụ hệ thống đấu giá bạn đang làm).

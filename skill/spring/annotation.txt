@@ -1,0 +1,202 @@
+Dưới đây là bảng tổng hợp đầy đủ - dễ hiểu - theo nhóm các annotation quan trọng nhất trong Spring (Spring Framework + Spring Boot + Spring MVC + Spring Data JPA) và tác dụng của từng cái.
+---
+#  1. Annotation trong Spring Core (IoC, Dependency Injection)
+	@Component
+	* Đánh dấu một class là bean để Spring quản lý (scan tự động).
+	* Là annotation gốc của các annotation khác như @Service, @Repository, @Controller.
+---
+@Service
+* Dùng cho lớp business logic.
+* Giúp code rõ ràng, phân tầng tốt.
+---
+	@Repository
+	* Dùng cho lớp DAO, nơi truy cập dữ liệu.
+	* Bắt exception từ JPA/JDBC và wrap thành DataAccessException.
+---
+@Controller (trong MVC)
+* Đánh dấu một class xử lý request HTTP.
+* Trả về View (HTML).
+---
+	@RestController
+	* Kết hợp @Controller + @ResponseBody.
+	* Dùng cho API REST  trả JSON/XML.
+---
+@Configuration
+* Class cấu hình, tương đương XML config.
+---
+	@Bean
+	* Khởi tạo một bean thủ công trong class @Configuration.
+---
+@Autowired
+* Tiêm dependency theo kiểu by type.
+* Có thể dùng:
+  * Trên trường
+  * Setter
+  * Constructor (khuyến khích nhất)
+---
+	@Qualifier("beanName")
+	* Dùng khi có nhiều bean cùng type.
+---
+@Value("${config.value}")
+* Inject giá trị từ application.properties/yaml.
+---
+	@Lazy
+	* Bean chỉ được tạo khi lần đầu tiên cần.
+---
+@Scope("prototype")
+* Mỗi lần request bean  tạo mới instance.
+* Mặc định là "singleton".
+---
+#  2. Annotation Spring MVC (Controller, REST)
+	@RequestMapping
+	* Mapping endpoint ở class hoặc method.
+	* Hỗ trợ method GET/POST/PUT/DELETE.
+---
+## Shortcut:
+* @GetMapping VV
+* @PostMapping VV
+* @PutMapping VV 
+* @DeleteMapping VV
+* @PatchMapping VV
+---
+	@RequestParam VV
+	* Lấy params từ query string.
+		@GetMapping("/search")
+		public String s(@RequestParam String key) { ... }
+	
+---
+@PathVariable VV
+* Lấy giá trị trong URL:
+	@GetMapping("/user/{id}")
+	public User get(@PathVariable int id)
+---
+	@RequestBody VV
+	* Đọc JSON  Object.
+	@ResponseBody VV
+	Chỉ cần dùng trong @Controller (do mặc định trả về view), không cần trong @RestController 
+	* Trả object  JSON.
+	@CrossOrigin
+	* Bật CORS.
+	@ExceptionHandler
+	* Xử lý exception cụ thể tại controller.
+#  3. Annotation Spring Boot
+	@SpringBootApplication
+    Bao gồm:
+    @Configuration
+    @EnableAutoConfiguration
+    @ComponentScan
+---
+    @EnableAutoConfiguration
+        * Bật auto config của Spring Boot.
+---
+	@ComponentScan
+	    * Tự tìm class có @Component, @Service...
+	@ConfigurationProperties
+	    * Mapping config  object.
+	@ConfigurationProperties(prefix = "app")
+        public class AppConfig {
+            private String name;
+        }
+#  4. Annotation Spring Data JPA
+	@Entity
+	    * Đánh dấu class là bảng trong database.
+	@Table(name = "users")
+	    * Tên bảng trong DB.
+	@Id
+	    * Primary key.
+	@GeneratedValue
+	    * Auto tăng ID.
+	@Column(name="...")
+	    * Thuộc tính của cột.
+	@ManyToOne
+        * Đánh dấu mối quan hệ nhiều - 1.
+        * Mapping quan hệ giữa các entity.
+        * VD: Có User 1-n Post thì sẽ đánh dấu ở class Post với @ManyToOne trong trường User user;
+        * Các tham số quan trọng:
+            - fetch = FetchType.LAZY / EAGER
+            - cascade = CascadeType.ALL / PERSIST / MERGE / REMOVE
+        * Cần kết hợp với @JoinColumn để chỉ định cột khóa ngoại.
+	@OneToMany
+        * Đánh dấu mối quan hệ 1 - nhiều.
+        * Mapping quan hệ giữa các entity.
+        * VD: Có User 1-n Post thì sẽ đánh dấu ở class User với @OneToMany trong trường List<Post> posts;
+        * Các tham số quan trọng:
+            - mappedBy = "user" (tên trường ở bên ManyToOne)
+            - fetch = FetchType.LAZY / EAGER
+                - LAZY: chỉ load khi gọi getPosts()
+                - EAGER: load luôn khi load User
+            - cascade = CascadeType.ALL / PERSIST / MERGE / REMOVE
+                - PERSIST: khi lưu User tự lưu luôn Post
+                - MERGE: khi update User tự update luôn Post
+                - REMOVE: khi xóa User tự xóa luôn Post
+            - orphanRemoval = true/false
+                - true: khi xóa Post khỏi list posts thì xóa luôn khỏi DB
+        * Cần kết hợp với @JoinColumn để chỉ định cột khóa ngoại (để ở bên ManyToOne).
+	@OneToOne
+        * Đánh dấu mối quan hệ 1 - 1.
+        * Vd: User 1-1 Comment
+        * Các tham số quan trọng:
+            - fetch = FetchType.LAZY / EAGER
+            - cascade = CascadeType.ALL / PERSIST / MERGE / REMOVE
+	@ManyToMany
+        * Đánh dấu mối quan hệ nhiều - nhiều.
+        * Mapping quan hệ giữa các entity.
+        * VD: Có User nhiều-nhều Role thì sẽ đánh dấu ở class User với @ManyToMany trong trường Set<Role> roles;
+        * Các tham số quan trọng:
+            - fetch = FetchType.LAZY / EAGER
+            - cascade = CascadeType.ALL / PERSIST / MERGE / REMOVE
+
+	@JoinColumn(name = "user_id")
+	    * Tên cột khóa ngoại.
+	@Repository
+	* Spring Data tự implement CRUD từ interface:
+	    public interface UserRepo extends JpaRepository<User, Long> {}
+    @Version:
+        * Dùng cho Optimistic Lock.
+        * Tự động tăng version khi update.
+        * Có thể tạo một trường version riêng hoặc tận dụng timestamp như last_update
+#  5. Annotation Security (Spring Security)
+	@EnableWebSecurity
+	    * Bật Spring Security.
+	@PreAuthorize("hasRole('ADMIN')")
+	    * Kiểm tra role trước khi chạy method.
+    @Secured("ROLE_ADMIN")
+    @WithMockUser
+	    * Dùng khi test.
+---
+#  6. Annotation Transaction (quan trọng)
+    @Transactional
+        * Tạo transaction (mặc định rollback khi exception runtime).
+    @Transactional
+        public void saveUser(User u) { ... }
+    Options:
+        * rollbackFor
+        * readOnly = true
+        * isolation
+        * propagation
+---
+#  7. Annotation Spring Cloud
+	* @EnableDiscoveryClient
+	* @EnableFeignClients
+	* @LoadBalanced
+	* @CircuitBreaker
+---
+#  8. Annotation Testing
+    * @SpringBootTest
+    * @Test
+    * @MockBean
+    * @ExtendWith(SpringExtension.class)
+---
+	#  Tóm tắt nhóm annotation chính
+	| Nhóm        | Tiêu biểu                                             |
+	| ----------- | ----------------------------------------------------- |
+	| IoC/DI      | @Component, @Service, @Repository, @Autowired |
+	| MVC         | @Controller, @RestController, @GetMapping       |
+	| Boot        | @SpringBootApplication, @ConfigurationProperties  |
+	| JPA         | @Entity, @Id, @OneToMany                        |
+	| Security    | @PreAuthorize                                       |
+	| Transaction | @Transactional                                      |
+	| Cloud       | @EnableFeignClients                                 |
+	| Test        | @SpringBootTest                                     |
+---
+Nếu bạn muốn, mình có thể tạo một file PDF/table hoặc cheat-sheet để bạn in ra hoặc dùng khi làm dự án Spring Boot.
