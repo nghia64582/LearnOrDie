@@ -1,0 +1,162 @@
+Dưới đây là lộ trình học Redis từ cơ bản đến nâng cao, tối ưu cho người làm backend như bạn:
+---
+	## 1 Giai đoạn 1 - Nền tảng Redis (1-2 ngày)
+	###  Redis là gì?
+	* In-memory database
+	* Key-Value Store
+	* Dùng cho:
+	  * Cache
+	  * Session
+	  * Queue
+	  * Pub/Sub
+	  * Rate limit
+	###  Cài đặt
+	* Windows: Redis for Windows / WSL
+	* Linux: `sudo apt install redis`
+	* Docker:
+		docker run -d -p 6379:6379 redis
+	
+	###  Redis CLI cơ bản
+	
+		redis-cli
+		PING
+		SET name Trung
+		GET name
+		DEL name
+		EXISTS name
+	
+---
+## 2 Giai đoạn 2 - Các kiểu dữ liệu quan trọng (2-3 ngày)
+###  String
+	SET key value
+	INCR counter
+ Dùng cho: cache, token, OTP
+---
+	###  Hash (rất hay dùng cho object)
+		HSET user:1 name Trung age 25
+		HGET user:1 name
+		HGETALL user:1
+	
+	 Thay thế JSON trong cache
+	
+---
+###  List
+	LPUSH queue job1
+	RPOP queue
+ Dùng làm Queue
+---
+	###  Set
+		SADD online user1
+		SISMEMBER online user1
+	
+	 Danh sách không trùng
+	
+---
+###  Sorted Set (ZSET) - CỰC QUAN TRỌNG
+	ZADD ranking 100 user1
+	ZRANGE ranking 0 -1 WITHSCORES
+ Dùng cho: leaderboard, ranking, priority queue
+---
+	## 3 Giai đoạn 3 - TTL, Cache, Session (1-2 ngày)
+	###  TTL
+		SET otp 123456 EX 60
+		TTL otp
+	
+	###  Cache Pattern
+	
+        * Cache Aside
+        * Write Through
+        * Write Behind
+	
+	 Redis cực mạnh khi dùng với:
+	
+        * Spring Boot
+        * NodeJS
+        * Django
+        * Laravel
+	
+---
+## 4 Giai đoạn 4 - Pub/Sub, Queue, Stream (2-3 ngày)
+###  Pub/Sub
+	SUBSCRIBE chat
+	PUBLISH chat "hello"
+ Realtime chat, notification
+---
+	###  Redis Queue
+	* Dùng List hoặc Stream
+	* Thay thế RabbitMQ nhỏ gọn
+---
+###  Redis Stream (rất giống Kafka mini)
+	XADD orders * user Trung product Book
+	XREAD STREAMS orders 0
+ Dùng cho:
+    * Event sourcing
+    * Message queue
+    * Log hệ thống
+---
+	## 5 Giai đoạn 5 - Transaction, Lua, Lock (2-3 ngày)
+	###  Transaction
+		MULTI
+		INCR money
+		EXEC
+	
+---
+###  Distributed Lock
+	SET lock:order 1 NX EX 10
+ Chống:
+* Double booking
+* Thanh toán trùng
+---
+	###  Lua Script
+		EVAL "return redis.call('GET', KEYS[1])" 1 mykey
+	
+	 Atomic mạnh hơn transaction
+	
+---
+## 6 Giai đoạn 6 - Hiệu năng & Triển khai (2-3 ngày)
+###  Persistence
+* RDB
+* AOF
+###  Replication
+* Master - Slave
+###  Redis Cluster
+* Sharding
+* Scale hàng triệu user
+---
+	## 7 Redis + Backend thực tế (rất quan trọng)
+	Nếu bạn làm:
+	*  Spring Boot  dùng:
+	  * `spring-boot-starter-data-redis`
+	  * Cache với `@Cacheable`
+	*  NodeJS  dùng `ioredis`
+	*  Python  dùng `redis-py`
+	### Các case thực tế nên làm:
+	| Bài toán       | Redis dùng kiểu gì |
+	| -------------- | ------------------ |
+	| Login session  | String + TTL       |
+	| OTP            | String + EX        |
+	| Giỏ hàng       | Hash               |
+	| Chat           | Pub/Sub            |
+	| Queue đơn hàng | List / Stream      |
+	| Xếp hạng       | ZSet               |
+	| Rate limit     | INCR + TTL         |
+	| Chống spam     | Set + TTL          |
+---
+##  Tổng thời gian học thực chiến:
+| Mức      | Thời gian |
+| -------- | --------- |
+| Cơ bản   | 3 ngày    |
+| Ứng dụng | 5 ngày    |
+| Nâng cao | 7–10 ngày |
+ Sau 2 tuần là làm Redis production được.
+---
+	##  Nếu bạn muốn, tôi có thể:
+	* Vẽ sơ đồ Redis trong hệ thống microservice
+	* Cho ví dụ Redis dùng trong Spring Boot
+	* So sánh chi tiết: Redis vs Kafka vs RabbitMQ vs MQTT
+	* Hoặc viết mini project Redis queue + cache + rate limit
+	Bạn muốn học Redis theo hướng:
+	* Backend Web
+	* Game server
+	* Realtime chat
+	* Hay Microservice?

@@ -1,0 +1,213 @@
+sDưới đây là bộ lệnh Redis CLI đầy đủ - có tham số - giải thích - dùng đúng trong thực tế production. Bạn chỉ cần nắm vững phần này là dùng Redis thành thạo 80-90%.
+---
+#  1. Kết nối Redis CLI
+		redis-cli
+	
+	Kết nối host + port:
+	
+	redis-cli -h 127.0.0.1 -p 6379
+	
+	Có password:
+	
+		redis-cli -a mypassword
+	
+---
+#  2. Nhóm lệnh STRING (Cache, Token, OTP)
+###  SET - Lưu dữ liệu
+	SET key value
+	SET name Trung
+Có TTL:
+	SET otp 123456 EX 60
+	SET token abc NX EX 300
+| Tham số   | Ý nghĩa                  |
+| --------- | ------------------------ |
+| `EX 60`   | Hết hạn sau 60 giây      |
+| `PX 1000` | Hết hạn sau 1000 ms      |
+| `NX`      | Chỉ set nếu chưa tồn tại |
+| `XX`      | Chỉ set nếu đã tồn tại   |
+---
+	###  GET - Lấy dữ liệu
+		GET name
+	
+---
+###  INCR / DECR - Tăng giảm số
+	INCR counter
+	DECR counter
+	INCRBY counter 5
+ Dùng cho rate limit, view count
+---
+#  3. Key Management (Quản lý key)
+		DEL key1 key2      // Xóa
+		EXISTS key         // Kiểm tra tồn tại
+		TTL key            // Xem thời gian sống
+		EXPIRE key 60      // Set TTL
+		PERSIST key        // Bỏ TTL
+		KEYS *             //  Không dùng production
+		SCAN 0             //  Dùng production
+	
+---
+#  4. HASH - Lưu Object (Thay JSON)
+	HSET user:1 name Trung age 25
+	HGET user:1 name
+	HGETALL user:1
+	HDEL user:1 age
+	HEXISTS user:1 name
+ Dùng cho:
+* User session
+* Cart
+* Profile cache
+---
+#  5. LIST - Queue, Stack
+		LPUSH queue job1
+		RPUSH queue job2
+		LPOP queue
+		RPOP queue
+		LRANGE queue 0 -1
+		LLEN queue
+	
+	 Dùng làm:
+	
+	* Queue xử lý đơn hàng
+	* Task async
+	
+---
+#  6. SET - Tập không trùng
+	SADD online u1 u2
+	SMEMBERS online
+	SISMEMBER online u1
+	SREM online u1
+	SCARD online
+ Dùng cho:
+* User online
+* Chống trùng
+---
+#  7. SORTED SET (ZSET) - Ranking, Priority Queue
+		ZADD ranking 100 user1
+		ZADD ranking 200 user2
+		ZRANGE ranking 0 -1 WITHSCORES
+		ZREVRANGE ranking 0 2
+		ZSCORE ranking user1
+		ZREM ranking user1
+	
+	 Dùng cho:
+	
+	* Leaderboard
+	* Xếp hạng
+	* Ưu tiên task
+	
+---
+#  8. PUB / SUB - Realtime
+Terminal 1:
+	SUBSCRIBE chat
+Terminal 2:
+	PUBLISH chat "hello"
+ Dùng cho:
+* Chat
+* Notification
+* Realtime system
+---
+#  9. STREAM - Message Queue nâng cao (Kafka mini)
+	Thêm message:
+		XADD orders * user Trung product Book
+	
+	Đọc message:
+	
+		XREAD STREAMS orders 0
+	
+	Consumer group:
+	
+		XGROUP CREATE orders g1 $
+		XREADGROUP GROUP g1 c1 STREAMS orders >
+	
+	 Dùng cho:
+	
+	* Event system
+	* Log
+	* Queue phân tán
+	
+---
+#  10. TRANSACTION - Giao dịch
+	MULTI
+	INCR money
+	INCR stock
+	EXEC
+Hủy:
+	DISCARD
+---
+#  11. DISTRIBUTED LOCK
+		SET lock:order 1 NX EX 10
+	
+	 Nếu trả về `OK`  lấy được lock
+	 Nếu `nil`  đang bị khóa
+	
+---
+#  12. LUA SCRIPT - Atomic mạnh nhất
+	EVAL "return redis.call('GET', KEYS[1])" 1 mykey
+Cộng 2 giá trị atom:
+	EVAL "
+	local a = tonumber(redis.call('GET', KEYS[1]))
+	local b = tonumber(redis.call('GET', KEYS[2]))
+	return a + b
+	" 2 x y
+---
+#  13. PERSISTENCE - Lưu ra disk
+		SAVE        // Đồng bộ
+		BGSAVE      // Background save
+	
+---
+#  14. REPLICATION - Master / Slave
+Slave:
+	REPLICAOF 127.0.0.1 6379
+---
+#  15. SERVER - Quản trị
+		INFO
+		INFO memory
+		INFO replication
+		CLIENT LIST
+		FLUSHDB
+		FLUSHALL
+	
+---
+#  16. Các lệnh CỰC HAY dùng trong Backend
+| Bài toán    | Lệnh          |
+| ----------- | ------------- |
+| Cache       | SET, GET, EX  |
+| Session     | SET EX        |
+| OTP         | SET NX EX     |
+| Rate limit  | INCR + EXPIRE |
+| Login token | SET + TTL     |
+| Queue       | LPUSH + RPOP  |
+| Ranking     | ZADD + ZRANGE |
+| Realtime    | PUB/SUB       |
+| Lock        | SET NX EX     |
+---
+#  17. Lệnh nào TUYỆT ĐỐI KHÔNG dùng production
+	| Lệnh       | Lý do            |
+	| ---------- | ---------------- |
+	| `KEYS *`   | Block Redis      |
+	| `FLUSHALL` | Xóa sạch dữ liệu |
+	| `SAVE`     | Block server     |
+---
+#  18. Một chuỗi lệnh thực tế (Login + OTP + Rate limit)
+	INCR login:ip:1.2.3.4
+	EXPIRE login:ip:1.2.3.4 60
+	SET otp:0987 123456 EX 60
+	SET session:abc user1 EX 3600
+---
+#  19. Tổng kết cực ngắn
+	* Redis không phải chỉ là cache
+	* Mỗi kiểu dữ liệu giải quyết 1 bài toán khác nhau
+	* Nắm vững:
+	  * `STRING + TTL`
+	  * `HASH`
+	  * `LIST`
+	  * `ZSET`
+	  * `STREAM`
+	* Là dùng Redis chuẩn Backend Engineer
+---
+Nếu bạn muốn, tôi có thể tiếp tục cho bạn:
+ Toàn bộ Redis command nâng cao (bit, geo, hyperloglog)
+ Redis dùng trong Spring Boot (`RedisTemplate`, `@Cacheable`)
+ So sánh Redis Queue vs Kafka vs RabbitMQ
+ Mini project Redis: OTP + Login + Rate Limit + Queue
+Bạn muốn đi tiếp theo hướng Backend Web, Game server, hay Microservice?

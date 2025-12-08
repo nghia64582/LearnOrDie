@@ -1,0 +1,40 @@
+--- Lộ trình học nghề cắt laser ---
+1. Làm quen với các kĩ thuật, khái niệm cơ bản về cắt laser:
+  - 
+2. Thực hành cắt một số hình đơn giản:
+  - Hình vuông
+  - Cắt que kem theo chiều dài yêu cầu
+  - Mối nối răng cưa để liên kết 2 tấm gỗ
+3. Chuẩn bị máy cắt laser
+4. Làm các module cơ bản, phổ biến trong các cấu trúc cơ khí:
+  - Các module phổ biến trong các cấu trúc:
+    - Thanh trượt.
+    - Hệ thống bắng răng.
+5. Hoàn thiện dự án đầu tiên: Hệ thống cắt laser tự động: (Auto Laser Cutter System)
+  - Mô tả: Một hệ thống cắt laser và cấp phôi tự động, cho phép sản xuất ra số lượng lớn các chi 
+    tiết nhỏ mà không cần sự can thiệp tay chân của con người, chủ yếu chỉ cần điền số liệu vào 
+    máy tính và chạy.
+  - Mô tả chi tiết:
+    - Quy trình thủ công:
+      - Phân tích nhu cầu cắt và tạo file svg cần thiết. (thủ công) - done
+      - Chuẩn bị phôi. (thủ công) - done
+      - Đưa phôi vào tấm chứa và căn chính xác. (thủ công) - done
+      - Chạy svg (trong LaserGRBL) (thủ công) - done
+      - Lấy chi tiết đã cắt và rửa. (thủ công) - done
+    - Quy trình bán tự động:
+      - Phân tích nhu cầu cắt (tự động) - done
+      - Nhập số liệu vào phần mềm cut_tool (phần mềm) - done
+      - Bấm nút tạo file (tự động) - done
+      - Dùng khuôn để đặt phôi vào vị trí (thủ công) - todo
+      - Bấm nút chạy file gcode (tự động) - done
+      - Rửa chi tiết (thủ công) - done
+    - Quy trình tự động hoàn toàn:
+      - Phân tích nhu cầu cắt - done
+      - Nhập số liệu vào phần mềm cut_tool (phần mềm) - done
+      - Bấm nút tạo file - done
+      - Gửi data cho esp32 điều khiển máy cấp phôi tự động (tự động) - todo
+        - Đưa các que vào khe của khuôn cấp phôi - todo
+        - Đưa khuôn cắt phôi vào vị trí cắt - todo
+      - Bấm nút chạy file gcode (tự động) - done
+      - Chạy quạt hút khói (tự động) - todo
+      - Gửi msg cho esp để đưa phôi đã cắt ra ngoài (tự động) - todo

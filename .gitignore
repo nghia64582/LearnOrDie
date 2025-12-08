@@ -40,3 +40,9 @@ Code/Pomelo/pomelo-udp-webrtc-plugin/
 Code/Pomelo/pomelo-udp-webrtc/
 /Code/Python/SvgDrawer/sample
 /draft
+Code/Python/AiAnswerCleaner/input.txt
+Code/Python/AiAnswerCleaner/output.txt
+Code/Python/LaserCtrl/cut_plan.gcode
+Code/Python/LaserCtrl/cut_plan.svg
+Code/Python/SvgDrawer/output.gcode
+Code/Python/SvgDrawer/output.svg

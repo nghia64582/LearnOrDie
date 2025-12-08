@@ -2,55 +2,55 @@ Dưới đây là bảng tổng hợp đầy đủ - dễ hiểu - theo nhóm c�
 ---
 #  1. Annotation trong Spring Core (IoC, Dependency Injection)
 	@Component
-	* Đánh dấu một class là bean để Spring quản lý (scan tự động).
-	* Là annotation gốc của các annotation khác như @Service, @Repository, @Controller.
+		* Đánh dấu một class là bean để Spring quản lý (scan tự động).
+		* Là annotation gốc của các annotation khác như @Service, @Repository, @Controller.
 ---
 @Service
-* Dùng cho lớp business logic.
-* Giúp code rõ ràng, phân tầng tốt.
+	* Dùng cho lớp business logic.
+	* Giúp code rõ ràng, phân tầng tốt.
 ---
-	@Repository
+@Repository
 	* Dùng cho lớp DAO, nơi truy cập dữ liệu.
 	* Bắt exception từ JPA/JDBC và wrap thành DataAccessException.
 ---
 @Controller (trong MVC)
-* Đánh dấu một class xử lý request HTTP.
-* Trả về View (HTML).
+	* Đánh dấu một class xử lý request HTTP.
+	* Trả về View (HTML).
 ---
-	@RestController
+@RestController
 	* Kết hợp @Controller + @ResponseBody.
 	* Dùng cho API REST  trả JSON/XML.
 ---
 @Configuration
-* Class cấu hình, tương đương XML config.
+	* Class cấu hình, tương đương XML config.
 ---
-	@Bean
+@Bean
 	* Khởi tạo một bean thủ công trong class @Configuration.
 ---
 @Autowired
-* Tiêm dependency theo kiểu by type.
-* Có thể dùng:
-  * Trên trường
-  * Setter
-  * Constructor (khuyến khích nhất)
+	* Tiêm dependency theo kiểu by type.
+	* Có thể dùng:
+	* Trên trường
+	* Setter
+	* Constructor (khuyến khích nhất)
 ---
-	@Qualifier("beanName")
+@Qualifier("beanName")
 	* Dùng khi có nhiều bean cùng type.
 ---
 @Value("${config.value}")
-* Inject giá trị từ application.properties/yaml.
+	* Inject giá trị từ application.properties/yaml.
 ---
-	@Lazy
+@Lazy
 	* Bean chỉ được tạo khi lần đầu tiên cần.
 ---
 @Scope("prototype")
-* Mỗi lần request bean  tạo mới instance.
-* Mặc định là "singleton".
+	* Mỗi lần request bean  tạo mới instance.
+	* Mặc định là "singleton".
 ---
 #  2. Annotation Spring MVC (Controller, REST)
 	@RequestMapping
-	* Mapping endpoint ở class hoặc method.
-	* Hỗ trợ method GET/POST/PUT/DELETE.
+		* Mapping endpoint ở class hoặc method.
+		* Hỗ trợ method GET/POST/PUT/DELETE.
 ---
 ## Shortcut:
 * @GetMapping VV
@@ -70,21 +70,21 @@ Dưới đây là bảng tổng hợp đầy đủ - dễ hiểu - theo nhóm c�
 	@GetMapping("/user/{id}")
 	public User get(@PathVariable int id)
 ---
-	@RequestBody VV
+@RequestBody VV
 	* Đọc JSON  Object.
-	@ResponseBody VV
+@ResponseBody VV
 	Chỉ cần dùng trong @Controller (do mặc định trả về view), không cần trong @RestController 
 	* Trả object  JSON.
-	@CrossOrigin
+@CrossOrigin VV
 	* Bật CORS.
-	@ExceptionHandler
+@ExceptionHandler
 	* Xử lý exception cụ thể tại controller.
 #  3. Annotation Spring Boot
-	@SpringBootApplication
+@SpringBootApplication
     Bao gồm:
-    @Configuration
-    @EnableAutoConfiguration
-    @ComponentScan
+		@Configuration
+		@EnableAutoConfiguration
+		@ComponentScan
 ---
     @EnableAutoConfiguration
         * Bật auto config của Spring Boot.
