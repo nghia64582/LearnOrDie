@@ -1,0 +1,170 @@
+Dưới đây là phần giải thích chuẩn backend production về:
+*  Cache Miss là gì
+*  Outdated / Stale Cache là gì
+*  Nguyên nhân
+*  Cách xử lý đúng trong Redis + Backend
+---
+#  1. Cache Miss là gì?
+	> Cache Miss = Không tìm thấy dữ liệu trong cache  phải xuống DB lấy lại
+	Ví dụ:
+		redis.get("user:1")  null  
+		 Query DB
+		 Set lại Redis
+	
+---
+##  Các loại Cache Miss
+| Loại                  | Ý nghĩa                   |
+| --------------------- | ------------------------- |
+| **Cold Miss**         | Lần đầu chưa có cache     |
+| **Capacity Miss**     | Bị Redis eviction xóa mất |
+| **Invalidation Miss** | Cache bị xóa do update    |
+| **Key Miss**          | Sai key                   |
+---
+	##  Cache Miss có nguy hiểm không?
+	| Trường hợp       | Nguy hiểm           |
+	| ---------------- | ------------------- |
+	| Nhẹ (ít request) | ❌                   |
+	| Cao tải          | ✅ **RẤT NGUY HIỂM** |
+	 Vì:
+	* Hàng loạt request cùng lúc  cùng miss
+	* Tất cả dồn xuống DB  DB chết
+	  => Gọi là Cache Stampede
+---
+#  2. Outdated Cache (Stale Cache) là gì?
+> Outdated Cache = Cache còn tồn tại nhưng dữ liệu đã lỗi thời so với DB
+Ví dụ:
+* DB: user = "Trung"
+* Cache: user = "Nghĩa"
+* User thấy sai dữ liệu 
+---
+	##  Nguyên nhân Cache bị Outdate
+	| Nguyên nhân                     | Ví dụ                                        |
+	| ------------------------------- | -------------------------------------------- |
+	| DB update nhưng không xóa cache | Update user nhưng quên DEL Redis             |
+	| Multi service                   | Service A update DB, Service B dùng cache cũ |
+	| TTL quá dài                     | Cache 24h nhưng DB đổi liên tục              |
+	| Event không đồng bộ             | Không dùng MQ                                |
+---
+#  3. So sánh Cache Miss vs Outdated Cache
+| Tiêu chí           | Cache Miss  | Outdated Cache |
+| ------------------ | ----------- | -------------- |
+| Có key trong Redis | ❌ Không     | ✅ Có           |
+| Có dữ liệu         | ❌ Không     | ✅ Có (sai)     |
+| Gây sai dữ liệu    | ❌           | ✅              |
+| Gây quá tải DB     | ✅           | ❌              |
+| Mức độ nguy hiểm   | ⚠ Hiệu năng | 🚨 Logic       |
+---
+#  4. Cách xử lý Cache Miss (CHỐNG SẬP DB)
+---
+##  4.1 Cache Aside Pattern (chuẩn nhất)
+	Client  Redis  Miss  DB  Set Redis  Trả về
+Code pseudo:
+	String key = "user:1";
+	User user = redis.get(key);
+	if (user == null) {
+		    user = db.findUser(1);
+		    redis.set(key, user, 60); // TTL
+	}
+ 90% hệ thống dùng cách này
+---
+##  4.2 Chống Cache Stampede (RẤT QUAN TRỌNG)
+	###  Cách 1: Distributed Lock
+		SET lock:user:1 1 NX EX 5
+	
+	Pseudo:
+	
+		if (redis.get(key) == null) {
+			   if (tryLock()) {
+			       data = db.get();
+			       redis.set(key, data, 60);
+			       unlock();
+		   } else {
+			       sleep(50);
+			       retry();
+		   }
+		}
+	
+---
+###  Cách 2: Logical Expire (Cache không bao giờ null)
+Cache lưu:
+	{
+	  "data": {...},
+		  "expireAt": 1700000000
+	}
+* Hết hạn  trả dữ liệu cũ
+* Ngầm refresh DB async
+ Rất mạnh cho:
+* Hot key
+* Homepage
+* Product top view
+---
+	###  Cách 3: Pre-Warm Cache
+	* Load sẵn dữ liệu hot khi app start
+	* Tránh Cold Miss
+---
+#  5. Cách xử lý Outdated Cache (TRÁNH SAI DỮ LIỆU)
+---
+##  5.1 Update DB  XÓA CACHE (Chuẩn nhất)
+		Update DB  DEL Redis
+	
+		db.updateUser(user);
+		redis.del("user:" + user.getId());
+	
+	 Khi request sau tới  tự cache lại
+	
+---
+##  5.2 Write Through (Ghi song song DB + Redis)
+	db.save(user);
+	redis.set("user:1", user, 60);
+ Áp lực ghi Redis rất lớn
+---
+##  5.3 Event-Driven Cache Invalidation (Microservice)
+		Service A update DB
+		 Push Kafka/Redis Stream
+		 Service B xóa cache
+	
+	 Chuẩn hệ thống lớn
+	
+---
+##  5.4 TTL ngắn cho dữ liệu hay đổi
+| Loại dữ liệu | TTL          |
+| ------------ | ------------ |
+| User profile | 10–30 phút   |
+| Sản phẩm     | 5–10 phút    |
+| Giá cả       | 30s – 2 phút |
+| Homepage     | 30s          |
+---
+#  6. Tổng hợp chiến thuật chuẩn Production
+	| Bài toán                | Giải pháp             |
+	| ----------------------- | --------------------- |
+	| Cache Miss              | Cache Aside           |
+	| DB sập khi miss         | Lock / Logical Expire |
+	| Cache bị sai            | Update DB → DEL cache |
+	| Microservice lệch cache | MQ invalidation       |
+	| Key quá hot             | Logical expire        |
+---
+#  7. Một luồng thực tế đầy đủ (Chuẩn Backend)
+###  Read:
+	Redis  Miss  Lock  DB  Redis  Return
+###  Write:
+	Update DB  DEL Redis  MQ Notify
+---
+#  8. Tóm tắt ngắn gọn cực dễ nhớ
+	| Khái niệm      | Bản chất              |
+	| -------------- | --------------------- |
+	| Cache Miss     | Không có cache        |
+	| Outdated Cache | Cache bị sai          |
+	| Nguy hiểm hơn  | ✅ Outdated            |
+	| Miss xử lý     | Cache Aside + Lock    |
+	| Outdated xử lý | Update DB → DEL cache |
+---
+Nếu bạn muốn, tôi có thể tiếp tục cho bạn:
+ Demo Cache Miss + Stampede bằng Redis + Java
+ Code Spring Boot @Cacheable thực tế & bẫy thường gặp
+ Chiến lược Cache cho Microservice lớn
+ So sánh Redis Cache vs CDN Cache
+Bạn đang dùng Redis theo hướng:
+* API backend
+* Game server
+* E-commerce
+* Hay Microservice?

@@ -1,0 +1,94 @@
+Câu hỏi này rất chuẩn kiến trúc hệ thống 
+Ngắn gọn: MQ (Kafka, RabbitMQ) không dùng để truyền tin đơn giản, mà để *xử lý dữ liệu ở quy mô lớn, bền vững, không mất mát, và tách rời hệ thống*.
+Còn HTTP, WebSocket, MQTT chủ yếu là giao thức truyền tải.
+Tôi phân tích theo 4 lớp cho dễ hiểu:
+---
+	# 1 BẢN CHẤT KHÁC NHAU
+	| Nhóm                                | Ví dụ                 | Là GÌ                                                           |
+	| ----------------------------------- | --------------------- | --------------------------------------------------------------- |
+	| **Protocol**                        | HTTP, WebSocket, MQTT | Cách **truyền dữ liệu từ A → B**                                |
+	| **Message Queue / Event Streaming** | RabbitMQ, Kafka       | **Hệ thống trung gian lưu – phân phối – đảm bảo xử lý message** |
+	 Protocol = đường ống
+	 MQ = kho trung chuyển + hệ thống điều phối giao thông
+---
+# 2 NẾU CHỈ DÙNG HTTP / MQTT / WebSocket  VẤN ĐỀ GÌ XẢY RA?
+Giả sử:
+	Mobile App  HTTP  Server A  xử lý đơn  gọi Server B  gửi email  ghi log  cập nhật thống kê
+###  Vấn đề nghiêm trọng:
+1. Server B down  Server A treo theo
+2. Gửi 100k request/s  sập hệ thống
+3. Crash giữa chừng  mất dữ liệu
+4. Không replay lại được dữ liệu
+5. Scale rất khó vì phụ thuộc đồng bộ
+---
+	# 3 MESSAGE QUEUE GIẢI QUYẾT NHỮNG GÌ?
+##  1. CHỐNG MẤT DỮ LIỆU (Durability)
+	* Kafka ghi xuống disk
+	* RabbitMQ có persistent queue
+	* Server chết  message vẫn còn
+	 HTTP chết là mất luôn request
+---
+##  2. TÁCH RỜI HỆ THỐNG (Decoupling)
+Không còn phụ thuộc trực tiếp:
+	Producer  MQ  Consumer
+Producer không cần biết consumer là ai, còn sống không, nhanh hay chậm.
+---
+##  3. CHỊU TẢI CAO (Backpressure)
+	| HTTP trực tiếp | MQ                 |
+	| -------------- | ------------------ |
+	| Tải cao → sập  | Tải cao → xếp hàng |
+	| Timeout        | Không mất dữ liệu  |
+---
+##  4. XỬ LÝ BẤT ĐỒNG BỘ CHUẨN KIẾN TRÚC MICROSERVICE
+Ví dụ đơn hàng:
+	Order Service  Kafka
+	            Email Service
+	            Inventory Service
+	            Recommendation Service
+Không service nào phụ thuộc service nào.
+---
+##  5. REPLAY - TIME TRAVEL DATA (KAFKA)
+	Kafka cho phép:
+	* Đọc lại dữ liệu từ 1 giờ trước, 1 ngày trước
+	* Rebuild lại toàn bộ hệ thống từ event
+	HTTP / MQTT không làm được điều này.
+---
+# 4 THẾ MQTT, WEBSOCKET CÓ DÙNG THAY MQ ĐƯỢC KHÔNG?
+| Giao thức | Có queue? | Lưu lâu? | Replay? | Scale lớn? |
+| --------- | --------- | -------- | ------- | ---------- |
+| HTTP      | ❌         | ❌        | ❌       | ❌          |
+| WebSocket | ❌         | ❌        | ❌       | ❌          |
+| MQTT      | ⚠️ (nhẹ)  | ⚠️       | ❌       | ⚠️         |
+| RabbitMQ  | ✅         | ✅        | ⚠️      | ✅          |
+| Kafka     | ✅✅✅       | ✅✅✅      | ✅✅✅     | ✅✅✅        |
+### MQTT:
+* Rất tốt cho IoT, sensor
+* Nhưng:
+  * Không giữ log lâu
+  * Không replay mạnh
+  * Không xử lý stream dữ liệu lớn
+---
+	# 5 KHI NÀO KHÔNG CẦN KAFKA / RABBITMQ?
+	 App nhỏ
+	 CRUD đơn giản
+	 User < 10k
+	 Không cần xử lý async phức tạp
+	 HTTP + WebSocket là đủ
+---
+# 6 KHI NÀO BẮT BUỘC PHẢI CÓ MQ?
+ Microservices
+ Hệ thống tài chính
+ Đơn hàng, thanh toán
+ Game realtime nhiều server
+ Tracking hành vi người dùng
+ Event sourcing
+ Big Data / AI stream
+---
+	# 7 TÓM GỌN 1 CÂU
+	> HTTP / MQTT / WebSocket chỉ là ống dẫn - còn Kafka, RabbitMQ là bộ não điều phối + kho chứa thông điệp an toàn.
+---
+Nếu bạn muốn, tôi có thể vẽ sơ đồ:
+*  Kiến trúc không dùng MQ (dễ sập)
+*  Kiến trúc dùng Kafka chuẩn microservice
+hoặc so sánh:
+* RabbitMQ vs Kafka trong hệ thống bạn đang làm.

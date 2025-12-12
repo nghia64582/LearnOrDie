@@ -1,4 +1,0 @@
-Q1: What is Spring Framework?
-    A1: Spring Framework is an open-source application framework for Java that provides comprehensive infrastructure support for developing Java applications. It is designed to simplify Java development and promote good design practices, such as loose coupling and testability.
-Q2: What are the main features of Spring Framework?
-    A2: The main features of Spring Framework include:

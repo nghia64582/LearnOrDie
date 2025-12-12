@@ -1,0 +1,140 @@
+Ques:
+Vậy làm sao Kafka biết một service đã xử lý xong message đã publish hay chưa. Nếu service chưa xử 
+lý, kafka sẽ publish lại lần nữa hay như nào. Nếu service đã xử lý, kafka làm sao tránh gửi 2 lần.
+
+Câu hỏi này đụng đúng lõi của Kafka 
+Kafka không dùng cơ chế ack từng message như RabbitMQ, mà dùng OFFSET + CONSUMER GROUP để biết:
+* Service đã xử lý tới đâu
+* Có cần gửi lại hay không
+* Và vì sao vẫn có khả năng bị xử lý trùng
+Tôi giải thích từng ý đúng theo 3 câu hỏi của bạn:
+---
+	# 1 KAFKA BIẾT SERVICE ĐÃ XỬ LÝ XONG BẰNG CÁCH NÀO?
+	 Bằng OFFSET
+	Mỗi message trong Kafka có:
+		topic | partition | offset
+	
+	Ví dụ:
+	
+		order-events | partition-0 | offset = 10521
+	
+	Service (consumer) sẽ:
+	
+1. Đọc message offset = 10521
+2. Xử lý xong
+3. Gửi lại cho Kafka:
+		 Tôi đã xử lý xong offset = 10521
+		 gọi là COMMIT OFFSET
+	
+	 Kafka chỉ nhớ offset, không biết bạn xử lý logic gì bên trong.
+	
+---
+# 2 NẾU SERVICE CHƯA XỬ LÝ XONG  KAFKA CÓ GỬI LẠI KHÔNG?
+ CÓ  nhưng KHÔNG PHẢI do Kafka chủ động resend, mà do:
+### Trường hợp 1: Service bị crash trước khi commit offset
+Flow thực tế:
+	Kafka  gửi message offset 10521  Service nhận
+	Service xử lý CHƯA XONG  Service sập 
+	 Offset CHƯA ĐƯỢC COMMIT
+	 Kafka xem như: CHƯA XỬ LÝ
+	 Khi service chạy lại  Kafka GỬI LẠI offset 10521
+ Đây gọi là:
+>  At-least-once delivery (Xử lý ÍT NHẤT 1 lần, có thể bị trùng)
+---
+	### Trường hợp 2: Service xử lý xong nhưng commit lỗi
+		 Xử lý xong DB
+		 Commit offset bị timeout
+		 Kafka tưởng CHƯA xử lý
+		 Gửi lại message
+	
+	 Vẫn bị trùng!
+	
+---
+# 3 NẾU SERVICE ĐÃ XỬ LÝ  KAFKA TRÁNH GỬI 2 LẦN BẰNG CÁCH NÀO?
+ Kafka chỉ dựa vào OFFSET đã commit
+| Trạng thái         | Kafka làm gì  |
+| ------------------ | ------------- |
+| Offset chưa commit | Gửi lại       |
+| Offset đã commit   | KHÔNG gửi nữa |
+ Kafka không biết bạn xử lý có thành công logic hay không
+ Kafka chỉ biết:
+ Offset này đã được ghi nhận là xong
+---
+	# 4 VẬY KAFKA CÓ ĐẢM BẢO KHÔNG TRÙNG MESSAGE KHÔNG?
+	 MẶC ĐỊNH: KHÔNG!
+	Kafka mặc định là:
+	>  At-least-once
+	>  Không phải Exactly-once
+	Có thể xảy ra:
+	* Trùng đơn hàng
+	* Trùng email
+	* Trùng cộng tiền
+	* Trùng ghi log
+---
+# 5 VẬY LÀM SAO ĐỂ KHÔNG BỊ XỬ LÝ TRÙNG?
+Bạn phải xử lý ở APPLICATION LEVEL:
+---
+	##  CÁCH 1: IDEMPOTENT CONSUMER (CÁCH PHỔ BIẾN NHẤT)
+	Mỗi message phải có:
+		eventId / orderId / transactionId
+	
+	Khi xử lý:
+	
+		INSERT INTO processed_event(event_id)
+		IF NOT EXISTS
+	
+	Nếu insert thất bại  bỏ qua  tránh xử lý trùng.
+	
+	 Cách này dùng trong:
+	
+	* Ngân hàng
+	* Đơn hàng
+	* Thanh toán
+	* Giao dịch ví
+	
+---
+##  CÁCH 2: TRANSACTION + EXACTLY-ONCE (CẤP KAFKA)
+Kafka hỗ trợ:
+* Producer Idempotent
+* Kafka Transaction API
+Flow:
+	Consume  Process  Produce  Commit Offset
+	TẤT CẢ trong 1 TRANSACTION
+ Đảm bảo:
+* Không mất message
+* Không bị gửi trùng downstream
+ Nhưng:
+* Code phức tạp
+* Tốn tài nguyên
+* Ít hệ thống dùng full chuẩn này
+---
+	# 6 TÓM GỌN NGUYÊN LÝ KAFKA TRONG 5 DÒNG
+	* Kafka không nhớ trạng thái xử lý logic
+	* Kafka chỉ nhớ offset đã commit
+	* Nếu chưa commit  gửi lại
+	* Nếu đã commit  không gửi nữa
+	* Do đó:
+	>  Kafka đảm bảo KHÔNG MẤT dữ liệu
+	>  Nhưng CÓ THỂ TRÙNG dữ liệu
+---
+# 7 SO SÁNH NHANH VỚI RABBITMQ
+| Tiêu chí       | Kafka           | RabbitMQ               |
+| -------------- | --------------- | ---------------------- |
+| Xác nhận xử lý | Commit Offset   | ACK                    |
+| Replay         | ✅ Có            | ❌ Không                |
+| Trùng message  | ✅ Có thể        | ✅ Có thể               |
+| Mất message    | ❌ Gần như không | ❌ Nếu không persistent |
+---
+	# 8 KẾT LUẬN CHUẨN KIẾN TRÚC
+	>  Kafka không giúp bạn tránh trùng message, mà giúp bạn không mất message.
+	>  Việc chống trùng là trách nhiệm của SERVICE.
+---
+Nếu bạn muốn, tôi có thể vẽ sơ đồ:
+*  Flow xử lý Kafka chuẩn trong hệ thống đơn hàng
+*  Flow bị trùng message do crash
+*  Flow dùng idempotent để chống trùng
+hoặc viết code ví dụ:
+* Kafka Consumer + Manual Commit
+* Kafka + Idempotent xử lý order.
+
+

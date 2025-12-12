@@ -18,6 +18,21 @@ Thí nghiệm làm mộng âm cho que kem
 Thí nghiệm làm mộng âm tròn cho que tre
     + Que tre đường kính 2.6-3 mm (đường kính không đều)
     + Kích thước khớp trên file: 3mm (R = 1.5mm)
+    + Kích thước với lực ép:
+        + 1.5mm: rộng và lỏng, quay ma sát nhẹ => Thích hợp cho trục quay cần độ khít, ít ma sát
+        + 1.3mm: quá chật, không thể nhét => Không thể làm gì
+        + 1.4mm: ổn định nhất, có độ chặt khá lớn nhưng vẫn nhét được => Thích hợp cho khớp cần lực
+          ma sát lớn như khớp quay
+        + 1.45mm: hơi chặt, vừa đủ để nhét => Thích hợp cho khớp nối, sau dán keo
+
+Thí nghiệm làm mộng âm dương que tròn 4.7 - 5mm:
+    + Que tròn đường kính 4.7-5mm
+    + Kích thước với lực ép:
+        + R = 2.35mm: Khá chặt => Thích hợp cho khớp quay, chịu lực xoắn
+        + R = 2.4mm: Chặt vừa đủ => Dùng cho khớp nối, sau dán keo
+        + R = 2.45mm: Hơi chặt 
+        + R = 2.5mm: rộng, lỏng => Thích hợp cho trục quay cần độ khít, ít ma sát
+        + R = 2.55mm: Khá rộng, lỏng => Trục quay gần như không ma sát
 
 Thí nghiệm làm mộng âm dương tấm-cạnh
     + Cắt cạnh theo cấu trúc răng cưa: 

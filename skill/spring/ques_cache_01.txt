@@ -1,0 +1,148 @@
+Có những cách setup cache cho các get function của bean service như nào, xóa cache khi update 
+database như nào
+
+Trong Spring Boot, có 2 cách chính để setup cache cho các hàm `get` trong Service:
+1. Cache bằng Annotation (chuẩn - đơn giản - dùng nhiều nhất)
+2. Cache thủ công bằng Redis / Map / Caffeine
+Và có 3 annotation quan trọng để quản lý cache khi update DB:
+* `@Cacheable`  lưu cache
+* `@CachePut`  update cache
+* `@CacheEvict`  xóa cache
+Tôi trình bày theo chuẩn dùng trong production.
+---
+#  1. BẬT CACHE TRONG SPRING
+	Chỉ cần 1 dòng:
+		@EnableCaching
+		@SpringBootApplication
+		public class Sp1Application {
+		}
+	
+---
+#  2. CACHE GET BẰNG `@Cacheable`
+Ví dụ bạn có hàm:
+	public UserEntity getUserById(Long id)
+###  Gắn cache:
+	@Cacheable(value = "users", key = "#id")
+	public UserEntity getUserById(Long id) {
+		    System.out.println("CALL DATABASE");
+		    return userRepository.findById(id).orElse(null);
+	}
+ Kết quả:
+* Lần 1  gọi DB  lưu vào cache
+* Lần 2  lấy từ cache  KHÔNG gọi DB
+---
+#  3. XÓA CACHE KHI UPDATE DB  `@CacheEvict`
+	Ví dụ hàm update:
+		@CacheEvict(value = "users", key = "#user.id")
+		public UserEntity updateUser(UserEntity user) {
+			    return userRepository.save(user);
+		}
+	
+	 Khi update:
+	
+	* DB được update
+	* Cache của user cũ bị xóa
+	* Lần sau gọi `getUserById` sẽ lấy DB lại
+	
+---
+#  4. CẬP NHẬT CACHE LUÔN  `@CachePut`
+Nếu bạn muốn:
+* Update DB
+* Update luôn cache (không xóa)
+	@CachePut(value = "users", key = "#user.id")
+	public UserEntity updateUser(UserEntity user) {
+		    return userRepository.save(user);
+	}
+---
+#  5. XÓA TOÀN BỘ CACHE
+	Ví dụ khi import dữ liệu:
+		@CacheEvict(value = "users", allEntries = true)
+		public void clearAllUsers() {
+		}
+	
+---
+#  6. SO SÁNH NHANH 3 ANNOTATION
+| Annotation    | Dùng khi nào  | DB có bị gọi không | Cache thay đổi |
+| ------------- | ------------- | ------------------ | -------------- |
+| `@Cacheable`  | GET           | Lần đầu có         | Lưu            |
+| `@CachePut`   | UPDATE        | Có                 | Update         |
+| `@CacheEvict` | DELETE/UPDATE | Có                 | Xóa            |
+---
+#  7. CACHE THEO NHIỀU KEY
+	Ví dụ cache theo email:
+		@Cacheable(value = "users", key = "#email")
+		public UserEntity getByEmail(String email) { ... }
+		
+		Hoặc combo key:
+		
+			@Cacheable(value = "users", key = "#id + '_' + #role")
+		
+	---
+	#  8. CACHE BẰNG REDIS (PRODUCTION CHUẨN)
+	### 8.1. Dependency:
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+	### 8.2. application.yml
+		spring:
+		  cache:
+		    type: redis
+		  data:
+		    redis:
+		      host: localhost
+		      port: 6379
+	Spring sẽ tự:
+	* Dùng Redis làm cache
+	* Không cần sửa code `@Cacheable`
+	---
+	#  9. TTL - TỰ HẾT HẠN CACHE
+		### Cấu hình TTL Redis:
+			@Bean
+			public RedisCacheConfiguration cacheConfig() {
+			    return RedisCacheConfiguration.defaultCacheConfig()
+			        .entryTtl(Duration.ofMinutes(10));
+		}
+	
+	 Cache tự mất sau 10 phút.
+	
+---
+#  10. CÁC LỖI THƯỜNG GẶP
+###  1. Gọi method cache trong cùng class  cache không hoạt động
+	this.getUserById(1L); //  Không chạy cache
+Phải gọi từ bean khác.
+---
+###  2. Object trả về không Serializable khi dùng Redis
+	Entity phải:
+		implements Serializable
+	
+---
+#  11. SƠ ĐỒ THỰC TẾ
+	Client
+	Controller
+	Service (@Cacheable)
+	Redis Cache   Nếu có thì return ngay
+	Database      Nếu cache miss
+---
+#  12. ÁP DỤNG CHUẨN CHO DỰ ÁN MẠNG XÃ HỘI
+	| API           | Cache |
+	| ------------- | ----- |
+	| Get user      | ✅     |
+	| Get post      | ✅     |
+	| Get comment   | ✅     |
+	| Like post     | ❌     |
+	| Share post    | ❌     |
+	| Feed realtime | ❌     |
+---
+#  TÓM TẮT NGẮN GỌN
+* Cache GET  `@Cacheable`
+* Update DB + Update cache  `@CachePut`
+* Update DB + Xóa cache  `@CacheEvict`
+* Redis = chuẩn production
+* Tránh self-call trong cùng class
+---
+	Nếu bạn muốn, tôi có thể:
+	 Viết full demo UserService + Cache + Redis + Update + Evict
+	 So sánh Redis vs Caffeine vs EhCache
+	 Setup cache cho hệ thống mạng xã hội bạn đang xây dựng
+	Bạn muốn theo hướng nào?

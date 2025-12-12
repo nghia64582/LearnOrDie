@@ -46,3 +46,6 @@ Code/Python/LaserCtrl/cut_plan.gcode
 Code/Python/LaserCtrl/cut_plan.svg
 Code/Python/SvgDrawer/output.gcode
 Code/Python/SvgDrawer/output.svg
+Code/Python/LaserCtrl/__pycache__/cut_handler.cpython-313.pyc
+Code/Python/LaserCtrl/__pycache__/extended_cut_export.cpython-313.pyc
+Code/Python/LaserCtrl/__pycache__/cut_plan_builder.cpython-313.pyc

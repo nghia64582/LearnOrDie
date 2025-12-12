@@ -1,0 +1,123 @@
+Kafka gửi at-lease-once, vậy khoảng cách thời gian giữa các lần gửi như nào, có thể setup không. 
+Nếu 2 service B và C cùng subcribe 1 topic, service A publish 1 message trong topic này, service B
+đã xử lý xong và commit offset, trong khi C bị lỗi, vậy theo logic trên thì kafka không bắn message
+lại nữa, điều này khiến service C có thể mất message này, tôi có hiểu đúng không, nếu đúng thế làm
+sao đảm bảo cả B và C cùng nhận được message và xử lý thành công và commit offset
+
+Bạn hỏi đúng trúng điểm hay bị hiểu sai nhất của Kafka. Mình trả lời theo đúng 3 ý của bạn, và sửa lại một hiểu nhầm quan trọng:
+---
+	# 1 Kafka gửi lại sau bao lâu? - CÓ SETUP ĐƯỢC KHÔNG?
+	 Kafka KHÔNG có khái niệm retry sau X giây như RabbitMQ.
+	Kafka chỉ gửi lại khi xảy ra 1 trong các sự kiện sau:
+###  1. Consumer bị coi là chết
+	Kafka sẽ gửi lại khi:
+	| Tham số                | Ý nghĩa                                          |
+	| ---------------------- | ------------------------------------------------ |
+	| `session.timeout.ms`   | Quá thời gian không heartbeat → consumer bị kick |
+	| `max.poll.interval.ms` | Consumer không gọi `poll()` kịp                  |
+	| Consumer crash         | Mất kết nối                                      |
+	 Khi đó:
+	* Kafka rebalance
+	* Gán partition cho consumer khác
+	* Consumer mới sẽ đọc lại từ offset đã commit gần nhất
+	 Thời gian gửi lại = phụ thuộc:
+	* `session.timeout.ms` (mặc định ~10s)
+	* `heartbeat.interval.ms` (mặc định ~3s)
+	 Bạn CÓ thể config khoảng thời gian Kafka phát hiện consumer chết
+	 Nhưng KHÔNG có khái niệm delay retry như MQ truyền thống
+---
+###  2. Consumer xử lý xong nhưng CHƯA commit  restart
+ Kafka gửi lại NGAY khi service chạy lại.
+---
+	# 2 TRƯỜNG HỢP BẠN ĐƯA RA - BẠN HIỂU SAI Ở 1 ĐIỂM RẤT QUAN TRỌNG 
+	Bạn nói:
+	> B và C cùng subscribe 1 topic, A publish 1 message,
+	> B xử lý xong commit offset,
+	> C bị lỗi  Kafka không gửi lại nữa  C mất message?
+	 Câu này CHỈ ĐÚNG nếu B và C nằm trong CÙNG MỘT CONSUMER GROUP.
+	Kafka hoạt động theo quy tắc:
+	>  Mỗi PARTITION chỉ được xử lý bởi 1 consumer trong 1 consumer group
+---
+##  CASE 1  B & C CÙNG GROUP (Load Balancing)
+	Topic (1 partition)
+	 Group: order-group
+	    B xử lý
+	    C đứng chờ
+A publish 1 message:
+ Chỉ B nhận được
+ B commit offset
+ C KHÔNG BAO GIỜ NHẬN MESSAGE NÀY
+ Đây là CHỦ ĐÍCH THIẾT KẾ để:
+* Scale xử lý
+* Chia tải
+* Tránh xử lý trùng
+ Trường hợp này:
+* C không bị mất message
+* Mà là C chưa bao giờ có quyền nhận message đó
+---
+	##  CASE 2  B & C KHÁC GROUP (Fan-out chuẩn microservice)
+		Topic: order-created
+		
+		Group: email-service    Consumer B
+		Group: inventory-service  Consumer C
+	
+	A publish 1 message:
+	
+	 B nhận được
+	 C cũng nhận được
+	 B commit offset KHÔNG ẢNH HƯỞNG GÌ TỚI C
+	 C crash  Kafka gửi lại cho C
+	 Không mất message
+	
+	 Đây mới là mô hình đúng cho microservice
+	
+---
+# 3 VẬY LÀM SAO ĐẢM BẢO B VÀ C CÙNG XỬ LÝ THÀNH CÔNG?
+ ĐIỀU KIỆN BẮT BUỘC:
+>  B và C PHẢI nằm trong 2 CONSUMER GROUP KHÁC NHAU
+###  Kiến trúc đúng:
+	Service A (Producer)
+	    Kafka Topic: order-created
+	Group: email-service       B
+	Group: inventory-service   C
+	Group: analytics-service   D
+ Mỗi service:
+* Có offset RIÊNG
+* Commit RIÊNG
+* Crash  Kafka gửi lại RIÊNG
+* Không ảnh hưởng nhau
+---
+	# 4 TÓM GỌN CHÍNH XÁC 4 Ý CỐT LÕI
+	1 Kafka KHÔNG retry theo thời gian, chỉ retry khi:
+	* Consumer chết
+	* Chưa commit offset
+	2 Commit offset là theo CONSUMER GROUP, không theo service toàn cục
+	3 Nếu:
+	* B & C cùng group  chỉ 1 thằng nhận
+	* B & C khác group  CẢ HAI ĐỀU NHẬN
+	4 Để đảm bảo:
+	>  B và C cùng xử lý thành công
+	>  BẮT BUỘC: B và C phải là 2 GROUP KHÁC NHAU
+---
+# 5 1 SAI LẦM KIẾN TRÚC RẤT NHIỀU NGƯỜI DÍNH 
+ Sai:
+	order-service
+	payment-service
+	email-service
+	 CÙNG 1 GROUP
+ Mất sự kiện, loạn nghiệp vụ, thiếu service xử lý.
+ Đúng:
+	order-service-group
+	payment-service-group
+	email-service-group
+---
+	#  KẾT LUẬN GỌN 1 CÂU
+	>  Kafka KHÔNG đảm bảo mọi consumer đều nhận message -
+	>  Kafka chỉ đảm bảo: MỖI CONSUMER GROUP sẽ nhận đủ message của nó.
+---
+Nếu bạn muốn, tôi có thể:
+* Vẽ sơ đồ Kafka fan-out đúng chuẩn microservice
+* Mô phỏng rebalance khi 1 consumer chết
+* Viết demo code:
+  * 2 group cùng đọc 1 topic
+  * 1 group bị crash  message được gửi lại.

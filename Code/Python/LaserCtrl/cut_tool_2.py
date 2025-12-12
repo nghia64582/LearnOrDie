@@ -148,7 +148,8 @@ class CutToolApp:
 
     def laser_on(self):
         if self.ser:
-            self.ser.write(b"M3\n")
+            # Bật laser ở S100 (đủ nhìn)
+            self.ser.write(b"M3 S100\n")
 
     def laser_off(self):
         if self.ser:
@@ -158,7 +159,26 @@ class CutToolApp:
         if not self.ser:
             messagebox.showerror("Error", "Not connected.")
             return
-        messagebox.showinfo("TODO", "Send GCODE logic here")
+        try:
+            with open("cut_plan.gcode", "r") as f:
+                lines = f.readlines()
+
+            total_lines = len(lines)
+            for i, line in enumerate(lines):
+                self.ser.write(line.encode('utf-8'))
+                self.ser.flush()
+                # Đợi phản hồi từ máy
+                while True:
+                    response = self.ser.readline().decode('utf-8').strip()
+                    if response:
+                        break
+                progress_percent = int((i + 1) / total_lines * 100)
+                self.progress.config(text=f"Progress: {progress_percent}%")
+                self.root.update_idletasks()
+
+            messagebox.showinfo("Done", "GCODE execution completed.")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     # ================= PARSER =================
 
