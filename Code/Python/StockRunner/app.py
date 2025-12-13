@@ -7,6 +7,13 @@ import threading
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import pandas as pd
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
 
 # Import the external data handler module
 from main import process

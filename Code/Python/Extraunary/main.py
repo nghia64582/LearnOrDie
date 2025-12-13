@@ -8,12 +8,18 @@ import pandas as pd
 import json
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
 class ExtraunaryManager:
     def __init__(self, root):
         self.root = root
         self.root.title("Extraunary")
-        self.root.geometry("800x600")
+        self.root.geometry("800x700")
 
         # Create tabs
         self.tab_control = ttk.Notebook(root)
@@ -39,7 +45,7 @@ class ExtraunaryManager:
 
     def setup_add_data_tab(self):
         # Configure font
-        self.custom_font = ("Times New Roman", 14)
+        self.custom_font = ("Times New Roman", 11)
 
         # Name Entry
         tk.Label(self.add_tab, text="Name:", font=self.custom_font).grid(row=0, column=0, padx=10, pady=10)
@@ -111,7 +117,7 @@ class ExtraunaryManager:
             messagebox.showerror("API Error", f"Error adding data: {response.text}")
 
     def setup_view_data_tab(self):
-        self.custom_font = ("Times New Roman", 14)
+        self.custom_font = ("Times New Roman", 11)
 
         style = ttk.Style()
         style.configure('Custom.TRadiobutton', font=self.custom_font)

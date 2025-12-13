@@ -1,3 +1,11 @@
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
+
 import os
 import socket
 import subprocess
@@ -9,8 +17,8 @@ class PortKillerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Port Killer Utility")
-        self.root.geometry("500x350")
-        self.root.resizable(False, False)
+        self.root.geometry("500x400")
+        self.root.resizable(True, True)
         
         # Set app icon if desired
         # self.root.iconbitmap("icon.ico")  # Uncomment and add your icon path

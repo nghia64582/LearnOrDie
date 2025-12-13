@@ -5,6 +5,14 @@ import os
 import uuid
 import subprocess
 
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
+
 # ==== Cấu hình chuyển đổi đơn vị ====
 # 1 inch = 25.4 mm, 96 px/inch => px/mm
 PX_PER_MM = 96.0 / 25.4

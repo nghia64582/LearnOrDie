@@ -1,3 +1,11 @@
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
+
 import tkinter as tk
 from tkinter import font
 
@@ -63,7 +71,7 @@ def run_gui():
     root.geometry("700x600")
 
     # Custom font
-    APP_FONT = font.Font(family="Times New Roman", size=12)
+    APP_FONT = font.Font(family="JetBrains Mono", size=10)
 
     # ----- Input Label -----
     lbl_input = tk.Label(root, text="Input", font=APP_FONT)

@@ -3,6 +3,14 @@ from tkinter import filedialog, messagebox, ttk
 import os
 import shutil # For deleting files/folders
 
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
+
 class FileFolderApp:
     def __init__(self, master):
         self.master = master
@@ -14,33 +22,33 @@ class FileFolderApp:
         self.current_directory = os.getcwd() # Start in current working directory
 
         # --- Top Frame: Path Entry and Navigation Buttons ---
-        self.top_frame = tk.Frame(master, padx=15, pady=15, bg="#f5f5f5", relief=tk.RAISED, bd=2)
-        self.top_frame.pack(fill=tk.X, pady=(10, 5), padx=10)
+        self.top_frame = tk.Frame(master, bg="#f5f5f5", relief=tk.RAISED, bd=2)
+        self.top_frame.pack(fill=tk.X)
 
         # Updated font to "Times New Roman", size 12
-        self.path_label = tk.Label(self.top_frame, text="Current Path:", font=("JetBrains Mono", 12, "bold"), bg="#f5f5f5", fg="#333333")
-        self.path_label.pack(side=tk.LEFT, padx=(0, 10))
+        self.path_label = tk.Label(self.top_frame, text="Current Path:", font=("JetBrains Mono", 11), bg="#f5f5f5", fg="#333333")
+        self.path_label.pack(side=tk.LEFT)
 
         # Updated font to "Times New Roman", size 12
-        self.path_entry = tk.Entry(self.top_frame, width=60, font=("JetBrains Mono", 12), bd=2, relief=tk.SUNKEN, bg="white", fg="#333333")
-        self.path_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 15))
+        self.path_entry = tk.Entry(self.top_frame, width=60, font=("JetBrains Mono", 10), bd=2, relief=tk.SUNKEN, bg="white", fg="#333333")
+        self.path_entry.pack(side=tk.LEFT, expand=True, fill=tk.X)
         self.path_entry.insert(0, self.current_directory)
         self.path_entry.bind("<Return>", self.go_to_path_event) # Bind Enter key
 
         # Updated font to "Times New Roman", size 12
-        self.go_button = tk.Button(self.top_frame, text="Go", command=self.go_to_path, font=("JetBrains Mono", 12, "bold"), bg="#4CAF50", fg="white", relief=tk.RAISED, bd=2, activebackground="#45a049", cursor="hand2")
-        self.go_button.pack(side=tk.LEFT, padx=(0, 8))
+        self.go_button = tk.Button(self.top_frame, text="Go", command=self.go_to_path, font=("JetBrains Mono", 10), bg="#4CAF50", fg="white", relief=tk.RAISED, bd=2, activebackground="#45a049", cursor="hand2")
+        self.go_button.pack(side=tk.LEFT)
 
         # Updated font to "Times New Roman", size 12
-        self.back_button = tk.Button(self.top_frame, text="Back", command=self.go_back, font=("JetBrains Mono", 12, "bold"), bg="#2196F3", fg="white", relief=tk.RAISED, bd=2, activebackground="#0b7dda", cursor="hand2")
-        self.back_button.pack(side=tk.LEFT, padx=(0, 0))
+        self.back_button = tk.Button(self.top_frame, text="Back", command=self.go_back, font=("JetBrains Mono", 10), bg="#2196F3", fg="white", relief=tk.RAISED, bd=2, activebackground="#0b7dda", cursor="hand2")
+        self.back_button.pack(side=tk.LEFT)
 
         # --- Separator ---
-        ttk.Separator(master, orient='horizontal').pack(fill='x', pady=10, padx=10)
+        ttk.Separator(master, orient='horizontal').pack(fill='x')
 
         # --- Content Frame: Scrollable Area for Files/Folders ---
         self.content_frame = tk.Frame(master, bg="#ffffff", bd=2, relief=tk.SUNKEN)
-        self.content_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+        self.content_frame.pack(fill=tk.BOTH, expand=True)
 
         self.canvas = tk.Canvas(self.content_frame, bg="#ffffff", highlightthickness=0) # Remove default canvas border
         self.scrollbar = ttk.Scrollbar(self.content_frame, orient="vertical", command=self.canvas.yview)
@@ -61,16 +69,16 @@ class FileFolderApp:
 
         # --- Table Headers ---
         self.header_frame = tk.Frame(self.scrollable_frame, bg="#e0e0e0", bd=1, relief=tk.SOLID)
-        self.header_frame.grid(row=0, column=0, columnspan=4, sticky="ew", pady=(0, 5))
+        self.header_frame.grid(row=0, column=0, columnspan=4, sticky="ew")
 
         # Updated font to "Times New Roman", size 12
-        tk.Label(self.header_frame, text="Name", font=("JetBrains Mono", 12, "bold"), width=30, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=0, sticky="w")
+        tk.Label(self.header_frame, text="Name", font=("JetBrains Mono", 10), width=30, anchor="w", bg="#e0e0e0", fg="#333333", bd=1, relief=tk.SOLID).grid(row=0, column=0, sticky="w")
         # Updated font to "Times New Roman", size 12
-        tk.Label(self.header_frame, text="Size", font=("JetBrains Mono", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=1, sticky="w")
+        tk.Label(self.header_frame, text="Size", font=("JetBrains Mono", 10), width=10, anchor="w", bg="#e0e0e0", fg="#333333", bd=1, relief=tk.SOLID).grid(row=0, column=1, sticky="w")
         # Updated font to "Times New Roman", size 12
-        tk.Label(self.header_frame, text="Action", font=("JetBrains Mono", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=2, sticky="w")
+        tk.Label(self.header_frame, text="Action", font=("JetBrains Mono", 10), width=10, anchor="w", bg="#e0e0e0", fg="#333333", bd=1, relief=tk.SOLID).grid(row=0, column=2, sticky="w")
         # Updated font to "Times New Roman", size 12
-        tk.Label(self.header_frame, text="Delete", font=("JetBrains Mono", 12, "bold"), width=10, anchor="w", bg="#e0e0e0", fg="#333333", padx=2, pady=0, bd=1, relief=tk.SOLID).grid(row=0, column=3, sticky="w")
+        tk.Label(self.header_frame, text="Delete", font=("JetBrains Mono", 10), width=10, anchor="w", bg="#e0e0e0", fg="#333333", bd=1, relief=tk.SOLID).grid(row=0, column=3, sticky="w")
 
         self.update_display()
 
@@ -148,23 +156,23 @@ class FileFolderApp:
                         size_str = "N/A" # Handle cases where file size cannot be accessed
 
                 # Name Label - Updated font to "Times New Roman", size 12
-                tk.Label(self.scrollable_frame, text=name, anchor="w", font=("JetBrains Mono", 12, "bold"), width=30, bg="#6ab370", fg="#333333", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=0, sticky="ew")
+                tk.Label(self.scrollable_frame, text=name, anchor="w", font=("JetBrains Mono", 10), width=30, bg="#6ab370", fg="#333333", bd=1, relief=tk.SOLID).grid(row=row_num, column=0, sticky="ew")
                 # Size Label - Updated font to "Times New Roman", size 12
-                tk.Label(self.scrollable_frame, text=size_str, anchor="w", font=("JetBrains Mono", 12, "bold"), width=10, bg="#ffffff", fg="#333333", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=1, sticky="ew")
+                tk.Label(self.scrollable_frame, text=size_str, anchor="w", font=("JetBrains Mono", 10), width=10, bg="#ffffff", fg="#333333", bd=1, relief=tk.SOLID).grid(row=row_num, column=1, sticky="ew")
 
                 # Action Button (Open for folders)
                 # show border
                 if is_dir:
                     # Updated font to "Times New Roman", size 12
-                    open_button = tk.Button(self.scrollable_frame, text="Open", command=lambda p=full_path: self.open_item(p), font=("JetBrains Mono", 12, "bold"), width=10, bg="#8BC34A", fg="white", relief=tk.RAISED, bd=1, activebackground="#7cb342", cursor="hand2")
-                    open_button.grid(row=row_num, column=2, padx=2, pady=8, sticky="ew")
+                    open_button = tk.Button(self.scrollable_frame, text="Open", command=lambda p=full_path: self.open_item(p), font=("JetBrains Mono", 10), width=10, bg="#8BC34A", fg="white", activebackground="#7cb342")
+                    open_button.grid(row=row_num, column=2, sticky="ew")
                 else:
                     # Updated font to "Times New Roman", size 12
-                    tk.Label(self.scrollable_frame, text="file", font=("JetBrains Mono", 12, "bold"), width=10, bg="#ffffff", padx=2, pady=8, bd=1, relief=tk.SOLID).grid(row=row_num, column=2, sticky="ew") # Placeholder for files
+                    tk.Label(self.scrollable_frame, text="file", font=("JetBrains Mono", 10), width=10, bg="#ffffff", bd=1, relief=tk.SOLID).grid(row=row_num, column=2, sticky="ew") # Placeholder for files
 
                 # Delete Button - Updated font to "Times New Roman", size 12
-                delete_button = tk.Button(self.scrollable_frame, text="Delete", command=lambda p=full_path, i_d=is_dir: self.delete_item(p, i_d), font=("JetBrains Mono", 12, "bold"), width=10, bg="#F44336", fg="#f3d0d0", relief=tk.RAISED, bd=1, activebackground="#e53935", cursor="hand2")
-                delete_button.grid(row=row_num, column=3, padx=2, pady=8, sticky="ew")
+                delete_button = tk.Button(self.scrollable_frame, text="Delete", command=lambda p=full_path, i_d=is_dir: self.delete_item(p, i_d), font=("JetBrains Mono", 10), width=10, bg="#F44336", fg="#f3d0d0", activebackground="#e53935")
+                delete_button.grid(row=row_num, column=3, sticky="ew")
 
                 row_num += 1
 

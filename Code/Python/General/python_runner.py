@@ -1,3 +1,11 @@
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
+
 import tkinter as tk
 from tkinter import filedialog, messagebox, font
 import subprocess
@@ -157,9 +165,9 @@ class PythonAppRunner:
         app_frame.path_value = app_path # Store path directly as an attribute
 
         # App Name Label and Entry
-        name_label = tk.Label(app_frame, text="App Name:", bg="white", fg="black", font=self.custom_font)
+        name_label = tk.Label(app_frame, text="App:", bg="white", fg="black", font=self.custom_font)
         name_label.grid(row=0, column=0, sticky="w", pady=2, padx=1)
-        name_entry = tk.Entry(app_frame, width=20, bg="white", fg="black", font=self.custom_font, insertbackground='black', textvariable=app_frame.name_var)
+        name_entry = tk.Entry(app_frame, width=16, bg="white", fg="black", font=self.custom_font, insertbackground='black', textvariable=app_frame.name_var)
         name_entry.grid(row=0, column=1, sticky="ew", pady=2, padx=1)
 
         # Buttons in a single row

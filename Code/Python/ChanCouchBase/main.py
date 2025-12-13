@@ -1,3 +1,11 @@
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from model_keys import load_model_keys

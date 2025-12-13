@@ -5,6 +5,14 @@ import serial.tools.list_ports
 from cut_plan_builder import *
 from extended_cut_export import *
 
+# ------- DPI FIX -------
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except:
+    ctypes.windll.user32.SetProcessDPIAware()
+# -----------------------
+
 class CutToolApp:
     def __init__(self, root):
         self.root = root
