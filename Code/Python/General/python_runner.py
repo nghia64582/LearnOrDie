@@ -159,13 +159,14 @@ class PythonAppRunner:
         app_frame = tk.Frame(self.scrollable_frame, bg="white", bd=1, relief=tk.SOLID, padx=1, pady=1)
         app_frame.pack(fill=tk.X, padx=1, pady=1)
         self.app_entries.append(app_frame)
+        apd_idx = len(self.app_entries)
 
         # Store app name and path as StringVar and attribute on the frame
         app_frame.name_var = tk.StringVar(value=app_name)
         app_frame.path_value = app_path # Store path directly as an attribute
 
         # App Name Label and Entry
-        name_label = tk.Label(app_frame, text="App:", bg="white", fg="black", font=self.custom_font)
+        name_label = tk.Label(app_frame, text=f"App:{apd_idx}", bg="white", fg="black", font=self.custom_font)
         name_label.grid(row=0, column=0, sticky="w", pady=2, padx=1)
         name_entry = tk.Entry(app_frame, width=16, bg="white", fg="black", font=self.custom_font, insertbackground='black', textvariable=app_frame.name_var)
         name_entry.grid(row=0, column=1, sticky="ew", pady=2, padx=1)
@@ -177,7 +178,7 @@ class PythonAppRunner:
         # Browse Button
         browse_button = tk.Button(
             button_row_frame,
-            text="Browse",
+            text="📁",
             command=lambda frame=app_frame: self.browse_file(frame),
             bg="#98C379", # Green
             fg="black",
@@ -192,7 +193,7 @@ class PythonAppRunner:
         # Start Button
         start_button = tk.Button(
             button_row_frame,
-            text="Start",
+            text="▶",
             command=lambda frame=app_frame: self.run_app(frame.path_value),
             bg="#61AFEF", # Blue
             fg="black",
@@ -207,7 +208,7 @@ class PythonAppRunner:
         # Delete Button
         delete_button = tk.Button(
             button_row_frame,
-            text="Delete",
+            text="🗑",
             command=lambda frame=app_frame: self.delete_app_entry(frame),
             bg="#E06C75", # Red
             fg="black",
@@ -218,6 +219,9 @@ class PythonAppRunner:
             cursor="hand2"
         )
         delete_button.pack(side=tk.LEFT, padx=2)
+
+        # Bind number "apd_idx" with self.run_app 
+        self.master.bind(f'{apd_idx}', lambda event, frame=app_frame: self.run_app(frame.path_value))
 
         # Configure column weights for responsiveness
         app_frame.grid_columnconfigure(1, weight=1)

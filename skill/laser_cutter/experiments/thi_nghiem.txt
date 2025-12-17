@@ -34,6 +34,14 @@ Thí nghiệm làm mộng âm dương que tròn 4.7 - 5mm:
         + R = 2.5mm: rộng, lỏng => Thích hợp cho trục quay cần độ khít, ít ma sát
         + R = 2.55mm: Khá rộng, lỏng => Trục quay gần như không ma sát
 
+Thí nghiệm làm mộng cho trục motor vàng:
+    + Khuôn chữ nhât:
+        + Lỗ ép khít vừa, ma sát nhỏ: 5.2mmX3.4mm
+        + Lỗ ép chặt: 5.1mm X 3.3mm
+    + Đế tròn:
+        + Lỗ ép khít vừa, R = 2.6mm
+        + Nên dùng que kem tiết diện thẳng để ép sát bề mặt motor, thay cho que tiết diện tròn
+
 Thí nghiệm làm mộng âm dương tấm-cạnh
     + Cắt cạnh theo cấu trúc răng cưa: 
     + Cắt tấm theo cấu trúc mộng âm là các hình chữ nhật có kích thước 2mm(phù hợp với độ dày tấm) * 10mm

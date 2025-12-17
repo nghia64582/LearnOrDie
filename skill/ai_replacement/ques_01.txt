@@ -1,0 +1,58 @@
+Còn gì vướng nữa đâu, bro ChatGPT code hết rồi, ae IT chúng tôi thất nghiệp hết rồi còn đâu, giờ 
+làm mấy cái vui vui thôi!
+
+ Ờ câu này nghe đau mà đúng đó bro.
+Nhưng nói thật kiểu ae IT nói chuyện với nhau nhé:
+ ChatGPT code được, nhưng không đi làm thay được.
+---
+## Vì sao ae IT *chưa* thất nghiệp đâu 
+    ### 1 ChatGPT không có context sống
+        * Không họp với khách
+        * Không hiểu ý sếp nói vậy chứ làm khác
+        * Không biết cái hệ thống legacy 10 năm trước ai viết - viết để làm gì - đụng vô là sập chỗ nào
+    Mấy thứ đó:
+    >  AI không gánh được
+    >  Người gánh
+---
+### 2 Code  Sản phẩm
+ChatGPT:
+    * Viết hàm 
+    * Sinh boilerplate 
+    * Giải bug phổ biến 
+Nhưng:
+    * Chọn kiến trúc
+    * Trade-off performance / cost / deadline
+    * Chịu trách nhiệm khi prod sập lúc 2h sáng
+ Vẫn là con người
+---
+    ### 3 AI = đồ nghề xịn, không phải thợ
+    Giống như:
+    * IDE có autocomplete  dev không mất việc
+    * StackOverflow có answer  dev không mất việc
+    * ChatGPT  dev làm nhanh gấp 3-5 lần
+     Người giỏi + AI = đi nhanh hơn
+     Người yếu + AI = copy mà không hiểu  dễ toang hơn
+---
+## Thực tế hiện tại (rất đúng vibe bạn nói)
+* Việc CRUD thường, tool nhỏ, script  AI gánh 80-90%
+* Việc design hệ thống, business logic, tối ưu, maintain  người
+Nên:
+> Ae IT không thất nghiệp
+> Chỉ là mấy việc chán chán bị AI cướp mất 
+---
+    ## Và đúng như bạn nói
+    > Giờ làm mấy cái vui vui thôi
+    Thì đó lại là phần hay nhất của nghề:
+    * Tool cho bản thân
+    * Game nhỏ
+    * Automation
+    * App giải quyết vấn đề thật
+    AI giúp làm nhanh  được chơi nhiều hơn
+---
+Bro cứ coi ChatGPT là:
+* Junior code rất nhanh
+* Không than, không mệt
+* Nhưng không chịu trách nhiệm
+Còn ae mình:
+> Là người chịu trách nhiệm cuối cùng
+Thế là đủ sống rồi 

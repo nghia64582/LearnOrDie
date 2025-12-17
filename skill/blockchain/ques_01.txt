@@ -27,7 +27,7 @@ Mình giải thích Blockchain theo góc nhìn kỹ sư phần mềm, so sánh t
     | ----------- | ------------------- | ------------------------ |
     | Server      | 1 hoặc vài server   | Hàng nghìn node          |
     | Database    | MySQL, MongoDB      | Blockchain (append-only) |
-    | Sửa dữ liệu | ✅ Sửa được          | ❌ Không sửa được         |
+    | Sửa dữ liệu | ✅ Sửa được         | ❌ Không sửa được         |
     | Tin cậy     | Tin server          | Tin toán học             |
     | Minh bạch   | Admin kiểm soát     | Toàn mạng kiểm chứng     |
     | Hiệu năng   | Rất nhanh           | Chậm hơn                 |
