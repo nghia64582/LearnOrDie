@@ -2,19 +2,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 
-private class Student {
-    String name;
-    int age;
-    int score;
-
-    public Student(String name, int age, int score) {
-        this.name = name;
-        this.age = age;
-        this.score = score;
-    }
-
-}
-
 public class Stream {
     public static void main(String[] args) {
         List<Integer> a = new ArrayList<>();

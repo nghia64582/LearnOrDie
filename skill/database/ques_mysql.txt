@@ -1,0 +1,160 @@
+Đúng   câu hỏi này chạm tầng rất thấp (storage engine) của SQL database. Mình sẽ đi từ block/page  index  variable-length data (TEXT/BLOB/JSON), theo cách hiểu để thiết kế & tối ưu.
+---
+    # 1. Database có lưu dữ liệu theo block/page không?
+     Có, tất cả RDBMS đều lưu theo page (block)
+    | DB           | Page size        |
+| ------------ | ---------------- |
+    | MySQL InnoDB | 16 KB (mặc định) |
+    | PostgreSQL   | 8 KB             |
+    | SQL Server   | 8 KB             |
+    | Oracle       | 8–32 KB          |
+     DB không đọc từng row, mà:
+    * đọc nguyên page vào memory
+    * buffer pool cache page
+---
+## Page chứa gì?
+### Data page (leaf page)
+* Nhiều row
+* Metadata (row pointer, free space)
+### Index page
+* Key + pointer
+* Tạo thành B+Tree
+---
+    # 2. Index giảm số block như thế nào?
+    ## 2.1. Không có index (Full table scan)
+    Giả sử:
+    * Bảng 1 TB
+    * Page 16 KB  ~67 triệu pages
+        SELECT * FROM users WHERE email='a@b.com';
+     Phải đọc rất nhiều page  IO khủng khiếp
+---
+## 2.2. B+Tree index hoạt động ra sao?
+### Cấu trúc
+            [Root]
+              |
+          [Internal]
+           /     \
+       [Leaf]  [Leaf]
+### Mỗi node là 1 page
+* Root: 1 page
+* Internal: vài page
+* Leaf: chứa key + pointer
+ Chiều cao thường 3-4 page dù bảng rất lớn
+---
+    ## 2.3. Ví dụ thực tế
+    * 1 tỷ row
+    * B+Tree height = 4
+        Root         1 page
+        Level 2      1 page
+        Level 3      1 page
+        Leaf         1 page
+        Data page    1 page
+     ~5 page read thay vì hàng triệu
+     Đó là lý do index ăn tiền
+---
+# 3. Clustered vs Secondary Index
+## 3.1. Clustered index
+* Data nằm trong leaf node
+* Thường là:
+  * Primary key
+### MySQL InnoDB
+    PRIMARY KEY  data thật
+    SECONDARY INDEX  trỏ về PK
+ Secondary index lookup = 2 lần B+Tree
+1. Tìm PK
+2. Tìm data theo PK
+---
+    ## 3.2. Covering index
+        CREATE INDEX idx_user_email ON users(email, name);
+    Query:
+        SELECT name FROM users WHERE email=...;
+     Không cần đọc data page
+     Chỉ đọc index page
+     Cực nhanh
+---
+# 4. Variable-length data (TEXT / BLOB / JSON) lưu thế nào?
+## 4.1. Không nhét thẳng hết vào page
+Page size cố định  không thể nhét TEXT dài vô hạn
+ DB dùng overflow / TOAST / off-page storage
+---
+    ## 4.2. MySQL InnoDB
+    ### TEXT / BLOB
+    * Trong row:
+      * chỉ lưu 20 bytes pointer
+    * Nội dung thật:
+      * lưu ở overflow pages
+        Row page:
+        [id][name][text_ptr]
+        Overflow page:
+        [text data...]
+     Chỉ 768 bytes đầu có thể inline (tuỳ config)
+---
+## 4.3. PostgreSQL (TOAST)
+* TEXT / JSONB / BYTEA
+* Nếu > ~2KB:
+  * tách ra TOAST table
+    Main table  pointer
+    TOAST table  chunked data
+ Có compression
+ Lazy load (chỉ đọc khi cần)
+---
+    ## 4.4. SQL Server
+    * `varchar(max)`, `nvarchar(max)`
+    * Lưu:
+      * inline nếu nhỏ
+      * off-row nếu lớn
+---
+# 5. Index với TEXT / JSON hoạt động thế nào?
+## 5.1. Không index toàn bộ TEXT
+ Không index cả blob
+ Index:
+* prefix
+* hash
+* expression
+### MySQL
+    CREATE INDEX idx_title ON post(title(100));
+---
+    ## 5.2. JSON index
+    ### PostgreSQL
+        CREATE INDEX idx_data ON tbl USING GIN (jsonb_col);
+    * GIN = inverted index
+    * Index từng key/value
+    ### MySQL
+        CREATE INDEX idx_age ON tbl ((JSON_EXTRACT(data,'$.age')));
+---
+# 6. Vì sao TEXT/BLOB làm index & join chậm?
+1. Pointer  thêm IO
+2. Không cache tốt
+3. Không dùng clustered index
+4. Không so sánh nhanh như int
+ Rule vàng:
+> JOIN / WHERE / ORDER BY  dùng field fixed-size (INT, BIGINT)
+---
+    # 7. Tối ưu thực tế (rất quan trọng)
+    ###  Tách bảng
+        user_core (id, email, name)
+        user_profile (id, bio TEXT, avatar BLOB)
+    ###  Đừng index TEXT trừ khi cần
+    ###  Dùng covering index
+    ###  PK ngắn, tăng dần
+    ###  Không dùng UUID random làm PK (nếu DB clustered)
+---
+# 8. Tóm tắt nhanh
+| Chủ đề          | Ý chính                    |
+| --------------- | -------------------------- |
+| Page/block      | DB đọc theo page           |
+| Index           | B+Tree giảm page read      |
+| Clustered index | Data nằm trong leaf        |
+| TEXT/BLOB       | Lưu off-page               |
+| JSON            | TOAST / overflow           |
+| Index TEXT      | Prefix / expression        |
+| Tối ưu          | Tách bảng + fixed-size key |
+---
+    ## Kết luận 1 câu
+    > Index không làm DB đọc ít row hơn, mà làm DB đọc ít PAGE hơn.
+    Nếu bạn muốn, mình có thể:
+    * Vẽ sơ đồ page + index
+    * Phân tích query plan thực tế (EXPLAIN)
+    * So sánh InnoDB vs PostgreSQL TOAST
+    * Gợi ý schema cho bảng hàng TB
+     Bạn đang dùng MySQL hay PostgreSQL, và bảng bạn quan tâm chứa loại dữ liệu nào nhiều (TEXT, JSON, BLOB)?

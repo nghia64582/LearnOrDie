@@ -1,0 +1,152 @@
+Câu hỏi này đúng chất kiến trúc sư / tech lead, và là chỗ dễ sai nhất khi làm microservice.
+Mình trả lời theo decision framework để bạn *tự quyết được*, chứ không chỉ nên hay không.
+---
+    # TL;DR - Quy tắc nhanh
+    > Feature mới = Service mới
+    >  *KHÔNG phải lúc nào cũng đúng*
+    > Feature mới = Thêm vào service cũ
+    >  *cũng rất hay thành God service*
+     Quyết định đúng không dựa vào feature, mà dựa vào domain, data, lifecycle và team.
+---
+# 1. Nguyên tắc cốt lõi: Bounded Context (DDD)
+Câu hỏi đầu tiên KHÔNG phải:
+> Feature này lớn không?
+Mà là:
+> Feature này có thuộc cùng một *domain context* không?
+### Ví dụ
+* `Order` + `Payment`  KHÔNG cùng context
+* `Order` + `OrderCancel`  CÙNG context
+ Nếu khác bounded context  service mới
+---
+    # 2. 7 tiêu chí quyết định (Production-grade)
+    ## (1) Domain Ownership - Ai chịu trách nhiệm?
+    | Câu hỏi                          | Ý nghĩa                  |
+| -------------------------------- | ------------------------ |
+    | Feature này có owner khác không? | Team khác → service khác |
+    | Business rule khác không?        | Khác → tách              |
+     Rule:
+    > 1 service = 1 domain owner
+---
+## (2) Data Ownership - Bảng này thuộc về ai?
+###  Dấu hiệu cần tách service
+* Feature cần:
+  * schema riêng
+  * lifecycle riêng
+  * retention riêng
+* Không nên join trực tiếp DB với service hiện tại
+ Rule:
+> Service sở hữu DB của nó
+---
+    ## (3) Change Frequency - Có thay đổi độc lập không?
+    | Tình huống                    | Quyết định |
+| ----------------------------- | ---------- |
+    | Feature thay đổi thường xuyên | Tách       |
+    | Feature ổn định               | Gộp        |
+    | Release cycle khác            | Tách       |
+     Nếu mỗi lần đổi feature mà build lại service chính  smell
+---
+## (4) Scaling Profile - Có scale khác không?
+### Ví dụ
+| Service      | Load    |
+| ------------ | ------- |
+| User         | 100 rps |
+| Notification | 10k rps |
+| Report       | batch   |
+ Nếu:
+* CPU bound vs IO bound
+* burst traffic
+* async heavy
+ Tách
+---
+    ## (5) Failure Isolation - Hỏng có kéo theo không?
+    ### Câu hỏi:
+    > Feature mới chết thì service chính có chết theo không?
+     Nếu có  tách
+     Ví dụ cần tách:
+    * Email / SMS
+    * Payment
+    * Recommendation
+    * Analytics
+---
+## (6) Tech Stack / Infra khác?
+| Khác biệt                | Tách |
+| ------------------------ | ---- |
+| DB (SQL vs NoSQL)        | ✅    |
+| Runtime (Java vs Python) | ✅    |
+| SLA                      | ✅    |
+| Security level           | ✅    |
+---
+    ## (7) Team Size & Cognitive Load
+    > Một dev mới có hiểu service này trong 1-2 tuần không?
+     Không  service quá to
+     Microservice giải quyết vấn đề con người, không chỉ kỹ thuật.
+---
+# 3. Anti-patterns thường gặp (rất hay dính)
+##  Feature-based microservice
+    user-service
+    order-service
+    discount-feature-service   
+ Sai vì feature  domain
+---
+    ##  Distributed monolith
+    * Tách service
+    * Nhưng:
+      * gọi sync chồng chéo
+      * shared DB
+      * deploy cùng lúc
+---
+##  Premature microservice
+* App còn nhỏ
+* Team 3 người
+* Đã 10 service
+ Monolith tốt > Microservice tệ
+---
+    # 4. Khi nào nên dùng service cũ?
+    ###  Dùng service cũ nếu:
+    * Cùng bounded context
+    * Chung transaction boundary
+    * CRUD trên cùng entity
+    * Không cần scale riêng
+    * Không async-heavy
+     Ví dụ:
+    * `Order` + `OrderHistory`
+    * `User` + `UserProfile`
+    * `Product` + `ProductImage`
+---
+# 5. Khi nào nên tách service mới?
+###  Tách service nếu có 2+ dấu hiệu:
+* Domain khác
+* Data riêng
+* Release độc lập
+* Scale khác
+* Failure không được lan
+* Team khác
+* SLA khác
+---
+    # 6. Decision Matrix (thực tế dùng được)
+    | Tiêu chí            | Service cũ | Service mới |
+    | ------------------- | ---------- | ----------- |
+    | Same domain         | ✅          | ❌           |
+    | Shared DB           | ✅          | ❌           |
+    | Independent scaling | ❌          | ✅           |
+    | Async-heavy         | ❌          | ✅           |
+    | High blast radius   | ❌          | ✅           |
+    | Different team      | ❌          | ✅           |
+---
+# 7. Kiến trúc tiến hóa (rất quan trọng)
+    Không cần quyết định đúng ngay từ đầu
+    ### Best practice:
+    1. Start modular monolith
+    2. Tách package rõ ràng
+    3. Khi đủ đau  extract service
+    Git repo mới chỉ là bước cuối cùng, không phải bước đầu.
+---
+    # 8. Câu kết (đáng nhớ)
+    > Microservice không phải là cách chia code,
+    > mà là cách chia trách nhiệm & rủi ro.
+---
+Nếu bạn muốn, hãy mô tả:
+    * feature mới là gì
+    * service hiện tại đang có
+    * team size & traffic
+    Mình sẽ đóng vai kiến trúc sư và quyết giúp bạn: *tách hay không, tách thế nào cho không chết*.

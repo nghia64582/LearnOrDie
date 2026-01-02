@@ -1,2 +1,31 @@
-<?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="9.0mm" height="100.0mm" viewBox="-2.0 0.0 9.0 100.0"><line x1="-2.000" y1="100.000" x2="7.000" y2="100.000" stroke="#FF0000" stroke-width="0.2" fill="none" /><line x1="-2.000" y1="50.000" x2="7.000" y2="50.000" stroke="#FF0000" stroke-width="0.2" fill="none" /><line x1="-2.000" y1="0.000" x2="7.000" y2="0.000" stroke="#FF0000" stroke-width="0.2" fill="none" /></svg>
+<?xml version="1.0" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="82.0mm" height="110.0mm"
+     viewBox="-6.0 -5.0 82.0 110.0">
+<g fill="none" stroke="#FF0000" stroke-width="0.2">
+<line x1="-1.0" y1="0.0" x2="11.0" y2="0.0" />
+<line x1="-1.0" y1="100.0" x2="11.0" y2="100.0" />
+<line x1="14.0" y1="0.0" x2="26.0" y2="0.0" />
+<line x1="14.0" y1="100.0" x2="26.0" y2="100.0" />
+<line x1="29.0" y1="0.0" x2="41.0" y2="0.0" />
+<line x1="29.0" y1="100.0" x2="41.0" y2="100.0" />
+<line x1="44.0" y1="0.0" x2="56.0" y2="0.0" />
+<line x1="44.0" y1="60.0" x2="56.0" y2="60.0" />
+<line x1="59.0" y1="0.0" x2="71.0" y2="0.0" />
+<line x1="59.0" y1="60.0" x2="71.0" y2="60.0" />
+<circle cx="5.0" cy="6.0" r="1.5" />
+<circle cx="5.0" cy="86.205" r="1.5" />
+<circle cx="5.0" cy="94.0" r="1.5" />
+<circle cx="20.0" cy="6.0" r="1.5" />
+<circle cx="20.0" cy="13.795" r="1.5" />
+<circle cx="20.0" cy="94.0" r="1.5" />
+<circle cx="35.0" cy="6.0" r="1.5" />
+<circle cx="35.0" cy="94.0" r="1.5" />
+<circle cx="50.0" cy="5.0" r="1.5" />
+<circle cx="50.0" cy="55.0" r="1.5" />
+<circle cx="65.0" cy="5.0" r="1.5" />
+<circle cx="65.0" cy="55.0" r="1.5" />
+<path d="M 30.0 5.0 A 5.0 5.0 0 0 0 40.0 5.0" />
+<path d="M 30.0 95.0 A 5.0 5.0 0 0 1 40.0 95.0" />
+</g>
+</svg>

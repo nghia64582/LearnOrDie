@@ -1,0 +1,173 @@
+
+
+Câu hỏi này rất kiến trúc 
+Nó không còn là SQL syntax nữa, mà là cách tổ chức dữ liệu để hệ thống sống khỏe khi lớn.
+Mình sẽ chia theo đúng 3 loại bạn nêu: Entity - Transaction - Log, kèm đặc thù CRUD + cách tối ưu (đây là cách làm thực tế ở hệ lớn).
+---
+    # 1. Phân loại dữ liệu trong hệ thống SQL
+    | Loại                            | Ví dụ                       | Đặc điểm                 |
+    | ------------------------------- | --------------------------- | ------------------------ |
+    | **Entity (Master / Dimension)** | User, Product, Student, Car | Ít thay đổi, đọc nhiều   |
+    | **Transaction (Fact)**          | Order, Invoice, Payment     | Ghi liên tục, tăng nhanh |
+    | **Log / Event**                 | Access log, Audit log       | Append-only, rất lớn     |
+---
+# 2. ENTITY (Master Data)
+## 2.1. Bản chất
+* Đại diện thực thể nghiệp vụ
+* Có vòng đời dài
+* Dùng làm FK cho nhiều bảng khác
+ Ví dụ:
+    users, products, cars, schools
+---
+    ## 2.2. CRUD đặc thù
+    | Operation | Tần suất           |
+    | --------- | ------------------ |
+    | CREATE    | Ít                 |
+    | READ      | Rất nhiều          |
+    | UPDATE    | Ít / theo field    |
+    | DELETE    | Hiếm (soft delete) |
+---
+## 2.3. Thiết kế & tối ưu
+###  Schema
+* PK ngắn, tăng dần (`BIGINT`)
+* Field fixed-size cho join
+* TEXT/BLOB  tách bảng phụ
+    users(id, email, name)
+    user_profile(id, bio TEXT, avatar)
+---
+###  Index
+    * PK
+    * UNIQUE (email, code)
+    * Covering index cho query phổ biến
+---
+###  Cache
+    * Redis / in-memory
+    * Read-through cache
+    Entity rất hợp cache
+---
+    ###  Delete
+    * Soft delete (`is_deleted`)
+    * Không cascade delete
+---
+# 3. TRANSACTION (Fact Data)
+## 3.1. Bản chất
+    * Ghi liên tục
+    * Không update nhiều
+    * Dữ liệu chỉ tăng
+    Ví dụ:
+        orders, invoices, payments
+---
+    ## 3.2. CRUD đặc thù
+    | Operation | Tần suất      |
+| --------- | ------------- |
+    | CREATE    | Rất nhiều     |
+    | READ      | Nhiều         |
+    | UPDATE    | Có (status)   |
+    | DELETE    | Gần như không |
+---
+## 3.3. Thiết kế & tối ưu
+###  Partition (cực quan trọng)
+    PARTITION BY RANGE (created_at)
+* Theo ngày / tháng
+* Giảm scan
+* Dễ archive
+---
+    ###  Index strategy
+    * Composite index:
+        (user_id, created_at)
+        (status, created_at)
+    * Tránh index dư thừa (write nặng)
+---
+###  Denormalization (có kiểm soát)
+    orders:
+      user_id
+      user_name (snapshot)
+ Tránh join nặng
+---
+    ###  Append-first
+    * Insert trước
+    * Update status sau
+    * Tránh UPDATE nhiều field
+---
+###  Delete = Archive
+    orders_2023  cold storage
+---
+    # 4. LOG / EVENT DATA
+    ## 4.1. Bản chất
+    * Append-only
+    * Rất lớn
+    * Ghi cực nhiều
+    * Ít update, ít delete
+     Ví dụ:
+        access_log, audit_log, click_event
+---
+## 4.2. CRUD đặc thù
+| Operation | Tần suất             |
+| --------- | -------------------- |
+| CREATE    | Cực nhiều            |
+| READ      | Ít (query theo time) |
+| UPDATE    | ❌                    |
+| DELETE    | Batch / TTL          |
+---
+    ## 4.3. Thiết kế & tối ưu
+    ###  Không dùng FK
+    * FK làm chậm write
+    * Log chấp nhận inconsistency
+---
+###  Partition theo thời gian
+    PARTITION BY RANGE (log_time)
+---
+    ###  Index tối thiểu
+    * Chỉ index `log_time`
+    * Tránh index text
+---
+###  Batch insert
+    INSERT INTO log VALUES (...), (...), (...);
+---
+    ###  TTL / Retention
+    * Xóa theo partition
+    * Không DELETE từng row
+---
+###  Khi nào KHÔNG dùng SQL?
+* Log > vài trăm GB/ngày
+   Dùng:
+    * ClickHouse
+    * ElasticSearch
+    * Kafka + sink
+---
+    # 5. So sánh nhanh 3 loại
+    | Thuộc tính | Entity  | Transaction | Log       |
+    | ---------- | ------- | ----------- | --------- |
+    | Kích thước | Nhỏ–TB  | Lớn         | Rất lớn   |
+    | Write      | Ít      | Nhiều       | Cực nhiều |
+    | Update     | Có      | Ít          | ❌        |
+    | Delete     | Soft    | Archive     | TTL       |
+    | Index      | Nhiều   | Vừa         | Rất ít    |
+    | FK         | Có      | Có/ít       | ❌        |
+    | Cache      | Rất tốt | Có          | ❌        |
+---
+# 6. Áp dụng vào hệ thống lớn (chuẩn thực tế)
+### Ví dụ e-commerce
+    users         ENTITY
+    products      ENTITY
+    orders        TRANSACTION
+    order_items   TRANSACTION
+    payment_log   LOG
+---
+    # 7. Nguyên tắc vàng
+    1. Entity  read optimized
+    2. Transaction  write optimized
+    3. Log  append optimized
+    4. Không dùng 1 chiến lược cho mọi bảng
+    5. Partition là vũ khí chính cho bảng lớn
+    6. Index = trade-off giữa read và write
+---
+# 8. Kết luận 1 câu
+> SQL không lưu dữ liệu, mà lưu mô hình nghiệp vụ - mỗi loại cần chiến lược CRUD khác nhau.
+---
+    Nếu bạn muốn, mình có thể:
+    * Review schema hiện tại của bạn
+    * Gợi ý partition & index strategy
+    * So sánh SQL vs NoSQL cho từng loại
+    * Áp dụng cho project bạn đang làm (carpool, marketplace, game, log system)
+     Bạn đang thiết kế hệ nào, và bảng nào đang làm bạn lo về hiệu năng?

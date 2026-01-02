@@ -1,0 +1,130 @@
+Ví dụ một game có 5 người vs 5 người, tổng là 10, trung bình 1 giây đưa ra 1 hành động
+ (có thể lên đến 3 hành động/s, tổng cả 10 người là 30, vậy server có update tick liên 
+ tục ko (như một schedule hoặc timer chẳng hạn) hay chỉ update nhiều tick một lúc khi 
+ có action người chơi gửi lên
+
+Câu hỏi này rất hay vì nó chạm đúng vào chỗ nhiều người thiết kế game server hay hiểu sai 
+Mình trả lời thẳng, rõ, theo cách MOBA/FPS thực tế đang làm.
+---
+    ## TL;DR (trả lời ngắn gọn trước)
+    > Server VẪN chạy tick liên tục,
+    > KHÔNG đợi action rồi mới update.
+    Action của người chơi chỉ là input,
+    thế giới game vẫn phải trôi theo thời gian.
+---
+# 1. Vì sao server BẮT BUỘC phải tick liên tục?
+Trong MOBA, kể cả không có ai bấm gì, game vẫn phải cập nhật:
+*  Cooldown skill
+*  Bullet đang bay
+*  DOT (damage over time)
+*  Buff / debuff hết hạn
+*  AI creep / tower
+*  HP regen / mana regen
+*  Skill đang channel
+ Tất cả đều phụ thuộc vào thời gian, không phụ thuộc action.
+---
+    # 2. Mô hình ĐÚNG: Tick liên tục + action là event
+    ### Server loop chuẩn
+        Tick 0
+          - apply actions
+          - update world
+        Tick 1
+          - apply actions
+          - update world
+        Tick 2
+          ...
+    Action chỉ được:
+    * enqueue
+    * xử lý tại tick kế tiếp
+---
+# 3. Action KHÔNG trigger tick
+ Sai lầm phổ biến:
+> Người chơi không bấm gì thì server không cần update
+ Sai vì:
+* Bullet vẫn bay
+* Skill vẫn nổ
+* Buff vẫn hết hạn
+---
+    # 4. Action được xử lý thế nào?
+    ### Client gửi:
+        {
+              "tick": 1024,
+              "action": "MOVE",
+              "direction": [1, 0]
+        }
+    ### Server:
+        actionQueue[tick].add(action)
+    ### Trong tick:
+        for action in actionQueue[currentTick]:
+            apply(action)
+---
+# 5. Nếu action nhiều (burst 30 action / giây)?
+Không vấn đề gì:
+* Tick = 20 / s
+* Mỗi tick xử lý ~1-2 action / player
+* Action rất nhẹ so với world update
+---
+    # 6. Có dùng schedule / timer không?
+    ### KHÔNG dùng nhiều timer riêng lẻ 
+    * Hàng trăm timer  overhead
+    * Khó debug
+    * Không deterministic
+    ### Dùng 1 game loop duy nhất 
+        Single thread loop
+        Fixed tick rate
+---
+# 7. Có mô hình chỉ update khi có action không?
+### Có - nhưng KHÔNG cho MOBA
+Phù hợp với:
+* Turn-based game
+* Idle game
+* Board game
+* Async strategy
+ Không phù hợp real-time game.
+---
+    # 8. Nếu không có action thì server có làm gì?
+    Ví dụ 1 tick không có action:
+        - update cooldown
+        - move bullets
+        - check DOT
+        - regen HP
+        - AI creep move
+     Vẫn phải chạy.
+---
+# 9. Tối ưu: Tick rỗng (Idle tick)
+    Khi game ít hoạt động:
+    * Không có bullet
+    * Không skill
+    * Không AI active
+     Tick vẫn chạy nhưng rất nhẹ:
+        O(number of active entities)
+---
+    # 10. Alternative nâng cao (ít dùng)
+    ### Variable tick + fixed simulation step
+    * Accumulate delta time
+    * Chạy nhiều step nếu lag
+    Dùng khi:
+    * Server overload
+    * Catch-up
+---
+# 11. Tóm tắt bằng bảng
+    | Câu hỏi                      | Trả lời      |
+| ---------------------------- | ------------ |
+    | Server có tick liên tục?     | ✅ Có         |
+    | Action có trigger tick?      | ❌ Không      |
+    | Action xử lý khi nào?        | Tick kế tiếp |
+    | Có dùng timer cho mỗi skill? | ❌ Không      |
+    | Tick rỗng có chạy?           | ✅ Có         |
+    | Turn-based có tick?          | ❌ Không      |
+---
+    ##  Kết luận quan trọng nhất
+    > Game real-time = thời gian luôn trôi
+    > Tick là nhịp tim của server
+    > Action chỉ là input vào nhịp tim đó
+---
+    Nếu bạn muốn, mình có thể:
+    * Vẽ timeline action vs tick
+    * Cho pseudo-code vòng lặp server
+    * Phân tích lag / jitter / packet delay
+    * So sánh fixed tick vs variable tick
+    Bạn đang làm game real-time MOBA, hay đang cân nhắc idle / semi-realtime?

@@ -1,0 +1,164 @@
+Thuật toán tìm đường trong mặt phẳng 2 chiều, có các vật cản biểu thị là các đa giác 
+(3 cạnh trở lên) là gì, tối ưu như nào (giả sử bản đồ 10000x10000, có 200 vật cản là
+ các đa giác, cạnh dài 20-200, unit không được đi vào các đa giác
+
+
+Đây là bài toán pathfinding kinh điển trong game / robotics:
+tìm đường trong mặt phẳng 2D với vật cản là đa giác bất kỳ.
+Mình sẽ trả lời theo thứ tự:
+1. Các thuật toán đúng bản chất
+2. Thuật toán nào phù hợp nhất với bài toán bạn nêu
+3. Cách tối ưu thực tế cho map rất lớn
+4. Kiến trúc hay dùng trong MOBA / RTS
+---
+    # 1. Bản chất bài toán
+    * Không gian: liên tục 2D
+    * Vật cản: đa giác lồi / lõm
+    * Unit:
+      * Là điểm hoặc hình tròn (radius r)
+      * Không được đi vào đa giác
+    * Mục tiêu:
+      * Tìm đường ngắn / hợp lý
+      * Chạy nhanh, gọi nhiều lần
+---
+# 2. Các thuật toán chính (từ lý thuyết  thực tế)
+## 2.1 Visibility Graph + A*
+### Ý tưởng
+* Các node:
+  * Start
+  * End
+  * Tất cả vertex của các polygon
+* Nối cạnh nếu:
+  * Đường thẳng không cắt vật cản
+* Chạy A* trên graph
+### Ưu điểm
+* Đường đi rất đẹp, rất ngắn
+* Chính xác cho hình học
+### Nhược điểm
+* O(n²) visibility check
+* Với 200 polygon  ~2000 vertex  rất nặng
+* Không phù hợp runtime game
+ Dùng cho robotics / offline, KHÔNG dùng cho MOBA runtime
+---
+    ## 2.2 Navigation Mesh (NavMesh)  (chuẩn game)
+    > ĐÂY LÀ CÂU TRẢ LỜI CHÍNH XÁC CHO BÀI TOÁN CỦA BẠN
+    ### Ý tưởng
+    * Chuyển không gian thành các polygon đi được
+    * Mỗi polygon là vùng trống
+    * Kết nối polygon với nhau
+        [ Poly A ]  [ Poly B ]  [ Poly C ]
+    ### Pathfinding:
+    1. Tìm polygon chứa start
+    2. Tìm polygon chứa end
+    3. A* trên graph polygon
+    4. Funnel algorithm để làm mượt đường
+    ### Ưu điểm
+    * Rất nhanh
+    * Scale cực tốt
+    * Đường đi tự nhiên
+    * Chuẩn công nghiệp (Unity, Unreal, Dota, LoL)
+    ### Nhược điểm
+    * Cần build trước
+    * Build hơi phức tạp
+---
+## 2.3 Grid + A* (KHÔNG khuyến nghị cho map của bạn)
+* Map 10,000 × 10,000
+* Grid 1×1  100 triệu cell
+   Không khả thi
+Ngay cả grid 10×10:
+* 1 triệu cell
+* Vẫn nặng
+---
+    ## 2.4 Voronoi Diagram (ít dùng hơn)
+    * Đường đi cách xa vật cản nhất
+    * Dùng cho robot tránh va chạm
+    * Không tự nhiên cho game
+---
+# 3. Giải pháp ĐÚNG cho bài toán bạn nêu
+## Thông số bạn đưa:
+* Map: 10,000 × 10,000
+* Vật cản: ~200 polygon
+* Cạnh: 20-200
+* Unit không vào polygon
+ NavMesh là lựa chọn tối ưu nhất
+---
+    # 4. Cách build NavMesh cho polygon obstacle
+    ## 4.1 Inflate obstacle (rất quan trọng)
+    Nếu unit có radius `r`:
+    * Expand polygon ra ngoài `r`
+    * Dùng Minkowski Sum
+     Sau đó coi unit là điểm
+---
+## 4.2 Triangulation không gian trống
+* Trừ các polygon obstacle khỏi map
+* Triangulate phần còn lại
+Thuật toán:
+* Constrained Delaunay Triangulation (CDT)
+* Ear clipping (map nhỏ)
+Kết quả:
+---
+    ## 4.3 Gộp triangle thành convex polygon
+    * Merge triangle  polygon lớn
+    * Điều kiện:
+      * Convex
+      * Không cắt obstacle
+     Giảm số node pathfinding
+---
+## 4.4 Graph polygon
+* Node = polygon
+* Edge = shared border
+---
+    # 5. Runtime pathfinding
+    ### 5.1 A* trên polygon graph
+    * Node rất ít (vài trăm)
+    * Chạy cực nhanh
+    ### 5.2 Funnel Algorithm (string pulling)
+    * Làm mượt đường
+    * Tránh zig-zag
+---
+# 6. Tối ưu quan trọng (game thực tế)
+## 6.1 Spatial indexing
+* Quadtree / BVH
+* Tìm polygon chứa point rất nhanh
+---
+    ## 6.2 Path cache
+    * Cache path giữa các choke point
+    * MOBA dùng rất nhiều
+---
+## 6.3 Hierarchical NavMesh (HPA*)
+* Chia map thành region
+* Path xa  coarse
+* Path gần  refine
+---
+    # 7. Khi nào KHÔNG dùng NavMesh?
+    | Trường hợp            | Giải pháp                     |
+| --------------------- | ----------------------------- |
+    | Map thay đổi liên tục | Local avoidance + dynamic nav |
+    | RTS hàng nghìn unit   | Flow field                    |
+    | Turn-based            | Visibility graph              |
+---
+# 8. Công cụ & thư viện chuẩn
+### Công nghiệp
+* Recast & Detour (Unity, Unreal)
+* Open-source, battle-tested
+### Nhẹ hơn
+* poly2tri
+* earcut
+* shapely (Python - offline)
+---
+    # 9. Kết luận ngắn gọn
+    > Bài toán của bạn = NavMesh + A* + Funnel
+     Không dùng grid
+     Không dùng GPU
+     Không visibility graph runtime
+     Build navmesh offline
+     Pathfinding trên polygon graph
+     Smooth bằng funnel
+---
+Nếu bạn muốn, mình có thể:
+* Vẽ pipeline build NavMesh
+* Cho pseudo-code A* + funnel
+* Phân tích Recast hoạt động thế nào
+* So sánh NavMesh vs Grid vs Flow Field
+* Gợi ý data structure cụ thể (Java / Scala)
+Bạn đang làm pathfinding cho MOBA, RTS, hay tower defense?

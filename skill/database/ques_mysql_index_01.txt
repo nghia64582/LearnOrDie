@@ -1,0 +1,143 @@
+Nếu trong sql, sau khi filter, hầu hết page/block (90% - 100%) đều có vài row thỏa mãn (vd : SELECT 
+* FROM table WHERE condition) thì index sẽ không hiệu quả đúng không, khi này có thể áp dụng kĩ 
+thuật nào
+
+
+
+Đúng   bạn hiểu hoàn toàn chính xác.
+> Nếu sau khi filter, 90-100% page đều có row thỏa mãn  index gần như vô dụng.
+Và không chỉ không hiệu quả, mà query planner thường sẽ CHỦ ĐỘNG KHÔNG DÙNG index.
+Mình sẽ giải thích vì sao, rồi khi đó nên làm gì (đây mới là phần quan trọng).
+---
+    # 1. Vì sao index không hiệu quả khi selectivity thấp?
+    ## 1.1. Khái niệm cốt lõi: *Selectivity*
+        selectivity = số row thỏa / tổng số row
+    * 1%  index rất tốt
+    * 10%  còn ổn
+    * 90%  index tệ
+    * 100%  index vô nghĩa
+---
+## 1.2. Page-level IO mới là vấn đề
+Giả sử:
+* Table: 1M page
+* Điều kiện lọc: 90% row match
+### Dùng index:
+    1. Đọc rất nhiều leaf page của index
+    2. Mỗi row  random access data page
+    3. Gần như đọc lại toàn bộ data page
+    Random IO + double access
+    Chậm hơn full table scan
+### Full table scan:
+    * Đọc tuần tự 1M page
+    * OS + DB prefetch cực tốt
+ Vì vậy planner chọn sequential scan
+---
+    # 2. DB tự động làm gì trong trường hợp này?
+    ### PostgreSQL
+        Seq Scan on table
+    ### MySQL
+        type = ALL
+     Planner bỏ index, dù index tồn tại.
+---
+# 3. Khi điều kiện lọc rất rộng, phải làm gì?
+Không có viên đạn bạc, nhưng có các kỹ thuật chuẩn sau 
+---
+    # 4. Kỹ thuật 1 - Partitioning (quan trọng nhất)
+    ## 4.1. Ý tưởng
+    Thay vì:
+        Scan 100% table
+     chỉ scan 1 partition
+---
+### Ví dụ
+    CREATE TABLE orders (
+      id BIGINT,
+      created_at DATE
+    ) PARTITION BY RANGE (created_at);
+    orders_2024
+    orders_2025
+Query:
+    WHERE created_at >= '2025-01-01'
+ DB prune partition
+ Scan ~5-10% data
+ Đây là cách chuẩn cho bảng lớn
+---
+    # 5. Kỹ thuật 2 - Partial index
+    ## Khi dùng?
+    * Chỉ quan tâm một trạng thái cụ thể
+    * Dù toàn bảng rất lớn
+    ### Ví dụ (Postgres)
+        CREATE INDEX idx_active
+        ON users(last_login)
+        WHERE status = 'ACTIVE';
+    Query:
+        WHERE status = 'ACTIVE'
+     Index nhỏ
+     Selectivity cao
+     Cực hiệu quả
+---
+# 6. Kỹ thuật 3 - Covering index (index-only scan)
+Ngay cả khi selectivity cao, nếu:
+    SELECT col1, col2 FROM table WHERE condition;
+Và:
+    CREATE INDEX idx ON table(condition, col1, col2);
+ DB không cần đọc data page
+ Chỉ đọc index page
+ Có thể vẫn nhanh dù match 80-90%
+---
+    # 7. Kỹ thuật 4 - Bitmap index scan (Postgres, Oracle)
+    ### Khi nào DB dùng?
+    * Nhiều row match
+    * Nhưng vẫn có index
+    DB sẽ:
+    1. Dùng index tạo bitmap (page  bit)
+    2. Merge bitmap
+    3. Đọc mỗi page 1 lần
+     Tối ưu IO
+     MySQL không có bitmap index scan
+---
+# 8. Kỹ thuật 5 - Denormalization / Pre-aggregation
+Nếu query:
+    WHERE is_active = true
+Và 95% row active  vô nghĩa
+ Giải pháp:
+* Tạo bảng riêng cho active
+* Hoặc materialized view
+---
+    # 9. Kỹ thuật 6 - Columnar / OLAP engine
+    Nếu:
+    * Query analytic
+    * Scan nhiều
+    * Ít filter
+     Dùng:
+    * ClickHouse
+    * BigQuery
+    * Redshift
+     Scan cực nhanh
+---
+# 10. Khi nào index KHÔNG NÊN tồn tại?
+| Trường hợp            | Hành động              |
+| --------------------- | ---------------------- |
+| Boolean column        | ❌ Index thường vô dụng |
+| status có 2–3 giá trị | ❌                      |
+| 90% row match         | ❌                      |
+| Update nhiều          | ❌                      |
+---
+    # 11. Tóm tắt nhanh
+    | Tình huống                 | Giải pháp      |
+| -------------------------- | -------------- |
+    | Filter match 90–100%       | Full scan      |
+    | Dữ liệu lớn theo thời gian | Partition      |
+    | Filter 1 trạng thái        | Partial index  |
+    | Cần đọc ít cột             | Covering index |
+    | Postgres                   | Bitmap index   |
+    | OLAP                       | Column store   |
+---
+# 12. Kết luận 1 câu
+> Index chỉ hiệu quả khi giúp DB đọc ít PAGE hơn - nếu đọc gần hết page, index không còn ý nghĩa.
+---
+    Nếu bạn muốn, mình có thể:
+    * Phân tích EXPLAIN thực tế
+    * Gợi ý partition strategy
+    * So sánh MySQL vs PostgreSQL
+    * Review index bạn đang dùng có nên xoá không
+     Bạn đang dùng DB nào, và điều kiện lọc của bạn là kiểu boolean / status / time-range?

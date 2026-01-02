@@ -1,0 +1,214 @@
+Thông thường với game online chúng ta sẽ tổ chức logic trạng thái game trên server như nào để xử lý các 
+logic như update tick, handle user action, unit logic (bullet, tower, skill, ...)
+
+
+Câu hỏi này rất đúng trọng tâm kiến trúc game online 
+Mình sẽ trả lời theo cách các game online thực tế (MMO, MOBA, FPS, Tower Defense, Idle online) thường làm, từ tổng thể  vòng lặp server  xử lý action  unit logic  đồng bộ client.
+---
+    # 1. Nguyên tắc cốt lõi (bất biến)
+    ###  Server là authoritative
+        * Client chỉ gửi ý định (intent / input)
+        * Server quyết định kết quả
+        * Client không được tin tưởng
+        * Client chỉ render
+    Ví dụ:
+        * Client gửi: *Tôi bắn*
+        * Server quyết định: *có bắn không, trúng ai, damage bao nhiêu*
+---
+# 2. Kiến trúc tổng thể (phổ biến)
+    Client
+       (input / action)
+    Gateway / Session Server
+    Game Logic Server
+    State Update / Snapshot
+    Client
+Trong game lớn có thể tách:
+    * Gateway (connection, auth)
+    * Game Server (logic)
+    * Match Server / Room Server
+    * Persistence Server (save DB)
+---
+    # 3. Vòng lặp game server (Game Loop)
+    ### 3.1 Tick-based loop (phổ biến nhất)
+        while (server_running):
+            start_time = now()
+            collect_player_inputs()
+            process_inputs()
+            update_game_state()
+            resolve_collisions()
+            send_state_to_clients()
+            sleep_until_next_tick()
+    ### Tick rate thường dùng
+    | Game            | Tick        |
+| --------------- | ----------- |
+    | Idle / TD       | 5–10 tick/s |
+    | MOBA            | 20–30       |
+    | FPS             | 30–64       |
+    | Competitive FPS | 64–128      |
+---
+# 4. Tổ chức trạng thái game (Game State)
+### 4.1 State tập trung (In-memory)
+    GameState
+      Players
+      Units (hero, tower, creep, bullet)
+      Map
+      Time
+      Events
+GameState luôn nằm trên server RAM
+DB chỉ dùng để:
+* Save match snapshot
+* Replay
+* Recovery
+---
+    ### 4.2 Entity-Component-System (ECS) (rất phổ biến)
+        Entity: ID (player_1, bullet_23)
+        Components:
+          - Position
+          - Velocity
+          - Health
+          - Skill
+        Systems:
+          - MovementSystem
+          - CombatSystem
+          - SkillSystem
+     Ưu điểm:
+    * Scale tốt
+    * Dễ thêm logic
+    * Tối ưu CPU cache
+---
+# 5. Xử lý user action (Input Handling)
+### 5.1 Client gửi gì?
+ KHÔNG gửi:
+* damage
+* vị trí sau khi đi
+* kết quả
+ GỬI:
+    {
+          "tick": 123456,
+          "action": "CAST_SKILL",
+          "skillId": 3,
+          "targetPos": [10, 5]
+    }
+---
+    ### 5.2 Server xử lý
+        validate_action()
+        enqueue_action()
+    Trong tick:
+        for action in actions:
+            if valid(action):
+                apply(action)
+    Validation gồm:
+    * Cooldown
+    * Mana
+    * Range
+    * Anti-cheat (speed hack, spam)
+---
+# 6. Update unit logic (bullet, tower, skill)
+## 6.1 Bullet / Projectile
+    for bullet in bullets:
+        bullet.pos += bullet.velocity * delta
+        if collide(bullet, unit):
+            apply_damage()
+            destroy(bullet)
+* Server quyết định hit
+* Client chỉ render
+---
+    ## 6.2 Tower / AI logic
+        for tower in towers:
+            target = find_target()
+            if can_attack(target):
+                spawn_bullet()
+---
+## 6.3 Skill logic
+* Skill = state machine
+    Idle  Casting  Active  Cooldown
+Hoặc:
+    SkillInstance
+      startTick
+      duration
+      effectFn()
+---
+    # 7. Đồng bộ client (State Sync)
+    ### 7.1 Snapshot sync
+    Server gửi:
+    * Position
+    * HP
+    * Animation state
+    * Events (hit, cast, die)
+    Client:
+    * Interpolate
+    * Predict nhẹ
+---
+### 7.2 Delta sync (tối ưu)
+Chỉ gửi:
+    {
+          "entityId": 42,
+          "hp": -10,
+          "state": "dead"
+    }
+---
+    # 8. Client-side prediction & reconciliation (nâng cao)
+    Để giảm lag:
+    * Client tạm thời giả lập
+    * Server gửi state thật
+    * Client rollback nếu sai
+    Áp dụng nhiều trong:
+    * FPS
+    * MOBA
+---
+# 9. Chia server (Scaling)
+### 9.1 Match-based
+* 1 match = 1 game loop
+* Scale theo số match
+---
+    ### 9.2 Zone / Shard
+    * World chia vùng
+    * Mỗi server xử lý 1 zone
+---
+# 10. Persist & Recovery
+* Snapshot định kỳ:
+    tick 10000  save state
+* Event sourcing (game lớn):
+    Input log  replay  rebuild state
+---
+    # 11. Công nghệ thường dùng
+    | Thành phần    | Công nghệ              |
+    | ------------- | ---------------------- |
+    | Network       | TCP / UDP / WebSocket  |
+    | Serialization | Protobuf / FlatBuffers |
+    | Loop          | Single-thread + job    |
+    | Storage       | Redis / DB             |
+    | Sync          | Snapshot + delta       |
+---
+# 12. Ví dụ cực giản lược (Pseudo-code)
+    class GameServer {
+            void tick() {
+                handleInputs();
+                updateUnits();
+                resolveCombat();
+                broadcastState();
+        }
+    }
+---
+    # 13. Liên hệ với dự án của bạn
+    Với background của bạn:
+    * Đã dùng WebSocket / MQTT
+    * Làm game idle / TD / multiplayer
+    * Scala / Java backend
+     Rất phù hợp để:
+    * Tick-based server
+    * ECS nhẹ
+    * WebSocket authoritative server
+---
+##  Tóm tắt ngắn gọn
+* Server chạy game loop theo tick
+* Client gửi intent
+* Server xử lý toàn bộ logic
+* GameState ở RAM
+* Đồng bộ bằng snapshot / delta
+Nếu bạn muốn, mình có thể:
+* Vẽ sơ đồ kiến trúc cho game TD / idle
+* Đưa skeleton code (Java / Scala)
+* So sánh MQTT vs WebSocket cho game
+* Phân tích anti-cheat cơ bản
+Bạn đang làm thể loại game nào (TD, MOBA, idle, bắn súng)?

@@ -18,6 +18,7 @@ except:
 # Import the external data handler module
 from main import process
 
+# To install a lib with pip of specific python, use: py <version> -m pip install <lib1> <lib2> ...
 class StockApp:
     def __init__(self, root):
         self.root = root

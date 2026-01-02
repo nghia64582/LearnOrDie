@@ -8,7 +8,6 @@ try:
 except:
     ctypes.windll.user32.SetProcessDPIAware()
 # -----------------------
-
 from tab_machine import MachineTab
 from tab_small_parts import SmallPartsTab
 from tab_parallel import ParallelTab
