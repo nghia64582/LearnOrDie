@@ -1,0 +1,176 @@
+Câu hỏi này rất đúng chỗ đau của hệ thống search/filter lớn (bất động sản, marketplace, job, product catalog).
+Mình trả lời theo best practice thực tế ở production, không theo kiểu sách vở.
+---
+    # TL;DR (kết luận nhanh)
+     KHÔNG load toàn bộ hàng triệu / chục triệu record vào memory (Redis hay Java Collection) để filter
+     Filter phải làm ở storage layer chuyên cho query (DB hoặc Search Engine)
+     In-memory chỉ dùng cho cache kết quả hoặc metadata nhỏ
+---
+# 1. Bản chất bài toán của bạn
+Bạn đang có:
+* Data size: triệu  chục triệu record
+* Filter đa chiều:
+  * range: `timestamp`, `price`, `area`
+  * enum: `type`, `bedrooms`
+* Query pattern:
+  * rất nhiều tổ hợp filter
+  * user-driven (random, khó predict)
+* Yêu cầu:
+  * latency thấp
+  * paging / sorting
+ Đây là search problem, không phải CRUD đơn giản.
+---
+    # 2. Vì sao KHÔNG load hết vào memory?
+    ## (1) Memory không phải để scan
+    Giả sử:
+    * 10 triệu record
+    * mỗi record ~300 bytes  ~3GB raw
+    * Java object overhead ×2-3  6-9GB heap
+     Chưa tính:
+    * GC pressure
+    * concurrent access
+    * multiple instances
+---
+## (2) In-memory không giúp giảm độ phức tạp
+Filter 7 field =
+* không biết index theo field nào
+* không thể build index cho mọi combination
+ Cuối cùng vẫn là:
+    O(N) scan
+Memory chỉ nhanh hơn disk khi access có locality & index rõ ràng.
+---
+    ## (3) Redis không phải search engine
+    Redis:
+    * mạnh: key-value, sorted set, simple range
+    * yếu: multi-field filtering + complex condition
+     Redis làm search:
+    * phức tạp
+    * tốn RAM
+    * khó maintain
+    * scale kém
+---
+# 3. Best practice chuẩn cho bài toán này
+## Kiến trúc chuẩn (industry standard)
+    [Client]
+    [Search API]
+    [Search Engine]   Elasticsearch / OpenSearch
+    [Primary DB]      MySQL / PostgreSQL
+---
+    # 4. Tối ưu ở đâu là đúng?
+    ## (A) Database-level (nếu CHƯA dùng search engine)
+    ### 1 Composite index có chọn lọc
+    Không index bừa!
+    Ví dụ:
+        (price, area, type)
+        (created_at, type)
+        (type, bedrooms)
+     Rule:
+    * field selective cao đứng trước
+    * enum đứng sau
+    * range thường đứng cuối
+---
+### 2 Partition table (RẤT quan trọng)
+Ví dụ:
+* partition theo `created_at` (month / quarter)
+Lợi ích:
+* giảm block scan
+* prune partition sớm
+---
+    ### 3 Covering index cho list page
+        SELECT id, price, area, type
+        FROM property
+        WHERE ...
+        ORDER BY created_at DESC
+        LIMIT 20
+     tránh table lookup
+---
+ Nhưng:
+* DB chỉ ổn đến vài triệu - chục triệu
+* Query phức tạp  chậm dần
+---
+    ## (B) Search Engine - GIẢI PHÁP ĐÚNG
+    ### Elasticsearch / OpenSearch
+    #### Vì sao phù hợp?
+    * inverted index
+    * bitmap / doc values
+    * optimized cho:
+      * multi-filter
+      * range query
+      * enum
+      * sort + paging
+---
+### Mapping ví dụ (rút gọn)
+    price:       long
+    area:        integer
+    type:        keyword
+    bedrooms:    integer
+    created_at:  date
+---
+    ### Query example
+        {
+              "bool": {
+                "filter": [
+              { "range": { "price": { "gte": 2e9, "lte": 4e9 }}},
+              { "term": { "type": "APARTMENT" }},
+              { "range": { "area": { "gte": 50 }}}
+                ]
+          }
+        }
+     Filter:
+    * không scoring
+    * cực nhanh
+    * cache được
+---
+# 5. Vậy in-memory dùng khi nào?
+##  NÊN dùng in-memory cho:
+### (1) Metadata nhỏ
+* enum mapping
+* config
+* static lookup
+---
+    ### (2) Cache kết quả query phổ biến
+    Ví dụ:
+    * `type=APARTMENT`
+    * `price 2-3B`
+    Cache:
+        (query_hash  list of IDs)
+    TTL ngắn: 30s-2min
+---
+### (3) Cache first page
+Trang 1 chiếm:
+* ~70% traffic
+---
+    ##  KHÔNG dùng in-memory cho:
+    * full dataset
+    * raw filtering
+    * ad-hoc query
+---
+# 6. Pattern chuẩn cho Real Estate / Marketplace
+    Write:
+        DB  CDC  Search Engine
+    Read:
+        Search Engine  IDs  DB (detail)
+ Ưu điểm:
+* search nhanh
+* DB nhẹ
+* scale tốt
+---
+    # 7. Nếu buộc phải dùng SQL (chưa có ES)?
+    ### Strategy:
+    1. Partition table
+    2. 2-4 composite index tối đa
+    3. Denormalize 1 bảng search
+    4. Cache hot query
+    5. Giới hạn filter combination
+---
+# 8. Câu kết (rất quan trọng)
+> Memory không thay thế được index
+> Cache không thay thế được search engine
+> Load all data vào RAM để filter = anti-pattern
+---
+    Nếu bạn muốn, mình có thể:
+    * thiết kế index cụ thể cho schema của bạn
+    * đề xuất mapping ES tối ưu
+    * so sánh MySQL vs PostgreSQL vs Elasticsearch
+    * tính toán RAM / CPU / cost
+     Chỉ cần gửi schema + traffic ước lượng.

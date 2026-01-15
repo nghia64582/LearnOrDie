@@ -1,0 +1,166 @@
+Event Sourcing là một kiến trúc (architectural pattern) trong đó trạng thái của hệ thống không được lưu dưới dạng giá trị hiện tại, mà được xây dựng lại bằng cách replay một chuỗi các event đã xảy ra trong quá khứ.
+Nói ngắn gọn:
+>  Không lưu User hiện có 1.000.000
+>  Lưu User +200k, User 100k, User +900k  replay ra 1.000.000
+---
+    ## 1. Event Sourcing hoạt động như thế nào?
+    ### Kiến trúc truyền thống (CRUD)
+        User Table
+        id | balance
+        1  | 1000000
+    * Update  overwrite dữ liệu
+    * Không biết lịch sử đã xảy ra gì
+    ### Event Sourcing
+        Event Store
+        1 | UserCreated
+        2 | MoneyDeposited(200k)
+        3 | MoneyWithdrawn(100k)
+        4 | MoneyDeposited(900k)
+     State hiện tại = replay toàn bộ event theo thứ tự
+---
+## 2. Event Sourcing thường đi cùng gì?
+Event Sourcing hiếm khi đứng một mình, thường đi chung với:
+### CQRS (Command Query Responsibility Segregation)
+* Command side: ghi event
+* Query side: đọc từ materialized view (projection)
+    [Command]  validate  append event  Event Store
+                                    Projection
+                                     Read Model
+---
+    ## 3. Use case phù hợp với Event Sourcing
+    ###  RẤT PHÙ HỢP
+    #### 1. Hệ thống tài chính
+    * Ngân hàng
+    * Ví điện tử
+    * Kế toán
+    * Blockchain-like ledger
+     Không được mất lịch sử
+---
+#### 2. Auction / Bidding system
+* User đặt giá
+* Hủy giá
+* Kết thúc đấu giá
+ Bạn từng làm Auction + Bidden Price  rất hợp Event Sourcing
+---
+    #### 3. Order / E-commerce phức tạp
+    * OrderCreated
+    * ItemAdded
+    * PaymentAuthorized
+    * PaymentFailed
+    * OrderCancelled
+     Rebuild lại order tại bất kỳ thời điểm nào
+---
+#### 4. Audit / Compliance-heavy systems
+* Bảo hiểm
+* Y tế
+* ERP lớn
+* Government systems
+---
+    #### 5. Real-time system
+    * Chat
+    * Game state
+    * IoT event streams
+---
+###  KHÔNG NÊN DÙNG
+* CRUD đơn giản
+* Blog, CMS
+* Todo list
+* Admin dashboard nhỏ
+* App mà chỉ cần state cuối cùng
+---
+    ## 4. Ưu điểm của Event Sourcing
+    ### 1. Audit & Trace cực mạnh
+    * Biết AI đã làm gì, khi nào, tại sao
+    * Debug production cực tốt
+---
+### 2. Time-travel / Replay
+* Xem state của hệ thống tại bất kỳ thời điểm nào
+* Fix bug  replay lại toàn bộ event
+---
+    ### 3. Không mất dữ liệu
+    * Event append-only
+    * Không overwrite  không mất thông tin
+---
+### 4. Tự nhiên scale tốt
+* Event store ghi tuần tự  rất nhanh
+* Read side scale riêng
+---
+    ### 5. Dễ tích hợp hệ thống khác
+    * Event  Kafka / MQ
+    * Microservices consume event
+---
+## 5. Nhược điểm (rất quan trọng)
+###  1. Độ phức tạp cao
+* Code khó hiểu hơn CRUD
+* Developer mới rất dễ ngợp
+---
+    ###  2. Query phức tạp
+    * Không query trực tiếp được
+    * Phải build projection / read model
+---
+###  3. Event versioning là ác mộng
+* Event đã ghi  không sửa được
+* Thay đổi schema phải handle backward compatibility
+---
+    ###  4. Debug không dễ với người mới
+    * Bug có thể do:
+      * event sai
+      * replay sai
+      * projection lỗi
+---
+###  5. Storage tăng theo thời gian
+* Event store chỉ tăng
+* Cần snapshot strategy
+---
+    ## 6. Snapshot là gì?
+    Để tránh replay quá nhiều event:
+        Snapshot:
+        User balance = 800k (tại event #1000)
+        Event #1001  #1050
+     Replay từ snapshot + event mới
+---
+## 7. So sánh nhanh CRUD vs Event Sourcing
+| Tiêu chí      | CRUD  | Event Sourcing |
+| ------------- | ----- | -------------- |
+| Đơn giản      | ⭐⭐⭐⭐⭐ | ⭐⭐             |
+| Audit         | ❌     | ⭐⭐⭐⭐⭐          |
+| Debug lịch sử | ❌     | ⭐⭐⭐⭐⭐          |
+| Query         | ⭐⭐⭐⭐⭐ | ⭐⭐             |
+| Scale lớn     | ⭐⭐    | ⭐⭐⭐⭐           |
+| Độ khó        | Thấp  | Cao            |
+---
+    ## 8. Khi nào NÊN dùng Event Sourcing?
+     Dùng nếu ít nhất 2-3 điều sau đúng:
+    * Cần audit / lịch sử
+    * Business logic phức tạp
+    * Domain-driven design
+    * Microservices
+    * Dữ liệu cực kỳ quan trọng
+---
+## 9. Công nghệ thường dùng
+* Event Store:
+  * EventStoreDB
+  * Kafka
+  * PostgreSQL (append-only)
+* Framework:
+  * Axon (Java / Spring)
+  * Lagom (Scala)
+  * Akka Persistence
+* Serialization:
+  * JSON / Avro / Protobuf
+---
+    ## 10. Gợi ý theo background của bạn
+    Với background của bạn:
+    * Java / Spring / Scala
+    * Auction / Bidding
+    * Microservices
+    * Real-time
+     Event Sourcing + CQRS là lựa chọn rất hợp, nhưng:
+    * Chỉ nên áp dụng cho core domain
+    * Không cần toàn hệ thống
+---
+Nếu bạn muốn, mình có thể:
+* Vẽ flow cụ thể cho 1 use case (Auction / Order)
+* Viết code mẫu Java / Scala
+* Phân tích khi nào chỉ cần CQRS mà không cần Event Sourcing
+Bạn muốn đi theo hướng nào?
