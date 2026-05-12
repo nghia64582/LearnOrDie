@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-
+from tab_designer import DesignerTab
 # ------- DPI FIX -------
 import ctypes
 try:
@@ -38,9 +38,15 @@ class CutToolApp:
             notebook, self
         )
 
+        self.tab_designer = DesignerTab(
+            notebook, self
+        )
+
+
         notebook.add(self.tab_machine, text="Machine")
         notebook.add(self.tab_small_parts, text="Small parts")
         notebook.add(self.tab_parallel, text="Parallel")
+        notebook.add(self.tab_designer, text="Designer")
 
 
 if __name__ == "__main__":

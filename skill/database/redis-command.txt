@@ -4,11 +4,9 @@ sDưới đây là bộ lệnh Redis CLI đầy đủ - có tham số - giải t
 		redis-cli
 	
 	Kết nối host + port:
-	
-	redis-cli -h 127.0.0.1 -p 6379
+		redis-cli -h 127.0.0.1 -p 6379
 	
 	Có password:
-	
 		redis-cli -a mypassword
 	
 ---

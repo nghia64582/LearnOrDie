@@ -1,5 +1,4 @@
 - Các lệnh trong Docker:
-  
   Nhóm lệnh cơ bản – thao tác với container
     docker run      :	Tạo và chạy container mới từ image	
       + Tham số: 

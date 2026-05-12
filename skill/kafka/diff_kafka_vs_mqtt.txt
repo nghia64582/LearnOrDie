@@ -4,10 +4,10 @@ Còn HTTP, WebSocket, MQTT chủ yếu là giao thức truyền tải.
 Tôi phân tích theo 4 lớp cho dễ hiểu:
 ---
 	# 1 BẢN CHẤT KHÁC NHAU
-	| Nhóm                                | Ví dụ                 | Là GÌ                                                           |
-	| ----------------------------------- | --------------------- | --------------------------------------------------------------- |
-	| **Protocol**                        | HTTP, WebSocket, MQTT | Cách **truyền dữ liệu từ A → B**                                |
-	| **Message Queue / Event Streaming** | RabbitMQ, Kafka       | **Hệ thống trung gian lưu – phân phối – đảm bảo xử lý message** |
+| Nhóm                                | Ví dụ                 | Là GÌ                                                           |
+| ----------------------------------- | --------------------- | --------------------------------------------------------------- |
+| **Protocol**                        | HTTP, WebSocket, MQTT | Cách **truyền dữ liệu từ A → B**                                |
+| **Message Queue / Event Streaming** | RabbitMQ, Kafka       | **Hệ thống trung gian lưu – phân phối – đảm bảo xử lý message** |
 	 Protocol = đường ống
 	 MQ = kho trung chuyển + hệ thống điều phối giao thông
 ---
@@ -34,10 +34,10 @@ Không còn phụ thuộc trực tiếp:
 Producer không cần biết consumer là ai, còn sống không, nhanh hay chậm.
 ---
 ##  3. CHỊU TẢI CAO (Backpressure)
-	| HTTP trực tiếp | MQ                 |
-	| -------------- | ------------------ |
-	| Tải cao → sập  | Tải cao → xếp hàng |
-	| Timeout        | Không mất dữ liệu  |
+| HTTP trực tiếp | MQ                 |
+| -------------- | ------------------ |
+| Tải cao → sập  | Tải cao → xếp hàng |
+| Timeout        | Không mất dữ liệu  |
 ---
 ##  4. XỬ LÝ BẤT ĐỒNG BỘ CHUẨN KIẾN TRÚC MICROSERVICE
 Ví dụ đơn hàng:
