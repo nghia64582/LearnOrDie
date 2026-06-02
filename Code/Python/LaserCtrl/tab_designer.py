@@ -201,10 +201,10 @@ Rectangle (bottom-left)
 RC cx cy w h
 Rectangle (center)
 
-LV x y length
+LH x y length
 Horizontal line
 
-LH x y length
+LV x y length
 Vertical line
 
 L x1 y1 x2 y2
@@ -413,7 +413,7 @@ L 0 0 100 100
                 width=2
             )
 
-        elif cmd == "LV":
+        elif cmd == "LH":
 
             x, y, length = nums
 
@@ -425,7 +425,7 @@ L 0 0 100 100
                 width=2
             )
 
-        elif cmd == "LH":
+        elif cmd == "LV":
 
             x, y, length = nums
 
@@ -477,7 +477,7 @@ L 0 0 100 100
                 lines.append(f"G1 X{x2:.3f} Y{y2:.3f} F{speed}")
                 lines.append("M5")
 
-            elif cmd == "LV":
+            elif cmd == "LH":
 
                 x, y, length = nums
 
@@ -486,7 +486,7 @@ L 0 0 100 100
                 lines.append(f"G1 X{x+length:.3f} Y{y:.3f} F{speed}")
                 lines.append("M5")
 
-            elif cmd == "LH":
+            elif cmd == "LV":
 
                 x, y, length = nums
 
