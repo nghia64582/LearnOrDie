@@ -451,9 +451,219 @@ L 0 0 100 100
             )
 
     # =========================================================
-    # GCODE
+    # SHAPES TO SEGMENTS
     # =========================================================
+    def _shapes_to_segments(self):
 
+        segments = []
+
+        for cmd, nums in self.shapes:
+
+            if cmd == "L":
+
+                x1, y1, x2, y2 = nums
+
+                segments.append(
+                    (x1, y1, x2, y2)
+                )
+
+            elif cmd == "LH":
+
+                x, y, length = nums
+
+                segments.append(
+                    (x, y, x + length, y)
+                )
+
+            elif cmd == "LV":
+
+                x, y, length = nums
+
+                segments.append(
+                    (x, y, x, y + length)
+                )
+
+            elif cmd == "R":
+
+                x, y, w, h = nums
+
+                segments.append(
+                    (x, y, x + w, y)
+                )
+
+                segments.append(
+                    (x + w, y, x + w, y + h)
+                )
+
+                segments.append(
+                    (x + w, y + h, x, y + h)
+                )
+
+                segments.append(
+                    (x, y + h, x, y)
+                )
+
+            elif cmd == "RC":
+
+                cx, cy, w, h = nums
+
+                x = cx - w / 2
+                y = cy - h / 2
+
+                segments.append(
+                    (x, y, x + w, y)
+                )
+
+                segments.append(
+                    (x + w, y, x + w, y + h)
+                )
+
+                segments.append(
+                    (x + w, y + h, x, y + h)
+                )
+
+                segments.append(
+                    (x, y + h, x, y)
+                )
+
+            elif cmd == "C":
+
+                cx, cy, r = nums
+
+                segment_count = 60
+
+                points = []
+
+                for i in range(segment_count):
+
+                    angle = math.radians(
+                        i * 360 / segment_count
+                    )
+
+                    x = cx + r * math.cos(angle)
+                    y = cy + r * math.sin(angle)
+
+                    points.append((x, y))
+
+                for i in range(segment_count):
+
+                    p1 = points[i]
+                    p2 = points[(i + 1) % segment_count]
+
+                    segments.append(
+                        (
+                            p1[0],
+                            p1[1],
+                            p2[0],
+                            p2[1]
+                        )
+                    )
+
+        return segments
+
+    def _segment_key(self, segment):
+        x1, y1, x2, y2 = segment
+
+        # Làm tròn để tránh floating point
+        p1 = (
+            round(x1, 6),
+            round(y1, 6)
+        )
+
+        p2 = (
+            round(x2, 6),
+            round(y2, 6)
+        )
+
+        # A->B và B->A là cùng segment
+        if p1 <= p2:
+            return (p1, p2)
+
+        return (p2, p1)
+    
+    def _remove_duplicate_segments(self, segments):
+
+        result = []
+        seen = set()
+
+        for segment in segments:
+
+            key = self._segment_key(segment)
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            result.append(segment)
+
+        return result
+
+    def _distance_sq(self, p1, p2):
+
+        dx = p1[0] - p2[0]
+        dy = p1[1] - p2[1]
+
+        return dx * dx + dy * dy   
+
+    def _optimize_segments_greedy(self, segments):
+        if not segments:
+            return []
+
+        remaining = segments.copy()
+
+        result = []
+
+        # Điểm bắt đầu
+        current = (0.0, 0.0)
+
+        while remaining:
+
+            best_index = None
+            best_distance = float("inf")
+            best_reversed = False
+
+            for i, segment in enumerate(remaining):
+
+                x1, y1, x2, y2 = segment
+
+                p1 = (x1, y1)
+                p2 = (x2, y2)
+
+                d1 = self._distance_sq(current, p1)
+                d2 = self._distance_sq(current, p2)
+
+                if d1 < best_distance:
+
+                    best_distance = d1
+                    best_index = i
+                    best_reversed = False
+
+                if d2 < best_distance:
+
+                    best_distance = d2
+                    best_index = i
+                    best_reversed = True
+
+            segment = remaining.pop(best_index)
+
+            x1, y1, x2, y2 = segment
+
+            if best_reversed:
+
+                segment = (
+                    x2, y2,
+                    x1, y1
+                )
+
+            result.append(segment)
+
+            current = (
+                segment[2],
+                segment[3]
+            )
+
+        return result
+    
     def generate_gcode(self):
 
         self.preview()
@@ -466,88 +676,98 @@ L 0 0 100 100
         lines.append("G21")
         lines.append("G90")
 
-        for cmd, nums in self.shapes:
+        # =========================================================
+        # B1: tất cả shape -> line segments
+        # =========================================================
 
-            if cmd == "L":
+        segments = self._shapes_to_segments()
 
-                x1, y1, x2, y2 = nums
+        # =========================================================
+        # Loại các segment trùng nhau
+        # =========================================================
 
-                lines.append(f"G0 X{x1:.3f} Y{y1:.3f}")
-                lines.append(f"M3 S{power}")
-                lines.append(f"G1 X{x2:.3f} Y{y2:.3f} F{speed}")
-                lines.append("M5")
+        segments = self._remove_duplicate_segments(
+            segments
+        )
+        print(segments)
 
-            elif cmd == "LH":
+        # =========================================================
+        # B2: greedy tìm đường đi
+        # =========================================================
 
-                x, y, length = nums
+        # segments = self._optimize_segments_greedy(
+        #     segments
+        # )
 
-                lines.append(f"G0 X{x:.3f} Y{y:.3f}")
-                lines.append(f"M3 S{power}")
-                lines.append(f"G1 X{x+length:.3f} Y{y:.3f} F{speed}")
-                lines.append("M5")
+        # =========================================================
+        # Xuất G-code
+        # =========================================================
 
-            elif cmd == "LV":
+        current = None
+        laser_on = False
 
-                x, y, length = nums
+        for x1, y1, x2, y2 in segments:
 
-                lines.append(f"G0 X{x:.3f} Y{y:.3f}")
-                lines.append(f"M3 S{power}")
-                lines.append(f"G1 X{x:.3f} Y{y+length:.3f} F{speed}")
-                lines.append("M5")
+            start = (x1, y1)
+            end = (x2, y2)
 
-            elif cmd in ["R", "RC"]:
+            # -----------------------------------------------------
+            # Nếu segment mới bắt đầu đúng tại vị trí hiện tại
+            # thì có thể tiếp tục cắt
+            # -----------------------------------------------------
 
-                if cmd == "R":
+            connected = (
+                current is not None
+                and abs(current[0] - x1) < 1e-6
+                and abs(current[1] - y1) < 1e-6
+            )
 
-                    x, y, w, h = nums
+            if not connected:
 
-                else:
+                if laser_on:
 
-                    cx, cy, w, h = nums
+                    lines.append("M5")
+                    laser_on = False
 
-                    x = cx - w/2
-                    y = cy - h/2
+                lines.append(
+                    f"G0 X{x1:.3f} Y{y1:.3f}"
+                )
 
-                lines.append(f"G0 X{x:.3f} Y{y:.3f}")
-                lines.append(f"M3 S{power}")
+                lines.append(
+                    f"M3 S{power}"
+                )
 
-                lines.append(f"G1 X{x+w:.3f} Y{y:.3f} F{speed}")
-                lines.append(f"G1 X{x+w:.3f} Y{y+h:.3f}")
-                lines.append(f"G1 X{x:.3f} Y{y+h:.3f}")
-                lines.append(f"G1 X{x:.3f} Y{y:.3f}")
+                laser_on = True
 
-                lines.append("M5")
+            elif not laser_on:
 
-            elif cmd == "C":
+                lines.append(
+                    f"G0 X{x1:.3f} Y{y1:.3f}"
+                )
 
-                cx, cy, r = nums
+                lines.append(
+                    f"M3 S{power}"
+                )
 
-                segments = 60
+                laser_on = True
 
-                sx = cx + r
-                sy = cy
+            # -----------------------------------------------------
+            # Cắt segment
+            # -----------------------------------------------------
 
-                lines.append(f"G0 X{sx:.3f} Y{sy:.3f}")
-                lines.append(f"M3 S{power}")
+            lines.append(
+                f"G1 X{x2:.3f} Y{y2:.3f} F{speed}"
+            )
 
-                for i in range(1, segments + 1):
+            current = end
 
-                    angle = math.radians(i * 360 / segments)
+        if laser_on:
 
-                    x = cx + r * math.cos(angle)
-                    y = cy + r * math.sin(angle)
-
-                    lines.append(
-                        f"G1 X{x:.3f} Y{y:.3f} F{speed}"
-                    )
-
-                lines.append("M5")
+            lines.append("M5")
 
         with open("cut_plan.gcode", "w") as f:
-
             f.write("\n".join(lines))
-
-        messagebox.showinfo(
-            "Done",
-            "Generated cut_plan.gcode"
-        )
+            messagebox.showinfo(
+                "Done",
+                "Generated cut_plan.gcode"
+            )

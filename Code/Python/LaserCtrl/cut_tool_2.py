@@ -11,6 +11,7 @@ except:
 from tab_machine import MachineTab
 from tab_small_parts import SmallPartsTab
 from tab_parallel import ParallelTab
+from tab_simulate import TabSimulate
 
 class CutToolApp:
     def __init__(self, root):
@@ -38,7 +39,11 @@ class CutToolApp:
             notebook, self
         )
 
-        self.tab_designer = DesignerTab(
+        self.tab_custom = DesignerTab(
+            notebook, self
+        )
+
+        self.tab_simulate = TabSimulate(
             notebook, self
         )
 
@@ -46,7 +51,8 @@ class CutToolApp:
         notebook.add(self.tab_machine, text="Machine")
         notebook.add(self.tab_small_parts, text="Small parts")
         notebook.add(self.tab_parallel, text="Parallel")
-        notebook.add(self.tab_designer, text="Designer")
+        notebook.add(self.tab_custom, text="Custom")
+        notebook.add(self.tab_simulate, text="Simulate")
 
 
 if __name__ == "__main__":
