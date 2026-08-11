@@ -1,1 +1,0 @@
-- Trong src/services/note.txt, chúng ta sẽ 
