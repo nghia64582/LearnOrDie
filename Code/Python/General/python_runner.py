@@ -253,16 +253,20 @@ class PythonAppRunner:
     def run_app(self, filepath):
         """Runs the specified Python script without showing a console window,
         setting the current working directory to the script's directory."""
+        print(f"Attempting to run: {filepath}") # Debugging output
         if not filepath:
             messagebox.showerror("Error", "Please provide a file path to run.")
+            print(1)
             return
 
         if not os.path.exists(filepath):
             messagebox.showerror("Error", f"File not found: {filepath}")
+            print(2)
             return
 
         if not filepath.endswith(".py"):
             messagebox.showwarning("Warning", f"The file '{filepath}' does not seem to be a Python script (.py). Attempting to run anyway.")
+            print(3)
 
         try:
             # Get the directory containing the script

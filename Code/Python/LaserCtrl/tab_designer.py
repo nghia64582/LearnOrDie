@@ -129,17 +129,26 @@ L 10 10 100 100
 
         gcode_frame.pack(fill="x", pady=5)
 
-        tk.Label(gcode_frame, text="Speed").grid(row=0, column=0)
+        tk.Label(gcode_frame, text="Speed_x").grid(row=0, column=0)
 
-        self.speed_var = tk.StringVar(value="280")
+        self.speed_x_var = tk.StringVar(value="480")
+        self.speed_y_var = tk.StringVar(value="200")
 
         tk.Entry(
             gcode_frame,
-            textvariable=self.speed_var,
+            textvariable=self.speed_x_var,
             width=10
         ).grid(row=0, column=1)
 
-        tk.Label(gcode_frame, text="Power").grid(row=1, column=0)
+        tk.Label(gcode_frame, text="Speed_y").grid(row=1, column=0)
+        tk.Entry(
+            gcode_frame,
+            textvariable=self.speed_y_var,
+            width=10
+        ).grid(row=1, column=1)
+
+
+        tk.Label(gcode_frame, text="Power").grid(row=2, column=0)
 
         self.power_var = tk.StringVar(value="1000")
 
@@ -147,7 +156,7 @@ L 10 10 100 100
             gcode_frame,
             textvariable=self.power_var,
             width=10
-        ).grid(row=1, column=1)
+        ).grid(row=2, column=1)
 
         # =====================================================
         # BUTTONS
@@ -668,7 +677,8 @@ L 0 0 100 100
 
         self.preview()
 
-        speed = float(self.speed_var.get())
+        speed_x = float(self.speed_x_var.get())
+        speed_y = float(self.speed_y_var.get())
         power = float(self.power_var.get())
 
         lines = []
@@ -755,8 +765,29 @@ L 0 0 100 100
             # Cắt segment
             # -----------------------------------------------------
 
+            dx = x2 - x1
+            dy = y2 - y1
+
+            length = (dx ** 2 + dy ** 2) ** 0.5
+
+            if length > 1e-9:
+                # Thành phần hướng của chuyển động
+                ux = abs(dx) / length
+                uy = abs(dy) / length
+
+                # Feed rate tối đa sao cho:
+                # vx <= speed_x
+                # vy <= speed_y
+                feed_x = speed_x / ux if ux > 1e-9 else float("inf")
+                feed_y = speed_y / uy if uy > 1e-9 else float("inf")
+
+                feed = min(feed_x, feed_y)
+
+            else:
+                feed = speed_x
+
             lines.append(
-                f"G1 X{x2:.3f} Y{y2:.3f} F{speed}"
+                f"G1 X{x2:.3f} Y{y2:.3f} F{feed:.3f}"
             )
 
             current = end
