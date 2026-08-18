@@ -20,10 +20,6 @@ class DesignerTab(ttk.Frame):
 
         self.build_gui()
 
-    # =========================================================
-    # GUI
-    # =========================================================
-
     def build_gui(self):
 
         left_frame = tk.Frame(self)
@@ -65,13 +61,7 @@ class DesignerTab(ttk.Frame):
 
         self.text_input.pack(fill="y")
 
-        sample = """C 50 50 30
-R 20 30 40 50
-RC 120 100 50 30
-LV 10 10 100
-LH 50 50 80
-L 10 10 100 100
-"""
+        sample = """C 50 50 30\nR 20 30 40 50\nRC 120 100 50 30\nLV 10 10 100\nLH 50 50 80\nL 10 10 100 100\n"""
 
         self.text_input.insert("1.0", sample)
 
@@ -131,7 +121,7 @@ L 10 10 100 100
 
         tk.Label(gcode_frame, text="Speed_x").grid(row=0, column=0)
 
-        self.speed_x_var = tk.StringVar(value="480")
+        self.speed_x_var = tk.StringVar(value="400")
         self.speed_y_var = tk.StringVar(value="200")
 
         tk.Entry(
@@ -194,49 +184,65 @@ L 10 10 100 100
 
         self.preview()
 
-    # =========================================================
-    # HELP
-    # =========================================================
-
     def show_help(self):
 
         text = """
-C x y r
-Circle
+            C x y r
+            Circle
 
-R x y w h
-Rectangle (bottom-left)
+            R x y w h
+            Rectangle (bottom-left)
 
-RC cx cy w h
-Rectangle (center)
+            RC cx cy w h
+            Rectangle (center)
 
-LH x y length
-Horizontal line
+            LH x y length
+            Horizontal line
 
-LV x y length
-Vertical line
+            LV x y length
+            Vertical line
 
-L x1 y1 x2 y2
-Any line
+            L x1 y1 x2 y2
+            Any line
 
-Examples:
+            A x y s_alpha e_alpha
+            Arc, tam (x, y), goc bat dau s_alpha, goc ket thuc e_alpha.
+            Goc 0 = huong len (truc +y), 180 = huong xuong (truc -y),
+            90 = huong phai (truc +x), 270 = huong trai (truc -x),
+            360 = trung voi 0 (mot vong tron day du).
 
-C 50 50 30
-R 20 30 40 50
-RC 100 100 80 40
-LV 10 20 50
-LH 30 40 80
-L 0 0 100 100
-"""
+            ADD x y
+            Tu dong nay tro di, moi hinh se duoc cong them (x, y)
+            cho den khi gap dong END (delta ve lai 0, 0).
+
+            P x1 y1 x2 y2 ... xn yn
+            Da giac (polygon) tuy y so dinh, tu dong noi dinh cuoi
+            ve dinh dau de dong kin hinh.
+
+            M x1 y1 x2 y2 ... xn yn
+            Day doan thang (polyline) tuy y so dinh, giong P nhung
+            KHONG noi diem cuoi ve diem dau (hinh ho).
+
+            Examples:
+
+            C 50 50 30
+            R 20 30 40 50
+            RC 100 100 80 40
+            LV 10 20 50
+            LH 30 40 80
+            L 0 0 100 100
+            A 50 50 0 180
+            P 0 0 40 0 40 40 20 60 0 40
+            M 0 0 20 30 40 0 60 30
+            ADD 20 20
+            C 0 0 10
+            END
+            """
 
         messagebox.showinfo(
             "Format Help",
             text
         )
-
-    # =========================================================
-    # COORD
-    # =========================================================
 
     def to_canvas(self, x, y):
 
@@ -256,10 +262,6 @@ L 0 0 100 100
         )
 
         return px, py
-
-    # =========================================================
-    # GRID
-    # =========================================================
 
     def draw_grid(self):
 
@@ -335,14 +337,8 @@ L 0 0 100 100
                 width=2
             )
 
-    # =========================================================
-    # PREVIEW
-    # =========================================================
-
     def preview(self):
-
         try:
-
             self.view_left = float(self.left_var.get())
             self.view_bottom = float(self.bottom_var.get())
             self.view_right = float(self.right_var.get())
@@ -357,6 +353,14 @@ L 0 0 100 100
 
             text = self.text_input.get("1.0", "end")
 
+            # -----------------------------------------------------
+            # Delta hien hanh, duoc cong don vao tat ca cac hinh
+            # cho den khi gap dong END
+            # -----------------------------------------------------
+
+            delta_x = 0.0
+            delta_y = 0.0
+
             for line in text.strip().splitlines():
 
                 line = line.strip()
@@ -368,205 +372,274 @@ L 0 0 100 100
 
                 cmd = parts[0]
 
+                if cmd == "ADD":
+
+                    dx, dy = map(float, parts[1:])
+
+                    delta_x = dx
+                    delta_y = dy
+
+                    continue
+
+                if cmd == "END":
+
+                    delta_x = 0.0
+                    delta_y = 0.0
+
+                    continue
+
                 nums = list(map(float, parts[1:]))
+
+                nums = self._apply_delta(
+                    cmd, nums, delta_x, delta_y
+                )
 
                 self.shapes.append((cmd, nums))
 
                 self.draw_shape(cmd, nums)
-
         except Exception as e:
-
             messagebox.showerror(
                 "Error",
                 str(e)
             )
 
-    # =========================================================
-    # DRAW SHAPE
-    # =========================================================
+    def _apply_delta(self, cmd, nums, dx, dy):
+
+        # Chi cong delta vao cac toa do vi tri (x, y / cx, cy),
+        # khong dong vao w, h, r, length hay goc
+
+        if cmd in ("C", "RC", "LH", "LV", "A"):
+
+            x, rest = nums[0], nums[1:]
+            y = rest[0]
+
+            return [x + dx, y + dy] + rest[1:]
+
+        if cmd == "R":
+
+            x, y, w, h = nums
+
+            return [x + dx, y + dy, w, h]
+
+        if cmd == "L":
+
+            x1, y1, x2, y2 = nums
+
+            return [x1 + dx, y1 + dy, x2 + dx, y2 + dy]
+
+        if cmd in ("P", "M"):
+
+            # Cong delta vao tung cap (x, y) cua da giac / polyline
+            result = []
+
+            for i in range(0, len(nums), 2):
+
+                result.append(nums[i] + dx)
+                result.append(nums[i + 1] + dy)
+
+            return result
+
+        return nums
 
     def draw_shape(self, cmd, nums):
 
-        if cmd == "C":
+        colors = {
+            "C": "black",
+            "A": "black",
+            "R": "green",
+            "RC": "green",
+            "P": "purple",
+            "M": "orange",
+        }
 
-            cx, cy, r = nums
+        color = colors.get(cmd, "black")
 
-            x1, y1 = self.to_canvas(cx - r, cy - r)
-            x2, y2 = self.to_canvas(cx + r, cy + r)
+        segments = self._shape_to_segments(cmd, nums)
 
-            self.canvas.create_oval(
-                x1, y2, x2, y1,
-                outline="black",
+        for x1, y1, x2, y2 in segments:
+
+            px1, py1 = self.to_canvas(x1, y1)
+            px2, py2 = self.to_canvas(x2, y2)
+
+            self.canvas.create_line(
+                px1, py1, px2, py2,
+                fill=color,
                 width=2
             )
 
-        elif cmd in ["R", "RC"]:
+    def _arc_segments(self, cx, cy, r, s_alpha, e_alpha):
 
-            if cmd == "R":
+        # Goc tinh theo kieu la ban: 0 = huong len (+y), 90 = huong
+        # phai (+x), 180 = huong xuong (-y), 270 = huong trai (-x).
+        # Doi sang goc toan hoc (radian) de dung cos/sin:
+        # math_angle = 90 - bearing
 
-                x, y, w, h = nums
+        span = e_alpha - s_alpha
 
-            else:
+        segment_count = max(
+            2,
+            round(abs(span) / 360 * 60)
+        )
 
-                cx, cy, w, h = nums
+        points = []
 
-                x = cx - w / 2
-                y = cy - h / 2
+        for i in range(segment_count + 1):
 
-            x1, y1 = self.to_canvas(x, y)
-            x2, y2 = self.to_canvas(x + w, y + h)
+            bearing = s_alpha + span * i / segment_count
 
-            self.canvas.create_rectangle(
-                x1, y2, x2, y1,
-                outline="green",
-                width=2
+            math_angle = math.radians(90 - bearing)
+
+            x = cx + r * math.cos(math_angle)
+            y = cy + r * math.sin(math_angle)
+
+            points.append((x, y))
+
+        segments = []
+
+        for i in range(len(points) - 1):
+
+            p1 = points[i]
+            p2 = points[i + 1]
+
+            segments.append(
+                (p1[0], p1[1], p2[0], p2[1])
+            )
+
+        return segments
+
+    def _shape_to_segments(self, cmd, nums):
+
+        segments = []
+
+        if cmd == "L":
+
+            x1, y1, x2, y2 = nums
+
+            segments.append(
+                (x1, y1, x2, y2)
             )
 
         elif cmd == "LH":
 
             x, y, length = nums
 
-            x1, y1 = self.to_canvas(x, y)
-            x2, y2 = self.to_canvas(x + length, y)
-
-            self.canvas.create_line(
-                x1, y1, x2, y2,
-                width=2
+            segments.append(
+                (x, y, x + length, y)
             )
 
         elif cmd == "LV":
 
             x, y, length = nums
 
-            x1, y1 = self.to_canvas(x, y)
-            x2, y2 = self.to_canvas(x, y + length)
-
-            self.canvas.create_line(
-                x1, y1, x2, y2,
-                width=2
+            segments.append(
+                (x, y, x, y + length)
             )
 
-        elif cmd == "L":
+        elif cmd == "R":
 
-            x1, y1, x2, y2 = nums
+            x, y, w, h = nums
 
-            px1, py1 = self.to_canvas(x1, y1)
-            px2, py2 = self.to_canvas(x2, y2)
-
-            self.canvas.create_line(
-                px1, py1,
-                px2, py2,
-                width=2
+            segments.append(
+                (x, y, x + w, y)
             )
 
-    # =========================================================
-    # SHAPES TO SEGMENTS
-    # =========================================================
+            segments.append(
+                (x + w, y, x + w, y + h)
+            )
+
+            segments.append(
+                (x + w, y + h, x, y + h)
+            )
+
+            segments.append(
+                (x, y + h, x, y)
+            )
+
+        elif cmd == "RC":
+
+            cx, cy, w, h = nums
+
+            x = cx - w / 2
+            y = cy - h / 2
+
+            segments.append(
+                (x, y, x + w, y)
+            )
+
+            segments.append(
+                (x + w, y, x + w, y + h)
+            )
+
+            segments.append(
+                (x + w, y + h, x, y + h)
+            )
+
+            segments.append(
+                (x, y + h, x, y)
+            )
+
+        elif cmd == "C":
+
+            cx, cy, r = nums
+
+            segments.extend(
+                self._arc_segments(cx, cy, r, 0, 360)
+            )
+
+        elif cmd == "A":
+
+            cx, cy, r, s_alpha, e_alpha = nums
+
+            segments.extend(
+                self._arc_segments(cx, cy, r, s_alpha, e_alpha)
+            )
+
+        elif cmd == "P":
+
+            points = [
+                (nums[i], nums[i + 1])
+                for i in range(0, len(nums), 2)
+            ]
+
+            point_count = len(points)
+
+            for i in range(point_count):
+
+                p1 = points[i]
+                p2 = points[(i + 1) % point_count]
+
+                segments.append(
+                    (p1[0], p1[1], p2[0], p2[1])
+                )
+
+        elif cmd == "M":
+
+            points = [
+                (nums[i], nums[i + 1])
+                for i in range(0, len(nums), 2)
+            ]
+
+            # Khong noi diem cuoi ve diem dau (khac voi P)
+            for i in range(len(points) - 1):
+
+                p1 = points[i]
+                p2 = points[i + 1]
+
+                segments.append(
+                    (p1[0], p1[1], p2[0], p2[1])
+                )
+
+        return segments
+
     def _shapes_to_segments(self):
 
         segments = []
 
         for cmd, nums in self.shapes:
 
-            if cmd == "L":
-
-                x1, y1, x2, y2 = nums
-
-                segments.append(
-                    (x1, y1, x2, y2)
-                )
-
-            elif cmd == "LH":
-
-                x, y, length = nums
-
-                segments.append(
-                    (x, y, x + length, y)
-                )
-
-            elif cmd == "LV":
-
-                x, y, length = nums
-
-                segments.append(
-                    (x, y, x, y + length)
-                )
-
-            elif cmd == "R":
-
-                x, y, w, h = nums
-
-                segments.append(
-                    (x, y, x + w, y)
-                )
-
-                segments.append(
-                    (x + w, y, x + w, y + h)
-                )
-
-                segments.append(
-                    (x + w, y + h, x, y + h)
-                )
-
-                segments.append(
-                    (x, y + h, x, y)
-                )
-
-            elif cmd == "RC":
-
-                cx, cy, w, h = nums
-
-                x = cx - w / 2
-                y = cy - h / 2
-
-                segments.append(
-                    (x, y, x + w, y)
-                )
-
-                segments.append(
-                    (x + w, y, x + w, y + h)
-                )
-
-                segments.append(
-                    (x + w, y + h, x, y + h)
-                )
-
-                segments.append(
-                    (x, y + h, x, y)
-                )
-
-            elif cmd == "C":
-
-                cx, cy, r = nums
-
-                segment_count = 60
-
-                points = []
-
-                for i in range(segment_count):
-
-                    angle = math.radians(
-                        i * 360 / segment_count
-                    )
-
-                    x = cx + r * math.cos(angle)
-                    y = cy + r * math.sin(angle)
-
-                    points.append((x, y))
-
-                for i in range(segment_count):
-
-                    p1 = points[i]
-                    p2 = points[(i + 1) % segment_count]
-
-                    segments.append(
-                        (
-                            p1[0],
-                            p1[1],
-                            p2[0],
-                            p2[1]
-                        )
-                    )
+            segments.extend(
+                self._shape_to_segments(cmd, nums)
+            )
 
         return segments
 
@@ -699,15 +772,14 @@ L 0 0 100 100
         segments = self._remove_duplicate_segments(
             segments
         )
-        print(segments)
 
         # =========================================================
         # B2: greedy tìm đường đi
         # =========================================================
 
-        # segments = self._optimize_segments_greedy(
-        #     segments
-        # )
+        segments = self._optimize_segments_greedy(
+            segments
+        )
 
         # =========================================================
         # Xuất G-code
