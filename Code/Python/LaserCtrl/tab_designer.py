@@ -7,6 +7,23 @@ class DesignerTab(ttk.Frame):
 
     GRID_MM = 10
 
+    # =====================================================
+    # Speed tab: doan thang dai hon nguong, phan giua di
+    # nhanh (V3) de khong cat xuyen het vat lieu
+    # =====================================================
+    SPEED_TAB_ENABLED = True
+    SPEED_TAB_THRESHOLD = 30  # mm
+    SPEED_TAB_LENGTH = 1  # mm
+    SPEED_TAB_FEED = 500  # mm/min (V3)
+
+    # =====================================================
+    # Short segment slowdown: doan ngan hon nguong se cat
+    # cham lai, tranh cat khong dut het vat lieu
+    # =====================================================
+    SHORT_SLOW_ENABLED = True
+    SHORT_SLOW_THRESHOLD = 15  # mm
+    SHORT_SLOW_PERCENT = 60  # %
+
     def __init__(self, parent, app):
         super().__init__(parent)
 
@@ -55,7 +72,7 @@ class DesignerTab(ttk.Frame):
         self.text_input = tk.Text(
             left_frame,
             width=40,
-            height=15,
+            height=28,
             font=("Consolas", 11)
         )
 
@@ -145,139 +162,6 @@ class DesignerTab(ttk.Frame):
         tk.Entry(
             gcode_frame,
             textvariable=self.power_var,
-            width=10
-        ).grid(row=2, column=1)
-
-        # =====================================================
-        # BRIDGES (cau giu mieng cat, khong roi ra)
-        # =====================================================
-
-        bridge_frame = tk.LabelFrame(
-            left_frame,
-            text="Bridges",
-            font=self.font
-        )
-
-        bridge_frame.pack(fill="x", pady=5)
-
-        self.bridge_var = tk.BooleanVar(value=False)
-
-        tk.Checkbutton(
-            bridge_frame,
-            text="Bat bridges (giu chi tiet)",
-            variable=self.bridge_var,
-            font=self.font
-        ).grid(row=0, column=0, columnspan=2, sticky="w")
-
-        tk.Label(bridge_frame, text="So luong").grid(row=1, column=0)
-
-        self.bridge_count_var = tk.StringVar(value="4")
-
-        tk.Entry(
-            bridge_frame,
-            textvariable=self.bridge_count_var,
-            width=10
-        ).grid(row=1, column=1)
-
-        tk.Label(bridge_frame, text="Do rong (mm)").grid(row=2, column=0)
-
-        self.bridge_width_var = tk.StringVar(value="0.3")
-
-        tk.Entry(
-            bridge_frame,
-            textvariable=self.bridge_width_var,
-            width=10
-        ).grid(row=2, column=1)
-
-        # =====================================================
-        # SPEED TAB (tab bang toc do, khong nhac laser)
-        # =====================================================
-
-        speed_tab_frame = tk.LabelFrame(
-            left_frame,
-            text="Speed Tab",
-            font=self.font
-        )
-
-        speed_tab_frame.pack(fill="x", pady=5)
-
-        self.speed_tab_var = tk.BooleanVar(value=False)
-
-        tk.Checkbutton(
-            speed_tab_frame,
-            text="Bat speed tab (doan > nguong)",
-            variable=self.speed_tab_var,
-            font=self.font
-        ).grid(row=0, column=0, columnspan=2, sticky="w")
-
-        tk.Label(speed_tab_frame, text="Nguong (mm)").grid(row=1, column=0)
-
-        self.speed_tab_threshold_var = tk.StringVar(value="30")
-
-        tk.Entry(
-            speed_tab_frame,
-            textvariable=self.speed_tab_threshold_var,
-            width=10
-        ).grid(row=1, column=1)
-
-        tk.Label(speed_tab_frame, text="Do dai tab (mm)").grid(row=2, column=0)
-
-        self.speed_tab_length_var = tk.StringVar(value="1")
-
-        tk.Entry(
-            speed_tab_frame,
-            textvariable=self.speed_tab_length_var,
-            width=10
-        ).grid(row=2, column=1)
-
-        tk.Label(speed_tab_frame, text="V3 (mm/min)").grid(row=3, column=0)
-
-        self.speed_tab_feed_var = tk.StringVar(value="400")
-
-        tk.Entry(
-            speed_tab_frame,
-            textvariable=self.speed_tab_feed_var,
-            width=10
-        ).grid(row=3, column=1)
-
-        # =====================================================
-        # SHORT SEGMENT SLOWDOWN (mong nho de cat khong dut)
-        # =====================================================
-
-        short_slow_frame = tk.LabelFrame(
-            left_frame,
-            text="Short Segment Slowdown",
-            font=self.font
-        )
-
-        short_slow_frame.pack(fill="x", pady=5)
-
-        self.short_slow_var = tk.BooleanVar(value=False)
-
-        tk.Checkbutton(
-            short_slow_frame,
-            text="Bat giam toc doan ngan",
-            variable=self.short_slow_var,
-            font=self.font
-        ).grid(row=0, column=0, columnspan=2, sticky="w")
-
-        tk.Label(short_slow_frame, text="Nguong (mm)").grid(row=1, column=0)
-
-        self.short_slow_threshold_var = tk.StringVar(value="15")
-
-        tk.Entry(
-            short_slow_frame,
-            textvariable=self.short_slow_threshold_var,
-            width=10
-        ).grid(row=1, column=1)
-
-        tk.Label(short_slow_frame, text="Ty le toc do (%)").grid(row=2, column=0)
-
-        self.short_slow_percent_var = tk.StringVar(value="60")
-
-        tk.Entry(
-            short_slow_frame,
-            textvariable=self.short_slow_percent_var,
             width=10
         ).grid(row=2, column=1)
 
@@ -480,10 +364,6 @@ class DesignerTab(ttk.Frame):
             self.view_width = self.view_right - self.view_left
             self.view_height = self.view_top - self.view_bottom
 
-            self.bridge_enabled = self.bridge_var.get()
-            self.bridge_count = int(round(float(self.bridge_count_var.get())))
-            self.bridge_width = float(self.bridge_width_var.get())
-
             self.draw_grid()
 
             self.shapes = []
@@ -644,120 +524,6 @@ class DesignerTab(ttk.Frame):
 
         return segments
 
-    def _maybe_bridge(self, segments):
-
-        # Chi ap dung bridge cho duong khep kin (closed loop), va
-        # chi khi nguoi dung bat tinh nang nay
-
-        if not getattr(self, "bridge_enabled", False):
-            return segments
-
-        if self.bridge_count <= 0 or self.bridge_width <= 0:
-            return segments
-
-        return self._apply_bridges_to_loop(
-            segments, self.bridge_count, self.bridge_width
-        )
-
-    def _apply_bridges_to_loop(self, segments, bridge_count, bridge_width):
-
-        # Cat bo N doan rat ngan (bridge_width) tren duong di, chia
-        # deu theo chu vi, de giu mieng cat khong roi ra.
-
-        if not segments:
-            return segments
-
-        seg_data = []
-        total = 0.0
-
-        for x1, y1, x2, y2 in segments:
-
-            length = math.hypot(x2 - x1, y2 - y1)
-
-            seg_data.append(
-                (x1, y1, x2, y2, total, total + length, length)
-            )
-
-            total += length
-
-        if total <= bridge_width * bridge_count:
-
-            # Chu vi qua nho so voi bridge, bo qua de tranh mat het
-            # net cat
-
-            return segments
-
-        step = total / bridge_count
-        offset = step / 2
-        half = bridge_width / 2
-
-        gaps = []
-
-        for i in range(bridge_count):
-
-            center = offset + i * step
-
-            gaps.append(
-                (center - half, center + half)
-            )
-
-        result = []
-
-        for x1, y1, x2, y2, s0, s1, length in seg_data:
-
-            if length <= 1e-9:
-                continue
-
-            keep_intervals = [(0.0, length)]
-
-            for gap_start, gap_end in gaps:
-
-                local_start = gap_start - s0
-                local_end = gap_end - s0
-
-                if local_end <= 0 or local_start >= length:
-                    continue
-
-                local_start = max(0.0, local_start)
-                local_end = min(length, local_end)
-
-                new_intervals = []
-
-                for a, b in keep_intervals:
-
-                    if local_end <= a or local_start >= b:
-
-                        new_intervals.append((a, b))
-                        continue
-
-                    if local_start > a:
-                        new_intervals.append((a, local_start))
-
-                    if local_end < b:
-                        new_intervals.append((local_end, b))
-
-                keep_intervals = new_intervals
-
-            dx = x2 - x1
-            dy = y2 - y1
-
-            for a, b in keep_intervals:
-
-                if b - a < 1e-9:
-                    continue
-
-                t1 = a / length
-                t2 = b / length
-
-                result.append((
-                    x1 + dx * t1,
-                    y1 + dy * t1,
-                    x1 + dx * t2,
-                    y1 + dy * t2
-                ))
-
-        return result
-
     def _shape_to_segments(self, cmd, nums):
 
         segments = []
@@ -790,14 +556,12 @@ class DesignerTab(ttk.Frame):
 
             x, y, w, h = nums
 
-            raw = [
+            segments.extend([
                 (x, y, x + w, y),
                 (x + w, y, x + w, y + h),
                 (x + w, y + h, x, y + h),
                 (x, y + h, x, y),
-            ]
-
-            segments.extend(self._maybe_bridge(raw))
+            ])
 
         elif cmd == "RC":
 
@@ -806,33 +570,28 @@ class DesignerTab(ttk.Frame):
             x = cx - w / 2
             y = cy - h / 2
 
-            raw = [
+            segments.extend([
                 (x, y, x + w, y),
                 (x + w, y, x + w, y + h),
                 (x + w, y + h, x, y + h),
                 (x, y + h, x, y),
-            ]
-
-            segments.extend(self._maybe_bridge(raw))
+            ])
 
         elif cmd == "C":
 
             cx, cy, r = nums
 
-            raw = self._arc_segments(cx, cy, r, 0, 360)
-
-            segments.extend(self._maybe_bridge(raw))
+            segments.extend(
+                self._arc_segments(cx, cy, r, 0, 360)
+            )
 
         elif cmd == "A":
 
             cx, cy, r, s_alpha, e_alpha = nums
 
-            raw = self._arc_segments(cx, cy, r, s_alpha, e_alpha)
-
-            if abs(e_alpha - s_alpha) >= 360 - 1e-6:
-                segments.extend(self._maybe_bridge(raw))
-            else:
-                segments.extend(raw)
+            segments.extend(
+                self._arc_segments(cx, cy, r, s_alpha, e_alpha)
+            )
 
         elif cmd == "P":
 
@@ -843,18 +602,14 @@ class DesignerTab(ttk.Frame):
 
             point_count = len(points)
 
-            raw = []
-
             for i in range(point_count):
 
                 p1 = points[i]
                 p2 = points[(i + 1) % point_count]
 
-                raw.append(
+                segments.append(
                     (p1[0], p1[1], p2[0], p2[1])
                 )
-
-            segments.extend(self._maybe_bridge(raw))
 
         elif cmd == "M":
 
@@ -928,8 +683,6 @@ class DesignerTab(ttk.Frame):
 
         # Gop cac doan thang cung phuong (collinear) bi chong lan
         # thanh 1 doan duy nhat, de tranh cat lap cung mot vi tri.
-        # Khe ho bridge (0.2-0.3mm) khong bi anh huong vi epsilon
-        # o day rat nho (1e-6mm).
 
         if not segments:
             return segments
@@ -1094,14 +847,14 @@ class DesignerTab(ttk.Frame):
         speed_y = float(self.speed_y_var.get())
         power = float(self.power_var.get())
 
-        speed_tab_enabled = self.speed_tab_var.get()
-        speed_tab_threshold = float(self.speed_tab_threshold_var.get())
-        speed_tab_length = float(self.speed_tab_length_var.get())
-        speed_tab_feed = float(self.speed_tab_feed_var.get())
+        speed_tab_enabled = self.SPEED_TAB_ENABLED
+        speed_tab_threshold = self.SPEED_TAB_THRESHOLD
+        speed_tab_length = self.SPEED_TAB_LENGTH
+        speed_tab_feed = self.SPEED_TAB_FEED
 
-        short_slow_enabled = self.short_slow_var.get()
-        short_slow_threshold = float(self.short_slow_threshold_var.get())
-        short_slow_percent = float(self.short_slow_percent_var.get())
+        short_slow_enabled = self.SHORT_SLOW_ENABLED
+        short_slow_threshold = self.SHORT_SLOW_THRESHOLD
+        short_slow_percent = self.SHORT_SLOW_PERCENT
 
         lines = []
 
