@@ -13,7 +13,7 @@ class DesignerTab(ttk.Frame):
     # =====================================================
     SPEED_TAB_ENABLED = True
     SPEED_TAB_THRESHOLD = 30  # mm
-    SPEED_TAB_LENGTH = 1  # mm
+    SPEED_TAB_LENGTH = 0.5  # mm
     SPEED_TAB_FEED = 500  # mm/min (V3)
 
     # =====================================================
@@ -23,6 +23,11 @@ class DesignerTab(ttk.Frame):
     SHORT_SLOW_ENABLED = True
     SHORT_SLOW_THRESHOLD = 15  # mm
     SHORT_SLOW_PERCENT = 60  # %
+
+    # =====================================================
+    # Font cho label cua tung lop ADD ve tren canvas
+    # =====================================================
+    ADD_LABEL_FONT = ("Arial", 9)
 
     def __init__(self, parent, app):
         super().__init__(parent)
@@ -228,9 +233,13 @@ class DesignerTab(ttk.Frame):
             90 = huong phai (truc +x), 270 = huong trai (truc -x),
             360 = trung voi 0 (mot vong tron day du).
 
-            ADD x y
-            Tu dong nay tro di, moi hinh se duoc cong them (x, y)
-            cho den khi gap dong END (delta ve lai 0, 0).
+            ADD x y label
+            Day them 1 lop delta (x, y) len stack, ap dung cho moi
+            hinh phia sau cho den khi gap dong END tuong ung. Co
+            the long nhau nhieu tang ADD (delta se cong don tat ca
+            cac lop dang mo). label la mot chuoi tuy y, duoc ve
+            kem cham danh dau tren canvas de de nhan biet.
+            END chi bo di lop ADD gan nhat (giong dong ngoac).
 
             P x1 y1 x2 y2 ... xn yn
             Da giac (polygon) tuy y so dinh, tu dong noi dinh cuoi
@@ -239,6 +248,12 @@ class DesignerTab(ttk.Frame):
             M x1 y1 x2 y2 ... xn yn
             Day doan thang (polyline) tuy y so dinh, giong P nhung
             KHONG noi diem cuoi ve diem dau (hinh ho).
+
+            # ...
+            Dong bat dau bang # la comment, se bi bo qua. Dong
+            trong hoac dong khong dung format (lenh la, sai so
+            tham so, ...) cung se tu dong bi bo qua, khong lam
+            gian doan preview.
 
             Examples:
 
@@ -251,8 +266,14 @@ class DesignerTab(ttk.Frame):
             A 50 50 0 180
             P 0 0 40 0 40 40 20 60 0 40
             M 0 0 20 30 40 0 60 30
-            ADD 20 20
+
+            # Vi du long 2 tang ADD
+            ADD 20 20 Ban le ngoai
             C 0 0 10
+            ADD 5 5 Ban le trong
+            C 0 0 3
+            END
+            C 0 0 5
             END
             """
 
@@ -371,18 +392,28 @@ class DesignerTab(ttk.Frame):
             text = self.text_input.get("1.0", "end")
 
             # -----------------------------------------------------
-            # Delta hien hanh, duoc cong don vao tat ca cac hinh
-            # cho den khi gap dong END
+            # Stack cac lop delta: moi lan ADD se day them 1 lop
+            # (dx, dy, label), moi lan END chi bo lop cuoi cung.
+            # Delta hien hanh = tong tat ca cac lop dang con trong
+            # stack.
             # -----------------------------------------------------
 
-            delta_x = 0.0
-            delta_y = 0.0
+            delta_stack = []
+
+            known_cmds = {
+                "C", "R", "RC", "LH", "LV", "L", "A", "P", "M"
+            }
 
             for line in text.strip().splitlines():
 
                 line = line.strip()
 
+                # Dong trong hoan toan -> bo qua
                 if not line:
+                    continue
+
+                # Dong comment (bat dau bang #) -> bo qua
+                if line.startswith("#"):
                     continue
 
                 parts = line.split()
@@ -391,21 +422,48 @@ class DesignerTab(ttk.Frame):
 
                 if cmd == "ADD":
 
-                    dx, dy = map(float, parts[1:])
+                    if len(parts) < 3:
+                        # Thieu x, y -> khong dung format, bo qua
+                        continue
 
-                    delta_x = dx
-                    delta_y = dy
+                    try:
+                        dx = float(parts[1])
+                        dy = float(parts[2])
+                    except ValueError:
+                        continue
+
+                    label = " ".join(parts[3:])
+
+                    delta_stack.append((dx, dy, label))
+
+                    cum_x = sum(d[0] for d in delta_stack)
+                    cum_y = sum(d[1] for d in delta_stack)
+
+                    self._draw_add_label(cum_x, cum_y, label, dx, dy)
 
                     continue
 
                 if cmd == "END":
 
-                    delta_x = 0.0
-                    delta_y = 0.0
+                    if delta_stack:
+                        delta_stack.pop()
 
                     continue
 
-                nums = list(map(float, parts[1:]))
+                # Cac dong khong theo dung format (cmd la, sai so
+                # luong tham so, sai kieu du lieu, ...) -> bo qua,
+                # khong lam gian doan toan bo preview
+
+                if cmd not in known_cmds:
+                    continue
+
+                try:
+                    nums = list(map(float, parts[1:]))
+                except ValueError:
+                    continue
+
+                delta_x = sum(d[0] for d in delta_stack)
+                delta_y = sum(d[1] for d in delta_stack)
 
                 nums = self._apply_delta(
                     cmd, nums, delta_x, delta_y
@@ -419,6 +477,32 @@ class DesignerTab(ttk.Frame):
                 "Error",
                 str(e)
             )
+
+    def _draw_add_label(self, x, y, label, dx, dy):
+
+        # Ve 1 diem danh dau + label cho lop ADD, de nguoi dung
+        # de hinh dung delta nay ap dung tu dau tren canvas
+
+        px, py = self.to_canvas(x, y)
+
+        if label:
+            text = f"{label} ({dx:g}, {dy:g})"
+        else:
+            text = f"({dx:g}, {dy:g})"
+
+        self.canvas.create_oval(
+            px - 3, py - 3, px + 3, py + 3,
+            fill="red",
+            outline=""
+        )
+
+        self.canvas.create_text(
+            px + 5, py - 5,
+            text=text,
+            font=self.ADD_LABEL_FONT,
+            anchor="sw",
+            fill="red"
+        )
 
     def _apply_delta(self, cmd, nums, dx, dy):
 
