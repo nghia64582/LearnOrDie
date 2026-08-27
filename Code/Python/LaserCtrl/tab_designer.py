@@ -13,7 +13,8 @@ class DesignerTab(ttk.Frame):
     # =====================================================
     SPEED_TAB_ENABLED = True
     SPEED_TAB_THRESHOLD = 30  # mm
-    SPEED_TAB_LENGTH = 0.5  # mm
+    SPEED_TAB_DISTANCE = 30  # mm, khoang cach giua 2 tab lien tiep
+    SPEED_TAB_LENGTH = 1  # mm
     SPEED_TAB_FEED = 500  # mm/min (V3)
 
     # =====================================================
@@ -27,7 +28,15 @@ class DesignerTab(ttk.Frame):
     # =====================================================
     # Font cho label cua tung lop ADD ve tren canvas
     # =====================================================
-    ADD_LABEL_FONT = ("Arial", 9)
+    ADD_LABEL_FONT = ("Times New Roman", 11)
+
+    # =====================================================
+    # Bounds mark: ve dau + tai 4 goc vung hoat dong (min/max
+    # x, y) de kiem tra pham vi cat truoc khi chay that
+    # =====================================================
+    BOUNDS_MARK_LENGTH = 4  # mm, do dai moi doan cua dau +
+    BOUNDS_MARK_POWER = 200
+    BOUNDS_MARK_FEED = 600  # mm/min
 
     def __init__(self, parent, app):
         super().__init__(parent)
@@ -188,6 +197,13 @@ class DesignerTab(ttk.Frame):
             btn_frame,
             text="Generate GCODE",
             command=self.generate_gcode,
+            font=self.font
+        ).pack(side="left", padx=2)
+
+        tk.Button(
+            btn_frame,
+            text="Ve vung hoat dong",
+            command=self.generate_bounds_gcode,
             font=self.font
         ).pack(side="left", padx=2)
 
@@ -439,7 +455,7 @@ class DesignerTab(ttk.Frame):
                     cum_x = sum(d[0] for d in delta_stack)
                     cum_y = sum(d[1] for d in delta_stack)
 
-                    self._draw_add_label(cum_x, cum_y, label, dx, dy)
+                    self._draw_add_label(cum_x, cum_y, label)
 
                     continue
 
@@ -472,23 +488,106 @@ class DesignerTab(ttk.Frame):
                 self.shapes.append((cmd, nums))
 
                 self.draw_shape(cmd, nums)
+
+            self._draw_speed_tab_marks()
         except Exception as e:
             messagebox.showerror(
                 "Error",
                 str(e)
             )
 
-    def _draw_add_label(self, x, y, label, dx, dy):
+    def _speed_tab_centers(self, length, threshold, distance):
 
-        # Ve 1 diem danh dau + label cho lop ADD, de nguoi dung
-        # de hinh dung delta nay ap dung tu dau tren canvas
+        # Tra ve danh sach vi tri (tinh tu diem dau doan thang,
+        # theo mm) cua tam moi tab, cu moi "distance" mm lai co 1
+        # tab, chi ap dung cho doan dai hon "threshold"
+
+        if length <= threshold or distance <= 0:
+            return []
+
+        count = int(length // distance)
+
+        if count < 1:
+            return []
+
+        centers = []
+
+        for i in range(count):
+
+            center = distance / 2 + i * distance
+
+            if center < length:
+                centers.append(center)
+
+        return centers
+
+    def _draw_speed_tab_marks(self):
+
+        # Highlight vi tri se bi speed-tab (doan giua di nhanh khi
+        # xuat gcode) bang dau X tren canvas, de de hinh dung truoc
+        # khi cat that. Dung cung logic gop trung/gop overlap nhu
+        # generate_gcode de vi tri hien thi khop voi thuc te.
+
+        if not self.SPEED_TAB_ENABLED:
+            return
+
+        threshold = self.SPEED_TAB_THRESHOLD
+        distance = self.SPEED_TAB_DISTANCE
+        tab_length = self.SPEED_TAB_LENGTH
+
+        if tab_length <= 0:
+            return
+
+        segments = self._shapes_to_segments()
+        segments = self._remove_duplicate_segments(segments)
+        segments = self._merge_collinear_overlaps(segments)
+
+        for x1, y1, x2, y2 in segments:
+
+            length = math.hypot(x2 - x1, y2 - y1)
+
+            centers = self._speed_tab_centers(
+                length, threshold, distance
+            )
+
+            dx = x2 - x1
+            dy = y2 - y1
+
+            for t in centers:
+
+                mx = x1 + dx * (t / length)
+                my = y1 + dy * (t / length)
+
+                self._draw_x_mark(mx, my)
+
+    def _draw_x_mark(self, x, y, size_px=5, color="magenta"):
+
+        # Dau nhan (X) co kich thuoc co dinh theo pixel, khong
+        # theo mm, de luon nhin ro du zoom vao/ra viewport khac
+        # nhau
 
         px, py = self.to_canvas(x, y)
 
-        if label:
-            text = f"{label} ({dx:g}, {dy:g})"
-        else:
-            text = f"({dx:g}, {dy:g})"
+        self.canvas.create_line(
+            px - size_px, py - size_px,
+            px + size_px, py + size_px,
+            fill=color,
+            width=2
+        )
+
+        self.canvas.create_line(
+            px - size_px, py + size_px,
+            px + size_px, py - size_px,
+            fill=color,
+            width=2
+        )
+
+    def _draw_add_label(self, x, y, label):
+
+        # Ve 1 diem danh dau + label cho lop ADD, de nguoi dung
+        # de hinh dung lop delta nay ap dung tu dau tren canvas
+
+        px, py = self.to_canvas(x, y)
 
         self.canvas.create_oval(
             px - 3, py - 3, px + 3, py + 3,
@@ -496,13 +595,15 @@ class DesignerTab(ttk.Frame):
             outline=""
         )
 
-        self.canvas.create_text(
-            px + 5, py - 5,
-            text=text,
-            font=self.ADD_LABEL_FONT,
-            anchor="sw",
-            fill="red"
-        )
+        if label:
+
+            self.canvas.create_text(
+                px + 5, py - 5,
+                text=label,
+                font=self.ADD_LABEL_FONT,
+                anchor="sw",
+                fill="red"
+            )
 
     def _apply_delta(self, cmd, nums, dx, dy):
 
@@ -933,6 +1034,7 @@ class DesignerTab(ttk.Frame):
 
         speed_tab_enabled = self.SPEED_TAB_ENABLED
         speed_tab_threshold = self.SPEED_TAB_THRESHOLD
+        speed_tab_distance = self.SPEED_TAB_DISTANCE
         speed_tab_length = self.SPEED_TAB_LENGTH
         speed_tab_feed = self.SPEED_TAB_FEED
 
@@ -1068,36 +1170,49 @@ class DesignerTab(ttk.Frame):
 
             # -----------------------------------------------------
             # Speed tab: doan giua di nhanh (V3) de khong cat xuyen,
-            # ap dung cho segment dai hon nguong da cau hinh
+            # cu moi speed_tab_distance mm tren doan thang dai hon
+            # nguong se co 1 tab, moi tab dai speed_tab_length mm
             # -----------------------------------------------------
 
-            use_speed_tab = (
-                speed_tab_enabled
-                and length > speed_tab_threshold
-                and 0 < speed_tab_length < length
+            tab_centers = (
+                self._speed_tab_centers(
+                    length, speed_tab_threshold, speed_tab_distance
+                )
+                if speed_tab_enabled and speed_tab_length > 0
+                else []
             )
 
-            if use_speed_tab:
+            if tab_centers:
 
                 half_tab = speed_tab_length / 2
-                mid = length / 2
+                cursor = 0.0
 
-                t1 = (mid - half_tab) / length
-                t2 = (mid + half_tab) / length
+                for center in tab_centers:
 
-                bx1 = x1 + dx * t1
-                by1 = y1 + dy * t1
+                    tab_start = max(cursor, center - half_tab)
+                    tab_end = min(length, center + half_tab)
 
-                bx2 = x1 + dx * t2
-                by2 = y1 + dy * t2
+                    if tab_end <= tab_start:
+                        continue
 
-                lines.append(
-                    f"G1 X{bx1:.3f} Y{by1:.3f} F{feed:.3f}"
-                )
+                    if tab_start > cursor:
 
-                lines.append(
-                    f"G1 X{bx2:.3f} Y{by2:.3f} F{speed_tab_feed:.3f}"
-                )
+                        px = x1 + dx * (tab_start / length)
+                        py = y1 + dy * (tab_start / length)
+
+                        lines.append(
+                            f"G1 X{px:.3f} Y{py:.3f} F{feed:.3f}"
+                        )
+
+                    px2 = x1 + dx * (tab_end / length)
+                    py2 = y1 + dy * (tab_end / length)
+
+                    lines.append(
+                        f"G1 X{px2:.3f} Y{py2:.3f} "
+                        f"F{speed_tab_feed:.3f}"
+                    )
+
+                    cursor = tab_end
 
                 lines.append(
                     f"G1 X{x2:.3f} Y{y2:.3f} F{feed:.3f}"
@@ -1120,4 +1235,96 @@ class DesignerTab(ttk.Frame):
             messagebox.showinfo(
                 "Done",
                 "Generated cut_plan.gcode"
+            )
+
+    def generate_bounds_gcode(self):
+
+        # B1: dam bao self.shapes dang khop voi noi dung text hien
+        # tai, roi tim min/max x, y tren toan bo segment cua tat
+        # ca cac hinh
+
+        self.preview()
+
+        segments = self._shapes_to_segments()
+
+        if not segments:
+
+            messagebox.showerror(
+                "Error",
+                "Khong co hinh nao de tinh vung hoat dong"
+            )
+
+            return
+
+        xs = []
+        ys = []
+
+        for x1, y1, x2, y2 in segments:
+
+            xs.append(x1)
+            xs.append(x2)
+
+            ys.append(y1)
+            ys.append(y2)
+
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+
+        # B2: generate gcode ve dau + (2 doan thang, moi doan dai
+        # BOUNDS_MARK_LENGTH mm) tai 4 goc cua vung hoat dong, cong
+        # suat va toc do chi du de tao vet cat nhe, khong cat sau
+
+        half = self.BOUNDS_MARK_LENGTH / 2
+        power = self.BOUNDS_MARK_POWER
+        feed = self.BOUNDS_MARK_FEED
+
+        corners = [
+            (min_x, min_y),
+            (max_x, min_y),
+            (min_x, max_y),
+            (max_x, max_y),
+        ]
+
+        lines = []
+
+        lines.append("G21")
+        lines.append("G90")
+
+        for cx, cy in corners:
+
+            # Doan ngang cua dau +
+            lines.append(
+                f"G0 X{cx - half:.3f} Y{cy:.3f}"
+            )
+
+            lines.append(
+                f"M3 S{power}"
+            )
+
+            lines.append(
+                f"G1 X{cx + half:.3f} Y{cy:.3f} F{feed}"
+            )
+
+            lines.append("M5")
+
+            # Doan doc cua dau +
+            lines.append(
+                f"G0 X{cx:.3f} Y{cy - half:.3f}"
+            )
+
+            lines.append(
+                f"M3 S{power}"
+            )
+
+            lines.append(
+                f"G1 X{cx:.3f} Y{cy + half:.3f} F{feed}"
+            )
+
+            lines.append("M5")
+
+        with open("bounds_plan.gcode", "w") as f:
+            f.write("\n".join(lines))
+            messagebox.showinfo(
+                "Done",
+                "Generated bounds_plan.gcode"
             )
