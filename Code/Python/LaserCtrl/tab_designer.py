@@ -12,8 +12,8 @@ class DesignerTab(ttk.Frame):
     SPEED_TAB_ENABLED = True
     SPEED_TAB_THRESHOLD = 30  # mm
     SPEED_TAB_DISTANCE = 30  # mm, khoang cach giua 2 tab lien tiep
-    SPEED_TAB_LENGTH = 1  # mm
-    SPEED_TAB_FEED = 500  # mm/min (V3)
+    SPEED_TAB_LENGTH = 0.8  # mm
+    SPEED_TAB_FEED = 450  # mm/min (V3)
 
     # Arc tab: cung (ke ca hinh tron, coi la cung 0-360 do) co ban
     # kinh > nguong nay se duoc chen tab theo do dai cung (dung
