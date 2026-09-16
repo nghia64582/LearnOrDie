@@ -24,6 +24,19 @@ from tkinter import ttk, filedialog, messagebox
 
 from ortools.sat.python import cp_model
 
+# ----------------------------------------------------------------------------
+# Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)
+# ----------------------------------------------------------------------------
+try:
+    from ctypes import windll
+    windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    pass
+
+# Custom font -- change these two to adjust the whole app's font in one place
+FONT_FAMILY = "Segoe UI"
+FONT_SIZE = 10
+
 # ============================================================================
 # 1. Shape definitions -- CELL geometry (used by the packing solver)
 # ============================================================================
@@ -343,7 +356,7 @@ class JointNestingApp:
                   foreground="#555").grid(row=16, column=0, columnspan=2, pady=(10, 0), sticky="w")
 
         self.result_var = tk.StringVar(value="")
-        ttk.Label(frame, textvariable=self.result_var, wraplength=200, font=("", 9, "bold")
+        ttk.Label(frame, textvariable=self.result_var, wraplength=200, font=(FONT_FAMILY, 9, "bold")
                   ).grid(row=17, column=0, columnspan=2, pady=(6, 0), sticky="w")
 
     def _build_canvas_panel(self):
@@ -469,7 +482,7 @@ class JointNestingApp:
                 self.canvas.create_polygon(*hpts, fill="white", outline="black")
             cx = sum(x for x, y in outer_t) / len(outer_t) * scale + margin
             cy = sum(y for x, y in outer_t) / len(outer_t) * scale + margin
-            self.canvas.create_text(cx, cy, text=p["name"], font=("", 7))
+            self.canvas.create_text(cx, cy, text=p["name"], font=(FONT_FAMILY, 7))
 
         # grid boundary
         gw = self.grid_cols * cell_size * scale + margin * 2
@@ -493,6 +506,10 @@ class JointNestingApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    default_font = (FONT_FAMILY, FONT_SIZE)
+    root.option_add("*Font", default_font)
+    style = ttk.Style(root)
+    style.configure(".", font=default_font)
     app = JointNestingApp(root)
     root.geometry("1000x700")
     root.mainloop()

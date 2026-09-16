@@ -10,10 +10,10 @@ class DesignerTab(ttk.Frame):
     # Speed tab: doan thang dai hon nguong, phan giua di nhanh (V3)
     # de khong cat xuyen het vat lieu
     SPEED_TAB_ENABLED = True
-    SPEED_TAB_THRESHOLD = 8  # mm
-    SPEED_TAB_DISTANCE = 8  # mm, khoang cach giua 2 tab lien tiep
+    SPEED_TAB_THRESHOLD = 30  # mm
+    SPEED_TAB_DISTANCE = 30  # mm, khoang cach giua 2 tab lien tiep
     SPEED_TAB_LENGTH = 0.5  # mm
-    SPEED_TAB_FEED = 550  # mm/min (V3)
+    SPEED_TAB_FEED = 350  # mm/min (V3)
 
     # Arc tab: cung (ke ca hinh tron, coi la cung 0-360 do) co ban
     # kinh > nguong nay se duoc chen tab theo do dai cung (dung
@@ -36,6 +36,10 @@ class DesignerTab(ttk.Frame):
     BOUNDS_MARK_LENGTH = 4  # mm, do dai moi doan cua dau +
     BOUNDS_MARK_POWER = 200
     BOUNDS_MARK_FEED = 600  # mm/min
+
+    # Toc do di chuyen khong cat (G0), dung de uoc luong thoi gian
+    # chay khi khong co tham so F (chi G1 moi co F)
+    GCODE_RAPID_FEED = 6000  # mm/min
 
     def __init__(self, parent, app):
         super().__init__(parent)
@@ -126,6 +130,11 @@ class DesignerTab(ttk.Frame):
                   command=self.generate_bounds_gcode, font=self.font)\
             .pack(side="left", padx=2)
 
+        # --- Thoi gian uoc luong ---
+        self.gcode_time_var = tk.StringVar(value="")
+        tk.Label(left_frame, textvariable=self.gcode_time_var,
+                 font=self.font, fg="blue").pack(anchor="w", pady=(0, 5))
+
         # --- Canvas ---
         self.canvas = tk.Canvas(right_frame, bg="white",
                                  width=self.canvas_width,
@@ -183,6 +192,13 @@ class DesignerTab(ttk.Frame):
             Day doan thang (polyline) tuy y so dinh, giong P nhung
             KHONG noi diem cuoi ve diem dau (hinh ho).
 
+            FIRST
+            Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
+            Nhieu hinh duoc danh dau FIRST se cat theo dung thu tu
+            xuat hien trong file. Cac hinh con lai van toi uu
+            duong di nhu thuong (greedy), nhung bat dau tu diem
+            cuoi cung cua nhom uu tien.
+
             # ...
             Dong bat dau bang # la comment, se bi bo qua. Dong
             trong hoac dong khong dung format (lenh la, sai so
@@ -200,6 +216,10 @@ class DesignerTab(ttk.Frame):
             A 50 50 0 180
             P 0 0 40 0 40 40 20 60 0 40
             M 0 0 20 30 40 0 60 30
+
+            # Vi du FIRST: cat hinh tron nho nay truoc tien
+            FIRST
+            C 5 5 3
 
             # Vi du long 2 tang ADD
             ADD 20 20 Ban le ngoai
@@ -279,6 +299,12 @@ class DesignerTab(ttk.Frame):
             # voi SPEED_TAB_FEED bat ke do dai cua no
             self._forced_tab_keys = set()
 
+            # Key -> (thu tu uu tien, thu tu doan trong hinh) cua
+            # cac doan thuoc hinh duoc danh dau "FIRST" (dong FIRST
+            # ap dung cho hinh ke tiep, cat truoc theo dung thu tu
+            # xuat hien trong file)
+            self._priority_keys = {}
+
             text = self.text_input.get("1.0", "end")
 
             # Stack chung cho ADD va ROTATE: moi lan ADD/ROTATE day
@@ -288,6 +314,12 @@ class DesignerTab(ttk.Frame):
             delta_stack = []
             known_cmds = {"C", "R", "RC", "LH", "LV", "L", "A", "P", "M"}
 
+            # "FIRST" danh dau hinh KE TIEP se duoc cat truoc; cac
+            # hinh duoc danh dau nhu vay cat theo dung thu tu xuat
+            # hien trong file (priority_counter tang dan)
+            next_is_priority = False
+            priority_counter = 0
+
             for line in text.strip().splitlines():
                 line = line.strip()
 
@@ -296,6 +328,10 @@ class DesignerTab(ttk.Frame):
 
                 parts = line.split()
                 cmd = parts[0]
+
+                if cmd == "FIRST":
+                    next_is_priority = True
+                    continue
 
                 if cmd == "ADD":
                     if len(parts) < 3:
@@ -358,6 +394,17 @@ class DesignerTab(ttk.Frame):
                 for seg, is_tab in zip(segments, raw_tab_flags):
                     if is_tab:
                         self._forced_tab_keys.add(self._segment_key(seg))
+
+                # Neu hinh nay duoc danh dau bang dong FIRST ngay
+                # truoc do, ghi nhan thu tu uu tien cho tung doan
+                # cua no (giu dung thu tu doan trong hinh)
+                if next_is_priority:
+                    for idx, seg in enumerate(segments):
+                        self._priority_keys[self._segment_key(seg)] = (
+                            priority_counter, idx
+                        )
+                    priority_counter += 1
+                    next_is_priority = False
 
                 self.shapes.append((cmd, segments))
                 self.draw_shape(cmd, segments)
@@ -701,13 +748,13 @@ class DesignerTab(ttk.Frame):
         dx, dy = p1[0] - p2[0], p1[1] - p2[1]
         return dx * dx + dy * dy
 
-    def _optimize_segments_greedy(self, segments):
+    def _optimize_segments_greedy(self, segments, start=(0.0, 0.0)):
         if not segments:
             return []
 
         remaining = segments.copy()
         result = []
-        current = (0.0, 0.0)  # Diem bat dau
+        current = start
 
         while remaining:
             best_index, best_distance, best_reversed = None, float("inf"), False
@@ -733,6 +780,48 @@ class DesignerTab(ttk.Frame):
 
         return result
 
+    def _estimate_gcode_time(self, lines):
+        # Uoc luong thoi gian chay (phut), dua tren tung dong G0/G1
+        # da xuat: delta_time = khoang cach giua toa do truoc/sau,
+        # chia cho van toc (G0 dung GCODE_RAPID_FEED mac dinh, G1
+        # dung dung tham so F ghi trong chinh dong lenh do).
+        total_minutes = 0.0
+        x, y = 0.0, 0.0
+
+        for line in lines:
+            line = line.strip()
+            if not (line.startswith("G0 ") or line.startswith("G1 ")):
+                continue
+
+            nx, ny, feed = None, None, None
+            for token in line.split()[1:]:
+                if token.startswith("X"):
+                    nx = float(token[1:])
+                elif token.startswith("Y"):
+                    ny = float(token[1:])
+                elif token.startswith("F"):
+                    feed = float(token[1:])
+
+            if nx is None or ny is None:
+                continue
+
+            if feed is None:
+                feed = self.GCODE_RAPID_FEED  # G0 khong co F
+
+            dist = math.hypot(nx - x, ny - y)
+            if feed > 0:
+                total_minutes += dist / feed
+
+            x, y = nx, ny
+
+        return total_minutes
+
+    def _format_time_estimate(self, total_minutes):
+        total_seconds = total_minutes * 60
+        minutes = int(total_seconds // 60)
+        seconds = total_seconds % 60
+        return f"Thoi gian uoc luong: {minutes} phut {seconds:.1f} giay"
+
     def generate_gcode(self):
 
         self.preview()
@@ -752,6 +841,7 @@ class DesignerTab(ttk.Frame):
         short_slow_percent = self.SHORT_SLOW_PERCENT
 
         forced_tab_keys = getattr(self, "_forced_tab_keys", set())
+        priority_keys = getattr(self, "_priority_keys", {})
 
         lines = ["G21", "G90"]
 
@@ -763,8 +853,34 @@ class DesignerTab(ttk.Frame):
         # lap lai nhung vi tri da cat
         segments = self._merge_collinear_overlaps(segments)
 
-        # B2: greedy tim duong di
-        segments = self._optimize_segments_greedy(segments)
+        # Tach cac doan duoc danh dau FIRST ra cat truoc, dung theo
+        # thu tu xuat hien trong file (khong qua greedy). Cac doan
+        # con lai van toi uu duong di nhu cu, nhung xuat phat tu
+        # diem cuoi cung cua nhom uu tien (thay vi tu goc toa do)
+        priority_segments, normal_segments = [], []
+
+        for seg in segments:
+            key = self._segment_key(seg)
+            if key in priority_keys:
+                priority_segments.append(seg)
+            else:
+                normal_segments.append(seg)
+
+        priority_segments.sort(
+            key=lambda seg: priority_keys[self._segment_key(seg)]
+        )
+
+        start_point = (
+            (priority_segments[-1][2], priority_segments[-1][3])
+            if priority_segments else (0.0, 0.0)
+        )
+
+        # B2: greedy tim duong di cho phan con lai
+        normal_segments = self._optimize_segments_greedy(
+            normal_segments, start_point
+        )
+
+        segments = priority_segments + normal_segments
 
         # Xuat G-code
         current = None
@@ -872,7 +988,15 @@ class DesignerTab(ttk.Frame):
 
         with open("cut_plan.gcode", "w") as f:
             f.write("\n".join(lines))
-        messagebox.showinfo("Done", "Generated cut_plan.gcode")
+
+        time_text = self._format_time_estimate(
+            self._estimate_gcode_time(lines)
+        )
+        self.gcode_time_var.set(time_text)
+
+        messagebox.showinfo(
+            "Done", f"Generated cut_plan.gcode\n{time_text}"
+        )
 
     def generate_bounds_gcode(self):
 
@@ -922,4 +1046,12 @@ class DesignerTab(ttk.Frame):
 
         with open("bounds_plan.gcode", "w") as f:
             f.write("\n".join(lines))
-        messagebox.showinfo("Done", "Generated bounds_plan.gcode")
+
+        time_text = self._format_time_estimate(
+            self._estimate_gcode_time(lines)
+        )
+        self.gcode_time_var.set(time_text)
+
+        messagebox.showinfo(
+            "Done", f"Generated bounds_plan.gcode\n{time_text}"
+        )
