@@ -36,7 +36,8 @@ KIND_COLOR = {"L": "#a8d0f0", "T": "#b8e6b0", "P": "#f5c99b"}
 class BeamDslApp:
     def __init__(self, root):
         self.root = root
-        root.title("Beam Stick DSL Tool")
+        if hasattr(root, "title"):
+            root.title("Beam Stick DSL Tool")
         self.dsl_text = ""
 
         self._build_input_panel()

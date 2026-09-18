@@ -33,7 +33,8 @@ FONT_SIZE = 10
 class SkeletonApp:
     def __init__(self, root):
         self.root = root
-        root.title("Rail Skeleton Tool")
+        if hasattr(root, "title"):
+            root.title("Rail Skeleton Tool")
         self.cutlist_text = ""
 
         self._build_input_panel()

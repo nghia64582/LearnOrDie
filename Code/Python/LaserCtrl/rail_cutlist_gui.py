@@ -55,7 +55,8 @@ def build_rail_dsl(lengths):
 class RailDslApp:
     def __init__(self, root):
         self.root = root
-        root.title("Rail Cut-list to DSL Tool")
+        if hasattr(root, "title"):
+            root.title("Rail Cut-list to DSL Tool")
         self.dsl_text = ""
 
         self._build_input_panel()
