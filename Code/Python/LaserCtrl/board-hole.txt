@@ -1,0 +1,5 @@
+esp8266 52.5mm
+esp32 47mm
+relay 2-ch 45mm
+l298 36.5mm
+breadboard-170 0 lỗ
