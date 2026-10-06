@@ -10,8 +10,8 @@ class DesignerTab(ttk.Frame):
     # Speed tab: doan thang dai hon nguong, phan giua di nhanh (V3)
     # de khong cat xuyen het vat lieu
     SPEED_TAB_ENABLED = True
-    SPEED_TAB_THRESHOLD = 30  # mm
-    SPEED_TAB_DISTANCE = 30  # mm, khoang cach giua 2 tab lien tiep
+    SPEED_TAB_THRESHOLD = 20  # mm
+    SPEED_TAB_DISTANCE = 20  # mm, khoang cach giua 2 tab lien tiep
     SPEED_TAB_LENGTH = 0.5  # mm
     SPEED_TAB_FEED = 350  # mm/min (V3)
 
@@ -20,7 +20,7 @@ class DesignerTab(ttk.Frame):
     # chung SPEED_TAB_* o tren), vi cac doan thang xap xi cung
     # thuong qua ngan de tu kich hoat tab theo do dai doan thang
     # thong thuong
-    ARC_TAB_DIAMETER_THRESHOLD = 30  # mm
+    ARC_TAB_DIAMETER_THRESHOLD = 10  # mm
 
     # Short segment slowdown: doan ngan hon nguong se cat cham lai,
     # tranh cat khong dut het vat lieu
@@ -669,6 +669,27 @@ class DesignerTab(ttk.Frame):
             segments.extend(shape_segments)
         return segments
 
+    def _shapes_to_paths(self):
+        """
+        Tach shapes thanh cac path:
+        - C/A: giu nguyen toan bo cac segment theo thu tu sinh ra.
+        - Cac shape khac: moi segment la 1 path rieng de greedy toi uu.
+        """
+        paths = []
+
+        for cmd, shape_segments in self.shapes:
+            if not shape_segments:
+                continue
+
+            if cmd in ("C", "A"):
+                # Circle/arc la 1 path lien mach.
+                paths.append(shape_segments)
+            else:
+                # Cac segment khac van cho greedy tu do.
+                paths.extend([[seg] for seg in shape_segments])
+
+        return paths
+
     def _segment_key(self, segment):
         x1, y1, x2, y2 = segment
         # Lam tron de tranh floating point
@@ -780,6 +801,66 @@ class DesignerTab(ttk.Frame):
 
         return result
 
+    def _optimize_paths_greedy(self, paths, start=(0.0, 0.0)):
+        """
+        Greedy theo PATH thay vi theo tung segment.
+
+        C/A duoc giu lien mach:
+            S1 -> S2 -> S3 -> ... -> Sn
+
+        Co the dao chieu ca path neu dau kia gan current hon,
+        nhung khong bao gio tach/interleave cac segment ben trong path.
+        """
+        if not paths:
+            return []
+
+        remaining = [path[:] for path in paths]
+        result = []
+        current = start
+
+        while remaining:
+            best_index = None
+            best_distance = float("inf")
+            best_reversed = False
+
+            for i, path in enumerate(remaining):
+                first = path[0]
+                last = path[-1]
+
+                d1 = self._distance_sq(
+                    current, (first[0], first[1])
+                )
+                d2 = self._distance_sq(
+                    current, (last[2], last[3])
+                )
+
+                if d1 < best_distance:
+                    best_distance = d1
+                    best_index = i
+                    best_reversed = False
+
+                if d2 < best_distance:
+                    best_distance = d2
+                    best_index = i
+                    best_reversed = True
+
+            path = remaining.pop(best_index)
+
+            if best_reversed:
+                # Dao ca path:
+                # A->B, B->C, C->D
+                # =>
+                # D->C, C->B, B->A
+                path = [
+                    (x2, y2, x1, y1)
+                    for x1, y1, x2, y2 in reversed(path)
+                ]
+
+            result.extend(path)
+            current = (path[-1][2], path[-1][3])
+
+        return result
+
     def _estimate_gcode_time(self, lines):
         # Uoc luong thoi gian chay (phut), dua tren tung dong G0/G1
         # da xuat: delta_time = khoang cach giua toa do truoc/sau,
@@ -845,42 +926,98 @@ class DesignerTab(ttk.Frame):
 
         lines = ["G21", "G90"]
 
-        # B1: tat ca shape -> line segments
-        segments = self._shapes_to_segments()
-        segments = self._remove_duplicate_segments(segments)
+                # B1: Tach shape thanh path.
+        #
+        # C/A = 1 path lien mach, khong duoc greedy tung segment.
+        # Cac shape khac = cac segment doc lap, van greedy nhu cu.
+        paths = self._shapes_to_paths()
 
-        # Gop cac doan chong lan tren cung 1 duong thang, tranh cat
-        # lap lai nhung vi tri da cat
-        segments = self._merge_collinear_overlaps(segments)
+        circle_paths = []
+        normal_segments = []
 
-        # Tach cac doan duoc danh dau FIRST ra cat truoc, dung theo
-        # thu tu xuat hien trong file (khong qua greedy). Cac doan
-        # con lai van toi uu duong di nhu cu, nhung xuat phat tu
-        # diem cuoi cung cua nhom uu tien (thay vi tu goc toa do)
-        priority_segments, normal_segments = [], []
+        for path in paths:
+            if len(path) > 1:
+                # C/A
+                circle_paths.append(path)
+            else:
+                normal_segments.extend(path)
 
-        for seg in segments:
+        # Cac segment thong thuong van dung logic dedupe + merge cu.
+        normal_segments = self._remove_duplicate_segments(
+            normal_segments
+        )
+        normal_segments = self._merge_collinear_overlaps(
+            normal_segments
+        )
+
+        # FIRST:
+        # - Segment thuong van uu tien tung segment.
+        # - Neu C/A duoc FIRST, uu tien ca path va giu nguyen
+        #   thu tu segment ben trong.
+        priority_segments = []
+        priority_paths = []
+        normal_paths = []
+
+        for path in circle_paths:
+            is_priority = any(
+                self._segment_key(seg) in priority_keys
+                for seg in path
+            )
+
+            if is_priority:
+                priority_paths.append(path)
+            else:
+                normal_paths.append(path)
+
+        # Sap xep FIRST circle theo thu tu priority nho nhat.
+        priority_paths.sort(
+            key=lambda path: min(
+                priority_keys[self._segment_key(seg)]
+                for seg in path
+                if self._segment_key(seg) in priority_keys
+            )
+        )
+
+        # Segment thuong FIRST van giu behavior cu.
+        for seg in normal_segments:
             key = self._segment_key(seg)
             if key in priority_keys:
                 priority_segments.append(seg)
-            else:
-                normal_segments.append(seg)
+
+        normal_segments = [
+            seg for seg in normal_segments
+            if self._segment_key(seg) not in priority_keys
+        ]
 
         priority_segments.sort(
             key=lambda seg: priority_keys[self._segment_key(seg)]
         )
 
+        # FIRST circle + FIRST segment duoc cat truoc.
+        priority_output = priority_segments[:]
+
+        for path in priority_paths:
+            priority_output.extend(path)
+
         start_point = (
-            (priority_segments[-1][2], priority_segments[-1][3])
-            if priority_segments else (0.0, 0.0)
+            (priority_output[-1][2], priority_output[-1][3])
+            if priority_output else (0.0, 0.0)
         )
 
-        # B2: greedy tim duong di cho phan con lai
-        normal_segments = self._optimize_segments_greedy(
-            normal_segments, start_point
+        # Gom cac path con lai:
+        # - circle/arc = 1 path
+        # - segment thuong = 1 path
+        normal_paths = normal_paths + [
+            [seg] for seg in normal_segments
+        ]
+
+        # Greedy theo PATH.
+        normal_output = self._optimize_paths_greedy(
+            normal_paths,
+            start_point
         )
 
-        segments = priority_segments + normal_segments
+        segments = priority_output + normal_output
 
         # Xuat G-code
         current = None

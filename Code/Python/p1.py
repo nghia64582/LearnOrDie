@@ -1,81 +1,20 @@
-import serial
-import tkinter as tk
-from tkinter import ttk
+import cadquery as cq
 
-# ====== Serial Setup ======
-PORT = "COM10"
-BAUD = 115200
+# 1. Tạo một khối hộp cơ sở (Dài 40mm, Rộng 40mm, Cao 10mm)
+# Trục tọa độ mặc định nằm ở tâm khối
+result = (
+    cq.Workplane("XY")
+    .box(40.0, 40.0, 10.0)
+)
 
-ser = serial.Serial(PORT, BAUD, timeout=1)
+# 2. Chọn bề mặt phía trên (Z+) để bo tròn các cạnh đứng
+# .edges("|Z") nghĩa là chọn tất cả các cạnh song song với trục Z
+result = result.edges("|Z").fillet(4.0)
 
-def send(cmd):
-    ser.write((cmd + "\n").encode())
-    log_box.insert(tk.END, ">> " + cmd + "\n")
-    log_box.see(tk.END)
+# 3. Chọn mặt trên cùng của khối để đục một lỗ thủng ở tâm
+# .faces(">Z") chọn mặt có tọa độ Z cao nhất
+# .hole(12.0) tạo một lỗ có đường kính 12mm xuyên suốt khối
+result = result.faces(">Z").workplane().hole(12.0)
 
-    resp = ser.readline().decode(errors="ignore").strip()
-    if resp:
-        log_box.insert(tk.END, "<< " + resp + "\n")
-        log_box.see(tk.END)
-
-
-# ====== Command functions ======
-
-def move_delta():
-    try:
-        dx = float(entry_dx.get())
-        dy = float(entry_dy.get())
-    except:
-        log_box.insert(tk.END, "Lỗi: dx/dy không hợp lệ!\n")
-        return
-
-    cmd = f"G91\nG1 X{dx} Y{dy} F2000\nG90"
-    for line in cmd.split("\n"):
-        send(line)
-
-def set_power():
-    try:
-        p = int(entry_power.get())
-        p = max(0, min(100, p))   # clamp 0–100
-    except:
-        log_box.insert(tk.END, "Lỗi: công suất không hợp lệ!\n")
-        return
-
-    s_value = int(p * 10)        # GRBL S0–1000
-    send(f"M3 S{s_value}")        # bật laser với công suất p%
-
-
-# ====== UI ======
-
-root = tk.Tk()
-root.title("Laser Controller (G-code)")
-
-frm = ttk.Frame(root, padding=10)
-frm.grid()
-
-# --- Move section ---
-ttk.Label(frm, text="ΔX:").grid(column=0, row=0)
-entry_dx = ttk.Entry(frm, width=10)
-entry_dx.grid(column=1, row=0)
-
-ttk.Label(frm, text="ΔY:").grid(column=2, row=0)
-entry_dy = ttk.Entry(frm, width=10)
-entry_dy.grid(column=3, row=0)
-
-btn_move = ttk.Button(frm, text="Move", command=move_delta)
-btn_move.grid(column=4, row=0, padx=5)
-
-# --- Laser power ---
-ttk.Label(frm, text="Laser Power (%):").grid(column=0, row=1)
-entry_power = ttk.Entry(frm, width=10)
-entry_power.grid(column=1, row=1)
-
-btn_power = ttk.Button(frm, text="Set Power", command=set_power)
-btn_power.grid(column=2, row=1, padx=5)
-
-# --- Log box ---
-log_box = tk.Text(frm, width=70, height=15)
-log_box.grid(column=0, row=2, columnspan=5, pady=10)
-
-root.mainloop()
-ser.close()
+# 4. Xuất mô hình ra định dạng STEP để mở trong các phần mềm CAD khác (SolidWorks, AutoCAD...)
+cq.exporters.export(result, "khoi_ga_co_khi.step")
