@@ -11,6 +11,7 @@ from models.node import Node, Position
 from storage.exceptions import StorageError
 from ui.dialogs import prompt_save_changes, prompt_text, show_error, show_info
 from ui.node_toolbox import NodeToolbox
+from ui.properties_panel import PropertiesPanel
 from ui.workflow_canvas import NODE_WIDTH, WorkflowCanvas
 
 
@@ -97,6 +98,13 @@ class WorkflowEditor(ttk.Frame):
 
         self.canvas = WorkflowCanvas(paned, app_state=self.app_state)
         paned.add(self.canvas, weight=1)
+
+        self.properties_panel = PropertiesPanel(
+            paned,
+            app_state=self.app_state,
+            width=280,
+        )
+        paned.add(self.properties_panel, weight=0)
 
     # ================= Actions =================
 

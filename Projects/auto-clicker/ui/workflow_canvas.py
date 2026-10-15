@@ -1,4 +1,4 @@
-"""Interactive canvas for workflow graph editing."""
+"""Interactive canvas for workflow graph editing and connection interactions."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from models.node_definitions import (
     get_output_ports,
 )
 from models.workflow import Workflow
+from ui.dialogs import show_warning
 
 NODE_WIDTH = 170.0
 NODE_MIN_HEIGHT = 70.0
@@ -51,6 +52,12 @@ class WorkflowCanvas(tk.Canvas):
         self._has_dragged: bool = False
 
         self._pan_start: Optional[tuple[float, float]] = None
+
+        # Connection interaction state
+        self._connecting_source: Optional[tuple[str, str]] = None  # (node_id, port_name)
+        self._connecting_is_dragging: bool = False
+        self._connecting_start_mouse: tuple[float, float] = (0.0, 0.0)
+        self._preview_wire_pos: Optional[tuple[float, float]] = None
 
         # Tags and item registry
         self._node_items: dict[str, list[int]] = {}
@@ -140,6 +147,7 @@ class WorkflowCanvas(tk.Canvas):
         self.bind("<ButtonPress-1>", self._on_left_click_press)
         self.bind("<B1-Motion>", self._on_left_click_drag)
         self.bind("<ButtonRelease-1>", self._on_left_click_release)
+        self.bind("<Motion>", self._on_mouse_move)
 
         # Pan with Right Mouse Button or Middle Mouse Button
         self.bind("<ButtonPress-2>", self._on_pan_press)
@@ -163,15 +171,85 @@ class WorkflowCanvas(tk.Canvas):
         # Resize
         self.bind("<Configure>", lambda e: self.repaint())
 
+    # ================= Connection Logic =================
+
+    def try_connect(
+        self,
+        src_node_id: str,
+        src_port: str,
+        tgt_node_id: str,
+        tgt_port: str = "in",
+    ) -> bool:
+        """Attempt to establish a connection between ports, enforcing strict rules."""
+        if not self.workflow:
+            return False
+
+        if src_node_id == tgt_node_id:
+            show_warning(self, "Invalid Connection", "Cannot connect a node to itself.")
+            return False
+
+        src_node = self.workflow.get_node(src_node_id)
+        tgt_node = self.workflow.get_node(tgt_node_id)
+        if not src_node or not tgt_node:
+            show_warning(self, "Invalid Connection", "Node does not exist.")
+            return False
+
+        # Check target accepts input port
+        valid_inputs = get_input_ports(tgt_node.type)
+        if tgt_port not in valid_inputs:
+            show_warning(
+                self,
+                "Invalid Connection",
+                f"Node '{tgt_node.name}' ({tgt_node.type}) does not accept incoming connections.",
+            )
+            return False
+
+        # Output port cardinality rule: each output port can have at most one outgoing edge
+        existing_edges = self.workflow.find_outgoing_edges(src_node_id, src_port)
+        if existing_edges:
+            show_warning(
+                self,
+                "Port Cardinality Exceeded",
+                f"Output port '{src_port}' on '{src_node.name}' already has a connection.\n"
+                "Each output port can only have one outgoing connection.",
+            )
+            return False
+
+        # Check for duplicate edge
+        for edge in self.workflow.edges:
+            if (
+                edge.source == src_node_id
+                and edge.source_port == src_port
+                and edge.target == tgt_node_id
+                and edge.target_port == tgt_port
+            ):
+                show_warning(
+                    self,
+                    "Duplicate Connection",
+                    "This connection already exists.",
+                )
+                return False
+
+        new_edge = Edge(
+            source=src_node_id,
+            source_port=src_port,
+            target=tgt_node_id,
+            target_port=tgt_port,
+        )
+        self.workflow.add_edge(new_edge, strict=True)
+        self.app_state.select_edge(new_edge.id)
+        self.app_state.notify_workflow_modified()
+        self.repaint()
+        return True
+
     # ================= User Interaction Handlers =================
 
     def _on_left_click_press(self, event: tk.Event) -> None:
         self.focus_set()
 
-        # If user has a pending node type from toolbox, place it at click position
+        # 1. Check if user is placing a pending node from toolbox
         if self.app_state.pending_node_type:
             lx, ly = self.screen_to_logic(event.x, event.y)
-            # Center node on click
             lx -= NODE_WIDTH / 2.0
             ly -= 35.0
             new_node = Node.create(
@@ -186,7 +264,44 @@ class WorkflowCanvas(tk.Canvas):
                 self.repaint()
             return
 
-        # Find item under cursor
+        # 2. Check if clicked on a port
+        hit_port = self._find_port_at(event.x, event.y)
+        if hit_port:
+            node_id, port_name, is_output = hit_port
+            if is_output:
+                # Started connection from this output port
+                self._connecting_source = (node_id, port_name)
+                self._connecting_is_dragging = True
+                self._connecting_start_mouse = (event.x, event.y)
+                self._preview_wire_pos = (event.x, event.y)
+                self.repaint()
+                return
+            else:
+                # Clicked on input port
+                if self._connecting_source:
+                    src_nid, src_p = self._connecting_source
+                    self._connecting_source = None
+                    self._preview_wire_pos = None
+                    self.try_connect(src_nid, src_p, node_id, port_name)
+                    return
+
+        # 3. If in click-to-connect mode and clicked on a node body
+        if self._connecting_source:
+            hit_node_id = self._find_node_at(event.x, event.y)
+            if hit_node_id:
+                src_nid, src_p = self._connecting_source
+                self._connecting_source = None
+                self._preview_wire_pos = None
+                self.try_connect(src_nid, src_p, hit_node_id, "in")
+                return
+            else:
+                # Clicked on empty space cancels click-to-connect mode
+                self._connecting_source = None
+                self._preview_wire_pos = None
+                self.repaint()
+                return
+
+        # 4. Check if clicked on a node body for dragging/selection
         hit_node_id = self._find_node_at(event.x, event.y)
         if hit_node_id:
             self._drag_node_id = hit_node_id
@@ -199,17 +314,25 @@ class WorkflowCanvas(tk.Canvas):
             self.repaint()
             return
 
+        # 5. Check if clicked on an edge
         hit_edge_id = self._find_edge_at(event.x, event.y)
         if hit_edge_id:
             self.app_state.select_edge(hit_edge_id)
             self.repaint()
             return
 
-        # Clicked on empty canvas -> clear selection
+        # 6. Clicked on empty canvas -> clear selection
         self.app_state.clear_selection()
         self.repaint()
 
     def _on_left_click_drag(self, event: tk.Event) -> None:
+        # Dragging connection wire
+        if self._connecting_source and self._connecting_is_dragging:
+            self._preview_wire_pos = (event.x, event.y)
+            self.repaint()
+            return
+
+        # Dragging node
         if not self._drag_node_id or not self.workflow:
             return
 
@@ -224,10 +347,48 @@ class WorkflowCanvas(tk.Canvas):
             self.repaint()
 
     def _on_left_click_release(self, event: tk.Event) -> None:
+        # Handling release during connection
+        if self._connecting_source and self._connecting_is_dragging:
+            dx = abs(event.x - self._connecting_start_mouse[0])
+            dy = abs(event.y - self._connecting_start_mouse[1])
+            is_drag_gesture = math.hypot(dx, dy) > 8.0
+
+            if is_drag_gesture:
+                # Mode 1: Drag Wire connection completed on mouse release
+                src_nid, src_p = self._connecting_source
+                self._connecting_source = None
+                self._connecting_is_dragging = False
+                self._preview_wire_pos = None
+
+                # Find target node or port under mouse
+                tgt_port = self._find_port_at(event.x, event.y)
+                if tgt_port and not tgt_port[2]:  # hit an input port
+                    self.try_connect(src_nid, src_p, tgt_port[0], tgt_port[1])
+                else:
+                    tgt_node_id = self._find_node_at(event.x, event.y)
+                    if tgt_node_id:
+                        self.try_connect(src_nid, src_p, tgt_node_id, "in")
+                    else:
+                        self.repaint()
+                return
+            else:
+                # Mode 2: Click Output Port completed -> remain in connecting mode!
+                self._connecting_is_dragging = False
+                self._preview_wire_pos = (event.x, event.y)
+                self.repaint()
+                return
+
+        # Normal node drag release
         if self._drag_node_id and self._has_dragged:
             self.app_state.notify_workflow_modified()
         self._drag_node_id = None
         self._has_dragged = False
+
+    def _on_mouse_move(self, event: tk.Event) -> None:
+        # If in click-to-connect mode, update preview wire following cursor
+        if self._connecting_source and not self._connecting_is_dragging:
+            self._preview_wire_pos = (event.x, event.y)
+            self.repaint()
 
     def _on_pan_press(self, event: tk.Event) -> None:
         self._pan_start = (event.x, event.y)
@@ -256,7 +417,6 @@ class WorkflowCanvas(tk.Canvas):
         if math.isclose(old_zoom, new_zoom):
             return
 
-        # Zoom centering at mouse position
         cx, cy = event.x, event.y
         lx, ly = self.screen_to_logic(cx, cy)
         self.zoom = new_zoom
@@ -282,16 +442,55 @@ class WorkflowCanvas(tk.Canvas):
             self.repaint()
 
     def _on_escape_key(self, event: tk.Event) -> None:
+        # Cancel pending connection
+        if self._connecting_source:
+            self._connecting_source = None
+            self._connecting_is_dragging = False
+            self._preview_wire_pos = None
+            self.repaint()
+            return
+
         self.app_state.set_pending_node_type(None)
         self.app_state.clear_selection()
         self.repaint()
 
     # ================= Hit Testing =================
 
+    def _find_port_at(self, sx: float, sy: float) -> Optional[tuple[str, str, bool]]:
+        """Find a port circle near the given screen coordinates.
+
+        Returns (node_id, port_name, is_output) or None.
+        """
+        if not self.workflow:
+            return None
+
+        tolerance = max(8.0, 10.0 * self.zoom)
+
+        for node in reversed(self.workflow.nodes):
+            # Check input port
+            inputs = get_input_ports(node.type)
+            if inputs:
+                port_name = inputs[0]
+                lpos = self.get_port_logic_pos(node.id, port_name, is_output=False)
+                if lpos:
+                    psx, psy = self.logic_to_screen(lpos[0], lpos[1])
+                    if math.hypot(sx - psx, sy - psy) <= tolerance:
+                        return (node.id, port_name, False)
+
+            # Check output ports
+            outputs = get_output_ports(node.type)
+            for port_name in outputs:
+                lpos = self.get_port_logic_pos(node.id, port_name, is_output=True)
+                if lpos:
+                    psx, psy = self.logic_to_screen(lpos[0], lpos[1])
+                    if math.hypot(sx - psx, sy - psy) <= tolerance:
+                        return (node.id, port_name, True)
+
+        return None
+
     def _find_node_at(self, sx: float, sy: float) -> Optional[str]:
         if not self.workflow:
             return None
-        # Test in reverse order (topmost node first)
         for node in reversed(self.workflow.nodes):
             nx0, ny0 = self.logic_to_screen(node.position.x, node.position.y)
             h = self.get_node_height(node)
@@ -302,7 +501,6 @@ class WorkflowCanvas(tk.Canvas):
         return None
 
     def _find_edge_at(self, sx: float, sy: float) -> Optional[str]:
-        """Find edge close to the click position using canvas find_withtag."""
         items = self.find_overlapping(sx - 4, sy - 4, sx + 4, sy + 4)
         for item in reversed(items):
             tags = self.gettags(item)
@@ -332,6 +530,7 @@ class WorkflowCanvas(tk.Canvas):
         self._draw_grid()
         self._draw_edges()
         self._draw_nodes()
+        self._draw_connection_preview()
 
     def _draw_empty_placeholder(self) -> None:
         w = self.winfo_width()
@@ -351,7 +550,7 @@ class WorkflowCanvas(tk.Canvas):
 
         step = GRID_SIZE * self.zoom
         if step < 12.0:
-            return  # Do not draw overly dense grid
+            return
 
         start_x = self.pan_x % step
         start_y = self.pan_y % step
@@ -389,11 +588,11 @@ class WorkflowCanvas(tk.Canvas):
 
         tag = f"node:{node.id}"
 
-        # Outer border / body
         outline_width = 3 if is_selected else 1
         outline_color = "#2196f3" if is_selected else border_color
 
-        body_rect = self.create_rectangle(
+        # Body background
+        self.create_rectangle(
             x0, y0, x1, y1,
             fill=body_bg,
             outline=outline_color,
@@ -402,7 +601,7 @@ class WorkflowCanvas(tk.Canvas):
         )
 
         # Header background
-        header_rect = self.create_rectangle(
+        self.create_rectangle(
             x0, y0, x1, y0 + header_height,
             fill=header_bg,
             outline=outline_color,
@@ -434,7 +633,7 @@ class WorkflowCanvas(tk.Canvas):
             tags=("node", tag),
         )
 
-        # Draw Input Port ('in') if node accepts input
+        # Draw Input Port ('in')
         inputs = get_input_ports(node.type)
         if inputs:
             port_name = inputs[0]
@@ -466,11 +665,22 @@ class WorkflowCanvas(tk.Canvas):
             if port_lpos:
                 px, py = self.logic_to_screen(port_lpos[0], port_lpos[1])
                 pr = PORT_RADIUS * self.zoom
+
+                # If this port is currently the active connection source, highlight it!
+                is_connecting_here = (
+                    self._connecting_source
+                    and self._connecting_source[0] == node.id
+                    and self._connecting_source[1] == port_name
+                )
+                p_fill = "#ffeb3b" if is_connecting_here else "#a5d6a7"
+                p_outline = "#f57f17" if is_connecting_here else "#2e7d32"
+                p_width = 3 if is_connecting_here else 2
+
                 self.create_oval(
                     px - pr, py - pr, px + pr, py + pr,
-                    fill="#a5d6a7",
-                    outline="#2e7d32",
-                    width=2,
+                    fill=p_fill,
+                    outline=p_outline,
+                    width=p_width,
                     tags=("port", f"port_out:{node.id}:{port_name}", tag),
                 )
                 self.create_text(
@@ -506,7 +716,6 @@ class WorkflowCanvas(tk.Canvas):
 
         tag = f"edge:{edge.id}"
 
-        # Calculate smooth bezier control points
         dx = max(40.0 * self.zoom, abs(x2 - x1) * 0.5)
         cx1, cy1 = x1 + dx, y1
         cx2, cy2 = x2 - dx, y2
@@ -523,7 +732,7 @@ class WorkflowCanvas(tk.Canvas):
             tags=("edge", tag),
         )
 
-        # Port label badge near edge start
+        # Port label badge
         badge_x = x1 + 18.0 * self.zoom
         badge_y = y1 - 8.0 * self.zoom
         font_size = max(7, int(8 * self.zoom))
@@ -535,6 +744,36 @@ class WorkflowCanvas(tk.Canvas):
             fill="#37474f",
             anchor=tk.W,
             tags=("edge", tag),
+        )
+
+    def _draw_connection_preview(self) -> None:
+        """Draw interactive dashed wire while user is connecting ports."""
+        if not self._connecting_source or not self._preview_wire_pos:
+            return
+
+        src_nid, src_p = self._connecting_source
+        src_pos = self.get_port_logic_pos(src_nid, src_p, is_output=True)
+        if not src_pos:
+            return
+
+        x1, y1 = self.logic_to_screen(src_pos[0], src_pos[1])
+        x2, y2 = self._preview_wire_pos
+
+        dx = max(40.0 * self.zoom, abs(x2 - x1) * 0.5)
+        cx1, cy1 = x1 + dx, y1
+        cx2, cy2 = x2 - dx, y2
+
+        arrow_size = (int(10 * self.zoom), int(12 * self.zoom), int(5 * self.zoom))
+
+        self.create_line(
+            x1, y1, cx1, cy1, cx2, cy2, x2, y2,
+            smooth=True,
+            arrow=tk.LAST,
+            arrowshape=arrow_size,
+            fill="#0288d1",
+            width=2,
+            dash=(6, 4),
+            tags="preview_wire",
         )
 
     # ================= View Control Helpers =================
