@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "workflow": {
+    "id": "wf_login_dashboard",
+    "name": "Login and Check Dashboard",
+    "description": "Example branching workflow",
+    "created_at": "2026-10-15T10:00:00+07:00",
+    "updated_at": "2026-10-15T16:39:46+07:00"
+  },
+  "nodes": [
+    {
+      "id": "start_1",
+      "type": "START",
+      "name": "Start",
+      "params": {},
+      "position": {
+        "x": 301.0,
+        "y": 60.0
+      }
+    },
+    {
+      "id": "check_1",
+      "type": "CHECK_IMAGE",
+      "name": "Dashboard visible?",
+      "params": {
+        "image_id": "dashboard",
+        "threshold": 0.85
+      },
+      "position": {
+        "x": 300.0,
+        "y": 180.0
+      }
+    },
+    {
+      "id": "click_1",
+      "type": "CLICK_IMAGE",
+      "name": "Click dashboard",
+      "params": {
+        "image_id": "dashboard",
+        "offset_x": 0.0,
+        "offset_y": 0.0
+      },
+      "position": {
+        "x": 159.0,
+        "y": 345.0
+      }
+    },
+    {
+      "id": "wait_1",
+      "type": "WAIT_IMAGE",
+      "name": "Wait for dashboard",
+      "params": {
+        "image_id": "dashboard",
+        "condition": "appear",
+        "timeout_ms": 10000,
+        "poll_interval_ms": 300
+      },
+      "position": {
+        "x": 460.0,
+        "y": 340.0
+      }
+    },
+    {
+      "id": "end_1",
+      "type": "END",
+      "name": "Done",
+      "params": {},
+      "position": {
+        "x": 160.0,
+        "y": 490.0
+      }
+    },
+    {
+      "id": "end_2",
+      "type": "END",
+      "name": "Wait completed",
+      "params": {},
+      "position": {
+        "x": 460.0,
+        "y": 490.0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1",
+      "source": "start_1",
+      "source_port": "next",
+      "target": "check_1",
+      "target_port": "in"
+    },
+    {
+      "id": "edge_2",
+      "source": "check_1",
+      "source_port": "true",
+      "target": "click_1",
+      "target_port": "in"
+    },
+    {
+      "id": "edge_3",
+      "source": "check_1",
+      "source_port": "false",
+      "target": "wait_1",
+      "target_port": "in"
+    },
+    {
+      "id": "edge_4",
+      "source": "click_1",
+      "source_port": "success",
+      "target": "end_1",
+      "target_port": "in"
+    },
+    {
+      "id": "edge_5",
+      "source": "wait_1",
+      "source_port": "success",
+      "target": "end_2",
+      "target_port": "in"
+    }
+  ],
+  "view": {
+    "zoom": 1.0,
+    "pan_x": 50.0,
+    "pan_y": 30.0
+  }
+}

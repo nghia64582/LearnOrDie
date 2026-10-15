@@ -44,8 +44,18 @@ class TestNoTkinterImport(unittest.TestCase):
     """Verify that models package does not import Tkinter."""
 
     def test_no_tkinter_in_sys_modules(self) -> None:
-        # Check that importing models didn't pull in tkinter
-        self.assertNotIn("tkinter", sys.modules, "Models must not import Tkinter")
+        import subprocess
+
+        result = subprocess.run(
+            [sys.executable, "-c", "import models, sys; assert 'tkinter' not in sys.modules"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            result.returncode,
+            0,
+            f"Importing models pulled in Tkinter: {result.stderr}",
+        )
 
 
 class TestNodeDefinitions(unittest.TestCase):
