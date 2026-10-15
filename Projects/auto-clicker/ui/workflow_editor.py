@@ -12,6 +12,7 @@ from storage.exceptions import StorageError
 from ui.dialogs import prompt_save_changes, prompt_text, show_error, show_info
 from ui.node_toolbox import NodeToolbox
 from ui.properties_panel import PropertiesPanel
+from ui.validation_panel import ValidationPanel
 from ui.workflow_canvas import NODE_WIDTH, WorkflowCanvas
 
 
@@ -56,7 +57,10 @@ class WorkflowEditor(ttk.Frame):
         btn_save.pack(side=tk.LEFT, padx=(0, 6))
 
         btn_save_as = ttk.Button(self.toolbar, text="💾 Save As...", command=self._on_save_as)
-        btn_save_as.pack(side=tk.LEFT, padx=(0, 15))
+        btn_save_as.pack(side=tk.LEFT, padx=(0, 10))
+
+        btn_validate = ttk.Button(self.toolbar, text="🔍 Validate", command=self._on_validate_clicked)
+        btn_validate.pack(side=tk.LEFT, padx=(0, 15))
 
         # View controls
         btn_zoom_in = ttk.Button(self.toolbar, text="🔍+", width=4, command=self._on_zoom_in)
@@ -84,7 +88,7 @@ class WorkflowEditor(ttk.Frame):
         self.lbl_status_zoom = ttk.Label(self.status_bar, text="Zoom: 100%")
         self.lbl_status_zoom.pack(side=tk.RIGHT, padx=10)
 
-        # Central Paned Area (Toolbox + Canvas)
+        # Central Paned Area (Toolbox + Canvas + Right Notebook)
         paned = ttk.PanedWindow(self, orient=tk.HORIZONTAL)
         paned.pack(fill=tk.BOTH, expand=True)
 
@@ -99,14 +103,28 @@ class WorkflowEditor(ttk.Frame):
         self.canvas = WorkflowCanvas(paned, app_state=self.app_state)
         paned.add(self.canvas, weight=1)
 
+        # Right Notebook with Properties & Validation tabs
+        self.right_notebook = ttk.Notebook(paned, width=290)
+
         self.properties_panel = PropertiesPanel(
-            paned,
+            self.right_notebook,
             app_state=self.app_state,
-            width=280,
         )
-        paned.add(self.properties_panel, weight=0)
+        self.right_notebook.add(self.properties_panel, text="Properties")
+
+        self.validation_panel = ValidationPanel(
+            self.right_notebook,
+            app_state=self.app_state,
+        )
+        self.right_notebook.add(self.validation_panel, text="Validation")
+
+        paned.add(self.right_notebook, weight=0)
 
     # ================= Actions =================
+
+    def _on_validate_clicked(self) -> None:
+        self.right_notebook.select(self.validation_panel)
+        self.validation_panel.run_validation()
 
     def _add_node_to_center(self, node_type: str) -> None:
         """Add node at the center of the current canvas viewport."""
