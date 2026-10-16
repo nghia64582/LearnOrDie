@@ -31,6 +31,8 @@ class WorkflowEditor(ttk.Frame):
         self.on_back_to_list = on_back_to_list
 
         self._build_ui()
+        self.bind_all("<Control-s>", lambda e: self._on_save())
+        self.bind_all("<Control-S>", lambda e: self._on_save())
         self.app_state.add_listener("workflow_changed", self._on_workflow_changed)
         self.app_state.add_listener("dirty_changed", self._on_dirty_changed)
         self.app_state.add_listener("selection_changed", self._on_selection_changed)

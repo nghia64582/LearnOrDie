@@ -386,9 +386,33 @@ class WorkflowCanvas(tk.Canvas):
 
     def _on_mouse_move(self, event: tk.Event) -> None:
         # If in click-to-connect mode, update preview wire following cursor
-        if self._connecting_source and not self._connecting_is_dragging:
+        if self._connecting_source:
             self._preview_wire_pos = (event.x, event.y)
+            self.configure(cursor="crosshair")
             self.repaint()
+            return
+
+        # Cursor feedback based on hovered elements
+        if self.app_state.pending_node_type:
+            self.configure(cursor="plus")
+            return
+
+        hit_port = self._find_port_at(event.x, event.y)
+        if hit_port:
+            self.configure(cursor="crosshair")
+            return
+
+        hit_node = self._find_node_at(event.x, event.y)
+        if hit_node:
+            self.configure(cursor="fleur")
+            return
+
+        hit_edge = self._find_edge_at(event.x, event.y)
+        if hit_edge:
+            self.configure(cursor="hand2")
+            return
+
+        self.configure(cursor="")
 
     def _on_pan_press(self, event: tk.Event) -> None:
         self._pan_start = (event.x, event.y)

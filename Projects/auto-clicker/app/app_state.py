@@ -13,8 +13,13 @@ from services.workflow_service import WorkflowService
 class AppState:
     """Central state container for the application."""
 
-    def __init__(self, service: WorkflowService) -> None:
+    def __init__(
+        self,
+        service: WorkflowService,
+        image_service: Optional[Any] = None,
+    ) -> None:
         self.service = service
+        self.image_service = image_service
         self.selected_node_id: Optional[str] = None
         self.selected_edge_id: Optional[str] = None
         self.pending_node_type: Optional[str] = None

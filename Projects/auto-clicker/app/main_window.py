@@ -33,6 +33,7 @@ class MainWindow(tk.Tk):
 
         # Service & State initialization
         self.repository = WorkflowRepository(workflows_dir)
+        self.repository.ensure_sample_workflow()
         self.service = WorkflowService(self.repository)
         self.app_state = AppState(self.service)
 
@@ -51,11 +52,35 @@ class MainWindow(tk.Tk):
             on_back_to_list=self.show_list,
         )
 
+        # Listen to state changes to update window title
+        self.app_state.add_listener("workflow_changed", lambda wf: self._update_title())
+        self.app_state.add_listener("dirty_changed", lambda d: self._update_title())
+
+        # Global shortcuts
+        self.bind("<Control-n>", lambda e: self.list_view._on_new())
+        self.bind("<Control-N>", lambda e: self.list_view._on_new())
+        self.bind("<Control-w>", lambda e: self._on_close_tab())
+        self.bind("<Control-W>", lambda e: self._on_close_tab())
+
         # Start with list view
         self.show_list()
 
         # Handle window closing with unsaved changes prompt
         self.protocol("WM_DELETE_WINDOW", self._on_close_window)
+
+    def _update_title(self) -> None:
+        """Update window title with active workflow name and dirty star."""
+        if self.app_state.current_workflow:
+            wf_name = self.app_state.current_workflow.workflow.name
+            dirty_star = " *" if self.app_state.is_dirty else ""
+            self.title(f"Workflow Graph Editor — {wf_name}{dirty_star}")
+        else:
+            self.title("Workflow Graph Editor")
+
+    def _on_close_tab(self) -> None:
+        """Handle Ctrl+W shortcut to return to list."""
+        if self.editor_view.winfo_ismapped():
+            self.editor_view._on_back()
 
     def show_list(self) -> None:
         """Switch view to workflow list."""

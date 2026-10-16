@@ -1,5 +1,6 @@
 """Validation engine package."""
 
+from engine.executor import WorkflowExecutor
 from engine.validator import (
     SEVERITY_ERROR,
     SEVERITY_WARNING,
@@ -14,4 +15,5 @@ __all__ = [
     "SEVERITY_WARNING",
     "validate_workflow",
     "is_valid_workflow",
+    "WorkflowExecutor",
 ]

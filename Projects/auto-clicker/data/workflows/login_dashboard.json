@@ -5,7 +5,7 @@
     "name": "Login and Check Dashboard",
     "description": "Example branching workflow",
     "created_at": "2026-10-15T10:00:00+07:00",
-    "updated_at": "2026-10-15T16:39:46+07:00"
+    "updated_at": "2026-10-15T17:27:33+07:00"
   },
   "nodes": [
     {
@@ -90,13 +90,6 @@
       "target_port": "in"
     },
     {
-      "id": "edge_2",
-      "source": "check_1",
-      "source_port": "true",
-      "target": "click_1",
-      "target_port": "in"
-    },
-    {
       "id": "edge_3",
       "source": "check_1",
       "source_port": "false",
@@ -115,6 +108,13 @@
       "source": "wait_1",
       "source_port": "success",
       "target": "end_2",
+      "target_port": "in"
+    },
+    {
+      "id": "fe16e391-f016-4cdb-ab63-f7a18763161c",
+      "source": "check_1",
+      "source_port": "true",
+      "target": "click_1",
       "target_port": "in"
     }
   ],

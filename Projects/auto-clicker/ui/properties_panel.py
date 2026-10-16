@@ -6,6 +6,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Optional
 
+from PIL import Image, ImageTk
+
 from app.app_state import AppState
 from models.edge import Edge
 from models.node import Node

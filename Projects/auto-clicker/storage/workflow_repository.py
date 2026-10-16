@@ -65,6 +65,39 @@ class WorkflowRepository:
         safe_name = sanitize_filename(name)
         return self.base_dir / f"{safe_name}.json"
 
+    def ensure_sample_workflow(self) -> Path:
+        """Create sample branching workflow login_dashboard.json if it does not exist."""
+        sample_path = self.base_dir / "login_dashboard.json"
+        if not sample_path.exists():
+            sample_content = {
+                "schema_version": 1,
+                "workflow": {
+                    "id": "wf_login_dashboard",
+                    "name": "Login and Check Dashboard",
+                    "description": "Example branching workflow with CHECK_IMAGE",
+                    "created_at": current_iso_timestamp(),
+                    "updated_at": current_iso_timestamp(),
+                },
+                "nodes": [
+                    {"id": "start_1", "type": "START", "name": "Start", "params": {}, "position": {"x": 300.0, "y": 60.0}},
+                    {"id": "check_1", "type": "CHECK_IMAGE", "name": "Dashboard visible?", "params": {"image_id": "dashboard", "threshold": 0.85}, "position": {"x": 300.0, "y": 180.0}},
+                    {"id": "click_1", "type": "CLICK_IMAGE", "name": "Click dashboard", "params": {"image_id": "dashboard", "offset_x": 0.0, "offset_y": 0.0}, "position": {"x": 160.0, "y": 340.0}},
+                    {"id": "wait_1", "type": "WAIT_IMAGE", "name": "Wait for dashboard", "params": {"image_id": "dashboard", "condition": "appear", "timeout_ms": 10000, "poll_interval_ms": 300}, "position": {"x": 460.0, "y": 340.0}},
+                    {"id": "end_1", "type": "END", "name": "Done", "params": {}, "position": {"x": 160.0, "y": 490.0}},
+                    {"id": "end_2", "type": "END", "name": "Wait completed", "params": {}, "position": {"x": 460.0, "y": 490.0}},
+                ],
+                "edges": [
+                    {"id": "edge_1", "source": "start_1", "source_port": "next", "target": "check_1", "target_port": "in"},
+                    {"id": "edge_2", "source": "check_1", "source_port": "true", "target": "click_1", "target_port": "in"},
+                    {"id": "edge_3", "source": "check_1", "source_port": "false", "target": "wait_1", "target_port": "in"},
+                    {"id": "edge_4", "source": "click_1", "source_port": "success", "target": "end_1", "target_port": "in"},
+                    {"id": "edge_5", "source": "wait_1", "source_port": "success", "target": "end_2", "target_port": "in"},
+                ],
+                "view": {"zoom": 1.0, "pan_x": 50.0, "pan_y": 30.0},
+            }
+            sample_path.write_text(json.dumps(sample_content, indent=2), encoding="utf-8")
+        return sample_path
+
     def list_workflows(self) -> list[WorkflowSummary]:
         """List all workflow files in base_dir.
 

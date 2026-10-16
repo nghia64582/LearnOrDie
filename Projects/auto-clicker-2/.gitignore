@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.idea/
+.vscode/
+data/images/*
+!data/images/.gitkeep
+data/workflows/*
+!data/workflows/.gitkeep
+data/images/index.json
