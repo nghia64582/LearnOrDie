@@ -2,8 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 from typing import List
 
-from cut_plan_builder import *
-from extended_cut_export import *
+from engraver_ctrl.cut_plan_builder import *
+from engraver_ctrl.extended_cut_export import *
 
 
 class SmallPartsTab(tk.Frame):

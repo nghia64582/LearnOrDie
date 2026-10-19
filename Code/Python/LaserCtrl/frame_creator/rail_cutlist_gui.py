@@ -22,7 +22,7 @@ import queue
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from rail_cutlist_core import optimize_layout, build_rail_dsl
+from frame_creator.rail_cutlist_core import optimize_layout, build_rail_dsl
 
 # ----------------------------------------------------------------------------
 # Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)

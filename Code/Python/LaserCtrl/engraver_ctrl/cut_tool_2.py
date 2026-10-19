@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from tab_designer import DesignerTab
+from engraver_ctrl.tab_designer import DesignerTab
 # ------- DPI FIX -------
 import ctypes
 try:
@@ -8,10 +8,10 @@ try:
 except:
     ctypes.windll.user32.SetProcessDPIAware()
 # -----------------------
-from tab_machine import MachineTab
-from tab_small_parts import SmallPartsTab
-from tab_parallel import ParallelTab
-from tab_simulate import TabSimulate
+from engraver_ctrl.tab_machine import MachineTab
+from engraver_ctrl.tab_small_parts import SmallPartsTab
+from engraver_ctrl.tab_parallel import ParallelTab
+from engraver_ctrl.tab_simulate import TabSimulate
 
 class CutToolApp:
     def __init__(self, root):

@@ -14,7 +14,7 @@ Run locally with: python rail_skeleton_gui.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from rail_skeleton_core import build_skeleton, cut_list, NODE_COLOR
+from frame_creator.rail_skeleton_core import build_skeleton, cut_list, NODE_COLOR
 
 # ----------------------------------------------------------------------------
 # Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)

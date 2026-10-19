@@ -15,7 +15,7 @@ Run locally with: python beam_dsl_gui.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from beam_dsl_core import build_sheet
+from frame_creator.beam_dsl_core import build_sheet
 
 # ----------------------------------------------------------------------------
 # Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)

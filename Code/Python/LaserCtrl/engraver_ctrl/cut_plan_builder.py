@@ -4,7 +4,7 @@ import math
 
 # IMPORT cut_optimize từ module hiện có (cut_handler)
 # sửa import nếu tên module khác
-from cut_handler import cut_optimize
+from engraver_ctrl.cut_handler import cut_optimize
 
 
 @dataclass

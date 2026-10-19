@@ -60,19 +60,19 @@ def main():
     notebook.pack(fill="both", expand=True)
 
     def build_joint(frame):
-        import joint_nesting_gui as m
+        import frame_creator.joint_nesting_gui as m
         m.JointNestingApp(frame)
 
     def build_beam(frame):
-        import beam_dsl_gui as m
+        import frame_creator.beam_dsl_gui as m
         m.BeamDslApp(frame)
 
     def build_skeleton(frame):
-        import rail_skeleton_gui as m
+        import frame_creator.rail_skeleton_gui as m
         m.SkeletonApp(frame)
 
     def build_railcut(frame):
-        import rail_cutlist_gui as m
+        import frame_creator.rail_cutlist_gui as m
         m.RailDslApp(frame)
 
     add_tab(notebook, "1. Mối nối (Joint)", build_joint)
