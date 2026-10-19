@@ -75,8 +75,11 @@ class TabSimulate(ttk.Frame):
             pady=10
         )
 
-        # Không cho panel bị co
-        control.grid_propagate(False)
+        # Không cho panel bị co/giãn theo nội dung. Các widget con
+        # dùng pack() nên phải tắt pack_propagate (grid_propagate
+        # không có tác dụng), nếu không panel sẽ đổi bề rộng theo độ
+        # dài text của label mỗi lần Next/Previous.
+        control.pack_propagate(False)
 
         # --------------------------------------------------
         # File
