@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import serial
 import serial.tools.list_ports
-import subprocess
 import os
 import time
 import threading
@@ -10,11 +9,34 @@ import re
 import math
 from datetime import datetime
 
+from engraver_ctrl.tab_simulate import TabSimulate
+
 # ---- Cấu hình ước lượng thời gian, chỉnh theo máy thực tế của bạn ----
 RAPID_RATE_MM_MIN = 3000  # tốc độ di chuyển nhanh (G0), tra trong setting $110/$111 của GRBL
 MIN_LINE_TIME = 0.05      # thời gian tối thiểu cho 1 lệnh không di chuyển (giây)
 
 LOG_FILE = "machine.log"
+
+# File gcode de preview: engraver_ctrl/cut_plan.gcode, tinh theo vi tri
+# file nguon nay (khong phu thuoc thu muc dang chay, chay duoc ca
+# Windows/Linux vi dung os.path.join thay vi dau "\\" cung)
+PREVIEW_GCODE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "cut_plan.gcode"
+)
+
+# Buoc jog mac dinh (mm) va cac lua chon nhanh
+JOG_STEP_DEFAULT = "1"
+JOG_STEP_CHOICES = ["0.1", "1", "5", "10"]
+
+# Phim -> (truc, huong). Quy uoc: Up = +Y, Down = -Y,
+# Left = -X, Right = +X
+JOG_KEYS = {
+    "w": ("Y", 1),
+    "s": ("Y", -1),
+    "a": ("X", -1),
+    "d": ("X", 1),
+}
 
 
 def estimate_gcode_times(lines):
@@ -69,71 +91,166 @@ def estimate_gcode_times(lines):
     return times
 
 
+class GcodePreviewRenderer:
+    """
+    Ve preview gcode len 1 canvas, dung lai cac ham parse/ve cua
+    TabSimulate (khong copy code). Cac ham do chi can cac thuoc tinh
+    canvas, steps, current_step, min/max_x/y, scale, offset_x/y.
+    """
+
+    parse_gcode = TabSimulate.parse_gcode
+    extract_axis = TabSimulate.extract_axis
+    calculate_bounds = TabSimulate.calculate_bounds
+    recompute_transform = TabSimulate.recompute_transform
+    transform = TabSimulate.transform
+    choose_grid_step = TabSimulate.choose_grid_step
+    draw_grid = TabSimulate.draw_grid
+    draw = TabSimulate.draw
+
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.steps = []
+        self.current_step = 0
+        self.min_x = 0
+        self.max_x = 100
+        self.min_y = 0
+        self.max_y = 100
+        self.scale = 1.0
+        self.offset_x = 0.0
+        self.offset_y = 0.0
+
+    def load(self, content):
+        # Ve toan bo file (current_step = so buoc)
+        self.steps = self.parse_gcode(content)
+        self.current_step = len(self.steps)
+        self.calculate_bounds()
+        self.redraw()
+
+    def redraw(self):
+        self.recompute_transform()
+        self.draw()
+
+
 class MachineTab(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
         self.font = app.font
-        self.lasergrbl_process = None
         self.is_running = False
         self.line_times = []
         self.total_time = 1.0
         self.stop_event = threading.Event()
         self.serial_lock = threading.Lock()
+        # Chi cho 1 lenh jog chay mot luc, tranh 2 chuoi G91/G0/G90
+        # xen ke nhau lam may ket o che do toa do tuong doi
+        self.jog_lock = threading.Lock()
         self.build_ui()
+        self.bind_jog_keys()
+
+        # Preview file gcode ngay khi mo tab
+        self.after_idle(self.preview_gcode)
 
     def build_ui(self):
+        # Ben trai: ket noi + dieu khien + jog + log (khong gian),
+        # ben phai: canvas preview gian theo cua so
+        self.columnconfigure(0, weight=0)
+        # minsize: preview luon co toi thieu 300px, khong bi cot ben
+        # trai (log rong) ep mat khi cua so hep
+        self.columnconfigure(1, weight=1, minsize=300)
+        self.rowconfigure(0, weight=1)
+
+        controls = tk.Frame(self)
+        controls.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+
         row = 0
 
-        tk.Label(self, text="COM Port:", font=self.font).grid(row=row, column=0, sticky="e")
-        self.combo_com = ttk.Combobox(self, values=[], width=12)
+        tk.Label(controls, text="COM Port:", font=self.font).grid(row=row, column=0, sticky="e")
+        self.combo_com = ttk.Combobox(controls, values=[], width=12)
         self.combo_com.grid(row=row, column=1, sticky="w")
 
-        tk.Button(self, text="Refresh", font=self.font,
+        tk.Button(controls, text="Refresh", font=self.font,
                   command=self.refresh_com).grid(row=row, column=2)
         row += 1
 
-        tk.Button(self, text="Connect", font=self.font,
+        tk.Button(controls, text="Connect", font=self.font,
                   command=self.connect_serial).grid(row=row, column=1, pady=5)
         row += 1
 
-        tk.Button(self, text="Laser ON", font=self.font,
+        tk.Button(controls, text="Laser ON", font=self.font,
                   command=self.laser_on).grid(row=row, column=0)
-        tk.Button(self, text="Laser OFF", font=self.font,
+        tk.Button(controls, text="Laser OFF", font=self.font,
                   command=self.laser_off).grid(row=row, column=1)
         row += 1
 
-        self.btn_run = tk.Button(self, text="Run GCODE", font=self.font,
+        self.btn_run = tk.Button(controls, text="Run GCODE", font=self.font,
                                   command=self.run_gcode)
         self.btn_run.grid(row=row, column=0, pady=10)
 
-        self.btn_stop = tk.Button(self, text="STOP", font=self.font, fg="white", bg="red",
+        self.btn_stop = tk.Button(controls, text="STOP", font=self.font, fg="white", bg="red",
                                    command=self.stop_gcode, state="disabled")
         self.btn_stop.grid(row=row, column=1, pady=10)
         row += 1
 
-        self.progress_bar = ttk.Progressbar(self, orient="horizontal",
+        self.progress_bar = ttk.Progressbar(controls, orient="horizontal",
                                              length=200, mode="determinate")
         self.progress_bar.grid(row=row, column=1)
         row += 1
 
-        self.progress = tk.Label(self, text="Progress: 0%", font=self.font)
+        self.progress = tk.Label(controls, text="Progress: 0%", font=self.font)
         self.progress.grid(row=row, column=1)
         row += 1
 
-        tk.Button(
-            self,
-            text="Preview GCODE",
-            font=self.font,
-            command=self.preview_gcode
-        ).grid(row=row, column=1, pady=5)
+        # ---- Jog: di chuyen nhanh dau laser bang G0 (phim W/A/S/D) ----
+        jog_frame = tk.LabelFrame(controls, text="Jog (W/A/S/D)", font=self.font)
+        jog_frame.grid(row=row, column=0, columnspan=3, pady=5)
+
+        tk.Label(jog_frame, text="Step (mm):", font=self.font).grid(row=0, column=0, sticky="e")
+        self.jog_step_var = tk.StringVar(value=JOG_STEP_DEFAULT)
+        self.combo_jog_step = ttk.Combobox(jog_frame, textvariable=self.jog_step_var,
+                                           values=JOG_STEP_CHOICES, width=6)
+        self.combo_jog_step.grid(row=0, column=1, columnspan=2, sticky="w", pady=(0, 5))
+
+        tk.Button(jog_frame, text="Up (W)", font=self.font, width=8,
+                  command=lambda: self.jog("Y", 1)).grid(row=1, column=1)
+        tk.Button(jog_frame, text="Left (A)", font=self.font, width=8,
+                  command=lambda: self.jog("X", -1)).grid(row=2, column=0)
+        tk.Button(jog_frame, text="Right (D)", font=self.font, width=8,
+                  command=lambda: self.jog("X", 1)).grid(row=2, column=2)
+        tk.Button(jog_frame, text="Down (S)", font=self.font, width=8,
+                  command=lambda: self.jog("Y", -1)).grid(row=3, column=1)
         row += 1
 
         # ---- Log box, thay cho print() ----
-        tk.Label(self, text="Log:", font=self.font).grid(row=row, column=0, sticky="nw")
-        self.log_text = scrolledtext.ScrolledText(self, width=60, height=10, state="disabled",
+        tk.Label(controls, text="Log:", font=self.font).grid(row=row, column=0, sticky="nw")
+        self.log_text = scrolledtext.ScrolledText(controls, width=60, height=10, state="disabled",
                                                     font=("Consolas", 9))
         self.log_text.grid(row=row, column=1, columnspan=2, sticky="w", pady=5)
+
+        # ---- Preview gcode (ben phai) ----
+        preview_frame = tk.Frame(self)
+        preview_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        preview_frame.columnconfigure(0, weight=1)
+        preview_frame.rowconfigure(1, weight=1)
+
+        header = tk.Frame(preview_frame)
+        header.grid(row=0, column=0, sticky="ew")
+        header.columnconfigure(0, weight=1)
+
+        # width=1: label khong doi requested width theo do dai text
+        # -> khong lam cot preview bi co gian (giat) moi lan doi text
+        self.preview_info = tk.Label(header, text="Preview: -", font=self.font,
+                                     anchor="w", width=1)
+        self.preview_info.grid(row=0, column=0, sticky="ew")
+
+        tk.Button(header, text="Reload preview", font=self.font,
+                  command=self.preview_gcode).grid(row=0, column=1, padx=(5, 0))
+
+        self.preview_canvas = tk.Canvas(preview_frame, background="white",
+                                        highlightthickness=0)
+        self.preview_canvas.grid(row=1, column=0, sticky="nsew", pady=(5, 0))
+
+        self.preview = GcodePreviewRenderer(self.preview_canvas)
+        self.preview_canvas.bind("<Configure>", self.on_preview_resize)
 
     # ---------------- LOG ----------------
 
@@ -367,38 +484,148 @@ class MachineTab(tk.Frame):
     # ---------------- PREVIEW ----------------
 
     def preview_gcode(self):
-        lasergrbl_path = r"C:\Program Files (x86)\LaserGRBL\LaserGRBL.exe"
-        gcode_path = r"C:\Users\LaptopKhanhTran\Desktop\Workspace\LearnOrDie\Code\Python\LaserCtrl\cut_plan.gcode"
+        """
+        Doc engraver_ctrl/cut_plan.gcode va ve len canvas ben phai.
+        Thieu file / loi doc thi bao tren canvas + log, khong crash.
+        """
+        path = PREVIEW_GCODE_PATH
 
-        if not os.path.exists(lasergrbl_path):
-            self.log("LaserGRBL.exe not found.")
-            messagebox.showerror("Error", "LaserGRBL.exe not found.")
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            self.preview.steps = []
+            self.preview.current_step = 0
+            self.preview_info.config(text=f"Preview: cannot read {path}")
+            self._show_preview_message(f"Cannot read G-code file:\n{path}\n\n{e}")
+            self.log(f"Preview error: {e}")
             return
 
-        if not os.path.exists(gcode_path):
-            self.log("GCODE file not found.")
-            messagebox.showerror("Error", "GCODE file not found.")
+        self.preview.load(content)
+
+        if not self.preview.steps:
+            self._show_preview_message(f"No G0/G1 moves in:\n{path}")
+
+        self.preview_info.config(
+            text=f"Preview: {path} ({len(self.preview.steps)} moves)"
+        )
+        self.log(f"Preview loaded: {path} ({len(self.preview.steps)} moves)")
+
+    def on_preview_resize(self, event):
+        if self.preview.steps:
+            self.preview.redraw()
+        else:
+            self._redraw_preview_message()
+
+    def _show_preview_message(self, message):
+        self._preview_message = message
+        self._redraw_preview_message()
+
+    def _redraw_preview_message(self):
+        message = getattr(self, "_preview_message", "")
+        canvas = self.preview_canvas
+        canvas.delete("all")
+        if message:
+            canvas.create_text(
+                canvas.winfo_width() / 2,
+                canvas.winfo_height() / 2,
+                text=message,
+                fill="red",
+                justify="center"
+            )
+
+    # ---------------- JOG ----------------
+
+    def bind_jog_keys(self):
+        # Bind tren cua so goc (add="+" de khong de binding khac),
+        # handler tu kiem tra tab dang mo va widget dang focus
+        root = self.winfo_toplevel()
+        for key in JOG_KEYS:
+            for k in (key, key.upper()):
+                root.bind(f"<KeyPress-{k}>", self.on_jog_key, add="+")
+
+    def on_jog_key(self, event):
+        # Chi xu ly khi tab Machine dang duoc chon
+        try:
+            if self.master.select() != str(self):
+                return
+        except Exception:
+            return
+
+        # Bo qua khi dang go chu trong o nhap (Entry/Combobox/Text...)
+        try:
+            focus = self.focus_get()
+        except Exception:
+            focus = None
+        if isinstance(focus, (tk.Entry, tk.Text, tk.Spinbox, ttk.Entry, ttk.Spinbox)):
+            return
+
+        axis, direction = JOG_KEYS[event.keysym.lower()]
+        self.jog(axis, direction)
+        return "break"
+
+    def build_jog_lines(self, axis, direction, step):
+        # Jog tuong doi: G91 -> G0 truc +/-buoc -> G90 (tra ve tuyet doi,
+        # file gcode cua tool dung toa do tuyet doi G90)
+        return [
+            "G91\n",
+            f"G0 {axis}{direction * step:.3f}\n",
+            "G90\n",
+        ]
+
+    def jog(self, axis, direction):
+        if not self.app.ser:
+            self.log("Jog ignored: not connected.")
+            messagebox.showerror("Error", "Not connected.")
+            return
+
+        if self.is_running:
+            self.log("Jog ignored: GCODE is running.")
             return
 
         try:
-            if (
-                self.lasergrbl_process is None
-                or self.lasergrbl_process.poll() is not None
-            ):
-                self.lasergrbl_process = subprocess.Popen(
-                    [lasergrbl_path, gcode_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-                self.log("LaserGRBL: first launch.")
-            else:
-                subprocess.Popen(
-                    [lasergrbl_path, gcode_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-                self.log("LaserGRBL: reused instance.")
+            step = float(self.jog_step_var.get())
+            if step <= 0:
+                raise ValueError
+        except ValueError:
+            self.log(f"Jog ignored: invalid step '{self.jog_step_var.get()}'.")
+            messagebox.showerror("Error", "Jog step must be a positive number (mm).")
+            return
 
+        # Dang co lenh jog chua xong -> bo qua (vd. giu phim auto-repeat)
+        if not self.jog_lock.acquire(blocking=False):
+            self.log("Jog busy, ignored.")
+            return
+
+        lines = self.build_jog_lines(axis, direction, step)
+        threading.Thread(target=self._jog_worker, args=(lines,), daemon=True).start()
+
+    def _jog_worker(self, lines):
+        label = f"Jog {lines[1].strip()}"
+        try:
+            with self.serial_lock:
+                self.app.ser.reset_input_buffer()
+
+            # G91
+            if not self._send_line_and_wait_ok(lines[0], timeout=5):
+                self.log(f"{label} FAILED at '{lines[0].strip()}' "
+                         f"(machine may be in Alarm state, try unlock $X)")
+                return
+
+            try:
+                ok = self._send_line_and_wait_ok(lines[1], timeout=30)
+            finally:
+                # Luon co gang tra ve G90 sau khi da gui G91, ke ca khi
+                # G0 loi, de lan Run GCODE sau khong chay theo toa do
+                # tuong doi
+                if not self._send_line_and_wait_ok(lines[2], timeout=5):
+                    self.log("WARNING: failed to restore G90 after jog, send G90 manually.")
+
+            if ok:
+                self.log(label)
+            else:
+                self.log(f"{label} FAILED (machine may be in Alarm state, try unlock $X)")
         except Exception as e:
-            self.log(f"Preview error: {e}")
-            messagebox.showerror("Error", str(e))
+            self.log(f"Jog error: {e}")
+        finally:
+            self.jog_lock.release()
