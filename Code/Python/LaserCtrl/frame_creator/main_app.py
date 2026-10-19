@@ -15,8 +15,17 @@ Run locally with: python main_app.py
 Requires: pip install ortools   (only needed for the "Mối nối" tab)
 """
 
+import sys
+import os
 import tkinter as tk
 from tkinter import ttk
+
+# Ensure the parent folder (LaserCtrl) is on the path so that
+# `import frame_creator.xxx` works even when this script is run
+# directly from inside the frame_creator directory.
+_parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
 
 # ----------------------------------------------------------------------------
 # Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)
