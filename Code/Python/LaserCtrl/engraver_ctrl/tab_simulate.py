@@ -35,6 +35,14 @@ class TabSimulate(ttk.Frame):
         self.offset_x = 0.0
         self.offset_y = 0.0
 
+        # Co chan khi update_ui() dang dat gia tri slider bang code,
+        # de callback cua slider khong kich hoat lai (feedback loop)
+        self._syncing_slider = False
+
+        # id cua lenh after_idle dang cho ve lai khi keo slider,
+        # gop nhieu su kien keo lien tiep thanh 1 lan draw()
+        self._slider_redraw_id = None
+
         # --------------------------------------------------
         # Layout
         # --------------------------------------------------
@@ -61,6 +69,31 @@ class TabSimulate(ttk.Frame):
             row=0,
             column=0,
             sticky="nsew"
+        )
+
+        # --------------------------------------------------
+        # Slider nhay nhanh den buoc bat ky (duoi canvas)
+        # --------------------------------------------------
+        self.step_slider = ttk.Scale(
+            canvas_frame,
+            orient="horizontal",
+            from_=0,
+            to=0,
+            command=self.on_slider_move
+        )
+        self.step_slider.grid(
+            row=1,
+            column=0,
+            sticky="ew",
+            pady=(5, 0)
+        )
+        self.step_slider.state(["disabled"])
+
+        # Mac dinh ttk.Scale click chuot trai vao ranh chi tang/giam
+        # 1 buoc -> cho nhay thang den vi tri click roi keo tiep
+        self.step_slider.bind(
+            "<Button-1>",
+            self.on_slider_click
         )
 
         # --------------------------------------------------
@@ -779,6 +812,71 @@ class TabSimulate(ttk.Frame):
         self.update_ui()
 
     # ======================================================
+    # SLIDER (keo de nhay den buoc bat ky)
+    # ======================================================
+    def on_slider_move(self, value):
+        # Bo qua khi chinh update_ui() dang dat gia tri slider
+        if self._syncing_slider:
+            return
+
+        total = len(self.steps)
+        new_step = max(
+            0,
+            min(int(round(float(value))), total)
+        )
+
+        if new_step == self.current_step:
+            return
+
+        self.current_step = new_step
+        self.update_ui()
+
+        # draw() ve lai toan bo cac buoc, ton thoi gian voi file
+        # lon -> gop cac su kien keo lien tiep, chi ve 1 lan khi
+        # Tkinter ranh (after_idle)
+        if self._slider_redraw_id is None:
+            self._slider_redraw_id = self.after_idle(
+                self._slider_redraw
+            )
+
+    def on_slider_click(self, event):
+        if self.step_slider.instate(["disabled"]):
+            return
+
+        element = self.step_slider.identify(event.x, event.y)
+        if "slider" in element:
+            # Click dung vao nut keo -> de binding mac dinh xu ly
+            return
+
+        # Dat gia tri tai vi tri click (goi on_slider_move). Binding
+        # mac dinh chay sau do se thay nut keo nam duoi chuot va bat
+        # che do keo tiep.
+        self.step_slider.set(
+            self.step_slider.get(event.x, event.y)
+        )
+
+    def _slider_redraw(self):
+        self._slider_redraw_id = None
+        self.draw()
+
+    def sync_slider(self):
+        # Dong bo pham vi + vi tri slider voi current_step, khong
+        # kich hoat lai on_slider_move
+        total = len(self.steps)
+
+        self._syncing_slider = True
+        try:
+            self.step_slider.configure(to=total)
+            self.step_slider.set(self.current_step)
+        finally:
+            self._syncing_slider = False
+
+        if total > 0:
+            self.step_slider.state(["!disabled"])
+        else:
+            self.step_slider.state(["disabled"])
+
+    # ======================================================
     # RESET
     # ======================================================
     def reset_simulation(self):
@@ -791,6 +889,8 @@ class TabSimulate(ttk.Frame):
     # ======================================================
     def update_ui(self):
         total = len(self.steps)
+
+        self.sync_slider()
 
         self.step_label.config(
             text=f"Step: {self.current_step} / {total}"
