@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
 
-from dsl_library import DSLLibrary
+from dsl_library import DSLLibrary, KVError
 from dsl_parser import parse_dsl
 from dsl_canvas import DSLCanvas
 
@@ -39,7 +39,7 @@ class App(tk.Tk):
         self.dirty = False
 
         self._build_ui()
-        self.refresh_list()
+        self.reload_library()
 
     def _build_ui(self):
         top = ttk.Frame(self, padding=8)
@@ -71,7 +71,7 @@ class App(tk.Tk):
 
         btns = ttk.Frame(left)
         btns.pack(fill="x", pady=(6, 0))
-        ttk.Button(btns, text="Refresh", command=self.refresh_list).pack(side="left", fill="x", expand=True)
+        ttk.Button(btns, text="Refresh", command=self.reload_library).pack(side="left", fill="x", expand=True)
         ttk.Button(btns, text="Delete", command=self.delete_dsl).pack(side="left", fill="x", expand=True, padx=(5, 0))
 
         editor = ttk.Frame(right)
@@ -111,34 +111,44 @@ class App(tk.Tk):
         self.folder_var.set(str(self.library_path))
         self.library = DSLLibrary(self.library_path)
         self.current_file = None
+        self.reload_library()
+
+    def reload_library(self):
+        # Tai lai danh sach tu worker; mat mang -> dung cache offline
+        online = self.library.refresh()
         self.refresh_list()
+        n = len(self.library.list_files())
+        if online:
+            self.status_var.set(f"Server OK - {n} DSL")
+        else:
+            self.status_var.set(f"OFFLINE (cache, {n} DSL): {self.library.last_error}")
+
+    def _filtered_files(self):
+        # Loc theo ten/mo ta trong index (khong goi mang moi lan go phim)
+        q = self.search_var.get().lower().strip()
+        return [(p, name) for p, name, desc in self.library.list_entries()
+                if not q or q in name.lower() or q in desc.lower()]
 
     def refresh_list(self):
         self.listbox.delete(0, "end")
-        q = self.search_var.get().lower().strip()
-        for p in self.library.list_files():
-            data = self.library.load(p)
-            if q and q not in data["name"].lower() and q not in data["description"].lower():
-                continue
-            self.listbox.insert("end", data["name"])
+        for _, name in self._filtered_files():
+            self.listbox.insert("end", name)
 
     def on_select(self, _event=None):
         sel = self.listbox.curselection()
         if not sel:
             return
-        names = []
-        q = self.search_var.get().lower().strip()
-        for p in self.library.list_files():
-            data = self.library.load(p)
-            if q and q not in data["name"].lower() and q not in data["description"].lower():
-                continue
-            names.append(p)
+        names = [p for p, _ in self._filtered_files()]
         if sel[0] >= len(names):
             return
         self.load_file(names[sel[0]])
 
     def load_file(self, path):
-        data = self.library.load(path)
+        try:
+            data = self.library.load(path)
+        except KVError as e:
+            messagebox.showerror("Load", str(e))
+            return
         self.current_file = path
         self.name_var.set(data["name"])
         self.desc_var.set(data["description"])
@@ -176,12 +186,16 @@ class App(tk.Tk):
             if not messagebox.askyesno("DSL has errors", msg + "\n\nSave anyway?"):
                 return
 
-        self.library.save(
-            self.current_file,
-            name,
-            self.desc_var.get().strip(),
-            dsl,
-        )
+        try:
+            self.library.save(
+                self.current_file,
+                name,
+                self.desc_var.get().strip(),
+                dsl,
+            )
+        except KVError as e:
+            messagebox.showerror("Save", f"Save failed, nothing lost locally in the editor.\n\n{e}")
+            return
         self.dirty = False
         self.dsl_text.edit_modified(False)
         self.status_var.set(f"Saved: {self.current_file.name}")
@@ -192,7 +206,11 @@ class App(tk.Tk):
             return
         if not messagebox.askyesno("Delete", f"Delete {self.current_file.name}?"):
             return
-        self.library.delete(self.current_file)
+        try:
+            self.library.delete(self.current_file)
+        except KVError as e:
+            messagebox.showerror("Delete", str(e))
+            return
         self.current_file = None
         self.new_dsl()
         self.refresh_list()

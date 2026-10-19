@@ -7,9 +7,20 @@ Requirements:
 Run:
     python main.py
 
-Each *.txt file is one DSL.
+Storage:
+DSL drawings are stored on the Cloudflare Worker KV REST API
+(KV_BASE_URL in dsl_library.py), not in local files:
+    dsl_library:v1:index        JSON list of drawings (name, key, sha256...)
+    dsl_library:v1:file:<id>    JSON {"name", "description", "content", ...}
+"content" is the text format below, byte-identical to the old *.txt files.
+Index + downloaded drawings are cached in dsl_library/.dsl_kv_cache.json
+so the list still opens offline (read-only; saving needs the server).
 
-File format:
+The *.txt files in dsl_library/ are the original files, already uploaded.
+To upload txt files again (one-time migration, verifies byte-for-byte):
+    python migrate_txt_to_kv.py [folder] [--overwrite]
+
+Text format of one DSL:
 [NAME]
 LM2596S-ZX001
 

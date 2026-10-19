@@ -1,0 +1,3 @@
+# Cache offline cua thu vien DSL (Cloudflare Worker KV), tao tu dong
+dsl_library/.dsl_kv_cache.json
+dsl_library/.dsl_kv_cache.tmp
