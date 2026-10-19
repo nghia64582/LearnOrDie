@@ -10,6 +10,7 @@ import math
 from datetime import datetime
 
 from engraver_ctrl.tab_simulate import TabSimulate
+from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
 
 # ---- Cấu hình ước lượng thời gian, chỉnh theo máy thực tế của bạn ----
 RAPID_RATE_MM_MIN = 3000  # tốc độ di chuyển nhanh (G0), tra trong setting $110/$111 của GRBL
@@ -17,13 +18,9 @@ MIN_LINE_TIME = 0.05      # thời gian tối thiểu cho 1 lệnh không di chu
 
 LOG_FILE = "machine.log"
 
-# File gcode de preview: engraver_ctrl/cut_plan.gcode, tinh theo vi tri
-# file nguon nay (khong phu thuoc thu muc dang chay, chay duoc ca
-# Windows/Linux vi dung os.path.join thay vi dau "\\" cung)
-PREVIEW_GCODE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "cut_plan.gcode"
-)
+# File gcode de preview: engraver_ctrl/cut_plan.gcode (xem paths.py),
+# cung file voi Run GCODE va cac tab generate
+PREVIEW_GCODE_PATH = CUT_PLAN_GCODE_PATH
 
 # Buoc jog mac dinh (mm) va cac lua chon nhanh
 JOG_STEP_DEFAULT = "1"
@@ -371,7 +368,7 @@ class MachineTab(tk.Frame):
             return
 
         try:
-            with open("cut_plan.gcode", "r") as f:
+            with open(CUT_PLAN_GCODE_PATH, "r") as f:
                 lines = [ln.strip() for ln in f.readlines() if ln.strip()]
             lines.append("M5")          # tắt laser trước
             lines.append("G0 X0 Y0")    # rồi mới di chuyển về vị trí gốc

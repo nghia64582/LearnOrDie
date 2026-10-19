@@ -4,6 +4,7 @@ from typing import List
 
 from engraver_ctrl.cut_plan_builder import *
 from engraver_ctrl.extended_cut_export import *
+from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
 
 
 class SmallPartsTab(tk.Frame):
@@ -76,7 +77,7 @@ class SmallPartsTab(tk.Frame):
 
             export_gcode_extended(
                 cut_plan,
-                "cut_plan.gcode",
+                CUT_PLAN_GCODE_PATH,
                 feedrate=float(self.entry_feedrate.get()),
                 power=float(self.entry_power.get())
             )

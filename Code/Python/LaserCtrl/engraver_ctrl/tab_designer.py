@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import math
 
+from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+
 
 class DesignerTab(ttk.Frame):
 
@@ -1123,7 +1125,7 @@ class DesignerTab(ttk.Frame):
         if laser_on:
             lines.append("M5")
 
-        with open("cut_plan.gcode", "w") as f:
+        with open(CUT_PLAN_GCODE_PATH, "w") as f:
             f.write("\n".join(lines))
 
         time_text = self._format_time_estimate(

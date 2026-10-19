@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
 
+from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+
 
 class ParallelTab(tk.Frame):
     def __init__(self, parent, app):
@@ -89,7 +91,7 @@ class ParallelTab(tk.Frame):
             # ---- Footer ----
             lines.append("G0 X0 Y0")
 
-            with open("cut_plan.gcode", "w") as f:
+            with open(CUT_PLAN_GCODE_PATH, "w") as f:
                 f.write("\n".join(lines))
 
             messagebox.showinfo("OK", "Parallel GCODE generated successfully!")

@@ -3,6 +3,8 @@ from tkinter import ttk, filedialog
 import re
 import math
 
+from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+
 
 class TabSimulate(ttk.Frame):
 
@@ -131,7 +133,7 @@ class TabSimulate(ttk.Frame):
         )
 
         self.file_var = tk.StringVar(
-            value="cut_plan.gcode"
+            value=CUT_PLAN_GCODE_PATH
         )
 
         self.file_entry = ttk.Entry(
