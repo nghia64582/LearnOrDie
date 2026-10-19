@@ -1,5 +1,15 @@
+import sys
+import os
 import tkinter as tk
 from tkinter import ttk
+
+# Ensure the parent folder (LaserCtrl) is on the path so that
+# `import engraver_ctrl.xxx` works even when this script is run
+# directly from inside the engraver_ctrl directory.
+_parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
+
 from engraver_ctrl.tab_designer import DesignerTab
 # ------- DPI FIX -------
 import ctypes
