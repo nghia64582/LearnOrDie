@@ -14,6 +14,13 @@ Các dataclass của ứng dụng và lớp lưu/đọc dữ liệu dạng JSON.
     | `click_coordinate` | Click tọa độ | `x`, `y`, `button`, `clicks` |
     | `type_text` | Gõ text | `text`, `interval=0.05` |
     | `press_key` | Gõ phím | `keys="enter"` (ví dụ `ctrl+c`) |
+    | `move_mouse` | Di chuột | `x`, `y`, `duration=0.2` |
+    | `drag_mouse` | Kéo chuột | `x1`, `y1`, `x2`, `y2`, `button="left"`, `duration=0.5` |
+    | `activate_window` | Mở cửa sổ | `title`, `timeout_seconds=5` |
+    | `set_window` | Đặt vị trí cửa sổ | `title`, `timeout_seconds=5`, `mode="position"` hoặc `"maximize"`, `left`, `top`, `width=800`, `height=600` |
+    | `minimize_window` | Thu nhỏ cửa sổ | `title`, `timeout_seconds=5` |
+
+  - `StepType.is_window_step` đúng với 3 loại bước cửa sổ.
 
   - `Step` (id uuid, `type`, `params`, `note`) có `to_dict`/`from_dict`. Khi đọc, `params` mặc định được gộp với dữ liệu trong file, nên file cũ thiếu khóa vẫn đọc được.
   - `summary()` sinh dòng mô tả ngắn để hiện trên canvas.

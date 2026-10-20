@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from engine import windows
 from models.image_library import ImageLibrary
 from models.step import Step, StepType
 from models.workflow import Workflow
@@ -32,6 +33,10 @@ def validate_workflow(workflow: Workflow, library: ImageLibrary) -> list[str]:
         errors.append("Workflow chưa có bước nào.")
         return errors
     for index, step in enumerate(workflow.steps, start=1):
+        if step.type.is_window_step:
+            if not str(step.params.get("title") or "").strip():
+                errors.append(f"Bước {index} ({step.type.label}): chưa nhập tiêu đề cửa sổ.")
+            continue
         if step.type not in (StepType.WAIT_IMAGE, StepType.CLICK_IMAGE):
             continue
         image_id = str(step.params.get("image_id") or "")
@@ -138,7 +143,60 @@ class WorkflowRunner:
             self._press_keys(pyautogui, keys)
             self._emit(RunEvent("log", f"Đã gõ phím {keys}", step.id))
             return
+        if step.type is StepType.MOVE_MOUSE:
+            x = int(step.params.get("x") or 0)
+            y = int(step.params.get("y") or 0)
+            pyautogui.moveTo(x, y, duration=max(0.0, float(step.params.get("duration") or 0)))
+            self._emit(RunEvent("log", f"Di chuột tới ({x}, {y})", step.id))
+            return
+        if step.type is StepType.DRAG_MOUSE:
+            p = step.params
+            x1, y1 = int(p.get("x1") or 0), int(p.get("y1") or 0)
+            x2, y2 = int(p.get("x2") or 0), int(p.get("y2") or 0)
+            pyautogui.moveTo(x1, y1)
+            pyautogui.dragTo(
+                x2,
+                y2,
+                duration=max(0.1, float(p.get("duration") or 0.5)),
+                button=str(p.get("button") or "left"),
+            )
+            self._emit(RunEvent("log", f"Kéo chuột ({x1}, {y1}) → ({x2}, {y2})", step.id))
+            return
+        if step.type.is_window_step:
+            win = self._wait_for_window(step)
+            if step.type is StepType.ACTIVATE_WINDOW:
+                windows.activate_window(win)
+                self._emit(RunEvent("log", f"Đã mở cửa sổ \"{win.title}\"", step.id))
+            elif step.type is StepType.MINIMIZE_WINDOW:
+                windows.minimize_window(win)
+                self._emit(RunEvent("log", f"Đã thu nhỏ cửa sổ \"{win.title}\"", step.id))
+            else:
+                p = step.params
+                windows.set_window_geometry(
+                    win,
+                    str(p.get("mode") or "position"),
+                    int(p.get("left") or 0),
+                    int(p.get("top") or 0),
+                    int(p.get("width") or 0),
+                    int(p.get("height") or 0),
+                )
+                self._emit(RunEvent("log", f"Đã đặt vị trí cửa sổ \"{win.title}\"", step.id))
+            return
         raise ValueError(f"Không hỗ trợ loại bước: {step.type}")
+
+    def _wait_for_window(self, step: Step):
+        # Đợi cửa sổ xuất hiện tối đa timeout_seconds (vd. app vừa được mở)
+        title = str(step.params.get("title") or "")
+        timeout = float(step.params.get("timeout_seconds") or 0)
+        deadline = time.monotonic() + max(0.0, timeout)
+        while True:
+            self._check_stop()
+            try:
+                return windows.find_window(title)
+            except windows.WindowError:
+                if time.monotonic() >= deadline:
+                    raise
+            time.sleep(LOCATE_INTERVAL)
 
     def _wait_for_image(self, pyautogui, step: Step, timeout: float):
         path = self._image_path(step)

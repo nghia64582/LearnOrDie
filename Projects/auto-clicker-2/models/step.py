@@ -12,6 +12,11 @@ class StepType(str, Enum):
     CLICK_COORDINATE = "click_coordinate"
     TYPE_TEXT = "type_text"
     PRESS_KEY = "press_key"
+    MOVE_MOUSE = "move_mouse"
+    DRAG_MOUSE = "drag_mouse"
+    ACTIVATE_WINDOW = "activate_window"
+    SET_WINDOW = "set_window"
+    MINIMIZE_WINDOW = "minimize_window"
 
     @property
     def label(self) -> str:
@@ -21,7 +26,16 @@ class StepType(str, Enum):
             StepType.CLICK_COORDINATE: "Click tọa độ",
             StepType.TYPE_TEXT: "Gõ text",
             StepType.PRESS_KEY: "Gõ phím",
+            StepType.MOVE_MOUSE: "Di chuột",
+            StepType.DRAG_MOUSE: "Kéo chuột",
+            StepType.ACTIVATE_WINDOW: "Mở cửa sổ",
+            StepType.SET_WINDOW: "Đặt vị trí cửa sổ",
+            StepType.MINIMIZE_WINDOW: "Thu nhỏ cửa sổ",
         }[self]
+
+    @property
+    def is_window_step(self) -> bool:
+        return self in (StepType.ACTIVATE_WINDOW, StepType.SET_WINDOW, StepType.MINIMIZE_WINDOW)
 
 
 def default_params(step_type: StepType) -> dict[str, Any]:
@@ -40,6 +54,22 @@ def default_params(step_type: StepType) -> dict[str, Any]:
         return {"text": "", "interval": 0.05}
     if step_type is StepType.PRESS_KEY:
         return {"keys": "enter"}
+    if step_type is StepType.MOVE_MOUSE:
+        return {"x": 0, "y": 0, "duration": 0.2}
+    if step_type is StepType.DRAG_MOUSE:
+        return {"x1": 0, "y1": 0, "x2": 0, "y2": 0, "button": "left", "duration": 0.5}
+    if step_type in (StepType.ACTIVATE_WINDOW, StepType.MINIMIZE_WINDOW):
+        return {"title": "", "timeout_seconds": 5.0}
+    if step_type is StepType.SET_WINDOW:
+        return {
+            "title": "",
+            "timeout_seconds": 5.0,
+            "mode": "position",
+            "left": 0,
+            "top": 0,
+            "width": 800,
+            "height": 600,
+        }
     raise ValueError(f"Unknown step type: {step_type}")
 
 
@@ -97,4 +127,20 @@ class Step:
             return f'Gõ text "{preview}"'
         if self.type is StepType.PRESS_KEY:
             return f"Gõ phím {self.params.get('keys', '')}"
+        if self.type is StepType.MOVE_MOUSE:
+            return f"Di chuột tới ({self.params.get('x', 0)}, {self.params.get('y', 0)})"
+        if self.type is StepType.DRAG_MOUSE:
+            p = self.params
+            return f"Kéo ({p.get('x1', 0)}, {p.get('y1', 0)}) → ({p.get('x2', 0)}, {p.get('y2', 0)})"
+        if self.type.is_window_step:
+            title = str(self.params.get("title") or "")
+            target = f'"{title}"' if title else "chưa chọn cửa sổ"
+            if self.type is StepType.ACTIVATE_WINDOW:
+                return f"Mở cửa sổ {target}"
+            if self.type is StepType.MINIMIZE_WINDOW:
+                return f"Thu nhỏ {target}"
+            p = self.params
+            if p.get("mode") == "maximize":
+                return f"Phóng to {target}"
+            return f"Đặt {target} {p.get('width', 0)}x{p.get('height', 0)} tại ({p.get('left', 0)}, {p.get('top', 0)})"
         return self.type.label

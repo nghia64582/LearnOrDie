@@ -12,6 +12,11 @@ NODE_COLORS = {
     StepType.CLICK_COORDINATE: "#fff4e5",
     StepType.TYPE_TEXT: "#f3e8ff",
     StepType.PRESS_KEY: "#fde8ef",
+    StepType.MOVE_MOUSE: "#fff4e5",
+    StepType.DRAG_MOUSE: "#fff4e5",
+    StepType.ACTIVATE_WINDOW: "#eef2ff",
+    StepType.SET_WINDOW: "#eef2ff",
+    StepType.MINIMIZE_WINDOW: "#eef2ff",
 }
 
 NODE_WIDTH = 220
