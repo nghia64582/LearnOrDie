@@ -8,9 +8,13 @@ from models.image_library import ImageLibrary
 from models.step import Step, StepType
 from models.workflow import Workflow
 from models.workflow_store import WorkflowStore
-from ui.run_dialog import RunDialog
+from ui.run_session import COUNTDOWN_SECONDS, RunSession
 from ui.step_editor import StepEditor
+from ui.toast import Toast
 from ui.workflow_canvas import WorkflowCanvas
+
+# Toast lỗi hiển thị lâu hơn toast thường (ms)
+ERROR_TOAST_MS = 8000
 
 
 class WorkflowsTab(ttk.Frame):
@@ -21,7 +25,8 @@ class WorkflowsTab(ttk.Frame):
         self._current: Workflow | None = None
         self._selected_step_id: str | None = None
         self._saving = False
-        self._run_dialog: RunDialog | None = None
+        self._run_session: RunSession | None = None
+        self._toast: Toast | None = None
         self._run_current_id: str | None = None
         self._run_failed_id: str | None = None
         self._run_completed: set[str] = set()
@@ -124,6 +129,9 @@ class WorkflowsTab(ttk.Frame):
         ttk.Button(tools, text="Xóa bước", command=self.delete_step).pack(side="left")
         self._run_btn = ttk.Button(tools, text="Chạy", command=self.run_workflow)
         self._run_btn.pack(side="right")
+        # Trạng thái chạy hiển thị ngay trên tab (dòng riêng), thay cho cửa sổ popup
+        self._run_status = ttk.Label(right, text="", foreground="#667085")
+        self._run_status.grid(row=3, column=0, sticky="e", pady=(6, 0))
 
     def refresh_images(self) -> None:
         self.library.reload()
@@ -270,8 +278,11 @@ class WorkflowsTab(ttk.Frame):
         self._render_editor()
 
     def run_workflow(self) -> None:
-        if self._run_dialog is not None and self._run_dialog.winfo_exists():
-            self._run_dialog.lift()
+        if self._run_session is not None and self._run_session.active:
+            # Nút "Chạy" thành "Dừng" khi đang chạy
+            self._run_session.stop()
+            self._run_btn.configure(state="disabled")
+            self._set_run_status("Đang dừng…")
             return
         if self._current is None:
             messagebox.showinfo("Chạy workflow", "Hãy chọn một workflow trước.", parent=self)
@@ -286,16 +297,57 @@ class WorkflowsTab(ttk.Frame):
         self._run_completed = set()
         self._run_failed_id = None
         self._run_current_id = None
-        self._run_btn.configure(state="disabled")
-        self._run_dialog = RunDialog(
+        self._run_btn.configure(text="Dừng")
+        self._run_session = RunSession(
             self,
             snapshot,
             self.library,
             on_event=self._on_run_event,
+            on_countdown=self._on_run_countdown,
+            on_started=self._on_run_started,
             on_close=self._on_run_close,
         )
 
+    def _on_run_countdown(self, seconds: int) -> None:
+        text = f"Bắt đầu sau {seconds}s… Chuyển sang cửa sổ cần thao tác."
+        self._set_run_status(text)
+        if seconds == COUNTDOWN_SECONDS:
+            self._show_toast(
+                f'Chạy "{self._current.name if self._current else ""}" sau {seconds}s.\n'
+                "Dừng khẩn cấp: đưa chuột lên góc trên-trái màn hình.",
+                duration_ms=0,
+            )
+
+    def _on_run_started(self) -> None:
+        # Đóng toast trước khi bắt đầu click để không che màn hình/ảnh mẫu
+        self._hide_toast()
+        self._set_run_status("Đang chạy…")
+
+    def _set_run_status(self, text: str, error: bool = False) -> None:
+        self._run_status.configure(text=text, foreground="#b42318" if error else "#667085")
+
+    def _show_toast(self, text: str, kind: str = "info", duration_ms: int = 3000) -> None:
+        self._hide_toast()
+        self._toast = Toast(self, text, kind=kind, duration_ms=duration_ms)
+
+    def _hide_toast(self) -> None:
+        if self._toast is not None and self._toast.winfo_exists():
+            self._toast.dismiss()
+        self._toast = None
+
     def _on_run_event(self, event: RunEvent) -> None:
+        if event.kind == "step_started":
+            self._set_run_status(event.message)
+        elif event.kind == "finished":
+            self._set_run_status("Hoàn thành.")
+            self._show_toast(event.message, kind="success")
+        elif event.kind == "cancelled":
+            self._set_run_status(event.message)
+            self._show_toast(event.message)
+        elif event.kind == "failed":
+            # Lỗi vẫn hiển thị rõ: nhãn đỏ giữ đến lần chạy sau + toast đỏ lâu hơn
+            self._set_run_status(event.message, error=True)
+            self._show_toast(event.message, kind="error", duration_ms=ERROR_TOAST_MS)
         if event.kind == "step_started" and event.step_id:
             self._run_current_id = event.step_id
             self._selected_step_id = event.step_id
@@ -310,9 +362,9 @@ class WorkflowsTab(ttk.Frame):
         self._render_canvas()
 
     def _on_run_close(self) -> None:
-        self._run_dialog = None
+        self._run_session = None
         self._run_current_id = None
-        self._run_btn.configure(state="normal")
+        self._run_btn.configure(text="Chạy", state="normal")
         self._render_canvas()
 
     def _on_workflow_select(self) -> None:
