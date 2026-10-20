@@ -25,7 +25,7 @@ python main.py
 
 ## Luồng chính
 
-1. **Tab "Hình ảnh"**: thêm ảnh mẫu. File được copy vào `data/images/<uuid>.<ext>` và ghi vào `data/images/index.json`.
+1. **Tab "Hình ảnh"**: thêm ảnh mẫu bằng cách chọn file, **chụp màn hình** (nút "Chụp màn hình (Win+Shift+S)" mở công cụ cắt của Windows rồi tự lấy ảnh mới từ clipboard), hoặc **dán ảnh bằng Ctrl+V**. Ảnh được copy vào `data/images/<uuid>.<ext>` (ảnh chụp lưu dạng PNG) và ghi vào `data/images/index.json`.
 2. **Tab "Workflow"**: tạo workflow, thêm/sửa/sắp xếp các bước. Mỗi thay đổi được **tự lưu** ngay vào `data/workflows/<id>.json`.
 3. **Nhấn "Chạy"**:
    - Kiểm tra workflow (`validate_workflow`).
@@ -37,7 +37,7 @@ python main.py
 
 ## Phụ thuộc
 
-- **Pillow**: bắt buộc, vì tab Hình ảnh import PIL ngay khi mở app.
+- **Pillow**: bắt buộc, vì tab Hình ảnh import PIL ngay khi mở app. `ImageGrab.grabclipboard()` cũng dùng để đọc ảnh chụp hoặc ảnh dán. Trên Linux, việc này cần thêm `xclip` hoặc `wl-paste`.
 - **pyautogui**: chỉ import khi chạy workflow hoặc lấy tọa độ chuột, nên thiếu nó app vẫn mở được.
 - **opencv-python**: cần cho tham số "độ khớp" (`confidence`) khi tìm ảnh. Thiếu nó thì engine tìm ảnh khớp tuyệt đối.
 - **pyperclip** (không có trong requirements): tùy chọn, dùng để gõ text có dấu/Unicode qua clipboard (Ctrl+V).

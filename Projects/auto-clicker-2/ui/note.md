@@ -40,6 +40,18 @@ Giao diện Tkinter/ttk: hai tab chính, canvas hiển thị workflow, form sử
 - **`images_tab.py`**: `ImagesTab`, tab "Hình ảnh".
   - Danh sách ảnh (tên, file) với các nút Thêm ảnh (chọn file), Đổi tên, Xóa (xóa cả file, có hỏi xác nhận).
   - Xem trước ảnh thu nhỏ tối đa 420x320 bằng Pillow, kèm thông tin tên, file và thời gian tạo.
+  - **"Chụp màn hình (Win+Shift+S)"**:
+    1. Ghi nhớ dấu vân tay (hash) của nội dung clipboard hiện tại.
+    2. Thu nhỏ cửa sổ app, đợi 350 ms rồi mở lớp phủ chụp của Windows (`os.startfile("ms-screenclip:")`, lỗi thì thử `explorer ms-screenclip:`).
+    3. Đọc clipboard mỗi 400 ms bằng `after()` (không chặn UI) qua `PIL.ImageGrab.grabclipboard()`. Chỉ nhận ảnh **khác** nội dung đã ghi nhớ, nên ảnh cũ trong clipboard bị bỏ qua.
+    - Quá 60 giây (`SNIP_TIMEOUT_SECONDS`) hoặc nhấn lại nút (lúc này là "Hủy chụp") thì dừng chờ.
+    - Mọi trường hợp đều khôi phục cửa sổ.
+    - Ngoài Windows, hoặc khi không mở được công cụ chụp: báo lỗi bằng nhãn và toast đỏ, hướng dẫn tự nhấn Win+Shift+S rồi Ctrl+V.
+  - **"Dán (Ctrl+V)"** hoặc phím **Ctrl+V** khi đang ở tab này (bỏ qua nếu đang gõ trong ô nhập): thêm ảnh từ clipboard.
+    - Clipboard là **ảnh**: lưu PNG tạm rồi thêm qua `ImageLibrary.add_from_file()`, đúng luồng thêm file (copy thành `data/images/<uuid>.png` và ghi `index.json`). Tên tự đặt là `Chụp YYYY-MM-DD HH:MM:SS`, không hỏi tên, giống luồng chọn file.
+    - Clipboard là **danh sách file** (copy file trong Explorer): thêm các file có đuôi ảnh, bỏ qua file khác.
+    - Clipboard trống hoặc không có ảnh: chỉ hiện thông báo.
+  - Kết quả hiện ở nhãn dưới các nút và bằng toast (xanh khi thành công, đỏ khi lỗi). Danh sách được làm mới và ảnh mới được chọn.
 
 ## Lưu ý
 
