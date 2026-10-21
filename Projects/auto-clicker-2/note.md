@@ -1,6 +1,6 @@
 # auto-clicker-2
 
-Ứng dụng desktop (Python + Tkinter) để **thiết kế và chạy workflow tự động thao tác giao diện**: đợi ảnh xuất hiện trên màn hình, click ảnh, click tọa độ, gõ text, gõ phím, di/kéo chuột, mở / thu nhỏ / đặt vị trí cửa sổ đang chạy, mở file/thư mục/chương trình. Thao tác chuột/bàn phím và tìm ảnh dùng PyAutoGUI. Yêu cầu ban đầu nằm trong `spec.md`.
+Ứng dụng desktop (Python + Tkinter) để **thiết kế và chạy workflow tự động thao tác giao diện**: đợi ảnh xuất hiện trên màn hình, click ảnh, click tọa độ, gõ text, gõ phím, di/kéo chuột, mở / thu nhỏ / đặt vị trí / đóng cửa sổ đang chạy, mở file/thư mục/chương trình. Thao tác chuột/bàn phím và tìm ảnh dùng PyAutoGUI. Yêu cầu ban đầu nằm trong `spec.md`.
 
 ## Chạy
 
@@ -39,7 +39,7 @@ python main.py
 
 - **Pillow**: bắt buộc, vì tab Hình ảnh import PIL ngay khi mở app. `ImageGrab.grabclipboard()` cũng dùng để đọc ảnh chụp hoặc ảnh dán. Trên Linux, việc này cần thêm `xclip` hoặc `wl-paste`.
 - **pyautogui**: chỉ import khi chạy workflow hoặc lấy tọa độ chuột, nên thiếu nó app vẫn mở được.
-- **pygetwindow** (đi kèm pyautogui): dùng cho các bước cửa sổ (mở, thu nhỏ, đặt vị trí) và dropdown chọn cửa sổ. Thư viện này **chỉ chạy trên Windows**; trên máy khác form vẫn mở được nhưng báo lỗi khi làm mới danh sách hoặc khi chạy bước cửa sổ.
+- **pygetwindow** (đi kèm pyautogui): dùng cho các bước cửa sổ (mở, thu nhỏ, đặt vị trí, đóng) và dropdown chọn cửa sổ. Thư viện này **chỉ chạy trên Windows**; trên máy khác form vẫn mở được nhưng báo lỗi khi làm mới danh sách hoặc khi chạy bước cửa sổ.
 - **opencv-python**: cần cho tham số "độ khớp" (`confidence`) khi tìm ảnh. Thiếu nó thì engine tìm ảnh khớp tuyệt đối.
 - **pyperclip** (không có trong requirements): tùy chọn, dùng để gõ text có dấu/Unicode qua clipboard (Ctrl+V).
 

@@ -176,6 +176,9 @@ class WorkflowRunner:
                 self._check_stop()
                 time.sleep(min(0.1, max(0.0, deadline - time.monotonic())))
             return
+        if step.type is StepType.CLOSE_WINDOW:
+            self._close_window(step)
+            return
         if step.type.is_window_step:
             win = self._wait_for_window(step)
             if step.type is StepType.ACTIVATE_WINDOW:
@@ -211,6 +214,37 @@ class WorkflowRunner:
                 if time.monotonic() >= deadline:
                     raise
             time.sleep(LOCATE_INTERVAL)
+
+    def _close_window(self, step: Step) -> None:
+        p = step.params
+        try:
+            win = self._wait_for_window(step)
+        except windows.WindowError as exc:
+            if p.get("missing") == "skip":
+                self._emit(RunEvent("log", f"Bỏ qua: {exc}", step.id))
+                return
+            raise
+        title = win.title
+        windows.close_window(win)
+        # Chờ cửa sổ biến mất; app có thể đang hỏi "Lưu thay đổi?" nên không đóng ngay
+        wait = max(0.0, float(p.get("kill_after_seconds") or 0))
+        deadline = time.monotonic() + wait
+        while windows.window_exists(win):
+            if time.monotonic() >= deadline:
+                break
+            self._check_stop()
+            time.sleep(min(LOCATE_INTERVAL, max(0.0, deadline - time.monotonic())))
+        else:
+            self._emit(RunEvent("log", f"Đã đóng cửa sổ \"{title}\"", step.id))
+            return
+        if not p.get("force_kill"):
+            self._emit(
+                RunEvent("log", f"Đã gửi lệnh đóng \"{title}\" nhưng sau {wait:g}s cửa sổ vẫn còn (có thể đang hỏi lưu).", step.id)
+            )
+            return
+        pid = windows.window_pid(win)
+        windows.kill_process(pid)
+        self._emit(RunEvent("log", f"Cửa sổ \"{title}\" không tự đóng, đã buộc tắt tiến trình {pid}", step.id))
 
     def _wait_for_image(self, pyautogui, step: Step, timeout: float):
         path = self._image_path(step)

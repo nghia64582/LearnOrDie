@@ -17,6 +17,7 @@ NODE_COLORS = {
     StepType.ACTIVATE_WINDOW: "#eef2ff",
     StepType.SET_WINDOW: "#eef2ff",
     StepType.MINIMIZE_WINDOW: "#eef2ff",
+    StepType.CLOSE_WINDOW: "#fef3f2",
     StepType.OPEN_FILE: "#ecfdf3",
 }
 

@@ -17,6 +17,7 @@ class StepType(str, Enum):
     ACTIVATE_WINDOW = "activate_window"
     SET_WINDOW = "set_window"
     MINIMIZE_WINDOW = "minimize_window"
+    CLOSE_WINDOW = "close_window"
     OPEN_FILE = "open_file"
 
     @property
@@ -32,12 +33,18 @@ class StepType(str, Enum):
             StepType.ACTIVATE_WINDOW: "Mở cửa sổ",
             StepType.SET_WINDOW: "Đặt vị trí cửa sổ",
             StepType.MINIMIZE_WINDOW: "Thu nhỏ cửa sổ",
+            StepType.CLOSE_WINDOW: "Đóng cửa sổ",
             StepType.OPEN_FILE: "Mở file",
         }[self]
 
     @property
     def is_window_step(self) -> bool:
-        return self in (StepType.ACTIVATE_WINDOW, StepType.SET_WINDOW, StepType.MINIMIZE_WINDOW)
+        return self in (
+            StepType.ACTIVATE_WINDOW,
+            StepType.SET_WINDOW,
+            StepType.MINIMIZE_WINDOW,
+            StepType.CLOSE_WINDOW,
+        )
 
 
 def default_params(step_type: StepType) -> dict[str, Any]:
@@ -62,6 +69,9 @@ def default_params(step_type: StepType) -> dict[str, Any]:
         return {"x1": 0, "y1": 0, "x2": 0, "y2": 0, "button": "left", "duration": 0.5}
     if step_type is StepType.OPEN_FILE:
         return {"path": "", "arguments": "", "wait_seconds": 1.0}
+    if step_type is StepType.CLOSE_WINDOW:
+        # missing: "error" = báo lỗi nếu không thấy cửa sổ, "skip" = bỏ qua bước
+        return {"title": "", "timeout_seconds": 5.0, "force_kill": False, "kill_after_seconds": 3.0, "missing": "error"}
     if step_type in (StepType.ACTIVATE_WINDOW, StepType.MINIMIZE_WINDOW):
         return {"title": "", "timeout_seconds": 5.0}
     if step_type is StepType.SET_WINDOW:
@@ -147,6 +157,8 @@ class Step:
             target = f'"{title}"' if title else "chưa chọn cửa sổ"
             if self.type is StepType.ACTIVATE_WINDOW:
                 return f"Mở cửa sổ {target}"
+            if self.type is StepType.CLOSE_WINDOW:
+                return f"Đóng {target}" + (" (buộc tắt)" if self.params.get("force_kill") else "")
             if self.type is StepType.MINIMIZE_WINDOW:
                 return f"Thu nhỏ {target}"
             p = self.params

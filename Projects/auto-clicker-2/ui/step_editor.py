@@ -12,6 +12,7 @@ BUTTON_CHOICES = ("left", "right", "middle")
 # Đếm ngược trước khi đọc vị trí chuột, để kịp di chuột tới chỗ cần lấy
 CAPTURE_COUNTDOWN_SECONDS = 3
 WINDOW_MODES = {"position": "Vị trí & kích thước", "maximize": "Phóng to (maximize)"}
+MISSING_CHOICES = {"error": "Báo lỗi, dừng workflow", "skip": "Bỏ qua bước này"}
 
 
 class StepEditor(ttk.LabelFrame):
@@ -53,6 +54,9 @@ class StepEditor(ttk.LabelFrame):
         self._path_var = tk.StringVar()
         self._arguments_var = tk.StringVar()
         self._wait_var = tk.StringVar()
+        self._force_kill_var = tk.BooleanVar()
+        self._kill_after_var = tk.StringVar()
+        self._missing_var = tk.StringVar()
         self._capture_after_id: str | None = None
         self._text_widget: tk.Text | None = None
         self._rebuilding = False
@@ -107,6 +111,9 @@ class StepEditor(ttk.LabelFrame):
             self._path_var,
             self._arguments_var,
             self._wait_var,
+            self._force_kill_var,
+            self._kill_after_var,
+            self._missing_var,
         ):
             var.trace_add("write", lambda *_: self._emit())
 
@@ -279,6 +286,9 @@ class StepEditor(ttk.LabelFrame):
         self._timeout_var.set(str(params.get("timeout_seconds", 5.0)))
         self._add_labeled_entry(parent, 3, "Đợi cửa sổ tối đa (s):", self._timeout_var)
         parent.columnconfigure(1, weight=1)
+        if self._step is not None and self._step.type is StepType.CLOSE_WINDOW:
+            self._add_close_rows(parent, params)
+            return
         if self._step is None or self._step.type is not StepType.SET_WINDOW:
             return
         self._mode_var.set(WINDOW_MODES.get(str(params.get("mode", "position")), WINDOW_MODES["position"]))
@@ -304,6 +314,31 @@ class StepEditor(ttk.LabelFrame):
         ttk.Button(parent, text="Lấy từ cửa sổ", command=self._read_window_geometry).grid(
             row=9, column=1, sticky="w"
         )
+
+    def _add_close_rows(self, parent: ttk.Frame, params: dict) -> None:
+        self._missing_var.set(MISSING_CHOICES.get(str(params.get("missing", "error")), MISSING_CHOICES["error"]))
+        ttk.Label(parent, text="Không thấy cửa sổ:").grid(row=4, column=0, sticky="w", pady=4)
+        ttk.Combobox(
+            parent,
+            textvariable=self._missing_var,
+            values=list(MISSING_CHOICES.values()),
+            state="readonly",
+            width=20,
+        ).grid(row=4, column=1, sticky="ew")
+        self._force_kill_var.set(bool(params.get("force_kill", False)))
+        ttk.Checkbutton(parent, text="Buộc tắt nếu không đóng", variable=self._force_kill_var).grid(
+            row=5, column=0, columnspan=2, sticky="w", pady=(6, 2)
+        )
+        self._kill_after_var.set(str(params.get("kill_after_seconds", 3.0)))
+        self._add_labeled_entry(parent, 6, "Đợi đóng tối đa (s):", self._kill_after_var)
+        ttk.Label(
+            parent,
+            text="Đóng như bấm nút X; app có thể hỏi lưu file. Bật buộc tắt thì sau thời gian đợi "
+            "sẽ tắt hẳn tiến trình của cửa sổ (mất dữ liệu chưa lưu).",
+            foreground="#667085",
+            justify="left",
+            wraplength=300,
+        ).grid(row=7, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
     def _refresh_window_titles(self) -> None:
         try:
@@ -467,6 +502,12 @@ class StepEditor(ttk.LabelFrame):
         elif step.type.is_window_step:
             params["title"] = self._title_var.get().strip()
             params["timeout_seconds"] = self._as_float(self._timeout_var.get(), 5.0)
+            if step.type is StepType.CLOSE_WINDOW:
+                params["force_kill"] = bool(self._force_kill_var.get())
+                params["kill_after_seconds"] = self._as_float(self._kill_after_var.get(), 3.0)
+                params["missing"] = next(
+                    (key for key, label in MISSING_CHOICES.items() if label == self._missing_var.get()), "error"
+                )
             if step.type is StepType.SET_WINDOW:
                 mode = next((key for key, label in WINDOW_MODES.items() if label == self._mode_var.get()), "position")
                 params["mode"] = mode

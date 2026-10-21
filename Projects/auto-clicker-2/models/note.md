@@ -19,9 +19,10 @@ Các dataclass của ứng dụng và lớp lưu/đọc dữ liệu dạng JSON.
     | `activate_window` | Mở cửa sổ | `title`, `timeout_seconds=5` |
     | `set_window` | Đặt vị trí cửa sổ | `title`, `timeout_seconds=5`, `mode="position"` hoặc `"maximize"`, `left`, `top`, `width=800`, `height=600` |
     | `minimize_window` | Thu nhỏ cửa sổ | `title`, `timeout_seconds=5` |
+    | `close_window` | Đóng cửa sổ | `title`, `timeout_seconds=5`, `force_kill=False`, `kill_after_seconds=3`, `missing="error"` hoặc `"skip"` |
     | `open_file` | Mở file | `path`, `arguments=""` (tham số cho .exe), `wait_seconds=1` (đợi sau khi mở) |
 
-  - `StepType.is_window_step` đúng với 3 loại bước cửa sổ.
+  - `StepType.is_window_step` đúng với 4 loại bước cửa sổ (mở, đặt vị trí, thu nhỏ, đóng).
 
   - `Step` (id uuid, `type`, `params`, `note`) có `to_dict`/`from_dict`. Khi đọc, `params` mặc định được gộp với dữ liệu trong file, nên file cũ thiếu khóa vẫn đọc được.
   - `summary()` sinh dòng mô tả ngắn để hiện trên canvas.

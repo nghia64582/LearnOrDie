@@ -31,6 +31,10 @@ Kiểm tra và thực thi workflow bằng PyAutoGUI. Phần này không phụ th
   - *Bước cửa sổ*: tìm cửa sổ theo `title` mỗi `LOCATE_INTERVAL` cho tới `timeout_seconds` (cửa sổ có thể chưa kịp mở), vẫn kiểm tra `should_stop()`. Hết giờ thì báo lỗi "Không tìm thấy cửa sổ…".
     - *Mở cửa sổ*: nếu đang thu nhỏ thì `restore()`, rồi `activate()` để đưa lên trên.
     - *Thu nhỏ cửa sổ*: `minimize()`.
+    - *Đóng cửa sổ*:
+      - Không thấy cửa sổ: `missing="error"` thì báo lỗi; `"skip"` thì ghi log "Bỏ qua" rồi chạy bước sau.
+      - Gọi `close()` (gửi WM_CLOSE, như bấm nút X), rồi đợi tối đa `kill_after_seconds` cho cửa sổ biến mất (`window_exists`).
+      - Hết giờ mà cửa sổ còn (thường là app đang hỏi "Lưu thay đổi?"): nếu không bật `force_kill` thì chỉ ghi log và **không** báo lỗi. Nếu bật thì lấy PID của cửa sổ và buộc tắt tiến trình đó.
     - *Đặt vị trí cửa sổ*: `mode="maximize"` thì `maximize()`; ngược lại `restore()` (nếu đang thu nhỏ/phóng to) rồi `moveTo(left, top)` và `resizeTo(width, height)`.
 
   - *Mở file*: gọi `launcher.open_path(path, arguments)`, sau đó đợi `wait_seconds` để chương trình kịp mở (trong lúc đợi vẫn bấm Dừng được).
@@ -63,7 +67,13 @@ Lớp mỏng bọc `pygetwindow` (import lười, chỉ có trên Windows). Thi�
 
 - `list_window_titles()`: tiêu đề các cửa sổ đang mở (bỏ trống, bỏ trùng, đã sắp xếp), dùng cho dropdown ở UI.
 - `find_window(title)`: ưu tiên tiêu đề trùng khớp hoàn toàn (không phân biệt hoa thường), sau đó tới tiêu đề **chứa** chuỗi đã nhập. Vì vậy chỉ cần gõ một phần, ví dụ `Notepad`.
-- `activate_window`, `minimize_window`, `set_window_geometry`.
+- `activate_window`, `minimize_window`, `set_window_geometry`, `close_window`.
+- `window_exists(win)`: dùng `IsWindow(hwnd)`. Không có handle hoặc không phải Windows thì xem cửa sổ còn trong danh sách không.
+- `window_pid(win)`: `GetWindowThreadProcessId`.
+- `kill_process(pid)`:
+  - `OpenProcess(PROCESS_TERMINATE)` rồi `TerminateProcess`. Không được thì chạy `taskkill /PID … /F /T` (tắt cả tiến trình con).
+  - Không cho buộc tắt chính auto-clicker.
+  - Buộc tắt làm **mất dữ liệu chưa lưu**. Tiến trình chạy quyền admin thì có thể không tắt được khi auto-clicker không chạy quyền admin.
 - Windows đôi khi chặn đưa cửa sổ lên trước (`activate()` lỗi "Error code 0"). Khi đó code thử `minimize()` rồi `restore()` để cửa sổ hiện lên.
 - **`confidence`** bị giới hạn trong khoảng 0.1–0.99. Nếu OpenCV không có (lỗi liên quan confidence/opencv) thì engine tìm lại **không** dùng confidence, tức khớp tuyệt đối.
 

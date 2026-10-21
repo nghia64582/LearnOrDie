@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+
 
 class WindowError(RuntimeError):
     pass
@@ -67,3 +71,70 @@ def set_window_geometry(win, mode: str, left: int, top: int, width: int, height:
 
 def minimize_window(win) -> None:
     win.minimize()
+
+
+def close_window(win) -> None:
+    """Đóng nhẹ nhàng: gửi WM_CLOSE (như bấm nút X), app vẫn có thể hỏi lưu file."""
+    win.close()
+
+
+def window_exists(win) -> bool:
+    hwnd = getattr(win, "_hWnd", None)
+    if hwnd is not None and sys.platform == "win32":
+        try:
+            import ctypes
+
+            return bool(ctypes.windll.user32.IsWindow(hwnd))
+        except Exception:
+            pass
+    # Không kiểm tra được bằng handle thì xem cửa sổ còn trong danh sách không
+    try:
+        current = _gw().getWindowsWithTitle(win.title)
+    except WindowError:
+        return False
+    if hwnd is not None:
+        return any(getattr(other, "_hWnd", None) == hwnd for other in current)
+    return any(other is win for other in current)
+
+
+def window_pid(win) -> int:
+    """PID của tiến trình sở hữu cửa sổ (GetWindowThreadProcessId)."""
+    hwnd = getattr(win, "_hWnd", None)
+    if hwnd is None or sys.platform != "win32":
+        raise WindowError("Không lấy được tiến trình của cửa sổ (chỉ hỗ trợ Windows).")
+    import ctypes
+    from ctypes import wintypes
+
+    pid = wintypes.DWORD(0)
+    ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+    if not pid.value:
+        raise WindowError("Không lấy được tiến trình của cửa sổ.")
+    return int(pid.value)
+
+
+def kill_process(pid: int) -> None:
+    """Buộc tắt tiến trình: TerminateProcess, lỗi thì dùng taskkill /F."""
+    if pid == os.getpid():
+        raise WindowError("Không thể buộc tắt chính auto-clicker.")
+    if sys.platform != "win32":
+        raise WindowError("Buộc tắt chỉ hỗ trợ Windows.")
+    import ctypes
+
+    process_terminate = 0x0001
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.OpenProcess(process_terminate, False, int(pid))
+    if handle:
+        try:
+            if kernel32.TerminateProcess(handle, 1):
+                return
+        finally:
+            kernel32.CloseHandle(handle)
+    # Không đủ quyền với OpenProcess/TerminateProcess thì thử taskkill
+    result = subprocess.run(
+        ["taskkill", "/PID", str(int(pid)), "/F", "/T"],
+        capture_output=True,
+        text=True,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
+    if result.returncode != 0:
+        raise WindowError(f"Không buộc tắt được tiến trình {pid}: {(result.stderr or result.stdout).strip()}")
