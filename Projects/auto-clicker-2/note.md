@@ -9,7 +9,7 @@ python -m pip install -r requirements.txt   # Pillow, pyautogui, opencv-python, 
 python main.py
 ```
 
-- `main.py` gọi `ensure_data_dirs()` rồi mở `MainWindow`.
+- `main.py` bật DPI awareness (`engine/screen.py`, chỉ có tác dụng trên Windows), gọi `ensure_data_dirs()` rồi mở `MainWindow`.
 - Import dùng tên tuyệt đối (`app.`, `models.`, `engine.`, `ui.`). Khi chạy `python main.py`, thư mục dự án tự nằm trong `sys.path`.
 - Dữ liệu luôn lưu ở `data/` của dự án (tính theo vị trí file nguồn, không theo thư mục đang đứng).
 
@@ -49,4 +49,5 @@ python main.py
 - Tọa độ `Node` lưu trong JSON luôn bị xếp lại thành một cột, và canvas tự vẽ theo layout cố định (xem `models/note.md`).
 - File workflow JSON hỏng sẽ bị **bỏ qua im lặng** khi liệt kê.
 - Xóa ảnh không kiểm tra workflow nào đang dùng ảnh đó. Lỗi chỉ lộ ra khi chạy (bước kiểm tra sẽ báo).
+- **Nhiều màn hình**: engine tìm ảnh trên **mọi màn hình** (chụp cả màn hình ảo bằng `ImageGrab.grab(all_screens=True)`), rồi đổi tọa độ sang tọa độ màn hình thật, kể cả khi màn hình phụ nằm bên trái/phía trên màn hình chính (tọa độ âm). Chưa có tùy chọn chọn màn hình cho từng bước. Chi tiết xem `engine/note.md`.
 - Ứng dụng nhắm tới Windows (font Segoe UI, hotkey `ctrl+v`).

@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from engine import windows
+from engine import screen, windows
 from models.image_library import ImageLibrary
 from models.step import Step, StepType
 from models.workflow import Workflow
@@ -219,17 +219,21 @@ class WorkflowRunner:
         return path
 
     def _locate(self, pyautogui, path: Path, confidence: float):
-        image = str(path)
+        # Chụp mọi màn hình rồi tìm trong ảnh đó (locateOnScreen chỉ thấy màn hình chính)
+        haystack = screen.grab_all_screens()
+        return screen.to_screen_box(self._locate_in(pyautogui, str(path), haystack, confidence))
+
+    def _locate_in(self, pyautogui, image: str, haystack, confidence: float):
         confidence = min(max(confidence, 0.1), 0.99)
         try:
-            return pyautogui.locateOnScreen(image, confidence=confidence)
+            return pyautogui.locate(image, haystack, confidence=confidence)
         except Exception as exc:
             if _is_not_found(exc):
                 return None
             if "confidence" not in str(exc).lower() and "opencv" not in str(exc).lower() and not isinstance(exc, TypeError):
                 raise
         try:
-            return pyautogui.locateOnScreen(image)
+            return pyautogui.locate(image, haystack)
         except Exception as exc:
             if _is_not_found(exc):
                 return None

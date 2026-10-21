@@ -17,7 +17,7 @@ Kiểm tra và thực thi workflow bằng PyAutoGUI. Phần này không phụ th
   - Gọi `should_stop()` trước mỗi bước và trong vòng lặp tìm ảnh. Nếu được yêu cầu dừng thì phát `cancelled`.
   - Đưa chuột vào góc màn hình (`FailSafeException`) cũng được coi là `cancelled`.
 - **Từng loại bước:**
-  - *Đợi ảnh*: gọi `locateOnScreen` mỗi `LOCATE_INTERVAL = 0.35` giây cho tới `timeout_seconds`. Hết giờ thì báo `TimeoutError`.
+  - *Đợi ảnh*: chụp mọi màn hình và tìm ảnh (xem `screen.py`) mỗi `LOCATE_INTERVAL = 0.35` giây cho tới `timeout_seconds`. Hết giờ thì báo `TimeoutError`.
   - *Click ảnh*: đợi ảnh tối đa `CLICK_IMAGE_TIMEOUT = 8` giây (cố định), rồi click vào tâm ảnh với `button` và `clicks` đã chọn.
   - *Click tọa độ*: `pyautogui.click(x, y, …)`.
   - *Gõ text*:
@@ -31,6 +31,19 @@ Kiểm tra và thực thi workflow bằng PyAutoGUI. Phần này không phụ th
     - *Mở cửa sổ*: nếu đang thu nhỏ thì `restore()`, rồi `activate()` để đưa lên trên.
     - *Thu nhỏ cửa sổ*: `minimize()`.
     - *Đặt vị trí cửa sổ*: `mode="maximize"` thì `maximize()`; ngược lại `restore()` (nếu đang thu nhỏ/phóng to) rồi `moveTo(left, top)` và `resizeTo(width, height)`.
+
+## `screen.py` (nhiều màn hình)
+
+`pyautogui.locateOnScreen` trên Windows chỉ chụp **màn hình chính**, nên ảnh nằm ở màn hình phụ không bao giờ tìm thấy. Vì vậy engine không dùng nó nữa:
+
+1. `grab_all_screens()`: chụp cả "màn hình ảo" (gộp mọi monitor) bằng `ImageGrab.grab(all_screens=True)`.
+2. `pyautogui.locate(ảnh mẫu, ảnh chụp, confidence)`: tìm trong ảnh đó. Tọa độ trả về tính từ góc trên-trái ảnh chụp.
+3. `to_screen_box(box)`: cộng gốc màn hình ảo `virtual_screen_origin()` = `GetSystemMetrics(SM_XVIRTUALSCREEN=76, SM_YVIRTUALSCREEN=77)` để ra tọa độ thật dùng cho click.
+   - Ví dụ 2 màn 1920x1080, màn chính bên trái: gốc là (0, 0), ảnh chụp rộng 3840, ảnh ở màn phải có x từ 1920 trở lên.
+   - Màn phụ nằm bên trái màn chính: gốc là (-1920, 0), nên tọa độ ở màn phụ là số âm. `pyautogui.click` vẫn click được tọa độ âm.
+   - Không phải Windows thì gốc là (0, 0).
+- `enable_dpi_awareness()`: gọi trong `main.py` trước khi tạo cửa sổ. Thử `SetProcessDpiAwareness(2)` (per-monitor), lỗi thì dùng `SetProcessDPIAware()`. Không phải Windows thì bỏ qua. Không có bước này, khi scale màn hình khác 100% thì ảnh chụp, tọa độ chuột và tọa độ click sẽ lệch nhau.
+- Nút "Lấy tọa độ" ở UI dùng `pyautogui.position()` (GetCursorPos), vốn đã trả về tọa độ màn hình ảo, nên lấy được cả vị trí trên màn hình phụ.
 
 ## `windows.py`
 
@@ -49,4 +62,4 @@ Re-export `RunEvent`, `WorkflowRunner`, `validate_workflow`.
 ## Lưu ý
 
 - `run()` chạy blocking. UI gọi nó trên thread nền (`ui/run_session.py`) và nhận sự kiện qua `emit`.
-- Ảnh được tìm trên toàn màn hình, nên cửa sổ hay thông báo nào che vùng cần tìm hoặc cần click đều làm ảnh hưởng kết quả.
+- Ảnh được tìm trên toàn bộ các màn hình (mỗi lần tìm chụp lại cả màn hình ảo, nên nhiều màn hình lớn thì mỗi lần tìm chậm hơn), nên cửa sổ hay thông báo nào che vùng cần tìm hoặc cần click đều làm ảnh hưởng kết quả.
