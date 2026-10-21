@@ -38,6 +38,7 @@ Giao diện Tkinter/ttk: hai tab chính, canvas hiển thị workflow, form sử
   - Các trường hiện ra theo loại bước: ảnh (chọn theo tên), độ khớp, timeout, tọa độ X/Y kèm nút lấy tọa độ, nút chuột, số lần click, nội dung text, khoảng cách gõ, phím, và ghi chú.
   - **Di chuột / Kéo chuột**: ô X/Y (kéo thì có điểm Từ và Đến), mỗi điểm có nút "Lấy vị trí chuột (3s)". Nút này đếm ngược 3 giây bằng `after()` (không chặn UI), rồi đọc `pyautogui.position()` vào ô. Đổi bước hoặc đổi loại trong lúc đếm sẽ hủy đếm ngược.
   - **Bước cửa sổ**: combobox tiêu đề cửa sổ (chọn trong danh sách cửa sổ đang mở, hoặc gõ một phần tiêu đề), nút "Làm mới danh sách" để lấy lại danh sách, và ô thời gian đợi. Bước "Đặt vị trí cửa sổ" có thêm kiểu (vị trí & kích thước / phóng to), trái/trên/rộng/cao, và nút "Lấy từ cửa sổ" để đọc vị trí hiện tại của cửa sổ đã chọn.
+  - **Mở file**: ô đường dẫn, nút "Chọn file..." (hộp thoại chọn file; muốn mở thư mục thì gõ đường dẫn thư mục), ô tham số (cho .exe) và ô thời gian đợi sau khi mở.
   - Mỗi lần sửa gọi `on_change`, dẫn tới tự lưu.
 - **`images_tab.py`**: `ImagesTab`, tab "Hình ảnh".
   - Danh sách ảnh (tên, file) với các nút Thêm ảnh (chọn file), Đổi tên, Xóa (xóa cả file, có hỏi xác nhận).

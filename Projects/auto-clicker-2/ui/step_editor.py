@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections.abc import Callable
-from tkinter import ttk
+from tkinter import filedialog, ttk
 
 from engine import windows
 from models.image_library import ImageLibrary
@@ -50,6 +50,9 @@ class StepEditor(ttk.LabelFrame):
         self._top_var = tk.StringVar()
         self._width_var = tk.StringVar()
         self._height_var = tk.StringVar()
+        self._path_var = tk.StringVar()
+        self._arguments_var = tk.StringVar()
+        self._wait_var = tk.StringVar()
         self._capture_after_id: str | None = None
         self._text_widget: tk.Text | None = None
         self._rebuilding = False
@@ -101,6 +104,9 @@ class StepEditor(ttk.LabelFrame):
             self._top_var,
             self._width_var,
             self._height_var,
+            self._path_var,
+            self._arguments_var,
+            self._wait_var,
         ):
             var.trace_add("write", lambda *_: self._emit())
 
@@ -221,6 +227,26 @@ class StepEditor(ttk.LabelFrame):
             self._add_labeled_entry(self._fields, 7, "Thời gian kéo (s):", self._duration_var)
         elif self._step.type.is_window_step:
             self._add_window_rows(self._fields, params)
+        elif self._step.type is StepType.OPEN_FILE:
+            self._path_var.set(str(params.get("path", "")))
+            ttk.Label(self._fields, text="Đường dẫn:").grid(row=0, column=0, sticky="w", pady=4)
+            ttk.Entry(self._fields, textvariable=self._path_var, width=28).grid(row=0, column=1, sticky="ew")
+            ttk.Button(self._fields, text="Chọn file...", command=self._browse_file).grid(
+                row=1, column=1, sticky="w"
+            )
+            self._arguments_var.set(str(params.get("arguments", "")))
+            self._add_labeled_entry(self._fields, 2, "Tham số (.exe):", self._arguments_var)
+            self._wait_var.set(str(params.get("wait_seconds", 1.0)))
+            self._add_labeled_entry(self._fields, 3, "Đợi sau khi mở (s):", self._wait_var)
+            ttk.Label(
+                self._fields,
+                text="Mở bằng ứng dụng mặc định. Dùng được %USERPROFILE%, ~ và cả thư mục. "
+                "Có tham số thì chạy trực tiếp file (.exe) kèm tham số.",
+                foreground="#667085",
+                justify="left",
+                wraplength=320,
+            ).grid(row=4, column=0, columnspan=2, sticky="w", pady=(6, 0))
+            self._fields.columnconfigure(1, weight=1)
         if self._step.type in (StepType.MOVE_MOUSE, StepType.DRAG_MOUSE):
             self._capture_status = ttk.Label(self._fields, text="", foreground="#667085")
             self._capture_status.grid(row=8, column=0, columnspan=3, sticky="w", pady=(6, 0))
@@ -303,6 +329,11 @@ class StepEditor(ttk.LabelFrame):
         self._width_var.set(str(int(win.width)))
         self._height_var.set(str(int(win.height)))
         self._window_status.configure(text=f'Đã lấy vị trí của "{win.title}".', foreground="#667085")
+
+    def _browse_file(self) -> None:
+        path = filedialog.askopenfilename(parent=self, title="Chọn file cần mở")
+        if path:
+            self._path_var.set(path)
 
     def _start_capture(self, x_var: tk.StringVar, y_var: tk.StringVar) -> None:
         # Đếm ngược không chặn UI, hết giờ thì đọc vị trí chuột hiện tại
@@ -429,6 +460,10 @@ class StepEditor(ttk.LabelFrame):
             params["y2"] = self._as_int(self._y2_var.get(), 0)
             params["button"] = self._button_var.get() or "left"
             params["duration"] = self._as_float(self._duration_var.get(), 0.5)
+        elif step.type is StepType.OPEN_FILE:
+            params["path"] = self._path_var.get().strip()
+            params["arguments"] = self._arguments_var.get().strip()
+            params["wait_seconds"] = self._as_float(self._wait_var.get(), 1.0)
         elif step.type.is_window_step:
             params["title"] = self._title_var.get().strip()
             params["timeout_seconds"] = self._as_float(self._timeout_var.get(), 5.0)

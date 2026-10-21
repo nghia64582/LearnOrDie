@@ -17,6 +17,7 @@ NODE_COLORS = {
     StepType.ACTIVATE_WINDOW: "#eef2ff",
     StepType.SET_WINDOW: "#eef2ff",
     StepType.MINIMIZE_WINDOW: "#eef2ff",
+    StepType.OPEN_FILE: "#ecfdf3",
 }
 
 NODE_WIDTH = 220

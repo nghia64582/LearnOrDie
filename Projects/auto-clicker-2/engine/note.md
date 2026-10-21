@@ -8,6 +8,7 @@ Kiểm tra và thực thi workflow bằng PyAutoGUI. Phần này không phụ th
   - Workflow chưa có bước nào.
   - Bước đợi ảnh hoặc click ảnh chưa chọn ảnh, ảnh không còn trong thư viện, hoặc mất file ảnh.
   - Bước cửa sổ chưa nhập tiêu đề.
+  - Bước mở file chưa nhập đường dẫn.
 - **`RunEvent(kind, message, step_id, index)`**: sự kiện gửi ra ngoài. `kind` là một trong `log`, `step_started`, `step_success`, `failed`, `cancelled`, `finished`.
 - **`WorkflowRunner(workflow, library, should_stop, emit).run()`** trả về `"finished"`, `"failed"` hoặc `"cancelled"`.
   - Import `pyautogui` lúc chạy. Nếu thiếu thì phát `failed` kèm hướng dẫn cài.
@@ -31,6 +32,17 @@ Kiểm tra và thực thi workflow bằng PyAutoGUI. Phần này không phụ th
     - *Mở cửa sổ*: nếu đang thu nhỏ thì `restore()`, rồi `activate()` để đưa lên trên.
     - *Thu nhỏ cửa sổ*: `minimize()`.
     - *Đặt vị trí cửa sổ*: `mode="maximize"` thì `maximize()`; ngược lại `restore()` (nếu đang thu nhỏ/phóng to) rồi `moveTo(left, top)` và `resizeTo(width, height)`.
+
+  - *Mở file*: gọi `launcher.open_path(path, arguments)`, sau đó đợi `wait_seconds` để chương trình kịp mở (trong lúc đợi vẫn bấm Dừng được).
+
+## `launcher.py` (mở file)
+
+- `expand_path(raw)`: bỏ dấu `"` bao quanh (khi copy bằng "Copy as path" của Windows), mở rộng `%TEN%` (tự xử lý, nên chạy được cả ngoài Windows), `$TEN` và `~`.
+- `open_path(raw, arguments)`:
+  - Đường dẫn không tồn tại thì báo `LaunchError("Không tìm thấy file hoặc thư mục: …")`.
+  - Không có tham số: Windows dùng `os.startfile` (mở bằng app mặc định; thư mục thì mở Explorer; .exe thì chạy). macOS dùng `open`, Linux dùng `xdg-open`.
+  - Có tham số và là file: chạy trực tiếp `subprocess.Popen([file, *tham số])`, thư mục làm việc là thư mục chứa file. Tham số tách theo khoảng trắng; dùng `"..."` cho tham số có dấu cách (trên Windows dấu `\` giữ nguyên).
+  - Lỗi hệ điều hành (ví dụ không có app nào mở được loại file đó) báo `LaunchError("Không mở được …")`.
 
 ## `screen.py` (nhiều màn hình)
 

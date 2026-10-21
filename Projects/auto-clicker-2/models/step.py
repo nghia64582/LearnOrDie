@@ -17,6 +17,7 @@ class StepType(str, Enum):
     ACTIVATE_WINDOW = "activate_window"
     SET_WINDOW = "set_window"
     MINIMIZE_WINDOW = "minimize_window"
+    OPEN_FILE = "open_file"
 
     @property
     def label(self) -> str:
@@ -31,6 +32,7 @@ class StepType(str, Enum):
             StepType.ACTIVATE_WINDOW: "Mở cửa sổ",
             StepType.SET_WINDOW: "Đặt vị trí cửa sổ",
             StepType.MINIMIZE_WINDOW: "Thu nhỏ cửa sổ",
+            StepType.OPEN_FILE: "Mở file",
         }[self]
 
     @property
@@ -58,6 +60,8 @@ def default_params(step_type: StepType) -> dict[str, Any]:
         return {"x": 0, "y": 0, "duration": 0.2}
     if step_type is StepType.DRAG_MOUSE:
         return {"x1": 0, "y1": 0, "x2": 0, "y2": 0, "button": "left", "duration": 0.5}
+    if step_type is StepType.OPEN_FILE:
+        return {"path": "", "arguments": "", "wait_seconds": 1.0}
     if step_type in (StepType.ACTIVATE_WINDOW, StepType.MINIMIZE_WINDOW):
         return {"title": "", "timeout_seconds": 5.0}
     if step_type is StepType.SET_WINDOW:
@@ -132,6 +136,12 @@ class Step:
         if self.type is StepType.DRAG_MOUSE:
             p = self.params
             return f"Kéo ({p.get('x1', 0)}, {p.get('y1', 0)}) → ({p.get('x2', 0)}, {p.get('y2', 0)})"
+        if self.type is StepType.OPEN_FILE:
+            path = str(self.params.get("path") or "")
+            if not path:
+                return "Mở file (chưa chọn file)"
+            name = path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1] or path
+            return f'Mở "{name}"'
         if self.type.is_window_step:
             title = str(self.params.get("title") or "")
             target = f'"{title}"' if title else "chưa chọn cửa sổ"

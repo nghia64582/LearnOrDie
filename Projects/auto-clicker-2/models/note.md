@@ -19,6 +19,7 @@ Các dataclass của ứng dụng và lớp lưu/đọc dữ liệu dạng JSON.
     | `activate_window` | Mở cửa sổ | `title`, `timeout_seconds=5` |
     | `set_window` | Đặt vị trí cửa sổ | `title`, `timeout_seconds=5`, `mode="position"` hoặc `"maximize"`, `left`, `top`, `width=800`, `height=600` |
     | `minimize_window` | Thu nhỏ cửa sổ | `title`, `timeout_seconds=5` |
+    | `open_file` | Mở file | `path`, `arguments=""` (tham số cho .exe), `wait_seconds=1` (đợi sau khi mở) |
 
   - `StepType.is_window_step` đúng với 3 loại bước cửa sổ.
 

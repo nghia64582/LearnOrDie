@@ -1,6 +1,6 @@
 # auto-clicker-2
 
-Ứng dụng desktop (Python + Tkinter) để **thiết kế và chạy workflow tự động thao tác giao diện**: đợi ảnh xuất hiện trên màn hình, click ảnh, click tọa độ, gõ text, gõ phím, di/kéo chuột, mở / thu nhỏ / đặt vị trí cửa sổ đang chạy. Thao tác chuột/bàn phím và tìm ảnh dùng PyAutoGUI. Yêu cầu ban đầu nằm trong `spec.md`.
+Ứng dụng desktop (Python + Tkinter) để **thiết kế và chạy workflow tự động thao tác giao diện**: đợi ảnh xuất hiện trên màn hình, click ảnh, click tọa độ, gõ text, gõ phím, di/kéo chuột, mở / thu nhỏ / đặt vị trí cửa sổ đang chạy, mở file/thư mục/chương trình. Thao tác chuột/bàn phím và tìm ảnh dùng PyAutoGUI. Yêu cầu ban đầu nằm trong `spec.md`.
 
 ## Chạy
 

@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from engine import screen, windows
+from engine import launcher, screen, windows
 from models.image_library import ImageLibrary
 from models.step import Step, StepType
 from models.workflow import Workflow
@@ -33,6 +33,10 @@ def validate_workflow(workflow: Workflow, library: ImageLibrary) -> list[str]:
         errors.append("Workflow chưa có bước nào.")
         return errors
     for index, step in enumerate(workflow.steps, start=1):
+        if step.type is StepType.OPEN_FILE:
+            if not str(step.params.get("path") or "").strip():
+                errors.append(f"Bước {index} ({step.type.label}): chưa nhập đường dẫn file.")
+            continue
         if step.type.is_window_step:
             if not str(step.params.get("title") or "").strip():
                 errors.append(f"Bước {index} ({step.type.label}): chưa nhập tiêu đề cửa sổ.")
@@ -161,6 +165,16 @@ class WorkflowRunner:
                 button=str(p.get("button") or "left"),
             )
             self._emit(RunEvent("log", f"Kéo chuột ({x1}, {y1}) → ({x2}, {y2})", step.id))
+            return
+        if step.type is StepType.OPEN_FILE:
+            p = step.params
+            path = launcher.open_path(str(p.get("path") or ""), str(p.get("arguments") or ""))
+            self._emit(RunEvent("log", f"Đã mở {path}", step.id))
+            # Đợi chương trình kịp mở trước bước tiếp theo (vẫn dừng được giữa chừng)
+            deadline = time.monotonic() + max(0.0, float(p.get("wait_seconds") or 0))
+            while time.monotonic() < deadline:
+                self._check_stop()
+                time.sleep(min(0.1, max(0.0, deadline - time.monotonic())))
             return
         if step.type.is_window_step:
             win = self._wait_for_window(step)
