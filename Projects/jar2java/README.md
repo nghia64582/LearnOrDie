@@ -63,3 +63,16 @@ Settings VS Code tắt Java language server import để không bị build/index
 - Jar obfuscate (ProGuard...) thì vẫn khó đọc.
 - Trùng tên jar ở các thư mục khác nhau → thư mục output có hậu tố `_xxxxxx`.
 - Nếu có sẵn `-sources.jar` trên Maven thì nên dùng nó thay vì decompile.
+
+## Giao diện đồ hoạ (GUI)
+
+Chạy: `python3 jar2java_gui.py` — hoặc nhấp đúp `jar2java_gui.bat` (Windows, không hiện cửa sổ console) / `./jar2java_gui.sh` (Linux/macOS).
+
+1. **Thêm file JAR...** (chọn nhiều file cùng lúc) hoặc **Thêm thư mục...** (quét cả thư mục con). Có thể xoá từng mục hoặc xoá hết.
+2. Chọn **thư mục output**.
+3. Tuỳ chọn: decompiler (vineflower/cfr), số luồng song song, dịch cả thư viện lồng bên trong + bộ lọc regex, chạy lại tất cả (bỏ qua cache).
+4. Bấm **▶ Chạy**. Thanh tiến trình, trạng thái từng file và nhật ký cập nhật trực tiếp; giao diện không bị treo. **Huỷ** sẽ bỏ qua các file chưa chạy (file đang chạy sẽ chạy xong).
+5. Xong thì bấm **Mở thư mục output**, rồi mở thư mục đó bằng IntelliJ / VS Code và Ctrl+Shift+F.
+
+Yêu cầu: Python 3 có Tkinter (Windows/macOS có sẵn; Ubuntu: `sudo apt install python3-tk`) và Java 11+. Nếu thiếu Java, chương trình sẽ báo rõ ràng.
+GUI dùng chung lõi với CLI (`jar2java.run()`), nên kết quả giống hệt bản dòng lệnh.

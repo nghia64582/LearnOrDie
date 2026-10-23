@@ -1,0 +1,7 @@
+tools/
+output/
+__pycache__/
+*.pyc
+.jar2java-cache.json
+jar2java-report.json
+jar2java-failures.log

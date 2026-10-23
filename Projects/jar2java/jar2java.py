@@ -13,7 +13,16 @@ DECOMPILERS = {
 }
 RES_SKIP = (".class",)
 
-def log(*a): print("[jar2java]", *a, flush=True)
+LOG_HOOK = None  # GUI can set a callable(str)
+
+def log(*a):
+    msg = " ".join(str(x) for x in a)
+    if LOG_HOOK: LOG_HOOK(msg)
+    else: print("[jar2java]", msg, flush=True)
+
+def find_java(java="java"):
+    """Return path to java executable or None."""
+    return shutil.which(java) or (java if Path(java).exists() else None)
 
 def latest_version(path, default):
     try:
@@ -165,7 +174,7 @@ def write_ide_files(out_root):
     if not iml.exists():
         iml.write_text('<?xml version="1.0" encoding="UTF-8"?>\n<module type="JAVA_MODULE" version="4">\n  <component name="NewModuleRootManager">\n    <content url="file://$MODULE_DIR$" />\n  </component>\n</module>\n')
 
-def main():
+def build_parser():
     ap = argparse.ArgumentParser(description="Decompile JARs to .java for IDE search")
     ap.add_argument("inputs", nargs="*", help="jar files and/or folders (recursive)")
     ap.add_argument("-l", "--list", help="text file with one jar/folder per line")
@@ -180,9 +189,17 @@ def main():
     ap.add_argument("--no-ide", action="store_true", help="don't write .vscode / .iml")
     ap.add_argument("--java", default=os.environ.get("JAVA", "java"))
     ap.add_argument("--xmx", default="2g")
-    a = ap.parse_args()
-    if not a.inputs and not a.list: ap.error("give jar/folder or --list")
-    if not shutil.which(a.java) and not Path(a.java).exists(): sys.exit("Java not found. Install JDK 17+ (e.g. Temurin) or set JAVA=/path/to/java")
+    return ap
+
+def make_options(**kw):
+    """Options namespace with CLI defaults (for programmatic / GUI use)."""
+    a = build_parser().parse_args([])
+    for k, v in kw.items(): setattr(a, k, v)
+    return a
+
+def run(a, on_result=None, cancel=None):
+    """Core pipeline. on_result(res, done, total) per top-level jar; cancel: threading.Event.
+    Returns list of result dicts."""
     a.order = [a.decompiler] + ([] if a.no_fallback else [d for d in DECOMPILERS if d != a.decompiler])
     djars = {d: ensure_decompiler(d) for d in a.order}
     out_root = Path(a.output).resolve(); out_root.mkdir(parents=True, exist_ok=True)
@@ -199,16 +216,24 @@ def main():
         h = sha256(j)
         opt = f"{a.decompiler}|{a.nested}|{a.nested_filter}|{a.no_resources}"
         if cache.get(str(j), {}).get("hash") == h and cache[str(j)].get("opt") == opt and (out_root / key).exists():
-            log("SKIP (unchanged)", j.name); continue
+            log("SKIP (unchanged)", j.name)
+            if on_result: on_result({"jar": str(j), "ok": True, "skipped": True, "java": 0}, None, None)
+            continue
         todo.append((j, h, opt, key))
     log(f"{len(jars)} jar(s) found, {len(todo)} to process, jobs={a.jobs}")
     allres = []
-    with cf.ThreadPoolExecutor(a.jobs) as ex:
-        futs = {ex.submit(process, j, a, djars, out_root, 0, k): (j, h, opt) for j, h, opt, k in todo}
+    done = 0
+    def job(j, k):
+        if cancel is not None and cancel.is_set():
+            return [{"jar": str(j), "ok": False, "cancelled": True, "java": 0, "error": "cancelled"}]
+        return process(j, a, djars, out_root, 0, k)
+    with cf.ThreadPoolExecutor(max(1, a.jobs)) as ex:
+        futs = {ex.submit(job, j, k): (j, h, opt) for j, h, opt, k in todo}
         for f in cf.as_completed(futs):
             j, h, opt = futs[f]
-            rs = f.result(); allres += rs
+            rs = f.result(); allres += rs; done += 1
             if rs[0]["ok"]: cache[str(j)] = {"hash": h, "opt": opt}
+            if on_result: on_result(rs[0], done, len(todo))
     cache_f.write_text(json.dumps(cache, indent=1))
     fails = [r for r in allres if not r["ok"]]
     with open(out_root / "jar2java-failures.log", "w", encoding="utf-8") as f:
@@ -218,7 +243,15 @@ def main():
     log(f"done: {len(allres)-len(fails)} ok, {len(fails)} failed, "
         f"{sum(r['java'] for r in allres)} .java files -> {out_root}")
     if fails: log("see", out_root / "jar2java-failures.log")
-    sys.exit(1 if fails else 0)
+    return allres
+
+def main():
+    ap = build_parser()
+    a = ap.parse_args()
+    if not a.inputs and not a.list: ap.error("give jar/folder or --list")
+    if not find_java(a.java): sys.exit("Java not found. Install JDK 17+ (e.g. Temurin) or set JAVA=/path/to/java")
+    allres = run(a)
+    sys.exit(1 if any(not r["ok"] for r in allres) else 0)
 
 if __name__ == "__main__":
     main()
