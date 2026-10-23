@@ -93,13 +93,17 @@ a.b.xQ_9z$iI1	Tx::Foo.Inner
 ```
 Tuỳ chọn CLI: `--no-metainfo` (tắt), `--metainfo-annotation TenKhac`, `--metainfo-attr name`. Trên GUI có ô tick "Tạo file index @MetaInfo" và ô "Tên annotation".
 
-## Nhiều jar trùng tên ở các thư mục khác nhau
+## Tên thư mục output (chứa đường dẫn jar)
 
-- Jar có tên không trùng thì giữ nguyên tên thư mục (`server/`).
-- Khi có jar trùng tên (không phân biệt hoa thường, như trên Windows), mỗi jar thêm **số thư mục cha ít nhất đủ để phân biệt**, nối bằng `__`:
-  - `D:\work-space\server.jar` → `work-space__server/`
-  - `D:\work-space-2\server.jar` → `work-space-2__server/`
-  - Nếu trùng tới tận gốc thì thêm cả ổ đĩa: `D__work-space__server/` và `E__work-space__server/`.
-- Ký tự không hợp lệ trên Windows (`<>:"/\|?*`) được thay bằng `_`. Tên dài quá 120 ký tự được cắt bớt và thêm hash ngắn.
-- Bảng ánh xạ jar → thư mục nằm trong `jar2java-mapping.json`, và log (CLI/GUI) in các dòng `MAP ... -> ...`.
-- Cache tính theo **đường dẫn đầy đủ** của jar, kèm tên thư mục output.
+Mặc định (`--name-mode path`), tên thư mục output của mỗi jar là **đường dẫn đầy đủ** của jar, kể cả ổ đĩa. Nhờ đó các jar trùng tên nằm ở thư mục khác nhau không bao giờ bị lẫn:
+- `D:\work-space\server.jar` → `D__work-space__server/`
+- `D:\work-space-2\server.jar` → `D__work-space-2__server/`
+- `/home/u/libs/core.jar` (Linux) → `home__u__libs__core/`
+
+Quy tắc: dấu phân cách thư mục thành `__`, bỏ dấu `:` của ổ đĩa, ký tự không hợp lệ (`<>:"/\|?*`) thành `_`. Tên dài quá 120 ký tự thì cắt bớt **phía đầu đường dẫn** (vẫn giữ tên jar ở cuối) và thêm hash 6 ký tự ở đầu. Nếu vẫn trùng thì thêm `_2`, `_3`...
+
+Các chế độ khác (CLI `--name-mode`, GUI có ô chọn "Tên thư mục output"):
+- `short`: chỉ dùng tên jar; khi trùng tên mới thêm số thư mục cha ít nhất đủ để phân biệt (`work-space__server`, `work-space-2__server`).
+- `name`: chỉ tên jar (`server`, `server_2`).
+
+Bảng ánh xạ jar → thư mục nằm trong `jar2java-mapping.json`, và log in các dòng `MAP ... -> ...`. Cache tính theo đường dẫn đầy đủ của jar. Nếu tên thư mục đổi (ví dụ đổi chế độ) thì jar được dịch lại. File index @MetaInfo gộp chỉ lấy các thư mục của lần chạy hiện tại.

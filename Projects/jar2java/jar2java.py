@@ -284,13 +284,21 @@ def _parts(p):
         if pp.drive: parts = [pp.drive.rstrip(":\\/").replace(":", "")] + parts
     return parts
 
-def output_names(jars):
+def output_names(jars, mode="path"):
     """Map each jar -> output folder name. Unique stems keep the plain stem (e.g. 'server');
     same-stem jars get the shortest parent-folder suffix that distinguishes them
     (e.g. 'work-space__server', 'work-space-2__server'). Case-insensitive (Windows)."""
+    """mode: 'path' (default) = full sanitized path incl. drive, e.g. D__work-space__server;
+    'short' = plain name, shortest distinguishing parent suffix only on collisions; 'name' = plain jar name (+ _2)."""
+    res = {}
+    if mode == "path":
+        for j in jars: res[Path(j)] = "__".join([_san(x) for x in _parts(Path(j).parent)] + [_san(Path(j).stem)])
+        return _finalize(res)
+    if mode == "name":
+        for j in jars: res[Path(j)] = _san(Path(j).stem)
+        return _finalize(res)
     by = {}
     for j in jars: by.setdefault(Path(j).stem.lower(), []).append(Path(j))
-    res = {}
     for group in by.values():
         if len(group) == 1:
             res[group[0]] = _san(group[0].stem); continue
@@ -299,10 +307,13 @@ def output_names(jars):
             d = dirs[j]; k = 1
             while k < len(d) and any(o is not j and dirs[o][-k:] == d[-k:] for o in group): k += 1
             res[j] = "__".join([_san(x) for x in _parts(j.parent)[-k:]] + [_san(j.stem)])
+    return _finalize(res)
+
+def _finalize(res):
     used = set()
     for j, nm in res.items():
         if len(nm) > MAX_NAME:
-            nm = nm[-(MAX_NAME - 7):].lstrip("_") + "_" + hashlib.md5(str(j).encode()).hexdigest()[:6]
+            nm = hashlib.md5(str(j).encode()).hexdigest()[:6] + "__" + nm[-(MAX_NAME - 8):].lstrip("_")
         base, i = nm, 2
         while nm.lower() in used: nm = f"{base}_{i}"; i += 1
         used.add(nm.lower()); res[j] = nm
@@ -336,6 +347,8 @@ def build_parser():
     ap.add_argument("--no-ide", action="store_true", help="don't write .vscode / .iml")
     ap.add_argument("--java", default=os.environ.get("JAVA", "java"))
     ap.add_argument("--xmx", default="2g")
+    ap.add_argument("--name-mode", choices=["path", "short", "name"], default="path",
+                    help="output folder name: path = full path (D__work-space__server), short = add parent folders only when names clash, name = jar name")
     ap.add_argument("--no-metainfo", dest="metainfo", action="store_false", help="don't build @MetaInfo index")
     ap.add_argument("--metainfo-annotation", default="MetaInfo", help="annotation simple name (any package)")
     ap.add_argument("--metainfo-attr", default="name", help="annotation element to read (fallback: value / first string)")
@@ -356,7 +369,7 @@ def run(a, on_result=None, cancel=None):
     cache_f = out_root / ".jar2java-cache.json"
     cache = json.loads(cache_f.read_text()) if cache_f.exists() and not a.force else {}
     jars = collect(a.inputs, a.list)
-    names = output_names(jars)
+    names = output_names(jars, getattr(a, "name_mode", "path"))
     todo = []
     mapping = {}
     for j in jars:
@@ -392,7 +405,7 @@ def run(a, on_result=None, cancel=None):
     (out_root / "jar2java-mapping.json").write_text(json.dumps(mapping, indent=1, ensure_ascii=False), encoding="utf-8")
     if a.metainfo:
         rows = []
-        for f in sorted(list(out_root.glob("*/metainfo-index.txt")) + list(out_root.glob("*__libs/*/metainfo-index.txt"))):
+        for f in [f for k in sorted(set(mapping.values())) for f in [out_root / k / "metainfo-index.txt", *sorted((out_root / f"{k}__libs").glob("*/metainfo-index.txt"))] if f.exists()]:
             jarname = str(f.parent.relative_to(out_root)).replace("\\", "/")
             for line in f.read_text(encoding="utf-8").splitlines():
                 if "\t" in line: rows.append(tuple(line.split("\t", 1)) + (jarname,))

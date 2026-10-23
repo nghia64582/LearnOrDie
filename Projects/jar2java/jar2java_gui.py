@@ -60,6 +60,11 @@ class App(tk.Tk):
         ttk.Label(f3, text="Lọc tên thư viện (regex):").grid(row=1, column=3, sticky="e", **pad)
         self.filter_var = tk.StringVar()
         ttk.Entry(f3, textvariable=self.filter_var, width=20).grid(row=1, column=4, sticky="w", **pad)
+        ttk.Label(f3, text="Tên thư mục output:").grid(row=3, column=0, sticky="w", **pad)
+        self.mode_labels = {"Đường dẫn đầy đủ (D__work-space__server)": "path",
+                            "Rút gọn (chỉ thêm path khi trùng tên)": "short", "Chỉ tên jar": "name"}
+        self.mode_var = tk.StringVar(value=next(iter(self.mode_labels)))
+        ttk.Combobox(f3, textvariable=self.mode_var, values=list(self.mode_labels), state="readonly", width=40).grid(row=3, column=1, columnspan=3, sticky="w", **pad)
         self.meta_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(f3, text="Tạo file index @MetaInfo (tên class mã hoá ↔ name)", variable=self.meta_var).grid(row=2, column=0, columnspan=3, sticky="w", **pad)
         ttk.Label(f3, text="Tên annotation:").grid(row=2, column=3, sticky="e", **pad)
@@ -128,7 +133,7 @@ class App(tk.Tk):
         except Exception: jobs = 1
         opts = core.make_options(inputs=list(self.jars), output=out, decompiler=self.dec_var.get(), jobs=jobs,
                                  nested=self.nested_var.get(), nested_filter=self.filter_var.get().strip() or None,
-                                 force=self.force_var.get(), metainfo=self.meta_var.get(),
+                                 force=self.force_var.get(), metainfo=self.meta_var.get(), name_mode=self.mode_labels[self.mode_var.get()],
                                  metainfo_annotation=(self.ann_var.get().strip().lstrip("@") or "MetaInfo"), java=os.environ.get("JAVA", "java"))
         for i in self.jars: self.tree.item(i, values=("Đang chờ...", ""))
         self.prog.config(maximum=len(self.jars), value=0)
