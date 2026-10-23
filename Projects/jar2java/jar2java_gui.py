@@ -60,6 +60,11 @@ class App(tk.Tk):
         ttk.Label(f3, text="Lọc tên thư viện (regex):").grid(row=1, column=3, sticky="e", **pad)
         self.filter_var = tk.StringVar()
         ttk.Entry(f3, textvariable=self.filter_var, width=20).grid(row=1, column=4, sticky="w", **pad)
+        self.meta_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(f3, text="Tạo file index @MetaInfo (tên class mã hoá ↔ name)", variable=self.meta_var).grid(row=2, column=0, columnspan=3, sticky="w", **pad)
+        ttk.Label(f3, text="Tên annotation:").grid(row=2, column=3, sticky="e", **pad)
+        self.ann_var = tk.StringVar(value="MetaInfo")
+        ttk.Entry(f3, textvariable=self.ann_var, width=20).grid(row=2, column=4, sticky="w", **pad)
 
         f4 = ttk.Frame(self); f4.pack(fill="x", **pad)
         self.run_btn = ttk.Button(f4, text="▶ Chạy", command=self.start); self.run_btn.pack(side="left", **pad)
@@ -123,7 +128,8 @@ class App(tk.Tk):
         except Exception: jobs = 1
         opts = core.make_options(inputs=list(self.jars), output=out, decompiler=self.dec_var.get(), jobs=jobs,
                                  nested=self.nested_var.get(), nested_filter=self.filter_var.get().strip() or None,
-                                 force=self.force_var.get(), java=os.environ.get("JAVA", "java"))
+                                 force=self.force_var.get(), metainfo=self.meta_var.get(),
+                                 metainfo_annotation=(self.ann_var.get().strip().lstrip("@") or "MetaInfo"), java=os.environ.get("JAVA", "java"))
         for i in self.jars: self.tree.item(i, values=("Đang chờ...", ""))
         self.prog.config(maximum=len(self.jars), value=0)
         self.cancel.clear(); self.run_btn.config(state="disabled"); self.cancel_btn.config(state="normal"); self.open_btn.config(state="disabled")
@@ -167,6 +173,8 @@ class App(tk.Tk):
         ok = sum(1 for r in data if r["ok"]); fail = len(data) - ok; n = sum(r.get("java", 0) for r in data)
         msg = f"Hoàn tất: {ok} thành công, {fail} lỗi, {n} file .java"
         self.status.config(text="Hoàn tất" if not self.cancel.is_set() else "Đã huỷ"); self._log("=== " + msg)
+        idx = Path(self.out_var.get()) / "metainfo-index.txt"
+        if self.meta_var.get() and idx.exists(): self._log("Index @MetaInfo: " + str(idx))
         if fail: self._log("Xem chi tiết lỗi: " + str(Path(self.out_var.get()) / "jar2java-failures.log"))
 
     def open_out(self):

@@ -76,3 +76,30 @@ Chạy: `python3 jar2java_gui.py` — hoặc nhấp đúp `jar2java_gui.bat` (Wi
 
 Yêu cầu: Python 3 có Tkinter (Windows/macOS có sẵn; Ubuntu: `sudo apt install python3-tk`) và Java 11+. Nếu thiếu Java, chương trình sẽ báo rõ ràng.
 GUI dùng chung lõi với CLI (`jar2java.run()`), nên kết quả giống hệt bản dòng lệnh.
+
+## Index @MetaInfo (tên class mã hoá ↔ tên thật)
+
+Mặc định tool đọc annotation `@MetaInfo(name = "Tx::ClassName")` **trực tiếp từ bytecode** (`.class`). Cách này không phụ thuộc decompiler, không cần thư viện ngoài, và chạy được cả với retention CLASS/RUNTIME.
+- Nhận `MetaInfo` ở **bất kỳ package nào** (so theo tên ngắn). Đọc thuộc tính `name`; nếu không có thì đọc `value`, rồi đến chuỗi đầu tiên.
+- Lấy cả **class lồng/inner class** (vd. `a.b.xQ_9z$iI1`).
+- Kết quả:
+  - Mỗi jar: `<output>/<jar>/metainfo-index.txt` (2 cột, cách nhau bằng tab) và `metainfo-index.md` (bảng).
+  - Gộp ở thư mục output: `metainfo-index.txt` / `.md` (2 cột), cùng `metainfo-index-by-jar.txt` / `.md` (thêm cột jar).
+
+Ví dụ `metainfo-index.txt`:
+```
+a.b.xQ_9z	Tx::Foo
+a.b.xQ_9z$iI1	Tx::Foo.Inner
+```
+Tuỳ chọn CLI: `--no-metainfo` (tắt), `--metainfo-annotation TenKhac`, `--metainfo-attr name`. Trên GUI có ô tick "Tạo file index @MetaInfo" và ô "Tên annotation".
+
+## Nhiều jar trùng tên ở các thư mục khác nhau
+
+- Jar có tên không trùng thì giữ nguyên tên thư mục (`server/`).
+- Khi có jar trùng tên (không phân biệt hoa thường, như trên Windows), mỗi jar thêm **số thư mục cha ít nhất đủ để phân biệt**, nối bằng `__`:
+  - `D:\work-space\server.jar` → `work-space__server/`
+  - `D:\work-space-2\server.jar` → `work-space-2__server/`
+  - Nếu trùng tới tận gốc thì thêm cả ổ đĩa: `D__work-space__server/` và `E__work-space__server/`.
+- Ký tự không hợp lệ trên Windows (`<>:"/\|?*`) được thay bằng `_`. Tên dài quá 120 ký tự được cắt bớt và thêm hash ngắn.
+- Bảng ánh xạ jar → thư mục nằm trong `jar2java-mapping.json`, và log (CLI/GUI) in các dòng `MAP ... -> ...`.
+- Cache tính theo **đường dẫn đầy đủ** của jar, kèm tên thư mục output.
