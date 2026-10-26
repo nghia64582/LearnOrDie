@@ -194,6 +194,21 @@ class DesignerTab(ttk.Frame):
             Day doan thang (polyline) tuy y so dinh, giong P nhung
             KHONG noi diem cuoi ve diem dau (hinh ho).
 
+            JF x y width height teeth_length first_d
+            Mong am: cac lo chu nhat tren dai (x, y, width, height).
+            Huong tu dong: canh dai hon la truc doc dai, canh ngan
+            la do day. Lo dai teeth_length, cach nhau teeth_length,
+            lo dau bat dau cach dau dai first_d. Lo cuoi bi le
+            (vuot qua cuoi dai) se bi bo. Chi cat cac lo.
+
+            JM x y width height teeth_length first_d out|in
+            Mong duong: duong zigzag (ho, giong M) chay het dai,
+            rang trung vi tri voi lo cua JF (cung teeth_length,
+            first_d). Do cao rang = do day dai.
+            out (+): rang nho ve phia x+width / y+height.
+            in  (-): rang nho ve phia x / y (goc cua manh).
+            Vd: JF 8.5 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
+
             FIRST
             Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
             Nhieu hinh duoc danh dau FIRST se cat theo dung thu tu
@@ -314,7 +329,8 @@ class DesignerTab(ttk.Frame):
             # lop cuoi cung (giong dong ngoac). Delta/goc hien hanh
             # = tong tat ca cac lop dang con trong stack.
             delta_stack = []
-            known_cmds = {"C", "R", "RC", "LH", "LV", "L", "A", "P", "M"}
+            known_cmds = {"C", "R", "RC", "LH", "LV", "L", "A", "P", "M",
+                          "JF", "JM"}
 
             # "FIRST" danh dau hinh KE TIEP se duoc cat truoc; cac
             # hinh duoc danh dau nhu vay cat theo dung thu tu xuat
@@ -370,10 +386,29 @@ class DesignerTab(ttk.Frame):
                 if cmd not in known_cmds:
                     continue
 
+                # JM co token huong (out/in/+/-) o cuoi, khong phai so
+                # -> tach ra truoc, doi thanh +1 (out) / -1 (in)
+                num_parts = parts[1:]
+                jm_dir = None
+                if cmd == "JM":
+                    if len(num_parts) != 7:
+                        continue
+                    jm_dir = {"out": 1.0, "+": 1.0,
+                              "in": -1.0, "-": -1.0}.get(
+                                  num_parts[-1].lower())
+                    if jm_dir is None:
+                        continue
+                    num_parts = num_parts[:-1]
+
                 try:
-                    nums = list(map(float, parts[1:]))
+                    nums = list(map(float, num_parts))
                 except ValueError:
                     continue
+
+                if cmd == "JF" and len(nums) != 6:
+                    continue
+                if jm_dir is not None:
+                    nums.append(jm_dir)
 
                 # Segment "tho", tinh truoc khi ap delta/xoay - de
                 # xoay dung cho MOI loai hinh (ke ca R, RC von
@@ -514,7 +549,8 @@ class DesignerTab(ttk.Frame):
 
     def draw_shape(self, cmd, segments):
         colors = {"C": "black", "A": "black", "R": "green",
-                  "RC": "green", "P": "purple", "M": "orange"}
+                  "RC": "green", "P": "purple", "M": "orange",
+                  "JF": "red", "JM": "blue"}
         color = colors.get(cmd, "black")
 
         for x1, y1, x2, y2 in segments:
@@ -658,12 +694,72 @@ class DesignerTab(ttk.Frame):
                 p1, p2 = points[i], points[i + 1]
                 segments.append((p1[0], p1[1], p2[0], p2[1]))
 
+        elif cmd in ("JF", "JM"):
+            segments.extend(self._joint_segments(cmd, nums))
+
         if cmd in ("C", "A"):
             tab_flags = arc_tab_flags
         else:
             tab_flags = [False] * len(segments)
 
         return segments, tab_flags
+
+    def _joint_segments(self, cmd, nums):
+        """
+        Sinh segment cho mong am (JF) / mong duong (JM).
+        nums JF: x y w h teeth first_d
+        nums JM: x y w h teeth first_d dir (+1 out, -1 in)
+        Tham so sai -> tra ve [] (bo qua hinh).
+        """
+        if cmd == "JF" and len(nums) != 6:
+            return []
+        if cmd == "JM" and len(nums) != 7:
+            return []
+        x, y, w, h, teeth, first_d = nums[:6]
+        if w <= 0 or h <= 0 or teeth <= 0 or first_d < 0:
+            return []
+
+        along_x = w >= h
+        length = w if along_x else h
+        thick = h if along_x else w
+
+        # Vi tri (start, end) cac rang theo truc doc dai, bo rang le
+        teeth_pos = []
+        t = first_d
+        while t + teeth <= length + 1e-9:
+            teeth_pos.append((t, t + teeth))
+            t += 2 * teeth
+
+        # Doi toa do (u doc dai, v ngang do day) -> (x, y)
+        def pt(u, v):
+            return (x + u, y + v) if along_x else (x + v, y + u)
+
+        segments = []
+        if cmd == "JF":
+            for a, b in teeth_pos:
+                corners = [pt(a, 0), pt(b, 0), pt(b, thick), pt(a, thick)]
+                for i in range(4):
+                    p1, p2 = corners[i], corners[(i + 1) % 4]
+                    segments.append((p1[0], p1[1], p2[0], p2[1]))
+            return segments
+
+        # JM: out -> nen o v=0, rang o v=thick; in -> nguoc lai
+        base, top = (0.0, thick) if nums[6] > 0 else (thick, 0.0)
+        points = [(0.0, base)]
+        for a, b in teeth_pos:
+            if a > points[-1][0] + 1e-9:
+                points.append((a, base))
+            points.append((a, top))
+            points.append((b, top))
+            points.append((b, base))
+        if length > points[-1][0] + 1e-9:
+            points.append((length, base))
+        xy = [pt(u, v) for u, v in points]
+        for i in range(len(xy) - 1):
+            p1, p2 = xy[i], xy[i + 1]
+            if p1 != p2:
+                segments.append((p1[0], p1[1], p2[0], p2[1]))
+        return segments
 
     def _shapes_to_segments(self):
         segments = []
