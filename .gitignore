@@ -50,3 +50,10 @@ Code/Python/LaserCtrl/__pycache__/cut_handler.cpython-313.pyc
 Code/Python/LaserCtrl/__pycache__/extended_cut_export.cpython-313.pyc
 Code/Python/LaserCtrl/__pycache__/cut_plan_builder.cpython-313.pyc
 Code/Python/LaserCtrl/engraver_ctrl/machine.log
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# LaserCtrl generated gcode
+cut_plan.gcode

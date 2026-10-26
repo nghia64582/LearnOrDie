@@ -207,7 +207,7 @@ class DesignerTab(ttk.Frame):
             first_d). Do cao rang = do day dai.
             out (+): rang nho ve phia x+width / y+height.
             in  (-): rang nho ve phia x / y (goc cua manh).
-            Vd: JF 8.5 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
+            Vd: JF 10 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
 
             FIRST
             Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
@@ -737,7 +737,9 @@ class DesignerTab(ttk.Frame):
         segments = []
         if cmd == "JF":
             for a, b in teeth_pos:
-                corners = [pt(a, 0), pt(b, 0), pt(b, thick), pt(a, thick)]
+                # x (doc) / y (ngang) la truc doi xung cua lo
+                hv = thick / 2
+                corners = [pt(a, -hv), pt(b, -hv), pt(b, hv), pt(a, hv)]
                 for i in range(4):
                     p1, p2 = corners[i], corners[(i + 1) % 4]
                     segments.append((p1[0], p1[1], p2[0], p2[1]))
