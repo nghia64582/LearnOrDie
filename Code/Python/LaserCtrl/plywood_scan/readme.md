@@ -26,7 +26,7 @@ khi màn hình scale 125%/150%; kích thước panel tự nhân theo DPI (`ui_ut
 
 - Gốc **(0, 0) = góc DƯỚI-TRÁI của tấm** = **góc số 4** khi chọn góc trong
   `scan_app` (*4 bottom-left (0,0)*). Trục x sang phải, trục **y hướng lên**, đơn vị mm. Giống canvas của
-  `engraver_ctrl/tab_designer.py`, nên dán thẳng các dòng `R x y w h` vào là xem
+  `engraver_ctrl/tab_designer.py`, nên dán thẳng DSL xuất ra vào là xem
   được.
 - Mỗi thanh xuất ra là một khung tọa độ cục bộ:
   ```
