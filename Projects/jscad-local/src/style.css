@@ -1,0 +1,16 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #1e1e1e; color: #ddd; }
+body { display: flex; }
+#sidebar { width: 280px; padding: 16px; background: #252526; overflow-y: auto; border-right: 1px solid #333; }
+#sidebar h1 { font-size: 18px; margin: 0 0 12px; }
+#sidebar label { display: block; margin: 8px 0; font-size: 13px; }
+#sidebar select, #sidebar input[type=number], #sidebar input[type=text] { width: 100%; margin-top: 4px; padding: 4px; background: #1e1e1e; color: #ddd; border: 1px solid #444; }
+#sidebar input[type=range] { width: 100%; }
+.buttons { display: flex; gap: 8px; margin: 12px 0; }
+button { flex: 1; padding: 6px; background: #0e639c; color: #fff; border: 0; cursor: pointer; }
+button:hover { background: #1177bb; }
+#status { font-size: 12px; color: #9cdcfe; white-space: pre-wrap; }
+#status.error { color: #f48771; }
+.hint { font-size: 12px; color: #888; }
+#viewer { flex: 1; position: relative; }
+#viewer canvas { display: block; }

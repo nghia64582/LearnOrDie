@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>JSCAD Local</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <aside id="sidebar">
+      <h1>JSCAD Local</h1>
+      <label>Model
+        <select id="model-select"></select>
+      </label>
+      <div id="params"></div>
+      <div class="buttons">
+        <button id="btn-fit">Zoom vừa khung</button>
+        <button id="btn-stl">Tải STL</button>
+      </div>
+      <p id="status"></p>
+      <p class="hint">
+        Chuột trái: xoay · Shift + kéo / chuột phải: di chuyển · Lăn chuột: zoom.<br />
+        Sửa file trong <code>models/</code> rồi lưu, trang sẽ tự tải lại.
+      </p>
+    </aside>
+    <main id="viewer"></main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
