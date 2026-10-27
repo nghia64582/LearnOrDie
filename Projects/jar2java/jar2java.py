@@ -20,6 +20,31 @@ def log(*a):
     if LOG_HOOK: LOG_HOOK(msg)
     else: print("[jar2java]", msg, flush=True)
 
+def _no_window_kwargs():
+    """On Windows: hide the console window of child processes (no popping terminals,
+    also when the GUI runs under pythonw). Empty dict elsewhere."""
+    if os.name != "nt": return {}
+    si = subprocess.STARTUPINFO()
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 0  # SW_HIDE
+    return {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000), "startupinfo": si}
+
+def run_hidden(cmd, timeout=None):
+    """Run a command without a visible window; stdin closed, stdout/stderr captured (text)."""
+    return subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          text=True, errors="replace", timeout=timeout, **_no_window_kwargs())
+
+def java_version(java="java"):
+    """Return first line of `java -version`, or None if java can't run."""
+    exe = find_java(java)
+    if not exe: return None
+    try:
+        r = run_hidden([exe, "-version"], timeout=30)
+    except Exception:
+        return None
+    out = (r.stderr or r.stdout).strip().splitlines()
+    return (out[0] if out else "java") if r.returncode == 0 else None
+
 def find_java(java="java"):
     """Return path to java executable or None."""
     return shutil.which(java) or (java if Path(java).exists() else None)
@@ -73,8 +98,9 @@ def run_decompiler(name, djar, src_jar, outdir, java, xmx):
         cmd = [java, f"-Xmx{xmx}", "-jar", str(djar), "-dgs=1", "-rsy=1", "-rbr=1", "-ind=    ", "-log=WARN", str(src_jar), str(outdir)]
     else:
         cmd = [java, f"-Xmx{xmx}", "-jar", str(djar), str(src_jar), "--outputdir", str(outdir), "--silent", "true"]
-    r = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
-    if r.returncode != 0: raise RuntimeError(f"{name} exit {r.returncode}: {r.stderr[-2000:]}")
+    r = run_hidden(cmd)
+    if r.returncode != 0: raise RuntimeError(f"{name} exit {r.returncode}: {(r.stderr or r.stdout)[-2000:]}")
+    if r.stderr.strip(): log(f"{name} {Path(src_jar).name}: " + r.stderr.strip()[-500:])
     # Vineflower writes a jar/zip or a dir depending on version: normalize to sources dir
     for z in list(outdir.glob("*.jar")) + list(outdir.glob("*.zip")):
         with zipfile.ZipFile(z) as zf: zf.extractall(outdir)

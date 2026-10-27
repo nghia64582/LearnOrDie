@@ -115,7 +115,9 @@ class App(tk.Tk):
 
     # ---------- run ----------
     def _check_java(self):
-        if not core.find_java(os.environ.get("JAVA", "java")):
+        ver = core.java_version(os.environ.get("JAVA", "java"))
+        if ver: self._log("Java: " + ver)
+        if not ver:
             messagebox.showerror("Thiếu Java", "Không tìm thấy Java trên máy.\n\nHãy cài JDK 11+ (ví dụ Eclipse Temurin: https://adoptium.net) "
                                  "rồi mở lại chương trình, hoặc đặt biến môi trường JAVA=đường_dẫn_tới_java.")
             return False

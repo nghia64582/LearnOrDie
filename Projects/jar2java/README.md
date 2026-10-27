@@ -107,3 +107,9 @@ Các chế độ khác (CLI `--name-mode`, GUI có ô chọn "Tên thư mục ou
 - `name`: chỉ tên jar (`server`, `server_2`).
 
 Bảng ánh xạ jar → thư mục nằm trong `jar2java-mapping.json`, và log in các dòng `MAP ... -> ...`. Cache tính theo đường dẫn đầy đủ của jar. Nếu tên thư mục đổi (ví dụ đổi chế độ) thì jar được dịch lại. File index @MetaInfo gộp chỉ lấy các thư mục của lần chạy hiện tại.
+
+## Chạy ngầm trên Windows (không bật cửa sổ terminal)
+
+- Mọi lệnh `java` (decompile, kiểm tra `java -version`) đều chạy qua hàm `run_hidden()`. Trên Windows hàm này dùng `CREATE_NO_WINDOW` và `STARTUPINFO` (`SW_HIDE`), nên khi convert nhiều jar cùng lúc sẽ **không bật lên cửa sổ console nào**, kể cả khi GUI chạy bằng `pythonw`.
+- stdin đóng (`DEVNULL`), còn stdout/stderr của java được thu lại và ghi vào nhật ký (GUI) hoặc in ra console (CLI).
+- `jar2java_gui.bat` mở GUI bằng `start "" pythonw`, nên không để lại cửa sổ console. Bản CLI (`jar2java.bat`) vẫn in log ra terminal như bình thường.
