@@ -14,7 +14,8 @@ import time
 import numpy as np
 
 import scan_core as sc
-from pack_core import pack_strips, verify_strips, strips_to_dsl, render_result
+from pack_core import (pack_strips, pack_pieces, parse_lengths, verify_strips,
+                       strips_to_dsl, parse_dsl_strips, render_result)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SAMPLE = os.path.join(HERE, "sample", "plywood_01.png")
@@ -53,32 +54,63 @@ def main(out_dir):
     print("Anh nan: %d x %d px" % (mask.shape[1], mask.shape[0]))
     print("Go con lai: %.1f%%" % (100 * (mask > 0).mean()))
 
+    res = meta["mm_per_px"]
     all_ok = True
-    for kw in (dict(), dict(objective="count"), dict(orient="H"),
-               dict(orient="V"), dict(step=5), dict(gap=0)):
+
+    def check(r, gap, label):
+        """Kiem tra ket qua + doc nguoc DSL (ADD/R/END) roi kiem tra lai."""
+        ok = True
+        errs = verify_strips(mask, res, r["strips"], gap)
+        back = parse_dsl_strips(strips_to_dsl(r["strips"]))
+        errs2 = verify_strips(mask, res, back, gap)
+        same = len(back) == len(r["strips"]) and all(
+            abs(a[k] - b[k]) < 1e-9 and str(b["label"]) == str(a["id"])
+            for a, b in zip(r["strips"], back) for k in "xywh"
+            if k in a) and all(str(b["label"]) == str(a["id"])
+                               for a, b in zip(r["strips"], back))
+        if errs or errs2 or not same:
+            ok = False
+            print("   LOI %s:" % label, errs[:3], errs2[:3], "dsl_ok", same)
+        return ok
+
+    # --- Che do chinh: danh sach thanh nhap tay ---
+    for text in ("80,80,100,100",
+                 "100x40, 80x30; 60 60 60 30x20",     # 93 thanh, khong du cho
+                 "300 300 500 120"):                   # co thanh qua dai
+        L = parse_lengths(text)
         t0 = time.time()
-        r = pack_strips(mask, meta["mm_per_px"], **kw)
-        errs = verify_strips(mask, meta["mm_per_px"], r["strips"],
-                             r["params"]["gap"])
-        all_ok &= not errs
-        print("%-22s %3d thanh, tong %7.1f mm, %-10s %.2fs, loi: %d" % (
-            kw or "mac dinh", r["count"], r["total_length"], r["strategy"],
-            time.time() - t0, len(errs)))
-        # Doc nguoc cac dong DSL (2 chu so thap phan) va kiem tra lai
-        back = []
-        for line in strips_to_dsl(r["strips"]):
-            x, y, w, h = map(float, line.split()[1:])
-            back.append({"x": x, "y": y, "w": w, "h": h})
-        errs2 = verify_strips(mask, meta["mm_per_px"], back, r["params"]["gap"])
-        all_ok &= not errs2
-        if errs2:
-            print("   loi sau khi xuat DSL:", errs2[:3])
-        if not kw:
-            best = r
-    sc.imwrite_unicode(os.path.join(out_dir, "result.png"),
-                       render_result(warped, mask, RES, best["strips"]))
-    with open(os.path.join(out_dir, "strips_dsl.txt"), "w") as f:
-        f.write("\n".join(strips_to_dsl(best["strips"])) + "\n")
+        r = pack_pieces(mask, res, L, strip_w=10, gap=0.5)
+        ok = check(r, 0.5, text)
+        # do dai phai giu nguyen dung nhu nhap
+        exact = all(abs(max(s["w"], s["h"]) - L[s["id"] - 1]) < 1e-9 and
+                    abs(min(s["w"], s["h"]) - 10) < 1e-9 for s in r["strips"])
+        ok &= exact and len(r["strips"]) + len(r["unplaced"]) == len(L)
+        all_ok &= ok
+        print("pieces '%s': dat %d / %d, tong %.1f mm, %.2fs, %s" % (
+            text if len(text) < 30 else text[:27] + "...", r["count"], len(L),
+            r["total_length"], time.time() - t0, "OK" if ok else "LOI"))
+        if r["unplaced"]:
+            print("   khong vua:", ", ".join("#%d(%g)" % (u["id"], u["length"])
+                                         for u in r["unplaced"][:12]),
+                  "..." if len(r["unplaced"]) > 12 else "")
+        if text == "80,80,100,100":
+            sc.imwrite_unicode(os.path.join(out_dir, "result.png"),
+                               render_result(warped, mask, res, r["strips"]))
+            with open(os.path.join(out_dir, "strips_dsl.txt"), "w") as f:
+                f.write("\n".join(strips_to_dsl(r["strips"])) + "\n")
+        elif r["unplaced"] and r["count"] > 20:
+            sc.imwrite_unicode(os.path.join(out_dir, "result_large_list.png"),
+                               render_result(warped, mask, res, r["strips"]))
+
+    # --- Che do phu: tu lap day ---
+    for kw in (dict(), dict(objective="count"), dict(step=5)):
+        t0 = time.time()
+        r = pack_strips(mask, res, **kw)
+        ok = check(r, r["params"]["gap"], str(kw))
+        all_ok &= ok
+        print("auto-fill %-22s %3d thanh, tong %7.1f mm, %.2fs, %s" % (
+            kw or "mac dinh", r["count"], r["total_length"], time.time() - t0,
+            "OK" if ok else "LOI"))
     print("Ket qua ->", out_dir, "| tat ca hop le:", all_ok)
     return 0 if all_ok else 1
 

@@ -5,9 +5,9 @@ Hai tool để tận dụng phần plywood còn lại sau nhiều lần cắt (m
 
 1. **`scan_app.py`**: chuyển ảnh chụp tấm gỗ thành **file mask nhị phân**
    (255 = gỗ còn, 0 = đã cắt) kèm file JSON kích thước.
-2. **`strip_packer.py`**: đọc mask, tính cách xếp các **thanh chữ nhật** (mặc
-   định rộng 10mm, dài 30–100mm) rồi xuất lệnh DSL `R x y w h` để dán vào tab
-   Designer.
+2. **`strip_packer.py`**: đọc mask, xếp **đúng danh sách thanh cần cắt** (ví dụ
+   `80,80,100,100`, rộng mặc định 10mm), báo thanh nào không vừa, rồi xuất DSL
+   dạng `ADD x y <số> / R 0 0 w h / END` để dán vào tab Designer.
 
 ## Cài đặt
 
@@ -28,8 +28,16 @@ khi màn hình scale 125%/150%; kích thước panel tự nhân theo DPI (`ui_ut
   `scan_app` (*4 bottom-left (0,0)*). Trục x sang phải, trục **y hướng lên**, đơn vị mm. Giống canvas của
   `engraver_ctrl/tab_designer.py`, nên dán thẳng các dòng `R x y w h` vào là xem
   được.
-- `R x y w h`: (x, y) là góc dưới-trái của thanh; thanh ngang có w = độ dài,
-  h = độ rộng thanh, thanh dọc thì ngược lại.
+- Mỗi thanh xuất ra là một khung tọa độ cục bộ:
+  ```
+  ADD x y <số thứ tự>
+  R 0 0 w h
+  END
+  ```
+  (x, y) là góc dưới-trái của thanh trên tấm. Thanh ngang là `R 0 0 L 10`,
+  thanh dọc là `R 0 0 10 L`. Giữa `R` và `END` có thể thêm chi tiết như JF/JM
+  hay lỗ, tọa độ tính từ góc dưới-trái của thanh. Số sau `ADD` là nhãn mà
+  Designer vẽ trên canvas.
 - Khi cắt thật, đặt tấm lên máy sao cho góc 4 trùng gốc gcode và cạnh 4→3
   song song trục X của máy (đúng hướng như lúc chọn góc).
 - Ảnh mask: hàng 0 = mép trên của tấm, nên `y_mm = (số_hàng − hàng) × mm_per_px`.
@@ -91,49 +99,69 @@ nền khác màu gỗ (thảm cắt xanh rất tốt).
 
 ## Tool 2: strip_packer.py
 
-Tham số: *Strip width*, *Min length* / *Max length*, *Length step* (0 = tự do,
-ví dụ 5 → 30, 35, 40, …), *Gap / kerf* (mặc định 0.5mm), *Orientation* (Both /
-Horizontal / Vertical), *Objective* (Max total length / Max count). Bấm *Compute*.
+Font chữ to hơn scan_app 2pt cho dễ đọc. Có 2 chế độ (*Mode*).
 
-Mọi tọa độ và độ dài xuất ra đều làm tròn tới 0.01 mm về phía trong vùng gỗ đã
-kiểm tra, nên các dòng DSL vẫn hợp lệ dù mm/px tự động là số lẻ (ví dụ 0.5393).
-Ở chế độ độ dài tự do, độ dài thanh sẽ lẻ (ví dụ 93.29). Muốn số tròn thì đặt
-*Length step*, ví dụ 5.
+**Required pieces** (mặc định, chế độ chính):
+- *Piece lengths (mm)*: danh sách độ dài cần cắt, ngăn cách bằng dấu phẩy, dấu
+  cách hoặc chấm phẩy, ví dụ `80,80,100,100`. Viết `100x3` nghĩa là 3 thanh
+  100mm. Số thứ tự của thanh là thứ tự trong danh sách (1, 2, 3, …). Nhập sai
+  (chữ, số ≤ 0) sẽ báo lỗi.
+- *Strip width*: mặc định 10mm. *Gap / kerf*: khoảng cách tối thiểu giữa 2
+  thanh, mặc định 0.5mm. *Orientation*: Both / Horiz. (X) / Vert. (Y).
+- Độ dài giữ **đúng như nhập**, làm tròn tới 0.01mm. Số pixel mỗi thanh chiếm
+  luôn đủ chứa đúng độ dài đó, kể cả khi mm/px là số lẻ.
+- Thuật toán (`pack_pieces`):
+  - Thử nhiều thứ tự xếp: dài trước, theo thứ tự nhập, ngắn trước, và vài
+    thứ tự ngẫu nhiên (trong giới hạn khoảng 6 giây).
+  - Ghép với 2 quy tắc chọn vị trí: tiếp xúc nhiều nhất với mép hoặc thanh đã
+    đặt (xếp chặt), và gần góc dưới-trái nhất. Ghép tiếp với ưu tiên hướng
+    (H+V, chỉ H, chỉ V).
+  - Mỗi vị trí ứng viên được kiểm tra bằng ảnh tích phân, nên luôn nằm trọn
+    trong gỗ và cách các thanh khác ít nhất một gap.
+  - Chọn phương án **đặt được nhiều thanh nhất**, sau đó tổng chiều dài lớn
+    nhất, sau đó gọn và gần gốc (0,0). Vì ưu tiên số thanh, khi danh sách quá
+    nhiều thì thanh dài có thể bị bỏ để nhét được nhiều thanh ngắn hơn.
+- Kết quả: *Placed n / N pieces* và dòng đỏ *Did not fit: #3 (500 mm), …* liệt kê
+  các thanh không vừa (cũng ghi thành dòng `#` trong DSL). Trên ảnh, mỗi thanh
+  có ghi số thứ tự (*Piece numbers*).
 
-Kết quả hiện lên ảnh (xanh lá = thanh ngang, xanh dương = thanh dọc), kèm số
-thanh, tổng chiều dài và kết quả kiểm tra (*Check: OK*). Có các nút *Export DSL
-(.txt)* (dòng `#` là chú thích, Designer bỏ qua), *Copy DSL* và *Save result
-image (.png)*.
+**Auto-fill** (chế độ phụ): tự lấp đầy vùng gỗ bằng các thanh dài trong
+[*Min length*, *Max length*] (*Length step* 0 = tự do), mục tiêu *Max total
+length* hoặc *Max count*. Thuật toán (`pack_strips`):
+- Với mỗi hướng, mỗi dải cao bằng bề rộng thanh được chia tối ưu thành các
+  thanh bằng knapsack.
+- Quy hoạch động chọn tập dải tốt nhất.
+- Kết hợp 2 hướng: ngang trước rồi lấp dọc, dọc trước rồi lấp ngang, hoặc
+  chọn theo từng vùng gỗ liên thông.
 
-Thuật toán (`pack_core.py`):
-- Với một hướng, mỗi "dải" cao bằng bề rộng thanh chia thành các đoạn liên tục
-  toàn gỗ. Mỗi đoạn dài n được chia tối ưu thành các thanh bằng knapsack (độ
-  dài cho phép, có gap). Sau đó quy hoạch động chọn tập dải không chồng nhau tốt
-  nhất. Trong một hướng, với kiểu xếp theo dải, kết quả là tối ưu.
-- Kết hợp 2 hướng bằng cách thử: chỉ ngang, chỉ dọc, ngang trước rồi lấp phần
-  còn lại bằng dọc (xen kẽ), dọc trước rồi ngang, và chọn chiến lược theo từng
-  vùng gỗ liên thông. Lấy phương án tốt nhất.
-- `verify_strips` kiểm tra lại: mỗi thanh nằm trọn trong gỗ, không chồng nhau,
-  và cách nhau ≥ gap.
+Nút: *Compute*, *Export DSL (.txt)* (dòng `#` là chú thích, Designer bỏ qua),
+*Copy DSL*, *Save result image (.png)*. Kết quả luôn được kiểm tra lại
+(*Check: OK*) bằng `verify_strips`: mỗi thanh nằm trọn trong gỗ, không chồng
+nhau, và cách nhau ≥ gap.
 
 Dùng như thư viện:
 
 ```python
-from strip_packer import pack_strips, load_mask_file, strips_to_dsl
+from strip_packer import pack_pieces, parse_lengths, load_mask_file, strips_to_dsl
 mask, meta, _ = load_mask_file("tam1_mask.json")
-res = pack_strips(mask, meta["mm_per_px"], strip_w=10, min_len=30, max_len=100,
-                  step=0, gap=0.5, orient="both", objective="length")
-print(res["count"], res["total_length"])
-print("\n".join(strips_to_dsl(res["strips"])))
+res = pack_pieces(mask, meta["mm_per_px"], parse_lengths("80,80,100,100"),
+                  strip_w=10, gap=0.5, orient="both")
+print(res["count"], res["unplaced"])          # unplaced: [{"id", "length"}]
+print("\n".join(strips_to_dsl(res["strips"])))  # ADD / R 0 0 w h / END
 ```
 
 ## Test
 
 `python test_sample.py [thu_muc_out]` chạy toàn bộ pipeline không cần GUI trên
 `sample/plywood_01.png`, với 4 góc chọn tay, kích thước **306 × 460 mm** và
-mm/px tính tự động từ 4 góc. Kết quả gồm mask, ảnh kết quả và DSL. Script kiểm
-tra không có thanh nào chồng nhau hoặc nằm ngoài gỗ, kể cả sau khi đọc ngược các
-dòng DSL đã làm tròn.
+mm/px tính tự động từ 4 góc. Script chạy các trường hợp sau:
+- Danh sách `80,80,100,100`.
+- Danh sách 93 thanh quá nhiều so với chỗ trống, để kiểm tra báo thanh không vừa.
+- Danh sách có thanh quá dài (500mm).
+- Chế độ Auto-fill.
+Với mỗi trường hợp, script kiểm tra không có thanh nào chồng nhau hoặc nằm ngoài
+gỗ, độ dài đúng như nhập, và các dòng DSL `ADD/R/END` đọc ngược lại khớp vị trí
+và số thứ tự.
 
 ## File
 

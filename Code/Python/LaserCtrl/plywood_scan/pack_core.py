@@ -316,6 +316,8 @@ def pack_strips(mask, mm_per_px, strip_w=10.0, min_len=30.0, max_len=100.0,
         strips.append({"x": round(x, 2), "y": round(y, 2),
                        "w": round(w_mm, 2), "h": round(h_mm, 2),
                        "orient": o, "length": round(L, 2)})
+    for i, st in enumerate(strips):
+        st["id"] = i + 1
     total = sum(s["length"] for s in strips)
     return {
         "strips": strips,
@@ -373,18 +375,261 @@ def verify_strips(mask, mm_per_px, strips, gap):
     return errs
 
 
-def strips_to_dsl(strips, decimals=2):
-    """Xuat cac thanh thanh lenh DSL 'R x y w h' (mm)."""
-    def f(v):
-        s = ("%." + str(decimals) + "f") % v
-        s = s.rstrip("0").rstrip(".")
-        return "0" if s in ("-0", "") else s
-    return ["R %s %s %s %s" % (f(s["x"]), f(s["y"]), f(s["w"]), f(s["h"]))
-            for s in strips]
+def _fmt(v, decimals=2):
+    s = ("%." + str(decimals) + "f") % v
+    s = s.rstrip("0").rstrip(".")
+    return "0" if s in ("-0", "") else s
 
 
-def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2):
-    """Ve ket qua: nen anh (neu co) + vung cat to do + thanh xep to xanh."""
+def strips_to_dsl(strips, decimals=2, style="add"):
+    """
+    Xuat cac thanh thanh DSL (mm).
+      style="add" (mac dinh): moi thanh la mot khung toa do cuc bo
+            ADD x y <so thu tu>
+            R 0 0 w h
+            END
+        de co the them chi tiet (JF / JM, lo...) ben trong tung thanh, toa do
+        tinh tu goc duoi-trai cua thanh.
+      style="rect": moi thanh 1 dong "R x y w h".
+    """
+    out = []
+    for i, s in enumerate(strips):
+        x, y, w, h = (_fmt(s[k], decimals) for k in ("x", "y", "w", "h"))
+        if style == "rect":
+            out.append("R %s %s %s %s" % (x, y, w, h))
+        else:
+            out += ["ADD %s %s %s" % (x, y, s.get("id", i + 1)),
+                    "R 0 0 %s %s" % (w, h),
+                    "END"]
+    return out
+
+
+def parse_dsl_strips(lines):
+    """
+    Doc nguoc DSL do strips_to_dsl tao (ca 2 kieu), mo phong cach
+    tab_designer xu ly ADD (cong don stack) / END (bo lop cuoi).
+    Tra ve list dict x, y, w, h, label (de kiem tra lai).
+    """
+    stack = []
+    out = []
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if parts[0] == "ADD":
+            stack.append((float(parts[1]), float(parts[2]),
+                          " ".join(parts[3:])))
+        elif parts[0] == "END":
+            if stack:
+                stack.pop()
+        elif parts[0] == "R":
+            x, y, w, h = map(float, parts[1:5])
+            out.append({"x": x + sum(d[0] for d in stack),
+                        "y": y + sum(d[1] for d in stack), "w": w, "h": h,
+                        "label": stack[-1][2] if stack else ""})
+    return out
+
+
+def parse_lengths(text):
+    """
+    Doc danh sach do dai nhap tay, vd "80,80,100,100" hoac "80 80; 100".
+    Ho tro dang "100x3" / "100*3" = 3 thanh 100 mm.
+    Tra ve list float (mm, lam tron 0.01). Loi -> ValueError (tieng Anh).
+    """
+    import re
+    tokens = [t for t in re.split(r"[,;\s]+", text.strip()) if t]
+    if not tokens:
+        raise ValueError("Enter at least one length, e.g. 80,80,100,100")
+    out = []
+    for t in tokens:
+        m = re.fullmatch(r"([0-9]*\.?[0-9]+)(?:[x*]([0-9]+))?", t.lower())
+        if not m:
+            raise ValueError("Invalid length: '%s' (use numbers in mm, "
+                             "e.g. 80,80,100 or 100x3)" % t)
+        L = round(float(m.group(1)), 2)
+        n = int(m.group(2)) if m.group(2) else 1
+        if L <= 0:
+            raise ValueError("Length must be > 0: '%s'" % t)
+        if n <= 0 or n > 1000:
+            raise ValueError("Invalid repeat count: '%s'" % t)
+        out += [L] * n
+    if len(out) > 2000:
+        raise ValueError("Too many pieces (max 2000)")
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Che do chinh: xep dung danh sach thanh nguoi dung nhap
+# ---------------------------------------------------------------------------
+
+def _integral(a):
+    s = np.zeros((a.shape[0] + 1, a.shape[1] + 1), np.int32)
+    s[1:, 1:] = np.cumsum(np.cumsum(a.astype(np.int32), axis=0), axis=1)
+    return s
+
+
+def _box_sums(S, h, w):
+    """Tong cua moi o h x w (goc tren-trai (r, c)) tu anh tich phan S."""
+    return S[h:, w:] - S[:-h, w:] - S[h:, :-w] + S[:-h, :-w]
+
+
+def _best_position(S_av, S_bl, H, W, h, w, rule):
+    """
+    Tim vi tri dat hcn h x w (pixel). S_av: anh tich phan cua vung con trong,
+    S_bl: anh tich phan cua vung bi chan (da pad 1 pixel). Tra ve
+    (score, r, c) hoac None.
+      rule "contact": uu tien vi tri tiep xuc nhieu voi vung da dung / mep
+          (xep chat), hoa thi gan goc toa do (duoi-trai)
+      rule "bl": gan goc duoi-trai nhat (bottom-left)
+    """
+    if h > H or w > W:
+        return None
+    ok = _box_sums(S_av, h, w) == h * w
+    rr, cc = np.nonzero(ok)
+    if rr.size == 0:
+        return None
+    # khoang cach toi goc DSL (0,0) = goc duoi-trai: (H - (r + h)) + c
+    dist = (H - (rr + h)) + cc
+    if rule == "bl":
+        key = -((H - (rr + h)).astype(np.int64) * (W + 1) + cc)
+    else:
+        ring = (S_bl[rr + h + 2, cc + w + 2] - S_bl[rr, cc + w + 2]
+                - S_bl[rr + h + 2, cc] + S_bl[rr, cc])
+        frac = ring / float(2 * (h + w) + 4)
+        key = np.round(frac * 1000).astype(np.int64) * (H + W + 2) - dist
+    i = int(np.argmax(key))
+    return int(key[i]), int(rr[i]), int(cc[i])
+
+
+def pack_pieces(mask, mm_per_px, lengths, strip_w=10.0, gap=0.5,
+                orient="both", trials=None, seed=0, time_limit=6.0):
+    """
+    Xep DUNG danh sach thanh (do dai trong lengths, mm; be rong strip_w).
+    Moi thanh giu nguyen do dai (lam tron 0.01 mm), so thu tu = vi tri trong
+    danh sach nhap (bat dau tu 1).
+
+    Heuristic: thu nhieu thu tu (dai truoc, theo thu tu nhap, ngan truoc,
+    xao tron ngau nhien giu uu tien dai) x quy tac chon vi tri (tiep xuc
+    nhieu nhat / goc duoi-trai) x uu tien huong; moi thanh chon vi tri + huong
+    tot nhat tren vung con trong (da tru khoang cach gap). Lay phuong an dat
+    duoc NHIEU thanh nhat, roi tong chieu dai lon nhat, roi gon / gan goc.
+    Cac thu tu co dinh luon duoc chay; cac thu tu ngau nhien dung khi het
+    time_limit (giay) hoac khi da dat du tat ca thanh.
+
+    Tra ve dict: strips (da dat, co id, length, x, y, w, h, orient),
+    unplaced (list dict id, length), count, requested, total_length,
+    strategy, params.
+    """
+    res = float(mm_per_px)
+    strip_w = round(float(strip_w), 2)
+    lengths = [round(float(L), 2) for L in lengths]
+    free = np.asarray(mask) > 0
+    H, W = free.shape
+    q = _grid_slack(res)
+    g = _ceil_px(gap, res) if gap > 0 else 0
+    w_px = _ceil_px(strip_w + q, res)
+    orients = ["H", "V"] if orient == "both" else [orient.upper()]
+    n = len(lengths)
+    ids = list(range(n))
+
+    orders = [("longest first", sorted(ids, key=lambda i: (-lengths[i], i))),
+              ("input order", ids[:]),
+              ("shortest first", sorted(ids, key=lambda i: (lengths[i], i)))]
+    if trials is None:
+        trials = max(2, min(12, 600 // max(1, n)))
+    rng = np.random.default_rng(seed)
+    for t in range(trials):
+        # xao tron nhe: dai truoc nhung co nhieu ngau nhien
+        noise = rng.uniform(0, 0.35, n)
+        orders.append(("random #%d" % (t + 1),
+                       sorted(ids, key=lambda i: -lengths[i] * (1 - noise[i]))))
+
+    def run(order, rule, pref):
+        avail = free.copy()
+        placed = []
+        # Vung trong chi co thu hep lai => neu thanh dai p pixel khong vua
+        # theo huong o thi moi thanh >= p cung khong vua: bo qua cho nhanh
+        fail = {o: 10 ** 9 for o in pref}
+        for i in order:
+            L = lengths[i]
+            p = _ceil_px(L + q, res)
+            if all(p >= fail[o] for o in pref):
+                continue
+            best = None
+            S_av = _integral(avail)
+            S_bl = _integral(np.pad(~avail, 1, constant_values=True)) \
+                if rule == "contact" else None
+            for o in pref:
+                if p >= fail[o]:
+                    continue
+                hh, ww = (w_px, p) if o == "H" else (p, w_px)
+                bp = _best_position(S_av, S_bl, H, W, hh, ww, rule)
+                if bp is None:
+                    fail[o] = p
+                if bp and (best is None or bp[0] > best[0]):
+                    best = (bp[0], bp[1], bp[2], hh, ww, o)
+            if best is None:
+                continue
+            _, r, c, hh, ww, o = best
+            avail[max(0, r - g):min(H, r + hh + g),
+                  max(0, c - g):min(W, c + ww + g)] = False
+            placed.append((i, r, c, hh, ww, o))
+        return placed
+
+    def layout_key(placed):
+        cnt = len(placed)
+        tot = sum(lengths[i] for i, *_ in placed)
+        spread = sum((H - (r + hh)) + c for _, r, c, hh, ww, _ in placed)
+        return (cnt, round(tot, 2), -spread)
+
+    import time
+    t0 = time.time()
+    best, best_key, best_name = [], None, ""
+    prefs = [orients] if len(orients) == 1 else [["H", "V"], ["H"], ["V"]]
+    for k_order, (oname, order) in enumerate(orders):
+        if k_order >= 3:
+            # thu tu ngau nhien: chi chay khi con thoi gian va chua dat het
+            if best_key and best_key[0] == n:
+                break
+            if time.time() - t0 > time_limit:
+                break
+        for rule in ("contact", "bl"):
+            for pref in (prefs if k_order == 0 else prefs[:1]):
+                pl = run(order, rule, pref)
+                k = layout_key(pl)
+                if best_key is None or k > best_key:
+                    best, best_key = pl, k
+                    best_name = "%s, %s, %s" % (oname, rule, "+".join(pref))
+
+    strips = []
+    for i, r, c, hh, ww, o in sorted(best, key=lambda t: t[0]):
+        L = lengths[i]
+        w_mm, h_mm = (L, strip_w) if o == "H" else (strip_w, L)
+        x = math.ceil(c * res * 100 - 1e-6) / 100.0
+        y_top = math.floor((H - r) * res * 100 + 1e-6) / 100.0
+        strips.append({"id": i + 1, "length": L, "orient": o,
+                       "x": round(x, 2), "y": round(y_top - h_mm, 2),
+                       "w": round(w_mm, 2), "h": round(h_mm, 2)})
+    placed_ids = {s["id"] for s in strips}
+    unplaced = [{"id": i + 1, "length": lengths[i]} for i in ids
+                if i + 1 not in placed_ids]
+    return {
+        "strips": strips,
+        "unplaced": unplaced,
+        "count": len(strips),
+        "requested": n,
+        "total_length": round(sum(s["length"] for s in strips), 2),
+        "strategy": best_name,
+        "params": dict(strip_w=strip_w, gap=gap, orient=orient,
+                       lengths=lengths, mm_per_px=res, mode="pieces"),
+    }
+
+
+def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2,
+                  labels=True):
+    """Ve ket qua: nen anh (neu co) + vung cat to do + thanh xep to xanh,
+    kem so thu tu cua tung thanh."""
     if warped_or_mask is None:
         base = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
         base[mask > 0] = (200, 225, 240)
@@ -401,7 +646,7 @@ def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2):
     out = cv2.resize(base, None, fx=scale, fy=scale,
                      interpolation=cv2.INTER_NEAREST)
     k = scale / mm_per_px
-    for s in strips:
+    for i, s in enumerate(strips):
         x0 = int(round(s["x"] * k))
         x1 = int(round((s["x"] + s["w"]) * k))
         y0 = int(round((H * mm_per_px - s["y"] - s["h"]) * k))
@@ -409,4 +654,17 @@ def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2):
         col = (60, 170, 40) if s["orient"] == "H" else (200, 120, 20)
         cv2.rectangle(out, (x0, y0), (x1 - 1, y1 - 1), col, -1)
         cv2.rectangle(out, (x0, y0), (x1 - 1, y1 - 1), (0, 0, 0), 1)
+        if labels:
+            txt = str(s.get("id", i + 1))
+            short = min(x1 - x0, y1 - y0)
+            fs = max(0.3, min(1.0, short / 40.0))
+            th = 1 if fs < 0.6 else 2
+            (tw, tht), _ = cv2.getTextSize(txt, cv2.FONT_HERSHEY_SIMPLEX,
+                                           fs, th)
+            cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+            org = (cx - tw // 2, cy + tht // 2)
+            cv2.putText(out, txt, org, cv2.FONT_HERSHEY_SIMPLEX, fs,
+                        (255, 255, 255), th + 2, cv2.LINE_AA)
+            cv2.putText(out, txt, org, cv2.FONT_HERSHEY_SIMPLEX, fs,
+                        (0, 0, 0), th, cv2.LINE_AA)
     return out
