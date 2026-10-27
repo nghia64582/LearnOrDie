@@ -41,20 +41,39 @@ def _floor_px(mm, res):
     return int(math.floor(mm / res + 1e-6))
 
 
+def _grid_slack(res):
+    """
+    Toa do xuat ra DSL lam tron toi 0.01 mm. Neu mm_per_px khong phai boi so
+    cua 0.01 (vd do phan giai tu dong 0.5393) thi diem dau thanh bi lam tron
+    len toi da 0.01 mm => moi thanh can chua them 0.01 mm trong so pixel no
+    chiem de khong bao gio tran ra ngoai vung pixel da kiem tra.
+    """
+    return 0.0 if abs(res * 100 - round(res * 100)) < 1e-9 else 0.01
+
+
 def allowed_lengths(min_len, max_len, step, res):
-    """Danh sach do dai cho phep (mm) va so pixel can de chua no."""
+    """
+    Danh sach (do dai mm, so pixel chiem cho) cua cac do dai cho phep.
+    Do dai luon lam tron toi 0.01 mm.
+    """
     if max_len < min_len:
         min_len, max_len = max_len, min_len
+    q = _grid_slack(res)
     out = []
     if step and step > 0:
         n = int(math.floor((max_len - min_len) / step + 1e-6))
         for i in range(n + 1):
-            L = round(min_len + i * step, 6)
-            out.append((L, _ceil_px(L, res)))
+            L = round(min_len + i * step, 2)
+            out.append((L, _ceil_px(L + q, res)))
     else:
-        # Khong co buoc: moi do dai la boi so cua kich thuoc pixel
-        for p in range(_ceil_px(min_len, res), _floor_px(max_len, res) + 1):
-            out.append((round(p * res, 6), p))
+        # Khong co buoc: do dai = phan nguyen 0.01 mm lon nhat vua so pixel
+        seen = set()
+        for p in range(_ceil_px(min_len + q, res),
+                       _floor_px(max_len + q, res) + 2):
+            L = math.floor((p * res - q) * 100 + 1e-6) / 100.0
+            if min_len - 1e-9 <= L <= max_len + 1e-9 and L not in seen:
+                seen.add(L)
+                out.append((L, p))
     return out
 
 
@@ -186,7 +205,7 @@ class _Packer:
     def __init__(self, free, res, strip_w, lengths, gap, objective):
         self.res = res
         self.strip_w = strip_w
-        self.w_px = _ceil_px(strip_w, res)
+        self.w_px = _ceil_px(strip_w + _grid_slack(res), res)
         self.gap_px = _ceil_px(gap, res) if gap > 0 else 0
         self.objective = objective
         n = max(free.shape) + 2
@@ -250,10 +269,11 @@ def pack_strips(mask, mm_per_px, strip_w=10.0, min_len=30.0, max_len=100.0,
     total_length, strategy, params.
     """
     res = float(mm_per_px)
+    strip_w = round(float(strip_w), 2)
     free = np.asarray(mask) > 0
     lengths = allowed_lengths(min_len, max_len, step, res)
     if not lengths:
-        raise ValueError("Khong co do dai hop le trong khoang da chon")
+        raise ValueError("No valid length in the selected range")
     orients = ["H", "V"] if orient == "both" else [orient.upper()]
     pk = _Packer(free, res, strip_w, lengths, gap, objective)
 
@@ -279,7 +299,7 @@ def pack_strips(mask, mm_per_px, strip_w=10.0, min_len=30.0, max_len=100.0,
             comp_rects += rs
             cur_free = pk.block(cur_free, rs)
         if pk.score(comp_rects) > pk.score(best):
-            best_name, best = "theo tung vung", comp_rects
+            best_name, best = "per region", comp_rects
 
     H = free.shape[0]
     strips = []
@@ -288,11 +308,14 @@ def pack_strips(mask, mm_per_px, strip_w=10.0, min_len=30.0, max_len=100.0,
             w_mm, h_mm = L, strip_w
         else:
             w_mm, h_mm = strip_w, L
-        x = c * res
-        y = (H - r) * res - h_mm   # doi sang truc y huong len
-        strips.append({"x": round(x, 4), "y": round(y, 4),
-                       "w": round(w_mm, 4), "h": round(h_mm, 4),
-                       "orient": o, "length": round(L, 4)})
+        # Lam tron toi 0.01 mm ve phia TRONG vung pixel: mep trai lam tron
+        # len, mep tren lam tron xuong (truc y huong len)
+        x = math.ceil(c * res * 100 - 1e-6) / 100.0
+        y_top = math.floor((H - r) * res * 100 + 1e-6) / 100.0
+        y = y_top - h_mm
+        strips.append({"x": round(x, 2), "y": round(y, 2),
+                       "w": round(w_mm, 2), "h": round(h_mm, 2),
+                       "orient": o, "length": round(L, 2)})
     total = sum(s["length"] for s in strips)
     return {
         "strips": strips,
@@ -322,10 +345,10 @@ def verify_strips(mask, mm_per_px, strips, gap):
         c0, c1 = int(math.floor(x0 / res + 1e-6)), int(math.ceil(x1 / res - 1e-6))
         r0, r1 = int(math.floor(yt / res + 1e-6)), int(math.ceil(yb / res - 1e-6))
         if c0 < 0 or r0 < 0 or c1 > W or r1 > H:
-            errs.append("thanh %d ra ngoai tam" % i)
+            errs.append("strip %d is outside the sheet" % i)
             continue
         if not m[r0:r1, c0:c1].all():
-            errs.append("thanh %d de len vung da cat" % i)
+            errs.append("strip %d overlaps a cut area" % i)
     # Kiem tra khoang cach tung cap (sap theo x de cat tia)
     idx = sorted(range(len(strips)), key=lambda k: strips[k]["x"])
     for a in range(len(idx)):
@@ -337,7 +360,7 @@ def verify_strips(mask, mm_per_px, strips, gap):
             ox = min(sa["x"] + sa["w"], sb["x"] + sb["w"]) - max(sa["x"], sb["x"])
             oy = min(sa["y"] + sa["h"], sb["y"] + sb["h"]) - max(sa["y"], sb["y"])
             if ox > 1e-6 and oy > 1e-6:
-                errs.append("thanh %d va %d chong nhau" % (idx[a], idx[b]))
+                errs.append("strips %d and %d overlap" % (idx[a], idx[b]))
                 continue
             dx = max(0.0, sb["x"] - (sa["x"] + sa["w"]),
                      sa["x"] - (sb["x"] + sb["w"]))
@@ -345,7 +368,7 @@ def verify_strips(mask, mm_per_px, strips, gap):
                      sa["y"] - (sb["y"] + sb["h"]))
             d = math.hypot(dx, dy)
             if d < gap - 1e-6:
-                errs.append("thanh %d va %d qua gan (%.3f mm)"
+                errs.append("strips %d and %d too close (%.3f mm)"
                             % (idx[a], idx[b], d))
     return errs
 

@@ -23,7 +23,7 @@ def imread_unicode(path, flags=cv2.IMREAD_COLOR):
     data = np.fromfile(path, dtype=np.uint8)
     img = cv2.imdecode(data, flags)
     if img is None:
-        raise ValueError("Khong doc duoc anh: %s" % path)
+        raise ValueError("Cannot read image: %s" % path)
     return img
 
 
@@ -31,7 +31,7 @@ def imwrite_unicode(path, img):
     ext = os.path.splitext(path)[1] or ".png"
     ok, buf = cv2.imencode(ext, img)
     if not ok:
-        raise ValueError("Khong ghi duoc anh: %s" % path)
+        raise ValueError("Cannot write image: %s" % path)
     buf.tofile(path)
 
 
@@ -96,6 +96,30 @@ def detect_sheet_corners(img):
     return order_corners(np.asarray(quad, dtype=np.float32) / scale)
 
 
+def auto_resolution(corners, width_mm, height_mm):
+    """
+    Tinh do phan giai (mm / pixel) tu 4 goc da chon va kich thuoc that,
+    de anh nan giu xap xi do phan giai goc cua anh chup:
+        rx = W / trung binh(do dai canh tren, canh duoi)   (pixel)
+        ry = H / trung binh(do dai canh trai, canh phai)
+        mm_per_px = (rx + ry) / 2
+    Tra ve (mm_per_px, rx, ry). rx va ry lech nhieu => kich thuoc nhap sai
+    hoac goc dat lech (hoac anh nghieng manh).
+    """
+    c = np.asarray(corners, dtype=np.float64).reshape(4, 2)
+    tl, tr, br, bl = c
+    top = np.linalg.norm(tr - tl)
+    bottom = np.linalg.norm(br - bl)
+    left = np.linalg.norm(bl - tl)
+    right = np.linalg.norm(br - tr)
+    if min(top, bottom, left, right) < 1:
+        raise ValueError("Corners are too close together")
+    rx = float(width_mm) / ((top + bottom) / 2.0)
+    ry = float(height_mm) / ((left + right) / 2.0)
+    res = round((rx + ry) / 2.0, 5)
+    return res, rx, ry
+
+
 def warp_sheet(img, corners, width_mm, height_mm, mm_per_px):
     """Nan phoi canh 4 goc ve anh chu nhat width_mm x height_mm."""
     out_w = int(round(width_mm / mm_per_px))
@@ -123,10 +147,10 @@ def rotate_corners(corners, times=1):
 # ---------------------------------------------------------------------------
 
 SEG_METHODS = {
-    "lab_b": "Lab b* (do vang cua go)",
-    "light": "Do sang L",
-    "sat": "Do bao hoa HSV (nguoc)",
-    "combo": "Ket hop (vang + sang)",
+    "combo": "Combined (low saturation + bright)",
+    "sat": "HSV saturation (inverted)",
+    "light": "Lightness L",
+    "lab_b": "Lab b* (yellowness)",
 }
 
 
@@ -328,8 +352,9 @@ def save_mask_file(png_path, mask, width_mm, height_mm, mm_per_px,
         "margin_mm": float(margin_mm),
         "source": source,
         "mask_file": os.path.basename(base + ".png"),
-        "convention": "255=go con lai, 0=da cat; hang 0 = mep tren; "
-                      "DSL: goc (0,0) = duoi-trai, y huong len",
+        "px_per_mm": round(1.0 / float(mm_per_px), 5),
+        "convention": "255 = wood remaining, 0 = cut; row 0 = top edge; "
+                      "DSL origin (0,0) = bottom-left corner, y up",
     }
     if raw_mask is not None:
         imwrite_unicode(base + "_raw.png", raw_mask)
@@ -363,7 +388,7 @@ def load_mask_file(path):
     mask = imread_unicode(png, cv2.IMREAD_GRAYSCALE)
     mask = ((mask > 127) * 255).astype(np.uint8)
     if "mm_per_px" not in meta:
-        raise ValueError("Thieu file JSON (mm_per_px) cho mask: %s" % png)
+        raise ValueError("Missing JSON sidecar (mm_per_px) for mask: %s" % png)
     meta.setdefault("height_mm", mask.shape[0] * meta["mm_per_px"])
     meta.setdefault("width_mm", mask.shape[1] * meta["mm_per_px"])
     return mask, meta, folder

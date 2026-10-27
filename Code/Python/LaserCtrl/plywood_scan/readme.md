@@ -13,16 +13,19 @@ Hai tool để tận dụng phần plywood còn lại sau nhiều lần cắt (m
 
 ```bash
 pip install -r requirements.txt     # opencv-python, numpy, pillow
-python scan_app.py                  # hoac: python scan_app.py anh.jpg
-python strip_packer.py              # hoac: python strip_packer.py tam1_mask.json
+python scan_app.py                  # hoặc: python scan_app.py anh.jpg
+python strip_packer.py              # hoặc: python strip_packer.py tam1_mask.json
 ```
 
-Chạy từ trong thư mục `plywood_scan` (các file import lẫn nhau).
+Chạy từ trong thư mục `plywood_scan` (các file import lẫn nhau). Giao diện dùng
+tiếng Anh. Trên Windows, app bật DPI awareness (`shcore.SetProcessDpiAwareness(1)`,
+fallback `user32.SetProcessDPIAware()`) trước khi tạo cửa sổ để chữ không bị mờ
+khi màn hình scale 125%/150%; kích thước panel tự nhân theo DPI (`ui_util.py`).
 
 ## Quy ước tọa độ (quan trọng)
 
 - Gốc **(0, 0) = góc DƯỚI-TRÁI của tấm** = **góc số 4** khi chọn góc trong
-  `scan_app`. Trục x sang phải, trục **y hướng lên**, đơn vị mm. Giống canvas của
+  `scan_app` (*4 bottom-left (0,0)*). Trục x sang phải, trục **y hướng lên**, đơn vị mm. Giống canvas của
   `engraver_ctrl/tab_designer.py`, nên dán thẳng các dòng `R x y w h` vào là xem
   được.
 - `R x y w h`: (x, y) là góc dưới-trái của thanh; thanh ngang có w = độ dài,
@@ -33,48 +36,74 @@ Chạy từ trong thư mục `plywood_scan` (các file import lẫn nhau).
 
 ## Tool 1: scan_app.py
 
-Các bước:
+Các bước (tên bước như trên giao diện):
 
-1. **Mở ảnh**: chọn ảnh tấm gỗ, hoặc *Mở mask đã lưu* để sửa tiếp.
-2. **Kích thước tấm**: W (cạnh trên, góc 1→2), H (cạnh trái, góc 1→4) đo bằng
-   thước, và độ phân giải mm/pixel (mặc định 0.5).
-3. **Chọn 4 góc**: tự gợi ý 4 góc (tìm vùng sáng lớn nhất rồi xấp xỉ tứ giác),
-   kéo các chấm màu để chỉnh, có kính lúp ở góc trái dưới. Lăn chuột để zoom,
-   chuột phải hoặc giữa kéo để di chuyển, double-click chuột phải để vừa màn hình.
-   Thứ tự 1 trên-trái, 2 trên-phải, 3 dưới-phải, 4 dưới-trái; nút *Đổi thứ tự
-   góc* xoay thứ tự 90° nếu đặt nhầm.
-4. **Kiểm tra lưới**: ảnh đã nắn phối cảnh kèm lưới mm (mặc định 10mm, gốc
-   dưới-trái) để đối chiếu với lưới 1cm của thảm cắt nhìn qua các lỗ. Nút *Đo
-   lưới thảm qua các lỗ* đo chu kỳ lưới thảm bằng FFT và gợi ý kích thước tấm
-   (sai số vài % vì thảm nằm thấp hơn mặt gỗ). Có nút xoay kết quả 90°.
-5. **Tạo mask**: phân đoạn tự động (mặc định *Kết hợp*: gỗ ít bão hòa và sáng,
-   thảm xanh bão hòa cao, bóng trong lỗ tối), ngưỡng chỉnh bằng thanh trượt
-   hoặc Otsu, có thêm K-means. Làm sạch bằng mở hình thái, bỏ đốm gỗ và lỗ nhỏ,
-   tùy chọn coi một viền mép tấm là đã cắt. Lớp phủ đỏ = đã cắt. Có cọ *Tô GỖ*
-   và *Tô CẮT* để sửa lỗi, Ctrl+Z để hoàn tác. Nét tô được giữ lại khi đổi ngưỡng.
-   - Mặc định *Đóng* = 0, vì đóng hình thái có thể lấp mất các đường cắt mảnh
-     (vết cắt chưa tách rời vật liệu). Hãy kiểm tra và tô CẮT các đường này.
-6. **Khoảng an toàn**: co vùng gỗ vào một khoảng (mm), tính theo khoảng cách
+1. **Open image**: chọn ảnh tấm gỗ (*Open sheet photo...*), hoặc *Open saved
+   mask (continue editing)...* để sửa tiếp mask đã lưu.
+2. **Sheet size**: nhập *Width W* (cạnh trên, góc 1→2) và *Height H* (cạnh
+   trái, góc 1→4) đo bằng thước. Kích thước điển hình khoảng **306 × 460 mm**
+   nhưng mỗi tấm một khác, nên luôn đo lại.
+   - **Độ phân giải mm/px được tính tự động**, không cần nhập:
+     `rx = W / trung bình(px cạnh trên, px cạnh dưới)`,
+     `ry = H / trung bình(px cạnh trái, px cạnh phải)`, và `mm_per_px = (rx + ry) / 2`.
+     Nhờ vậy ảnh nắn giữ xấp xỉ độ phân giải gốc của ảnh chụp.
+   - Muốn nhập tay thì tích *Advanced: override mm/px manually*.
+3. **Pick 4 corners**:
+   - *Auto-detect 4 corners* gợi ý 4 góc (vùng sáng lớn nhất, xấp xỉ tứ giác).
+     Kéo các chấm màu để chỉnh, có kính lúp ở dưới bên trái. Lăn chuột để zoom,
+     kéo chuột phải hoặc giữa để di chuyển, double-click chuột phải để vừa
+     màn hình.
+   - Thứ tự góc: 1 top-left, 2 top-right, 3 bottom-right, 4 bottom-left.
+     *Rotate corner order 90 deg* xoay thứ tự nếu đặt nhầm.
+   - Panel hiện ngay độ phân giải đang tính (mm/px và px/mm), kích thước ảnh
+     nắn, và rx, ry. Nếu X/Y lệch quá 3% sẽ có cảnh báo: có thể đã nhập sai
+     W × H hoặc đặt góc lệch.
+4. **Check grid**: ảnh đã nắn kèm lưới mm (*Show mm grid*, *Grid step*, gốc
+   dưới-trái) để đối chiếu với lưới 1cm của thảm cắt nhìn qua các lỗ.
+   - *Measure mat grid through holes* đo chu kỳ lưới thảm bằng FFT và gợi ý kích
+     thước tấm; bấm *Use suggested size* để áp dụng. Sai số vài % vì thảm nằm
+     thấp hơn mặt gỗ.
+   - *Rotate left/right 90* xoay kết quả.
+5. **Mask**:
+   - Phân đoạn tự động, mặc định *Combined (saturation + light)*: gỗ ít bão hòa
+     và sáng, thảm xanh bão hòa cao, bóng trong lỗ tối. Có thêm HSV, L, Lab b*
+     và K-means.
+   - *Threshold* chỉnh bằng thanh trượt hoặc nút *Otsu*.
+   - Làm sạch bằng *Open (denoise)*, *Drop wood specks*, *Fill small holes*,
+     và *Cut border band* (coi một viền mép tấm là đã cắt).
+   - Lớp phủ đỏ = đã cắt.
+   - Cọ *Paint WOOD* / *Paint CUT* để sửa lỗi, *Undo (Ctrl+Z)* để hoàn tác.
+     Nét tô được giữ lại khi đổi ngưỡng.
+   - Mặc định *Close (fill gaps)* = 0, để không lấp mất các đường cắt mảnh.
+6. **Safety margin**: co vùng gỗ vào một khoảng (mm), tính theo khoảng cách
    Euclid, để chừa mép cháy, kerf và sai số khi đặt lại tấm. Vùng màu cam là
    phần bị bỏ. Mép tấm cũng tính là mép cắt.
-7. **Lưu** `<ten>.png`, kèm theo:
-   - `<ten>.json` `{width_mm, height_mm, mm_per_px, margin_mm, source, ...}`
-   - `<ten>_raw.png` mask trước khi co margin, để mở lại sửa tiếp
-   - `<ten>_warped.png` ảnh đã nắn
-   Nút *Mở trong Strip Packer* mở luôn tool 2 với file vừa lưu.
+7. **Save** (*Save mask (PNG + JSON)...*) ghi `<ten>.png` (mask cuối, 255 = gỗ,
+   0 = cắt), kèm theo:
+   - `<ten>.json`: `{width_mm, height_mm, mm_per_px, px_per_mm, mm_per_px_mode
+     ("auto"/"manual"), margin_mm, source, corners_px, ...}`
+   - `<ten>_raw.png`: mask trước khi co margin, để mở lại sửa tiếp
+   - `<ten>_warped.png`: ảnh đã nắn
+   *Open in Strip Packer* mở luôn tool 2 với file vừa lưu.
 
 Mẹo chụp: chụp thẳng từ trên xuống, đủ sáng, không bóng đổ, tấm phẳng, đặt trên
 nền khác màu gỗ (thảm cắt xanh rất tốt).
 
 ## Tool 2: strip_packer.py
 
-Tham số: bề rộng thanh, dài tối thiểu/tối đa, bước độ dài (0 = tự do, ví dụ 5 →
-30, 35, 40, …), khoảng cách giữa 2 thanh (kerf, mặc định 0.5mm), hướng (cả hai /
-ngang / dọc), mục tiêu (tổng chiều dài lớn nhất hoặc nhiều thanh nhất).
+Tham số: *Strip width*, *Min length* / *Max length*, *Length step* (0 = tự do,
+ví dụ 5 → 30, 35, 40, …), *Gap / kerf* (mặc định 0.5mm), *Orientation* (Both /
+Horizontal / Vertical), *Objective* (Max total length / Max count). Bấm *Compute*.
+
+Mọi tọa độ và độ dài xuất ra đều làm tròn tới 0.01 mm về phía trong vùng gỗ đã
+kiểm tra, nên các dòng DSL vẫn hợp lệ dù mm/px tự động là số lẻ (ví dụ 0.5393).
+Ở chế độ độ dài tự do, độ dài thanh sẽ lẻ (ví dụ 93.29). Muốn số tròn thì đặt
+*Length step*, ví dụ 5.
 
 Kết quả hiện lên ảnh (xanh lá = thanh ngang, xanh dương = thanh dọc), kèm số
-thanh, tổng chiều dài và kết quả kiểm tra hợp lệ. Xuất được DSL (`.txt`, các
-dòng `#` là chú thích mà Designer bỏ qua), copy DSL, hoặc lưu ảnh kết quả.
+thanh, tổng chiều dài và kết quả kiểm tra (*Check: OK*). Có các nút *Export DSL
+(.txt)* (dòng `#` là chú thích, Designer bỏ qua), *Copy DSL* và *Save result
+image (.png)*.
 
 Thuật toán (`pack_core.py`):
 - Với một hướng, mỗi "dải" cao bằng bề rộng thanh chia thành các đoạn liên tục
@@ -101,9 +130,10 @@ print("\n".join(strips_to_dsl(res["strips"])))
 ## Test
 
 `python test_sample.py [thu_muc_out]` chạy toàn bộ pipeline không cần GUI trên
-`sample/plywood_01.png`, với 4 góc chọn tay và kích thước **giả định 300×450mm**
-(ước lượng từ lưới 1cm của thảm, chưa đo thật). Kết quả gồm mask, ảnh kết quả
-và DSL, và script kiểm tra không có thanh nào chồng nhau hoặc nằm ngoài gỗ.
+`sample/plywood_01.png`, với 4 góc chọn tay, kích thước **306 × 460 mm** và
+mm/px tính tự động từ 4 góc. Kết quả gồm mask, ảnh kết quả và DSL. Script kiểm
+tra không có thanh nào chồng nhau hoặc nằm ngoài gỗ, kể cả sau khi đọc ngược các
+dòng DSL đã làm tròn.
 
 ## File
 
@@ -112,5 +142,6 @@ và DSL, và script kiểm tra không có thanh nào chồng nhau hoặc nằm n
 - `scan_core.py` – xử lý ảnh: góc, nắn phối cảnh, phân đoạn, margin, lưu/đọc mask
 - `pack_core.py` – thuật toán xếp thanh, kiểm tra, xuất DSL, vẽ kết quả
 - `image_view.py` – canvas zoom/pan và kính lúp dùng chung
+- `ui_util.py` – DPI awareness trên Windows và hệ số scale kích thước pixel
 - `test_sample.py` – test không GUI
 - `sample/plywood_01.png` – ảnh mẫu

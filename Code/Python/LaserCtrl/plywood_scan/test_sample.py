@@ -3,8 +3,9 @@ Test khong GUI tren anh mau sample/plywood_01.png.
 
 Chay:  python test_sample.py [thu_muc_output]
 
-Kich thuoc tam trong anh mau la GIA DINH (300 x 450 mm, uoc luong tu luoi
-1cm cua tham cat) - khi dung that hay do tam bang thuoc.
+Kich thuoc tam trong anh mau: 306 x 460 mm (kich thuoc dien hinh cua tam,
+moi tam co the khac - khi dung that hay do bang thuoc). Do phan giai mm/px
+tinh tu dong tu 4 goc (giong scan_app).
 """
 import os
 import sys
@@ -19,7 +20,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SAMPLE = os.path.join(HERE, "sample", "plywood_01.png")
 # Goc uoc luong bang tay tren anh mau (TL, TR, BR, BL), pixel
 CORNERS = [[6, 165], [569, 166], [579, 1019], [10, 1022]]
-W_MM, H_MM, RES, MARGIN = 300.0, 450.0, 0.5, 1.0
+W_MM, H_MM, MARGIN = 306.0, 460.0, 1.0
 
 
 def main(out_dir):
@@ -28,6 +29,9 @@ def main(out_dir):
     auto = sc.detect_sheet_corners(img)
     print("Goc tu dong:", np.round(auto, 1).tolist())
     print("Goc dung de test:", CORNERS)
+    RES, rx, ry = sc.auto_resolution(CORNERS, W_MM, H_MM)
+    print("Do phan giai tu dong: %.4f mm/px (%.3f px/mm), X %.4f, Y %.4f"
+          % (RES, 1 / RES, rx, ry))
     warped = sc.warp_sheet(img, CORNERS, W_MM, H_MM, RES)
     raw, thr = sc.auto_mask(warped, RES)
     px, py = sc.estimate_grid_period_mm(warped, raw, RES)
@@ -35,7 +39,8 @@ def main(out_dir):
     final = sc.erode_margin(raw, MARGIN, RES)
     sc.save_mask_file(os.path.join(out_dir, "mask.png"), final, W_MM, H_MM,
                       RES, MARGIN, source=SAMPLE, raw_mask=raw,
-                      warped=warped, corners=CORNERS)
+                      warped=warped, corners=CORNERS,
+                      extra={"mm_per_px_mode": "auto"})
     sc.imwrite_unicode(os.path.join(out_dir, "warped_grid.png"),
                        sc.draw_mm_grid(warped, RES))
     sc.imwrite_unicode(os.path.join(out_dir, "mask_overlay.png"),
@@ -44,7 +49,8 @@ def main(out_dir):
                                        .astype(np.uint8)))
     # Doc lai tu file nhu tool 2
     mask, meta, _ = sc.load_mask_file(os.path.join(out_dir, "mask.json"))
-    assert mask.shape == (int(H_MM / RES), int(W_MM / RES))
+    assert mask.shape == (int(round(H_MM / RES)), int(round(W_MM / RES)))
+    print("Anh nan: %d x %d px" % (mask.shape[1], mask.shape[0]))
     print("Go con lai: %.1f%%" % (100 * (mask > 0).mean()))
 
     all_ok = True
@@ -58,6 +64,15 @@ def main(out_dir):
         print("%-22s %3d thanh, tong %7.1f mm, %-10s %.2fs, loi: %d" % (
             kw or "mac dinh", r["count"], r["total_length"], r["strategy"],
             time.time() - t0, len(errs)))
+        # Doc nguoc cac dong DSL (2 chu so thap phan) va kiem tra lai
+        back = []
+        for line in strips_to_dsl(r["strips"]):
+            x, y, w, h = map(float, line.split()[1:])
+            back.append({"x": x, "y": y, "w": w, "h": h})
+        errs2 = verify_strips(mask, meta["mm_per_px"], back, r["params"]["gap"])
+        all_ok &= not errs2
+        if errs2:
+            print("   loi sau khi xuat DSL:", errs2[:3])
         if not kw:
             best = r
     sc.imwrite_unicode(os.path.join(out_dir, "result.png"),

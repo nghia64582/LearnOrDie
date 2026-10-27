@@ -4,13 +4,15 @@ Tool 1: So hoa tam plywood con lai tu anh chup -> file mask nhi phan.
 Chay:  python scan_app.py  [duong_dan_anh]
 
 Cac buoc (wizard):
-    1. Mo anh (hoac mo mask da luu de sua tiep)
-    2. Nhap kich thuoc that cua tam (mm) va do phan giai (mm / pixel)
-    3. Chon 4 goc tam (co goi y tu dong, keo tha, kinh lup) -> nan phoi canh
-    4. Kiem tra bang luoi mm (doi chieu luoi 1cm cua tham cat), xoay huong
-    5. Tao mask: phan doan tu dong + nguong + lam sach + co to tay sua loi
-    6. Khoang an toan (margin) cho mep chay / kerf
-    7. Luu PNG (255 = go, 0 = da cat) + JSON
+    1. Open image (hoac mo mask da luu de sua tiep)
+    2. Sheet size: kich thuoc that cua tam (mm)
+    3. Pick 4 corners (goi y tu dong, keo tha, kinh lup) -> do phan giai
+       mm/px tinh tu dong tu do dai cac canh tu giac (pixel) va W x H (mm),
+       roi nan phoi canh
+    4. Check grid: luoi mm de doi chieu luoi 1cm cua tham cat, xoay huong
+    5. Mask: phan doan tu dong + nguong + lam sach + co to tay sua loi
+    6. Safety margin cho mep chay / kerf
+    7. Save PNG (255 = go, 0 = da cat) + JSON
 
 Toa do: goc 4 (duoi-trai) cua tam = goc (0, 0) cua DSL, y huong len.
 """
@@ -24,31 +26,34 @@ import cv2
 import numpy as np
 
 import scan_core as sc
+import ui_util
+from ui_util import px
 from image_view import ImageView, Magnifier
 
 FONT = ("Times New Roman", 11)
 FONT_B = ("Times New Roman", 11, "bold")
+FONT_S = ("Arial", 9)
 
 STEPS = [
-    "1. Mo anh",
-    "2. Kich thuoc tam",
-    "3. Chon 4 goc",
-    "4. Kiem tra luoi",
-    "5. Tao mask",
-    "6. Khoang an toan",
-    "7. Luu file",
+    "1. Open image",
+    "2. Sheet size",
+    "3. Pick 4 corners",
+    "4. Check grid",
+    "5. Mask",
+    "6. Safety margin",
+    "7. Save",
 ]
 
-CORNER_NAMES = ["1 tren-trai", "2 tren-phai", "3 duoi-phai",
-                "4 duoi-trai (0,0)"]
+CORNER_NAMES = ["1 top-left", "2 top-right", "3 bottom-right",
+                "4 bottom-left (0,0)"]
 CORNER_COLORS = ["#ff3030", "#30ff30", "#3090ff", "#ffff00"]
 
-METHODS = [("combo", "Ket hop (it bao hoa + sang)"),
-           ("sat", "Do bao hoa HSV (nguoc)"),
-           ("light", "Do sang L"),
-           ("lab_b", "Lab b* (vang)"),
-           ("kmeans", "K-means 2 nhom"),
-           ("saved", "Mask da luu (giu nguyen)")]
+METHODS = [("combo", "Combined (saturation + light)"),
+           ("sat", "HSV saturation (inverted)"),
+           ("light", "Lightness L"),
+           ("lab_b", "Lab b* (yellowness)"),
+           ("kmeans", "K-means, 2 clusters"),
+           ("saved", "Saved mask (keep as is)")]
 
 
 class ScanApp(ttk.Frame):
@@ -62,6 +67,8 @@ class ScanApp(ttk.Frame):
         self.src_path = ""
         self.corners = []              # list [x, y] trong anh goc
         self.warped = None
+        self.res = None                # mm/px cua anh da nan (dang dung)
+        self.res_mode = "auto"
         self.auto = None               # mask tu dong (truoc khi to tay)
         self.loaded_mask = None        # mask nap tu file (phuong phap "saved")
         self.edits = None              # int8: +1 giu go, -1 cat
@@ -73,10 +80,12 @@ class ScanApp(ttk.Frame):
         self._painting = False
         self._last_paint = None
         self._pending = None
+        self._suggest = None
         self.last_saved = None
 
-        self.v_w = tk.StringVar(value="300")
-        self.v_h = tk.StringVar(value="450")
+        self.v_w = tk.StringVar(value="306")
+        self.v_h = tk.StringVar(value="460")
+        self.v_res_override = tk.BooleanVar(value=False)
         self.v_res = tk.StringVar(value="0.5")
         self.v_grid = tk.BooleanVar(value=True)
         self.v_grid_step = tk.StringVar(value="10")
@@ -94,6 +103,7 @@ class ScanApp(ttk.Frame):
         self.v_margin = tk.StringVar(value="1.0")
         self.v_show_src = tk.BooleanVar(value=True)
         self.v_status = tk.StringVar(value="")
+        self.v_res_info = tk.StringVar(value="Resolution: pick 4 corners first")
 
         self.build_gui()
         self.show_step(0)
@@ -104,7 +114,8 @@ class ScanApp(ttk.Frame):
     # GUI
     # ------------------------------------------------------------------
     def build_gui(self):
-        left = tk.Frame(self, width=330)
+        self.wrap = px(310)
+        left = tk.Frame(self, width=px(340))
         left.pack(side="left", fill="y", padx=5, pady=5)
         left.pack_propagate(False)
 
@@ -122,27 +133,27 @@ class ScanApp(ttk.Frame):
 
         nav = tk.Frame(left)
         nav.pack(fill="x", pady=4)
-        self.btn_back = tk.Button(nav, text="< Quay lai", font=FONT,
+        self.btn_back = tk.Button(nav, text="< Back", font=FONT,
                                   command=self.prev_step)
         self.btn_back.pack(side="left")
-        self.btn_next = tk.Button(nav, text="Tiep theo >", font=FONT_B,
+        self.btn_next = tk.Button(nav, text="Next >", font=FONT_B,
                                   command=self.next_step)
         self.btn_next.pack(side="right")
 
-        self.magnifier = Magnifier(left, size=180, zoom=5)
+        self.magnifier = Magnifier(left, size=px(180), zoom=5)
         self.magnifier.pack(pady=4)
-        tk.Label(left, textvariable=self.v_status, font=("Arial", 9),
-                 justify="left", anchor="w", wraplength=310,
+        tk.Label(left, textvariable=self.v_status, font=FONT_S,
+                 justify="left", anchor="w", wraplength=self.wrap,
                  fg="#333").pack(fill="x")
 
         right = tk.Frame(self)
         right.pack(side="right", fill="both", expand=True)
-        self.view = ImageView(right, width=900, height=750)
+        self.view = ImageView(right, width=px(900), height=px(750))
         self.view.pack(fill="both", expand=True)
         self.view.on_redraw = self.draw_overlay
-        tk.Label(right, font=("Arial", 9), fg="#555",
-                 text="Lan chuot: zoom | chuot phai / giua keo: di chuyen | "
-                      "double-click chuot phai: vua man hinh").pack(fill="x")
+        tk.Label(right, font=FONT_S, fg="#555",
+                 text="Mouse wheel: zoom | right / middle drag: pan | "
+                      "double right-click: fit to window").pack(fill="x")
         self.view.bind("<ButtonPress-1>", self.on_press)
         self.view.bind("<B1-Motion>", self.on_drag)
         self.view.bind("<ButtonRelease-1>", self.on_release)
@@ -161,7 +172,7 @@ class ScanApp(ttk.Frame):
     def _row(self, parent, label, var, width=8, unit=""):
         r = tk.Frame(parent)
         r.pack(fill="x", pady=1)
-        tk.Label(r, text=label, font=FONT, width=16, anchor="w").pack(side="left")
+        tk.Label(r, text=label, font=FONT, width=18, anchor="w").pack(side="left")
         e = tk.Entry(r, textvariable=var, width=width, font=FONT)
         e.pack(side="left")
         if unit:
@@ -169,178 +180,195 @@ class ScanApp(ttk.Frame):
         return e
 
     def _note(self, parent, text):
-        tk.Label(parent, text=text, font=("Arial", 9), justify="left",
-                 wraplength=310, anchor="w", fg="#444").pack(fill="x", pady=3)
+        tk.Label(parent, text=text, font=FONT_S, justify="left",
+                 wraplength=self.wrap, anchor="w", fg="#444").pack(fill="x",
+                                                                   pady=3)
+
+    def _res_label(self, parent):
+        tk.Label(parent, textvariable=self.v_res_info, font=FONT,
+                 justify="left", anchor="w", wraplength=self.wrap,
+                 fg="#004080").pack(fill="x", pady=3)
 
     def _build_step_open(self):
         f = self._frame()
-        tk.Button(f, text="Chon anh tam go...", font=FONT,
+        tk.Button(f, text="Open sheet photo...", font=FONT,
                   command=self.ask_open_image).pack(fill="x", pady=2)
-        tk.Button(f, text="Mo mask da luu (sua tiep)...", font=FONT,
+        tk.Button(f, text="Open saved mask (continue editing)...", font=FONT,
                   command=self.ask_load_mask).pack(fill="x", pady=2)
-        self.lb_src = tk.Label(f, text="Chua co anh", font=FONT,
-                               wraplength=310, justify="left")
+        self.lb_src = tk.Label(f, text="No image loaded", font=FONT,
+                               wraplength=self.wrap, justify="left")
         self.lb_src.pack(fill="x", pady=4)
-        self._note(f, "Meo chup anh: chup thang tu tren xuong, du sang, "
-                      "khong bong do, tam go phang. Nen dat tam len nen "
-                      "khac mau (vd tham cat xanh) de tach go de hon.")
+        self._note(f, "Photo tips: shoot straight from above, good even "
+                      "light, no hard shadows, sheet lying flat. A background "
+                      "with a different colour (e.g. a green cutting mat) "
+                      "makes wood detection much easier.")
         return f
 
     def _build_step_size(self):
         f = self._frame()
-        self._row(f, "Chieu rong W", self.v_w, unit="mm")
-        self._row(f, "Chieu cao H", self.v_h, unit="mm")
+        self._row(f, "Width W", self.v_w, unit="mm")
+        self._row(f, "Height H", self.v_h, unit="mm")
+        self._note(f, "W = top edge (corner 1 -> corner 2), H = left edge "
+                      "(corner 1 -> corner 4). Measure the sheet with a ruler; "
+                      "it differs per sheet.")
+        ttk.Separator(f).pack(fill="x", pady=4)
+        tk.Label(f, text="Resolution (mm/px):", font=FONT_B,
+                 anchor="w").pack(fill="x")
+        self._note(f, "Computed automatically from the picked corners: the "
+                      "pixel length of the sheet edges divided into W x H, so "
+                      "the warped image keeps about the native photo "
+                      "resolution.")
+        tk.Checkbutton(f, text="Advanced: override mm/px manually",
+                       variable=self.v_res_override, font=FONT,
+                       command=self.update_res_info).pack(anchor="w")
         r = tk.Frame(f)
         r.pack(fill="x", pady=1)
-        tk.Label(r, text="Do phan giai", font=FONT, width=16,
+        tk.Label(r, text="Manual mm/px", font=FONT, width=16,
                  anchor="w").pack(side="left")
         ttk.Combobox(r, textvariable=self.v_res, width=6,
                      values=["0.2", "0.25", "0.5", "1.0"]).pack(side="left")
-        tk.Label(r, text="mm/pixel", font=FONT).pack(side="left")
-        self._note(f, "W = canh tu goc 1 sang goc 2 (canh tren), H = canh tu "
-                      "goc 1 xuong goc 4 (canh trai). Do bang thuoc cho "
-                      "chinh xac. 0.5 mm/px la du cho thanh rong 10mm; "
-                      "chon nho hon neu can chinh xac hon (cham hon).")
         return f
 
     def _build_step_corners(self):
         f = self._frame()
-        tk.Button(f, text="Tu dong tim 4 goc", font=FONT,
+        tk.Button(f, text="Auto-detect 4 corners", font=FONT,
                   command=self.auto_corners).pack(fill="x", pady=2)
-        tk.Button(f, text="Xoa cac goc, click lai", font=FONT,
+        tk.Button(f, text="Clear corners, click again", font=FONT,
                   command=self.clear_corners).pack(fill="x", pady=2)
-        tk.Button(f, text="Doi thu tu goc (xoay 90 do)", font=FONT,
+        tk.Button(f, text="Rotate corner order 90 deg", font=FONT,
                   command=lambda: self.rotate_order(1)).pack(fill="x", pady=2)
         self.lb_corners = tk.Label(f, text="", font=("Courier", 9),
                                    justify="left", anchor="w")
         self.lb_corners.pack(fill="x", pady=4)
-        self._note(f, "Click lan luot 4 goc: 1 tren-trai, 2 tren-phai, "
-                      "3 duoi-phai, 4 duoi-trai. Goc 4 la goc (0,0) cua DSL. "
-                      "Keo cac cham mau de chinh; dung kinh lup ben duoi "
-                      "va zoom de dat dung dinh goc tam (mat tren tam). "
-                      "Neu tam co canh cong, dat goc dung o dinh goc that.")
+        self._res_label(f)
+        self._note(f, "Click the 4 corners in order: 1 top-left, 2 top-right, "
+                      "3 bottom-right, 4 bottom-left. Corner 4 is the DSL "
+                      "origin (0,0). Drag the coloured dots to adjust; use "
+                      "the magnifier and zoom to hit the real corner of the "
+                      "top face. If an edge is curved, still place the dot on "
+                      "the true corner.")
         return f
 
     def _build_step_check(self):
         f = self._frame()
-        tk.Checkbutton(f, text="Hien luoi mm", variable=self.v_grid,
+        self._res_label(f)
+        tk.Checkbutton(f, text="Show mm grid", variable=self.v_grid,
                        font=FONT, command=self.refresh_view).pack(anchor="w")
-        self._row(f, "Buoc luoi", self.v_grid_step, unit="mm")
-        tk.Button(f, text="Ve lai luoi", font=FONT,
+        self._row(f, "Grid step", self.v_grid_step, unit="mm")
+        tk.Button(f, text="Redraw grid", font=FONT,
                   command=self.refresh_view).pack(fill="x", pady=2)
         r = tk.Frame(f)
         r.pack(fill="x", pady=2)
-        tk.Button(r, text="Xoay trai 90", font=FONT,
+        tk.Button(r, text="Rotate left 90", font=FONT,
                   command=lambda: self.rotate_result(1)).pack(side="left",
                                                               expand=True,
                                                               fill="x")
-        tk.Button(r, text="Xoay phai 90", font=FONT,
+        tk.Button(r, text="Rotate right 90", font=FONT,
                   command=lambda: self.rotate_result(3)).pack(side="left",
                                                               expand=True,
                                                               fill="x")
         ttk.Separator(f).pack(fill="x", pady=4)
-        tk.Label(f, text="Kiem tra kich thuoc bang luoi tham:",
+        tk.Label(f, text="Check size with the cutting-mat grid:",
                  font=FONT_B, anchor="w").pack(fill="x")
-        self._row(f, "O luoi tham", self.v_mat_pitch, unit="mm")
-        tk.Button(f, text="Do luoi tham qua cac lo", font=FONT,
+        self._row(f, "Mat grid pitch", self.v_mat_pitch, unit="mm")
+        tk.Button(f, text="Measure mat grid through holes", font=FONT,
                   command=self.measure_grid).pack(fill="x", pady=2)
         self.lb_grid = tk.Label(f, text="", font=FONT, justify="left",
-                                wraplength=310, anchor="w")
+                                wraplength=self.wrap, anchor="w")
         self.lb_grid.pack(fill="x")
-        self.btn_apply_size = tk.Button(f, text="Dung kich thuoc goi y",
+        self.btn_apply_size = tk.Button(f, text="Use suggested size",
                                         font=FONT, state="disabled",
                                         command=self.apply_suggested_size)
         self.btn_apply_size.pack(fill="x", pady=2)
-        self._note(f, "Luoi tim = luoi mm theo kich thuoc da nhap, goc (0,0) "
-                      "o duoi-trai. Neu luoi tim lech dan so voi luoi 1cm cua "
-                      "tham nhin qua lo => kich thuoc nhap sai hoac goc dat "
-                      "lech. Tham nam thap hon mat go 1 do day van nen sai "
-                      "so vai %.")
-        self._suggest = None
+        self._note(f, "Magenta grid = mm grid from the entered size, origin "
+                      "(0,0) at bottom-left. If it drifts against the 1 cm "
+                      "mat grid seen through the holes, the size or corners "
+                      "are off. The mat lies one sheet thickness lower, so "
+                      "expect an error of a few %.")
         return f
 
     def _build_step_mask(self):
         f = self._frame()
         r = tk.Frame(f)
         r.pack(fill="x")
-        tk.Label(r, text="Phuong phap", font=FONT).pack(side="left")
+        tk.Label(r, text="Method", font=FONT).pack(side="left")
         cb = ttk.Combobox(r, textvariable=self.v_method, state="readonly",
                           width=26, values=[m[1] for m in METHODS])
         cb.pack(side="left")
         cb.bind("<<ComboboxSelected>>", lambda e: self.recompute_auto(True))
         r = tk.Frame(f)
         r.pack(fill="x")
-        tk.Label(r, text="Nguong", font=FONT).pack(side="left")
+        tk.Label(r, text="Threshold", font=FONT).pack(side="left")
         tk.Scale(r, from_=0, to=255, orient="horizontal", variable=self.v_thr,
-                 length=200, command=lambda v: self.schedule(
+                 length=px(190), command=lambda v: self.schedule(
                      lambda: self.recompute_auto(False))).pack(side="left")
         tk.Button(r, text="Otsu", font=FONT,
                   command=lambda: self.recompute_auto(True)).pack(side="left")
-        self._row(f, "Mo (bo nhieu)", self.v_open, unit="mm")
-        self._row(f, "Dong (lap ke)", self.v_close, unit="mm")
-        self._row(f, "Bo dom go <", self.v_min_wood, unit="mm2")
-        self._row(f, "Bo lo nho <", self.v_min_hole, unit="mm2")
-        self._row(f, "Cat vien mep", self.v_border, unit="mm")
-        tk.Button(f, text="Ap dung", font=FONT,
+        self._row(f, "Open (denoise)", self.v_open, unit="mm")
+        self._row(f, "Close (fill gaps)", self.v_close, unit="mm")
+        self._row(f, "Drop wood specks <", self.v_min_wood, unit="mm2")
+        self._row(f, "Fill small holes <", self.v_min_hole, unit="mm2")
+        self._row(f, "Cut border band", self.v_border, unit="mm")
+        tk.Button(f, text="Apply", font=FONT,
                   command=lambda: self.recompute_auto(False)).pack(fill="x")
         r = tk.Frame(f)
         r.pack(fill="x")
-        tk.Label(r, text="Do dam lop phu", font=FONT).pack(side="left")
+        tk.Label(r, text="Overlay opacity", font=FONT).pack(side="left")
         tk.Scale(r, from_=0, to=1, resolution=0.05, orient="horizontal",
-                 variable=self.v_alpha, length=150,
+                 variable=self.v_alpha, length=px(150),
                  command=lambda v: self.schedule(self.refresh_view)
                  ).pack(side="left")
         ttk.Separator(f).pack(fill="x", pady=3)
-        tk.Label(f, text="Co to tay (sua loi):", font=FONT_B,
+        tk.Label(f, text="Brush (fix errors):", font=FONT_B,
                  anchor="w").pack(fill="x")
         r = tk.Frame(f)
         r.pack(fill="x")
-        for val, txt in (("view", "Xem"), ("keep", "To GO (giu)"),
-                         ("cut", "To CAT")):
+        for val, txt in (("view", "View"), ("keep", "Paint WOOD"),
+                         ("cut", "Paint CUT")):
             tk.Radiobutton(r, text=txt, value=val, font=FONT,
                            variable=self.v_brush_mode).pack(side="left")
-        self._row(f, "Co co", self.v_brush, unit="mm")
+        self._row(f, "Brush size", self.v_brush, unit="mm")
         r = tk.Frame(f)
         r.pack(fill="x", pady=2)
-        tk.Button(r, text="Hoan tac (Ctrl+Z)", font=FONT,
+        tk.Button(r, text="Undo (Ctrl+Z)", font=FONT,
                   command=self.undo).pack(side="left", expand=True, fill="x")
-        tk.Button(r, text="Xoa net to", font=FONT,
+        tk.Button(r, text="Clear strokes", font=FONT,
                   command=self.clear_edits).pack(side="left", expand=True,
                                                  fill="x")
-        tk.Checkbutton(f, text="Hien anh goc (bo chon = chi hien mask)",
+        tk.Checkbutton(f, text="Show photo (off = mask only)",
                        variable=self.v_show_src, font=FONT,
                        command=self.refresh_view).pack(anchor="w")
-        self._note(f, "Do = da cat. Kiem tra ky cac duong cat manh (vet cat "
-                      "chua tach roi) va bong trong lo, dung co 'To CAT' de "
-                      "ve them.")
+        self._note(f, "Red = cut. Check shadows inside holes; use 'Paint "
+                      "CUT' / 'Paint WOOD' to fix mistakes.")
         return f
 
     def _build_step_margin(self):
         f = self._frame()
-        self._row(f, "Khoang an toan", self.v_margin, unit="mm")
-        tk.Button(f, text="Xem truoc", font=FONT,
+        self._row(f, "Safety margin", self.v_margin, unit="mm")
+        tk.Button(f, text="Preview", font=FONT,
                   command=self.recompute_final).pack(fill="x", pady=2)
         self.lb_stats = tk.Label(f, text="", font=FONT, justify="left",
-                                 anchor="w", wraplength=310)
+                                 anchor="w", wraplength=self.wrap)
         self.lb_stats.pack(fill="x", pady=4)
-        self._note(f, "Vung go sat mep lo / mep tam bi co vao mot khoang nay "
-                      "(mau cam) vi mep chay, gion, va sai so dat lai tam "
-                      "tren may. Goi y 1-2 mm.")
+        self._note(f, "Wood next to holes and sheet edges is shrunk by this "
+                      "distance (orange) because of burnt, brittle edges, "
+                      "kerf and re-placement error on the machine. 1-2 mm "
+                      "is a good start.")
         return f
 
     def _build_step_save(self):
         f = self._frame()
-        tk.Button(f, text="Luu mask (PNG + JSON)...", font=FONT_B,
+        tk.Button(f, text="Save mask (PNG + JSON)...", font=FONT_B,
                   command=self.save).pack(fill="x", pady=2)
-        tk.Button(f, text="Mo trong Strip Packer", font=FONT,
+        tk.Button(f, text="Open in Strip Packer", font=FONT,
                   command=self.open_packer).pack(fill="x", pady=2)
         self.lb_saved = tk.Label(f, text="", font=FONT, justify="left",
-                                 wraplength=310, anchor="w")
+                                 wraplength=self.wrap, anchor="w")
         self.lb_saved.pack(fill="x", pady=4)
-        self._note(f, "Se ghi: <ten>.png (mask cuoi, 255 = go, 0 = cat), "
-                      "<ten>.json (kich thuoc, mm/px, margin), <ten>_raw.png "
-                      "(mask truoc margin) va <ten>_warped.png (anh da nan) "
-                      "de mo lai sua tiep.")
+        self._note(f, "Writes <name>.png (final mask, 255 = wood, 0 = cut), "
+                      "<name>.json (size, mm/px, margin), <name>_raw.png "
+                      "(mask before margin) and <name>_warped.png (warped "
+                      "photo) so you can reopen and keep editing.")
         return f
 
     # ------------------------------------------------------------------
@@ -357,13 +385,14 @@ class ScanApp(ttk.Frame):
         self.btn_back.config(state="normal" if i > 0 else "disabled")
         self.btn_next.config(state="normal" if i < len(STEPS) - 1
                              else "disabled")
+        self.update_res_info()
         self.refresh_view(fit=True)
 
     def next_step(self):
         try:
             ok = self._leave_step(self.step)
         except Exception as ex:  # thong bao loi nhap lieu
-            messagebox.showerror("Loi", str(ex))
+            messagebox.showerror("Error", str(ex))
             return
         if ok:
             self.show_step(min(self.step + 1, len(STEPS) - 1))
@@ -378,7 +407,7 @@ class ScanApp(ttk.Frame):
     def _leave_step(self, i):
         if i == 0:
             if self.src is None and self.warped is None:
-                messagebox.showwarning("Thieu anh", "Hay chon anh truoc.")
+                messagebox.showwarning("No image", "Open an image first.")
                 return False
             if self.src is None:      # mask da luu: nhay thang toi buoc mask
                 self.show_step(3)
@@ -389,7 +418,8 @@ class ScanApp(ttk.Frame):
                 self.auto_corners(silent=True)
         if i == 2:
             if len(self.corners) != 4:
-                messagebox.showwarning("Thieu goc", "Can dung 4 goc.")
+                messagebox.showwarning("Missing corners",
+                                       "Exactly 4 corners are required.")
                 return False
             self.do_warp()
         if i == 3:
@@ -403,17 +433,55 @@ class ScanApp(ttk.Frame):
     # Tham so
     # ------------------------------------------------------------------
     def get_size(self):
+        """Tra ve (W, H) mm."""
         try:
             w = float(self.v_w.get())
             h = float(self.v_h.get())
-            res = float(self.v_res.get())
         except ValueError:
-            raise ValueError("Kich thuoc / do phan giai phai la so")
-        if w <= 0 or h <= 0 or res <= 0:
-            raise ValueError("Kich thuoc phai > 0")
-        if (w / res) * (h / res) > 40e6:
-            raise ValueError("Anh qua lon, hay tang mm/pixel")
-        return w, h, res
+            raise ValueError("Width and height must be numbers")
+        if w <= 0 or h <= 0:
+            raise ValueError("Width and height must be > 0")
+        return w, h
+
+    def compute_res(self):
+        """
+        Do phan giai dung de nan: tu dong tu 4 goc (mac dinh) hoac nhap tay
+        (tuy chon nang cao). Tra ve (mm_per_px, mode, rx, ry).
+        """
+        w, h = self.get_size()
+        if self.v_res_override.get():
+            try:
+                r = float(self.v_res.get())
+            except ValueError:
+                raise ValueError("Manual mm/px must be a number")
+            if r <= 0:
+                raise ValueError("Manual mm/px must be > 0")
+            return r, "manual", None, None
+        if len(self.corners) != 4:
+            raise ValueError("Pick 4 corners first to compute mm/px")
+        r, rx, ry = sc.auto_resolution(self.corners, w, h)
+        return r, "auto", rx, ry
+
+    def update_res_info(self):
+        try:
+            r, mode, rx, ry = self.compute_res()
+        except ValueError as ex:
+            if self.res and self.src is None:
+                self.v_res_info.set("Resolution (from file): %.4f mm/px = "
+                                    "%.3f px/mm" % (self.res, 1 / self.res))
+            else:
+                self.v_res_info.set("Resolution: %s" % ex)
+            return
+        w, h = self.get_size()
+        txt = "Resolution (%s): %.4f mm/px = %.3f px/mm\nWarped image: " \
+              "%d x %d px" % (mode, r, 1 / r, int(round(w / r)),
+                              int(round(h / r)))
+        if rx and ry:
+            diff = 100.0 * abs(rx - ry) / ((rx + ry) / 2)
+            txt += "\nX: %.4f, Y: %.4f mm/px (diff %.1f%%)" % (rx, ry, diff)
+            if diff > 3:
+                txt += "\nWARNING: X/Y differ a lot - check W x H and corners"
+        self.v_res_info.set(txt)
 
     def _f(self, var, default=0.0):
         try:
@@ -433,9 +501,10 @@ class ScanApp(ttk.Frame):
     # ------------------------------------------------------------------
     def ask_open_image(self):
         p = filedialog.askopenfilename(
-            title="Chon anh tam go",
-            filetypes=[("Anh", "*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp"),
-                       ("Tat ca", "*.*")])
+            title="Open sheet photo",
+            filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp *.tif *.tiff "
+                                  "*.webp"),
+                       ("All files", "*.*")])
         if p:
             self.open_image(p)
 
@@ -443,12 +512,13 @@ class ScanApp(ttk.Frame):
         try:
             img = sc.imread_unicode(path)
         except Exception as ex:
-            messagebox.showerror("Loi", str(ex))
+            messagebox.showerror("Error", str(ex))
             return
         self.src = img
         self.src_path = path
         self.corners = []
         self.warped = self.auto = self.raw = self.final = None
+        self.res = None
         self.loaded_mask = None
         self.edits = None
         self.undo_stack = []
@@ -460,8 +530,9 @@ class ScanApp(ttk.Frame):
 
     def ask_load_mask(self):
         p = filedialog.askopenfilename(
-            title="Mo mask da luu",
-            filetypes=[("Mask JSON / PNG", "*.json *.png"), ("Tat ca", "*.*")])
+            title="Open saved mask",
+            filetypes=[("Mask JSON / PNG", "*.json *.png"),
+                       ("All files", "*.*")])
         if p:
             self.load_mask(p)
 
@@ -469,7 +540,7 @@ class ScanApp(ttk.Frame):
         try:
             mask, meta, folder = sc.load_mask_file(path)
         except Exception as ex:
-            messagebox.showerror("Loi", str(ex))
+            messagebox.showerror("Error", str(ex))
             return
         raw = mask
         if meta.get("raw_mask_file") and os.path.exists(
@@ -486,8 +557,9 @@ class ScanApp(ttk.Frame):
             warped = cv2.cvtColor(raw, cv2.COLOR_GRAY2BGR)
         self.v_w.set("%g" % meta["width_mm"])
         self.v_h.set("%g" % meta["height_mm"])
-        self.v_res.set("%g" % meta["mm_per_px"])
         self.v_margin.set("%g" % meta.get("margin_mm", 1.0))
+        self.res = float(meta["mm_per_px"])
+        self.res_mode = meta.get("mm_per_px_mode", "auto")
         self.src = None
         self.src_path = meta.get("source", "")
         self.corners = []
@@ -497,9 +569,9 @@ class ScanApp(ttk.Frame):
         self.edits = np.zeros(raw.shape, np.int8)
         self.undo_stack = []
         self.v_method.set(METHODS[-1][1])
-        self.lb_src.config(text="Mask: %s\n%g x %g mm, %g mm/px" % (
+        self.lb_src.config(text="Mask: %s\n%g x %g mm, %.4f mm/px" % (
             os.path.basename(path), meta["width_mm"], meta["height_mm"],
-            meta["mm_per_px"]))
+            self.res))
         self.update_raw()
         self.show_step(4)
 
@@ -512,8 +584,9 @@ class ScanApp(ttk.Frame):
         c = sc.detect_sheet_corners(self.src)
         if c is None:
             if not silent:
-                messagebox.showinfo("Khong tim thay",
-                                    "Khong tu tim duoc goc, hay click tay.")
+                messagebox.showinfo("Not found",
+                                    "Could not detect the corners, please "
+                                    "click them manually.")
             return
         self.corners = [list(map(float, p)) for p in c]
         self.refresh_view()
@@ -529,11 +602,17 @@ class ScanApp(ttk.Frame):
             self.refresh_view()
 
     def do_warp(self):
-        w, h, res = self.get_size()
+        w, h = self.get_size()
+        res, mode, _, _ = self.compute_res()
+        if (w / res) * (h / res) > 60e6:
+            raise ValueError("Warped image would be too large; increase "
+                             "mm/px (advanced override)")
+        self.res, self.res_mode = res, mode
         self.warped = sc.warp_sheet(self.src, self.corners, w, h, res)
         self.auto = self.raw = self.final = None
         self.edits = np.zeros(self.warped.shape[:2], np.int8)
         self.undo_stack = []
+        self.update_res_info()
 
     def rotate_result(self, times):
         # Xoay tam: doi thu tu goc va hoan doi W/H, nan lai
@@ -552,24 +631,26 @@ class ScanApp(ttk.Frame):
     def measure_grid(self):
         if self.warped is None:
             return
-        w, h, res = self.get_size()
+        w, h = self.get_size()
+        res = self.res
         m, _ = sc.auto_mask(self.warped, res)
-        px, py = sc.estimate_grid_period_mm(self.warped, m, res)
+        gx, gy = sc.estimate_grid_period_mm(self.warped, m, res)
         pitch = self._f(self.v_mat_pitch, 10.0)
-        if not px or not py:
-            self.lb_grid.config(text="Khong do duoc (it lo / luoi mo).")
+        if not gx or not gy:
+            self.lb_grid.config(text="Could not measure (few holes / "
+                                     "blurry grid).")
             return
-        sw, sh = w * pitch / px, h * pitch / py
+        sw, sh = w * pitch / gx, h * pitch / gy
         self._suggest = (sw, sh)
         self.lb_grid.config(text=(
-            "Chu ky luoi do duoc: x = %.2f mm, y = %.2f mm\n"
-            "(theo kich thuoc dang nhap %g x %g)\n"
-            "=> neu o luoi tham = %g mm thi tam ~ %.0f x %.0f mm"
-            % (px, py, w, h, pitch, sw, sh)))
+            "Measured grid period: x = %.2f mm, y = %.2f mm\n"
+            "(using the entered size %g x %g)\n"
+            "=> if the mat grid is %g mm, the sheet is ~ %.0f x %.0f mm"
+            % (gx, gy, w, h, pitch, sw, sh)))
         self.btn_apply_size.config(state="normal")
 
     def apply_suggested_size(self):
-        if not self._suggest:
+        if not self._suggest or self.src is None:
             return
         self.v_w.set("%.0f" % self._suggest[0])
         self.v_h.set("%.0f" % self._suggest[1])
@@ -589,11 +670,12 @@ class ScanApp(ttk.Frame):
         self._pending = None
         if self.warped is None:
             return
-        _, _, res = self.get_size()
+        res = self.res
         key = self.method_key()
         if key == "saved":
             if self.loaded_mask is None:
-                messagebox.showinfo("Chu y", "Chua nap mask nao tu file.")
+                messagebox.showinfo("Note", "No mask has been loaded from "
+                                            "a file.")
                 self.v_method.set(METHODS[0][1])
                 key = "combo"
             else:
@@ -639,8 +721,7 @@ class ScanApp(ttk.Frame):
     def paint(self, x, y):
         if self.edits is None:
             return
-        _, _, res = self.get_size()
-        r = max(1, int(round(self._f(self.v_brush, 3) / 2 / res)))
+        r = max(1, int(round(self._f(self.v_brush, 3) / 2 / self.res)))
         val = 1 if self.v_brush_mode.get() == "keep" else -1
         e = self.edits.astype(np.int16)
         cv2.circle(e, (int(round(x)), int(round(y))), r, val, -1)
@@ -658,12 +739,12 @@ class ScanApp(ttk.Frame):
     def recompute_final(self):
         if self.raw is None:
             self.recompute_auto(True)
-        _, _, res = self.get_size()
+        res = self.res
         margin = self._f(self.v_margin, 0)
         self.final = sc.erode_margin(self.raw, margin, res)
         area = (self.final > 0).sum() * res * res
         total = self.final.size * res * res
-        self.lb_stats.config(text="Go dung duoc: %.0f cm2 / %.0f cm2 (%.1f%%)"
+        self.lb_stats.config(text="Usable wood: %.0f cm2 / %.0f cm2 (%.1f%%)"
                              % (area / 100, total / 100, 100 * area / total))
         self.refresh_view()
 
@@ -672,7 +753,7 @@ class ScanApp(ttk.Frame):
     # ------------------------------------------------------------------
     def save(self):
         if self.raw is None:
-            messagebox.showwarning("Chua co mask", "Hay tao mask truoc.")
+            messagebox.showwarning("No mask", "Create the mask first.")
             return
         if self.final is None:
             self.recompute_final()
@@ -680,25 +761,26 @@ class ScanApp(ttk.Frame):
         if self.src_path:
             init = os.path.splitext(os.path.basename(self.src_path))[0] + \
                 "_mask.png"
-        p = filedialog.asksaveasfilename(title="Luu mask",
+        p = filedialog.asksaveasfilename(title="Save mask",
                                          defaultextension=".png",
                                          initialfile=init,
                                          filetypes=[("PNG", "*.png")])
         if not p:
             return
-        w, h, res = self.get_size()
+        w, h = self.get_size()
         png, js = sc.save_mask_file(
-            p, self.final, w, h, res, self._f(self.v_margin, 0),
+            p, self.final, w, h, self.res, self._f(self.v_margin, 0),
             source=self.src_path, raw_mask=self.raw, warped=self.warped,
             corners=self.corners if len(self.corners) == 4 else None,
-            extra={"method": self.method_key(),
+            extra={"mm_per_px_mode": self.res_mode,
+                   "method": self.method_key(),
                    "threshold": int(self.v_thr.get())})
         self.last_saved = js
-        self.lb_saved.config(text="Da luu:\n%s\n%s" % (png, js))
+        self.lb_saved.config(text="Saved:\n%s\n%s" % (png, js))
 
     def open_packer(self):
         if not self.last_saved:
-            messagebox.showinfo("Chua luu", "Hay luu mask truoc.")
+            messagebox.showinfo("Not saved", "Save the mask first.")
             return
         here = os.path.dirname(os.path.abspath(__file__))
         subprocess.Popen([sys.executable, os.path.join(here, "strip_packer.py"),
@@ -713,10 +795,7 @@ class ScanApp(ttk.Frame):
             return self.src if self.src is not None else self.warped
         if self.warped is None:
             return self.src
-        try:
-            _, _, res = self.get_size()
-        except ValueError:
-            res = 0.5
+        res = self.res or 0.5
         if s == 3:
             img = self.warped
             if self.v_grid.get():
@@ -729,9 +808,8 @@ class ScanApp(ttk.Frame):
         if s >= 5 and self.raw is not None:
             fin = self.final if self.final is not None else self.raw
             lost = ((self.raw > 0) & (fin == 0)).astype(np.uint8)
-            img = sc.overlay_mask(base, self.raw, self.v_alpha.get(),
-                                  extra=lost)
-            return img
+            return sc.overlay_mask(base, self.raw, self.v_alpha.get(),
+                                   extra=lost)
         return self.warped
 
     def refresh_view(self, fit=False):
@@ -763,11 +841,12 @@ class ScanApp(ttk.Frame):
             lines = []
             for i in range(4):
                 if i < len(self.corners):
-                    lines.append("%-18s %7.1f %7.1f" % (
+                    lines.append("%-20s %7.1f %7.1f" % (
                         CORNER_NAMES[i], *self.corners[i]))
                 else:
-                    lines.append("%-18s   (chua)" % CORNER_NAMES[i])
+                    lines.append("%-20s   (not set)" % CORNER_NAMES[i])
             self.lb_corners.config(text="\n".join(lines))
+            self.update_res_info()
 
     # ------------------------------------------------------------------
     # Su kien chuot
@@ -782,7 +861,7 @@ class ScanApp(ttk.Frame):
                 d = (cx - e.x) ** 2 + (cy - e.y) ** 2
                 if d < bd:
                     best, bd = i, d
-            if best is not None and bd < 15 ** 2:
+            if best is not None and bd < px(15) ** 2:
                 self._drag_idx = best
             elif len(self.corners) < 4:
                 self.corners.append([x, y])
@@ -820,27 +899,22 @@ class ScanApp(ttk.Frame):
         if img is None:
             return
         rad = None
-        if self.step == 4 and self.v_brush_mode.get() != "view":
-            try:
-                rad = self._f(self.v_brush, 3) / 2 / float(self.v_res.get())
-            except ValueError:
-                rad = None
+        if self.step == 4 and self.v_brush_mode.get() != "view" and self.res:
+            rad = self._f(self.v_brush, 3) / 2 / self.res
         self.magnifier.show(img, x, y, rad)
         txt = "x=%.0f y=%.0f px" % (x, y)
-        if self.step >= 3 and self.warped is not None:
-            try:
-                res = float(self.v_res.get())
-                txt += "  |  DSL: x=%.1f y=%.1f mm" % (
-                    x * res, (self.warped.shape[0] - y) * res)
-            except ValueError:
-                pass
+        if self.step >= 3 and self.warped is not None and self.res:
+            txt += "  |  DSL: x=%.1f y=%.1f mm" % (
+                x * self.res, (self.warped.shape[0] - y) * self.res)
         self.v_status.set(txt)
 
 
 def main():
+    ui_util.enable_dpi_awareness()      # phai goi truoc khi tao Tk
     root = tk.Tk()
-    root.title("Plywood Scan - so hoa tam go con lai")
-    root.geometry("1280x860")
+    ui_util.init_scaling(root)
+    root.title("Plywood Scan - digitize the remaining sheet")
+    ui_util.fit_geometry(root, 1280, 860)
     app = ScanApp(root, sys.argv[1] if len(sys.argv) > 1 else None)
     app.pack(fill="both", expand=True)
     root.mainloop()
