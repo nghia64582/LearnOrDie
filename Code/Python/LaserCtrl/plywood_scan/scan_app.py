@@ -25,6 +25,7 @@ from tkinter import ttk, filedialog, messagebox
 import cv2
 import numpy as np
 
+import align_core as ac
 import scan_core as sc
 import ui_util
 from ui_util import px
@@ -41,8 +42,12 @@ STEPS = [
     "4. Check grid",
     "5. Mask",
     "6. Safety margin",
-    "7. Save",
+    "7. Alignment marks",
+    "8. Save",
 ]
+
+STEP_ALIGN = 6
+STEP_SAVE = 7
 
 CORNER_NAMES = ["1 top-left", "2 top-right", "3 bottom-right",
                 "4 bottom-left (0,0)"]
@@ -82,6 +87,8 @@ class ScanApp(ttk.Frame):
         self._pending = None
         self._suggest = None
         self.last_saved = None
+        self.align_pts = [None, None]    # 2 diem can chinh (mm, toa do tam)
+        self._drag_pt = None
 
         self.v_w = tk.StringVar(value="306")
         self.v_h = tk.StringVar(value="460")
@@ -104,6 +111,20 @@ class ScanApp(ttk.Frame):
         self.v_show_src = tk.BooleanVar(value=True)
         self.v_status = tk.StringVar(value="")
         self.v_res_info = tk.StringVar(value="Resolution: pick 4 corners first")
+        # Can chinh
+        self.v_pt_target = tk.IntVar(value=0)
+        self.v_p = [[tk.StringVar(), tk.StringVar()],
+                    [tk.StringVar(), tk.StringVar()]]
+        self.v_cross = tk.StringVar(value="%g" % ac.ALIGN_DEFAULTS["cross_mm"])
+        self.v_power = tk.StringVar(value="%d" % ac.ALIGN_DEFAULTS["power"])
+        self.v_feed = tk.StringVar(value="%g" % ac.ALIGN_DEFAULTS["feed"])
+        self.v_off_x = tk.StringVar(value="0")
+        self.v_off_y = tk.StringVar(value="0")
+        self.v_return = tk.BooleanVar(value=True)
+        self.v_dist = tk.StringVar(value="")
+        # Luu
+        self.v_name = tk.StringVar(value="scan")
+        self.v_out_root = tk.StringVar(value=sc.default_output_root())
 
         self.build_gui()
         self.show_step(0)
@@ -164,7 +185,7 @@ class ScanApp(ttk.Frame):
         self.frames = [self._build_step_open(), self._build_step_size(),
                        self._build_step_corners(), self._build_step_check(),
                        self._build_step_mask(), self._build_step_margin(),
-                       self._build_step_save()]
+                       self._build_step_align(), self._build_step_save()]
 
     def _frame(self):
         return tk.Frame(self.step_area)
@@ -356,19 +377,88 @@ class ScanApp(ttk.Frame):
                       "is a good start.")
         return f
 
+    def _build_step_align(self):
+        f = self._frame()
+        self._note(f, "Click 2 points on the sheet (your choice, e.g. near "
+                      "two far-apart corners of a hole or the sheet). The "
+                      "alignment gcode burns a small '+' at each point: put "
+                      "the sheet on the machine, run it, nudge the sheet and "
+                      "rerun until both crosses hit the marks.")
+        r = tk.Frame(f)
+        r.pack(fill="x")
+        tk.Label(r, text="Click sets:", font=FONT).pack(side="left")
+        for i in range(2):
+            tk.Radiobutton(r, text="P%d" % (i + 1), value=i, font=FONT,
+                           variable=self.v_pt_target).pack(side="left")
+        for i in range(2):
+            r = tk.Frame(f)
+            r.pack(fill="x", pady=1)
+            tk.Label(r, text="P%d  X" % (i + 1), font=FONT_B,
+                     fg=("#d00000", "#0050d0")[i]).pack(side="left")
+            for j, lab in enumerate(("X", "Y")):
+                if j == 1:
+                    tk.Label(r, text="Y", font=FONT_B,
+                             fg=("#d00000", "#0050d0")[i]).pack(side="left")
+                e = tk.Entry(r, textvariable=self.v_p[i][j], width=8,
+                             font=FONT)
+                e.pack(side="left")
+                e.bind("<Return>", lambda ev: self.apply_point_entries())
+                e.bind("<FocusOut>", lambda ev: self.apply_point_entries())
+            tk.Label(r, text="mm", font=FONT).pack(side="left")
+        tk.Label(f, textvariable=self.v_dist, font=FONT_B, justify="left",
+                 anchor="w", wraplength=self.wrap).pack(fill="x", pady=3)
+        tk.Button(f, text="Clear points", font=FONT,
+                  command=self.clear_points).pack(fill="x", pady=1)
+        ttk.Separator(f).pack(fill="x", pady=3)
+        tk.Label(f, text="Alignment gcode:", font=FONT_B,
+                 anchor="w").pack(fill="x")
+        self._row(f, "Cross size", self.v_cross, unit="mm")
+        self._row(f, "Power S (0-1000)", self.v_power)
+        self._row(f, "Feed", self.v_feed, unit="mm/min")
+        self._row(f, "Offset X", self.v_off_x, unit="mm")
+        self._row(f, "Offset Y", self.v_off_y, unit="mm")
+        tk.Checkbutton(f, text="Return to origin at the end",
+                       variable=self.v_return, font=FONT).pack(anchor="w")
+        r = tk.Frame(f)
+        r.pack(fill="x", pady=2)
+        tk.Button(r, text="Show gcode", font=FONT,
+                  command=self.show_align_gcode).pack(side="left", expand=True,
+                                                      fill="x")
+        tk.Button(r, text="Send to Machine tab", font=FONT,
+                  command=self.send_align_to_machine).pack(side="left",
+                                                           expand=True,
+                                                           fill="x")
+        self._note(f, "Coordinates: sheet mm, origin (0,0) = bottom-left "
+                      "corner, X right, Y up = machine coordinates + offset. "
+                      "The same offset is used for the cut DSL in Strip "
+                      "Packer. The gcode is saved as alignment.gcode in the "
+                      "output folder at step 8.")
+        return f
+
     def _build_step_save(self):
         f = self._frame()
-        tk.Button(f, text="Save mask (PNG + JSON)...", font=FONT_B,
-                  command=self.save).pack(fill="x", pady=2)
+        self._row(f, "Name", self.v_name, width=20)
+        tk.Label(f, text="Output folder (parent):", font=FONT,
+                 anchor="w").pack(fill="x")
+        r = tk.Frame(f)
+        r.pack(fill="x")
+        tk.Entry(r, textvariable=self.v_out_root, font=FONT_S,
+                 width=30).pack(side="left", fill="x", expand=True)
+        tk.Button(r, text="...", font=FONT,
+                  command=self.ask_out_root).pack(side="left")
+        tk.Button(f, text="Save to output/<name>/", font=FONT_B,
+                  command=self.save).pack(fill="x", pady=4)
         tk.Button(f, text="Open in Strip Packer", font=FONT,
                   command=self.open_packer).pack(fill="x", pady=2)
         self.lb_saved = tk.Label(f, text="", font=FONT, justify="left",
                                  wraplength=self.wrap, anchor="w")
         self.lb_saved.pack(fill="x", pady=4)
-        self._note(f, "Writes <name>.png (final mask, 255 = wood, 0 = cut), "
-                      "<name>.json (size, mm/px, margin), <name>_raw.png "
-                      "(mask before margin) and <name>_warped.png (warped "
-                      "photo) so you can reopen and keep editing.")
+        self._note(f, "Writes into <output>/<name>/: mask.png (final mask, "
+                      "255 = wood, 0 = cut), mask.json (size, mm/px, margin, "
+                      "alignment points), mask_raw.png (before margin), "
+                      "mask_warped.png (warped photo) and alignment.gcode. "
+                      "If the folder exists you can overwrite it or save to "
+                      "<name>_2.")
         return f
 
     # ------------------------------------------------------------------
@@ -427,6 +517,13 @@ class ScanApp(ttk.Frame):
                 self.recompute_auto(True)
         if i == 4:
             self.recompute_final()
+        if i == STEP_ALIGN:
+            if self.align_pts[0] is None or self.align_pts[1] is None:
+                if not messagebox.askyesno(
+                        "Alignment", "Fewer than 2 alignment points are set. "
+                        "Continue anyway?"):
+                    return False
+            self.align_params()       # kiem tra tham so gcode
         return True
 
     # ------------------------------------------------------------------
@@ -524,13 +621,17 @@ class ScanApp(ttk.Frame):
         self.undo_stack = []
         if self.method_key() == "saved":
             self.v_method.set(METHODS[0][1])
+        self.align_pts = [None, None]
+        self.v_name.set(sc.sanitize_name(
+            os.path.splitext(os.path.basename(path))[0]))
+        self.update_points_ui()
         self.lb_src.config(text="%s\n%d x %d px" % (
             os.path.basename(path), img.shape[1], img.shape[0]))
         self.refresh_view(fit=True)
 
     def ask_load_mask(self):
         p = filedialog.askopenfilename(
-            title="Open saved mask",
+            title="Open saved mask", initialdir=sc.default_output_root(),
             filetypes=[("Mask JSON / PNG", "*.json *.png"),
                        ("All files", "*.*")])
         if p:
@@ -569,6 +670,20 @@ class ScanApp(ttk.Frame):
         self.edits = np.zeros(raw.shape, np.int8)
         self.undo_stack = []
         self.v_method.set(METHODS[-1][1])
+        al = meta.get("alignment") or {}
+        pts = (al.get("points_mm") or []) + [None, None]
+        self.align_pts = [list(p) if p else None for p in pts[:2]]
+        self.v_cross.set("%g" % al.get("cross_mm", 5.0))
+        self.v_power.set("%d" % al.get("power", 100))
+        self.v_feed.set("%g" % al.get("feed", 200.0))
+        off = al.get("offset_mm", [0.0, 0.0])
+        self.v_off_x.set("%g" % off[0])
+        self.v_off_y.set("%g" % off[1])
+        self.v_return.set(bool(al.get("return_home", True)))
+        self.update_points_ui()
+        # Thu muc dang mo => mac dinh luu de len chinh no
+        self.v_out_root.set(os.path.dirname(folder))
+        self.v_name.set(os.path.basename(folder))
         self.lb_src.config(text="Mask: %s\n%g x %g mm, %.4f mm/px" % (
             os.path.basename(path), meta["width_mm"], meta["height_mm"],
             self.res))
@@ -751,32 +866,60 @@ class ScanApp(ttk.Frame):
     # ------------------------------------------------------------------
     # Buoc 7: luu
     # ------------------------------------------------------------------
-    def save(self):
+    def ask_out_root(self):
+        d = filedialog.askdirectory(title="Output parent folder",
+                                    initialdir=self.v_out_root.get())
+        if d:
+            self.v_out_root.set(d)
+
+    def save(self, ask=True):
+        """Luu tat ca vao <output>/<name>/. ask=False: ghi de khong hoi."""
         if self.raw is None:
             messagebox.showwarning("No mask", "Create the mask first.")
-            return
+            return None
         if self.final is None:
             self.recompute_final()
-        init = "plywood_mask.png"
-        if self.src_path:
-            init = os.path.splitext(os.path.basename(self.src_path))[0] + \
-                "_mask.png"
-        p = filedialog.asksaveasfilename(title="Save mask",
-                                         defaultextension=".png",
-                                         initialfile=init,
-                                         filetypes=[("PNG", "*.png")])
-        if not p:
-            return
+        try:
+            align = self.align_params()
+        except ValueError as ex:
+            messagebox.showerror("Error", str(ex))
+            return None
+        root = self.v_out_root.get().strip() or sc.default_output_root()
+        name = sc.sanitize_name(self.v_name.get())
+        self.v_name.set(name)
+        folder = os.path.join(root, name)
+        if ask and sc.output_dir_has_files(folder):
+            ans = messagebox.askyesnocancel(
+                "Folder exists",
+                "%s already exists.\n\nYes = overwrite\nNo = save to a new "
+                "folder (%s)\nCancel = do nothing" % (
+                    folder, os.path.basename(sc.unique_dir(root, name))))
+            if ans is None:
+                return None
+            if ans is False:
+                folder = sc.unique_dir(root, name)
+                self.v_name.set(os.path.basename(folder))
+        os.makedirs(folder, exist_ok=True)
         w, h = self.get_size()
+        extra = {"mm_per_px_mode": self.res_mode,
+                 "method": self.method_key(),
+                 "threshold": int(self.v_thr.get()),
+                 "name": os.path.basename(folder),
+                 "alignment": align}
+        gpath = None
+        if any(p is not None for p in align["points_mm"]):
+            gpath = ac.write_alignment_gcode(folder, align)
+            align["gcode_file"] = os.path.basename(gpath)
         png, js = sc.save_mask_file(
-            p, self.final, w, h, self.res, self._f(self.v_margin, 0),
-            source=self.src_path, raw_mask=self.raw, warped=self.warped,
+            os.path.join(folder, sc.MASK_BASENAME + ".png"), self.final, w, h,
+            self.res, self._f(self.v_margin, 0), source=self.src_path,
+            raw_mask=self.raw, warped=self.warped,
             corners=self.corners if len(self.corners) == 4 else None,
-            extra={"mm_per_px_mode": self.res_mode,
-                   "method": self.method_key(),
-                   "threshold": int(self.v_thr.get())})
+            extra=extra)
         self.last_saved = js
-        self.lb_saved.config(text="Saved:\n%s\n%s" % (png, js))
+        self.lb_saved.config(text="Saved to:\n%s\n\n%s" % (
+            folder, "\n".join(sorted(os.listdir(folder)))))
+        return js
 
     def open_packer(self):
         if not self.last_saved:
@@ -830,6 +973,8 @@ class ScanApp(ttk.Frame):
                 self.view.create_text(cx + 12, cy - 12, text=str(i + 1),
                                       fill=CORNER_COLORS[i],
                                       font=("Arial", 14, "bold"))
+        if self.step >= STEP_ALIGN and self.warped is not None and self.res:
+            self.draw_align_points()
         if self.step == 3 and self.warped is not None:
             # Danh dau goc (0,0) DSL
             cx, cy = self.view.img_to_canvas(0, self.warped.shape[0])
@@ -867,6 +1012,21 @@ class ScanApp(ttk.Frame):
                 self.corners.append([x, y])
                 self._drag_idx = len(self.corners) - 1
                 self.refresh_view()
+        elif self.step == STEP_ALIGN and self.warped is not None:
+            # Keo diem gan con tro, neu khong thi dat diem dang chon
+            self._drag_pt = None
+            for i, p in enumerate(self.align_pts):
+                if p is None:
+                    continue
+                cx, cy = self.view.img_to_canvas(*self.mm_to_img(*p))
+                if (cx - e.x) ** 2 + (cy - e.y) ** 2 < px(12) ** 2:
+                    self._drag_pt = i
+            if self._drag_pt is None:
+                self._drag_pt = self.v_pt_target.get()
+                self.set_point(self._drag_pt, x, y)
+                # Dat xong P1 thi chuyen sang P2
+                if self._drag_pt == 0 and self.align_pts[1] is None:
+                    self.v_pt_target.set(1)
         elif self.step == 4 and self.v_brush_mode.get() != "view":
             self.undo_stack.append(self.edits.copy())
             if len(self.undo_stack) > 30:
@@ -885,10 +1045,13 @@ class ScanApp(ttk.Frame):
             self.update_status()
         elif self.step == 4 and self._painting:
             self.paint(x, y)
+        elif self.step == STEP_ALIGN and self._drag_pt is not None:
+            self.set_point(self._drag_pt, x, y)
         self.on_motion(e)
 
     def on_release(self, e):
         self._drag_idx = None
+        self._drag_pt = None
         if self._painting:
             self._painting = False
             self.refresh_view()
@@ -907,6 +1070,160 @@ class ScanApp(ttk.Frame):
             txt += "  |  DSL: x=%.1f y=%.1f mm" % (
                 x * self.res, (self.warped.shape[0] - y) * self.res)
         self.v_status.set(txt)
+
+    # ------------------------------------------------------------------
+    # Buoc 7: diem can chinh
+    # ------------------------------------------------------------------
+    def mm_to_img(self, xm, ym):
+        return xm / self.res, self.warped.shape[0] - ym / self.res
+
+    def set_point(self, i, x_img, y_img):
+        """Dat diem i tu toa do anh (pixel, so thuc) -> mm toa do tam."""
+        h, w = self.warped.shape[:2]
+        x_img = min(max(x_img, 0), w)
+        y_img = min(max(y_img, 0), h)
+        self.align_pts[i] = [round(float(x_img) * self.res, 2),
+                             round(float(h - y_img) * self.res, 2)]
+        self.update_points_ui()
+        self.view.redraw()
+
+    def clear_points(self):
+        self.align_pts = [None, None]
+        self.v_pt_target.set(0)
+        self.update_points_ui()
+        self.view.redraw()
+
+    def apply_point_entries(self):
+        """Nhap tay toa do diem (mm)."""
+        for i in range(2):
+            sx, sy = self.v_p[i][0].get().strip(), self.v_p[i][1].get().strip()
+            if not sx and not sy:
+                self.align_pts[i] = None
+                continue
+            try:
+                self.align_pts[i] = [round(float(sx), 2), round(float(sy), 2)]
+            except ValueError:
+                pass
+        self.update_points_ui()
+        self.view.redraw()
+
+    def update_points_ui(self):
+        for i in range(2):
+            p = self.align_pts[i]
+            self.v_p[i][0].set("" if p is None else "%.2f" % p[0])
+            self.v_p[i][1].set("" if p is None else "%.2f" % p[1])
+        p1, p2 = self.align_pts
+        if p1 is not None and p2 is not None:
+            self.v_dist.set("Distance P1-P2: %.2f mm\n(dX %.2f, dY %.2f mm)"
+                            % (ac.distance(p1, p2), p2[0] - p1[0],
+                               p2[1] - p1[1]))
+        else:
+            self.v_dist.set("Distance P1-P2: set both points")
+
+    def align_params(self):
+        try:
+            cross = float(self.v_cross.get())
+            power = float(self.v_power.get())
+            feed = float(self.v_feed.get())
+            ox = float(self.v_off_x.get() or 0)
+            oy = float(self.v_off_y.get() or 0)
+        except ValueError:
+            raise ValueError("Alignment gcode settings must be numbers")
+        if cross <= 0 or feed <= 0 or not 0 <= power <= 1000:
+            raise ValueError("Cross size and feed must be > 0, power 0-1000")
+        w, h = self.get_size()
+        for i, p in enumerate(self.align_pts):
+            if p is not None and not (0 <= p[0] <= w and 0 <= p[1] <= h):
+                raise ValueError("P%d (%.2f, %.2f) is outside the sheet "
+                                 "(0..%g, 0..%g mm)" % (i + 1, p[0], p[1], w, h))
+        # Giu dung vi tri P1 / P2 (null neu chua dat)
+        return {"points_mm": [None if p is None else list(p)
+                              for p in self.align_pts],
+                "cross_mm": cross, "power": int(round(power)), "feed": feed,
+                "offset_mm": [ox, oy], "return_home": bool(self.v_return.get()),
+                "frame": "sheet mm, origin bottom-left, X right, Y up; "
+                         "machine = sheet + offset_mm"}
+
+    def align_gcode_lines(self):
+        al = self.align_params()
+        return ac.alignment_gcode(al["points_mm"], al["cross_mm"], al["power"],
+                                  al["feed"], al["offset_mm"],
+                                  al["return_home"])
+
+    def show_align_gcode(self):
+        try:
+            lines = self.align_gcode_lines()
+        except ValueError as ex:
+            messagebox.showerror("Error", str(ex))
+            return
+        top = tk.Toplevel(self.root)
+        top.title("Alignment gcode")
+        t = tk.Text(top, font=("Courier", 10), width=40, height=30)
+        t.pack(fill="both", expand=True)
+        t.insert("1.0", "\n".join(lines))
+
+    def send_align_to_machine(self):
+        try:
+            lines = self.align_gcode_lines()
+        except ValueError as ex:
+            messagebox.showerror("Error", str(ex))
+            return
+        path = ac.cut_plan_path()
+        if not os.path.isdir(os.path.dirname(path)):
+            messagebox.showerror("Error", "engraver_ctrl folder not found:\n"
+                                 + os.path.dirname(path))
+            return
+        if not messagebox.askyesno(
+                "Send to Machine tab",
+                "Overwrite %s with the alignment gcode?\n(The Machine tab "
+                "runs this file.)" % path):
+            return
+        with open(path, "w") as f:
+            f.write("\n".join(lines))
+        messagebox.showinfo("Done", "Wrote alignment gcode to\n" + path)
+
+    def draw_align_points(self):
+        cross = self._f(self.v_cross, 5.0)
+        for i, p in enumerate(self.align_pts):
+            if p is None:
+                continue
+            col = ("#ff2020", "#2080ff")[i]
+            cx, cy = self.view.img_to_canvas(*self.mm_to_img(*p))
+            half = max(6, cross / 2 / self.res * self.view.scale)
+            self.view.create_line(cx - half, cy, cx + half, cy, fill=col,
+                                  width=2)
+            self.view.create_line(cx, cy - half, cx, cy + half, fill=col,
+                                  width=2)
+            self.view.create_oval(cx - 4, cy - 4, cx + 4, cy + 4, outline=col)
+            # Nhan co nen toi de doc duoc tren ca vung do / go; dat ben trai
+            # diem neu gan mep phai canvas
+            right = cx + half + 170 < self.view.winfo_width()
+            t = self.view.create_text(
+                cx + half + 4 if right else cx - half - 4, cy - 4,
+                anchor="sw" if right else "se", fill=col,
+                font=("Arial", 11, "bold"),
+                text="P%d (%.2f, %.2f)" % (i + 1, *p))
+            bb = self.view.bbox(t)
+            if bb:
+                r = self.view.create_rectangle(bb[0] - 2, bb[1] - 1, bb[2] + 2,
+                                               bb[3] + 1, fill="#202020",
+                                               outline="")
+                self.view.tag_lower(r, t)
+        p1, p2 = self.align_pts
+        if p1 is not None and p2 is not None:
+            a = self.view.img_to_canvas(*self.mm_to_img(*p1))
+            b = self.view.img_to_canvas(*self.mm_to_img(*p2))
+            self.view.create_line(*a, *b, fill="#ffff00", dash=(4, 3))
+            t = self.view.create_text((a[0] + b[0]) / 2, (a[1] + b[1]) / 2,
+                                      fill="#ffff00",
+                                      font=("Arial", 11, "bold"),
+                                      text="%.2f mm" % ac.distance(p1, p2))
+            bb = self.view.bbox(t)
+            if bb:
+                r = self.view.create_rectangle(bb[0] - 2, bb[1] - 1, bb[2] + 2,
+                                               bb[3] + 1, fill="#202020",
+                                               outline="")
+                self.view.tag_lower(r, t)
 
 
 def main():

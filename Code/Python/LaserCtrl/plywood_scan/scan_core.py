@@ -114,8 +114,8 @@ def auto_resolution(corners, width_mm, height_mm):
     right = np.linalg.norm(br - tr)
     if min(top, bottom, left, right) < 1:
         raise ValueError("Corners are too close together")
-    rx = float(width_mm) / ((top + bottom) / 2.0)
-    ry = float(height_mm) / ((left + right) / 2.0)
+    rx = float(width_mm) / float((top + bottom) / 2.0)
+    ry = float(height_mm) / float((left + right) / 2.0)
     res = round((rx + ry) / 2.0, 5)
     return res, rx, ry
 
@@ -452,3 +452,36 @@ def estimate_grid_period_mm(warped, mask, mm_per_px, min_mm=1.5, max_mm=30.0):
                 period = 1.0 / freqs[j]
         res.append(float(period))
     return res[0], res[1]
+
+
+# ---------------------------------------------------------------------------
+# Thu muc output: plywood_scan/output/<ten>/
+# ---------------------------------------------------------------------------
+
+MASK_BASENAME = "mask"   # => mask.png, mask.json, mask_raw.png, mask_warped.png
+
+
+def default_output_root():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
+
+
+def sanitize_name(name):
+    """Bo ky tu khong hop le tren Windows, tra ve ten thu muc an toan."""
+    import re
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", str(name)).strip().rstrip(".")
+    return name or "scan"
+
+
+def unique_dir(root, name):
+    """Tra ve <root>/<name>, hoac <name>_2, _3... neu da ton tai."""
+    base = os.path.join(root, name)
+    if not os.path.exists(base):
+        return base
+    k = 2
+    while os.path.exists("%s_%d" % (base, k)):
+        k += 1
+    return "%s_%d" % (base, k)
+
+
+def output_dir_has_files(path):
+    return os.path.isdir(path) and any(os.scandir(path))

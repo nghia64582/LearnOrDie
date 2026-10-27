@@ -381,7 +381,7 @@ def _fmt(v, decimals=2):
     return "0" if s in ("-0", "") else s
 
 
-def strips_to_dsl(strips, decimals=2, style="add"):
+def strips_to_dsl(strips, decimals=2, style="add", offset=(0.0, 0.0)):
     """
     Xuat cac thanh thanh DSL (mm).
       style="add" (mac dinh): moi thanh la mot khung toa do cuc bo
@@ -391,10 +391,13 @@ def strips_to_dsl(strips, decimals=2, style="add"):
         de co the them chi tiet (JF / JM, lo...) ben trong tung thanh, toa do
         tinh tu goc duoi-trai cua thanh.
       style="rect": moi thanh 1 dong "R x y w h".
+    offset: cong vao x, y (offset may, dung chung voi gcode can chinh).
     """
     out = []
+    ox, oy = float(offset[0]), float(offset[1])
     for i, s in enumerate(strips):
-        x, y, w, h = (_fmt(s[k], decimals) for k in ("x", "y", "w", "h"))
+        x, y = _fmt(s["x"] + ox, decimals), _fmt(s["y"] + oy, decimals)
+        w, h = _fmt(s["w"], decimals), _fmt(s["h"], decimals)
         if style == "rect":
             out.append("R %s %s %s %s" % (x, y, w, h))
         else:
@@ -627,7 +630,7 @@ def pack_pieces(mask, mm_per_px, lengths, strip_w=10.0, gap=0.5,
 
 
 def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2,
-                  labels=True):
+                  labels=True, align_points=None, cross_mm=5.0):
     """Ve ket qua: nen anh (neu co) + vung cat to do + thanh xep to xanh,
     kem so thu tu cua tung thanh."""
     if warped_or_mask is None:
@@ -667,4 +670,33 @@ def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2,
                         (255, 255, 255), th + 2, cv2.LINE_AA)
             cv2.putText(out, txt, org, cv2.FONT_HERSHEY_SIMPLEX, fs,
                         (0, 0, 0), th, cv2.LINE_AA)
+    # Diem can chinh P1 (do), P2 (xanh) + khoang cach
+    cols = [(60, 60, 255), (255, 150, 40)]
+    cpx = []
+    for i, pt in enumerate(align_points or []):
+        if pt is None:
+            continue
+        xm, ym = pt
+        cx = int(round(xm * k))
+        cy = int(round((H * mm_per_px - ym) * k))
+        cpx.append((cx, cy))
+        half = max(8, int(round(cross_mm / 2 * k)))
+        col = cols[i % 2]
+        for d in ((half, 0), (0, half)):
+            cv2.line(out, (cx - d[0], cy - d[1]), (cx + d[0], cy + d[1]),
+                     (255, 255, 255), 5, cv2.LINE_AA)
+            cv2.line(out, (cx - d[0], cy - d[1]), (cx + d[0], cy + d[1]),
+                     col, 2, cv2.LINE_AA)
+        txt = "P%d (%.2f, %.2f)" % (i + 1, xm, ym)
+        (tw, tht), _ = cv2.getTextSize(txt, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+        tx = cx + half + 6
+        if tx + tw > out.shape[1] - 2:
+            tx = cx - half - 6 - tw
+        ty = min(max(cy - 8, tht + 4), out.shape[0] - 4)
+        cv2.rectangle(out, (tx - 3, ty - tht - 4), (tx + tw + 3, ty + 5),
+                      (30, 30, 30), -1)
+        cv2.putText(out, txt, (tx, ty), cv2.FONT_HERSHEY_SIMPLEX, 0.8, col,
+                    2, cv2.LINE_AA)
+    if len(cpx) == 2:
+        cv2.line(out, cpx[0], cpx[1], (0, 230, 255), 1, cv2.LINE_AA)
     return out

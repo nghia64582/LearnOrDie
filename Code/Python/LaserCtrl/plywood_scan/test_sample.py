@@ -13,6 +13,7 @@ import time
 
 import numpy as np
 
+import align_core as ac
 import scan_core as sc
 from pack_core import (pack_strips, pack_pieces, parse_lengths, verify_strips,
                        strips_to_dsl, parse_dsl_strips, render_result)
@@ -22,6 +23,39 @@ SAMPLE = os.path.join(HERE, "sample", "plywood_01.png")
 # Goc uoc luong bang tay tren anh mau (TL, TR, BR, BL), pixel
 CORNERS = [[6, 165], [569, 166], [579, 1019], [10, 1022]]
 W_MM, H_MM, MARGIN = 306.0, 460.0, 1.0
+# 2 diem can chinh mau (mm, toa do tam)
+ALIGN_PTS = [[12.5, 20.0], [290.0, 447.25]]
+
+
+def check_alignment(meta, folder):
+    """Doc gcode can chinh, mo phong va kiem tra dau + dung vi tri / thong so."""
+    al = meta["alignment"]
+    assert al["points_mm"] == ALIGN_PTS, al["points_mm"]
+    with open(os.path.join(folder, al["gcode_file"])) as f:
+        lines = f.read().splitlines()
+    sim = ac.simulate_gcode(lines)
+    ok = (lines[:2] == ["G21", "G90"] and sim["rapids_on"] == 0
+          and sim["g1_off"] == 0 and not sim["laser_on_at_end"]
+          and lines[-1] == "M5" and sim["end_pos"] == (0.0, 0.0)
+          and len(sim["burns"]) == 2 * len(ALIGN_PTS))
+    for k, (px_, py_) in enumerate(ALIGN_PTS):
+        hseg, vseg = sim["burns"][2 * k], sim["burns"][2 * k + 1]
+        for (x1, y1, x2, y2, S, F), horiz in ((hseg, True), (vseg, False)):
+            L = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+            mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+            ok &= abs(L - 5.0) < 1e-6 and S == 100 and F == 200
+            ok &= abs(mx - px_) < 1e-6 and abs(my - py_) < 1e-6
+            ok &= (abs(y1 - y2) < 1e-9) if horiz else (abs(x1 - x2) < 1e-9)
+    d = ac.distance(*ALIGN_PTS)
+    print("Gcode can chinh: %d dong, %d net, P1-P2 = %.2f mm, %s" % (
+        len(lines), len(sim["burns"]), d, "OK" if ok else "LOI"))
+    # Offset: toa do may = toa do tam + offset
+    lo = ac.alignment_gcode(ALIGN_PTS, offset_mm=(10, -5))
+    so = ac.simulate_gcode(lo)
+    ok_off = abs((so["burns"][0][0] + so["burns"][0][2]) / 2 - 22.5) < 1e-6 \
+        and abs(so["burns"][0][1] - 15.0) < 1e-6 and so["end_pos"] == (10, -5)
+    print("Offset (10, -5):", "OK" if ok_off else "LOI")
+    return bool(ok and ok_off)
 
 
 def main(out_dir):
@@ -38,10 +72,18 @@ def main(out_dir):
     px, py = sc.estimate_grid_period_mm(warped, raw, RES)
     print("Nguong Otsu: %d, luoi tham do duoc: %.2f x %.2f mm" % (thr, px, py))
     final = sc.erode_margin(raw, MARGIN, RES)
-    sc.save_mask_file(os.path.join(out_dir, "mask.png"), final, W_MM, H_MM,
-                      RES, MARGIN, source=SAMPLE, raw_mask=raw,
+    # Luu giong scan_app: <out_dir>/<ten anh>/mask.* + alignment.gcode
+    folder = os.path.join(out_dir, sc.sanitize_name(
+        os.path.splitext(os.path.basename(SAMPLE))[0]))
+    os.makedirs(folder, exist_ok=True)
+    align = dict(ac.ALIGN_DEFAULTS, points_mm=ALIGN_PTS)
+    gpath = ac.write_alignment_gcode(folder, align)
+    align["gcode_file"] = os.path.basename(gpath)
+    sc.save_mask_file(os.path.join(folder, sc.MASK_BASENAME + ".png"), final,
+                      W_MM, H_MM, RES, MARGIN, source=SAMPLE, raw_mask=raw,
                       warped=warped, corners=CORNERS,
-                      extra={"mm_per_px_mode": "auto"})
+                      extra={"mm_per_px_mode": "auto", "alignment": align})
+    print("Da luu vao", folder, sorted(os.listdir(folder)))
     sc.imwrite_unicode(os.path.join(out_dir, "warped_grid.png"),
                        sc.draw_mm_grid(warped, RES))
     sc.imwrite_unicode(os.path.join(out_dir, "mask_overlay.png"),
@@ -49,13 +91,13 @@ def main(out_dir):
                                        extra=((raw > 0) & (final == 0))
                                        .astype(np.uint8)))
     # Doc lai tu file nhu tool 2
-    mask, meta, _ = sc.load_mask_file(os.path.join(out_dir, "mask.json"))
+    mask, meta, _ = sc.load_mask_file(os.path.join(folder, "mask.json"))
     assert mask.shape == (int(round(H_MM / RES)), int(round(W_MM / RES)))
     print("Anh nan: %d x %d px" % (mask.shape[1], mask.shape[0]))
+    all_ok = check_alignment(meta, folder)
     print("Go con lai: %.1f%%" % (100 * (mask > 0).mean()))
 
     res = meta["mm_per_px"]
-    all_ok = True
 
     def check(r, gap, label):
         """Kiem tra ket qua + doc nguoc DSL (ADD/R/END) roi kiem tra lai."""
@@ -95,7 +137,8 @@ def main(out_dir):
                   "..." if len(r["unplaced"]) > 12 else "")
         if text == "80,80,100,100":
             sc.imwrite_unicode(os.path.join(out_dir, "result.png"),
-                               render_result(warped, mask, res, r["strips"]))
+                               render_result(warped, mask, res, r["strips"],
+                                             align_points=ALIGN_PTS))
             with open(os.path.join(out_dir, "strips_dsl.txt"), "w") as f:
                 f.write("\n".join(strips_to_dsl(r["strips"])) + "\n")
         elif r["unplaced"] and r["count"] > 20:

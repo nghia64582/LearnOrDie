@@ -38,8 +38,11 @@ khi màn hình scale 125%/150%; kích thước panel tự nhân theo DPI (`ui_ut
   thanh dọc là `R 0 0 10 L`. Giữa `R` và `END` có thể thêm chi tiết như JF/JM
   hay lỗ, tọa độ tính từ góc dưới-trái của thanh. Số sau `ADD` là nhãn mà
   Designer vẽ trên canvas.
-- Khi cắt thật, đặt tấm lên máy sao cho góc 4 trùng gốc gcode và cạnh 4→3
-  song song trục X của máy (đúng hướng như lúc chọn góc).
+- **Tọa độ máy = tọa độ tấm + offset** (mặc định offset 0, 0, nghĩa là góc
+  dưới-trái của tấm = gốc 0,0 của máy). Gcode căn chỉnh và DSL cắt dùng
+  **chung** offset này: offset lưu trong JSON, Strip Packer tự cộng vào `ADD x y`.
+- Khi cắt thật, đặt tấm lên máy theo đúng hướng như lúc chọn góc, rồi căn bằng
+  gcode căn chỉnh (bước 7 bên dưới).
 - Ảnh mask: hàng 0 = mép trên của tấm, nên `y_mm = (số_hàng − hàng) × mm_per_px`.
 
 ## Tool 1: scan_app.py
@@ -86,13 +89,39 @@ Các bước (tên bước như trên giao diện):
 6. **Safety margin**: co vùng gỗ vào một khoảng (mm), tính theo khoảng cách
    Euclid, để chừa mép cháy, kerf và sai số khi đặt lại tấm. Vùng màu cam là
    phần bị bỏ. Mép tấm cũng tính là mép cắt.
-7. **Save** (*Save mask (PNG + JSON)...*) ghi `<ten>.png` (mask cuối, 255 = gỗ,
-   0 = cắt), kèm theo:
-   - `<ten>.json`: `{width_mm, height_mm, mm_per_px, px_per_mm, mm_per_px_mode
-     ("auto"/"manual"), margin_mm, source, corners_px, ...}`
-   - `<ten>_raw.png`: mask trước khi co margin, để mở lại sửa tiếp
-   - `<ten>_warped.png`: ảnh đã nắn
-   *Open in Strip Packer* mở luôn tool 2 với file vừa lưu.
+7. **Alignment marks**: click chọn **2 điểm** bất kỳ trên ảnh tấm (user tự
+   quyết, nên chọn 2 điểm cách xa nhau, ví dụ góc của 2 lỗ ở hai đầu tấm).
+   - *Click sets: P1 / P2* chọn điểm sẽ đặt khi click; đặt xong P1 thì tự
+     chuyển sang P2. Kéo dấu + để chỉnh, hoặc gõ tọa độ mm vào ô P1/P2 X/Y.
+     Dùng zoom và kính lúp được.
+   - Panel hiện tọa độ từng điểm (mm, gốc dưới-trái, X phải, Y lên) và
+     **Distance P1-P2**, kèm dX, dY, để đo lại bằng thước trên tấm thật.
+   - Thông số gcode: *Cross size* 5mm (mỗi nét dài 5mm, tâm tại điểm), *Power S
+     (0-1000)* 100 (= 10%), *Feed* 200 mm/min, *Offset X/Y* 0, và *Return to
+     origin at the end*.
+   - *Show gcode* để xem gcode. *Send to Machine tab* ghi đè
+     `engraver_ctrl/cut_plan.gcode`, là file tab Machine chạy (có hỏi xác nhận
+     trước).
+   - Gcode theo đúng quy ước của `tab_designer.generate_bounds_gcode`: `G21`,
+     `G90`, mỗi nét gồm `G0` tới điểm đầu, `M3 S100`, `G1 … F200`, `M5`, nên
+     laser luôn tắt khi di chuyển. Cuối file là `G0` về gốc (offset) và `M5`.
+   - Quy trình: đặt tấm lên máy, chạy gcode căn chỉnh, xem 2 dấu + so với 2
+     điểm trên tấm, xê dịch tấm, chạy lại cho tới khi trùng. Sau đó mới chạy
+     gcode cắt.
+8. **Save**: lưu vào **`plywood_scan/output/<name>/`**. *Name* mặc định là tên
+   file ảnh (sửa được), thư mục cha đổi được bằng nút `...`. Nếu thư mục đã có
+   file, app hỏi: *Yes* = ghi đè, *No* = lưu sang `<name>_2` (hoặc `_3`, …),
+   *Cancel* = không lưu. Các file được ghi:
+   - `mask.png`: mask cuối, 255 = gỗ, 0 = cắt
+   - `mask.json`: `{width_mm, height_mm, mm_per_px, px_per_mm, mm_per_px_mode,
+     margin_mm, source, corners_px, alignment: {points_mm, cross_mm, power,
+     feed, offset_mm, return_home, gcode_file}, ...}`
+   - `mask_raw.png`: mask trước khi co margin, để mở lại sửa tiếp
+   - `mask_warped.png`: ảnh đã nắn
+   - `alignment.gcode`: gcode căn chỉnh
+   Mở lại bằng *Open saved mask* sẽ khôi phục cả 2 điểm căn chỉnh, và lần lưu
+   sau ghi vào đúng thư mục đó. *Open in Strip Packer* mở luôn tool 2. Thư mục
+   `output/` đã nằm trong `.gitignore`.
 
 Mẹo chụp: chụp thẳng từ trên xuống, đủ sáng, không bóng đổ, tấm phẳng, đặt trên
 nền khác màu gỗ (thảm cắt xanh rất tốt).
@@ -134,6 +163,11 @@ length* hoặc *Max count*. Thuật toán (`pack_strips`):
 - Kết hợp 2 hướng: ngang trước rồi lấp dọc, dọc trước rồi lấp ngang, hoặc
   chọn theo từng vùng gỗ liên thông.
 
+Nếu JSON có điểm căn chỉnh, Strip Packer vẽ P1/P2 (dấu + và tọa độ) và đường
+nối lên ảnh kết quả, hiện khoảng cách P1-P2, và cộng offset máy vào `ADD x y`
+(có ghi chú trong DSL khi offset khác 0). Hộp thoại mở file mặc định ở
+`output/`.
+
 Nút: *Compute*, *Export DSL (.txt)* (dòng `#` là chú thích, Designer bỏ qua),
 *Copy DSL*, *Save result image (.png)*. Kết quả luôn được kiểm tra lại
 (*Check: OK*) bằng `verify_strips`: mỗi thanh nằm trọn trong gỗ, không chồng
@@ -163,12 +197,20 @@ Với mỗi trường hợp, script kiểm tra không có thanh nào chồng nha
 gỗ, độ dài đúng như nhập, và các dòng DSL `ADD/R/END` đọc ngược lại khớp vị trí
 và số thứ tự.
 
+Script còn lưu kết quả vào `<thu_muc_out>/plywood_01/` giống app, với 2 điểm
+căn chỉnh mẫu, rồi mô phỏng `alignment.gcode` để kiểm tra:
+- Mỗi điểm có đúng 2 nét vuông góc dài 5mm, tâm đúng tại điểm.
+- Mọi nét cắt là S100 và F200.
+- Không có `G0` nào khi laser đang bật, và file kết thúc bằng `M5` ở gốc.
+- Offset được cộng đúng.
+
 ## File
 
 - `scan_app.py` – GUI tool 1
 - `strip_packer.py` – GUI tool 2 (re-export hàm lõi)
 - `scan_core.py` – xử lý ảnh: góc, nắn phối cảnh, phân đoạn, margin, lưu/đọc mask
 - `pack_core.py` – thuật toán xếp thanh, kiểm tra, xuất DSL, vẽ kết quả
+- `align_core.py` – điểm căn chỉnh: sinh gcode dấu +, mô phỏng gcode để test
 - `image_view.py` – canvas zoom/pan và kính lúp dùng chung
 - `ui_util.py` – DPI awareness trên Windows và hệ số scale kích thước pixel
 - `test_sample.py` – test không GUI

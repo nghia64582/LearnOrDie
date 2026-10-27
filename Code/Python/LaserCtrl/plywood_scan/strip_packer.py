@@ -33,7 +33,9 @@ from tkinter import ttk, filedialog, messagebox
 from pack_core import (pack_pieces, pack_strips, parse_lengths,
                        verify_strips, strips_to_dsl, parse_dsl_strips,
                        render_result)
-from scan_core import load_mask_file, imread_unicode, imwrite_unicode
+from scan_core import (load_mask_file, imread_unicode, imwrite_unicode,
+                       default_output_root)
+import align_core as ac
 import ui_util
 from ui_util import px
 from image_view import ImageView
@@ -183,7 +185,8 @@ class StripPackerApp(ttk.Frame):
         self.view.pack(fill="both", expand=True)
         tk.Label(right, font=FONT_S, fg="#555",
                  text="Green = horizontal, blue = vertical, red = cut, "
-                      "number = piece | wheel: zoom | right drag: pan"
+                      "number = piece, + = alignment point | wheel: zoom | "
+                      "right drag: pan"
                  ).pack(fill="x")
 
     def _row(self, parent, label, var, unit):
@@ -205,7 +208,7 @@ class StripPackerApp(ttk.Frame):
     # ------------------------------------------------------------------
     def ask_load(self):
         p = filedialog.askopenfilename(
-            title="Open mask", filetypes=[("Mask", "*.json *.png"),
+            title="Open mask", initialdir=default_output_root(), filetypes=[("Mask", "*.json *.png"),
                                          ("All files", "*.*")])
         if p:
             self.load(p)
@@ -224,13 +227,36 @@ class StripPackerApp(ttk.Frame):
             if w.shape[:2] == mask.shape:
                 self.warped = w
         self.result = None
-        self.lb_file.config(text="%s\n%g x %g mm, %.4f mm/px, margin %g mm" % (
-            os.path.basename(path), meta["width_mm"], meta["height_mm"],
-            meta["mm_per_px"], meta.get("margin_mm", 0)))
+        info = "%s\n%g x %g mm, %.4f mm/px, margin %g mm" % (
+            os.path.relpath(path, os.path.dirname(os.path.dirname(
+                os.path.abspath(path)))), meta["width_mm"], meta["height_mm"],
+            meta["mm_per_px"], meta.get("margin_mm", 0))
+        al = self.alignment()
+        pts = al.get("points_mm") or []
+        if any(p is not None for p in pts):
+            info += "\nAlignment: " + ", ".join(
+                "P%d (%.2f, %.2f)" % (i + 1, p[0], p[1])
+                for i, p in enumerate(pts) if p is not None)
+            if len(pts) == 2 and None not in pts:
+                info += ", distance %.2f mm" % ac.distance(pts[0], pts[1])
+            off = al.get("offset_mm", [0, 0])
+            if off[0] or off[1]:
+                info += "\nMachine offset: X %g, Y %g mm (added to DSL)" % (
+                    off[0], off[1])
+        else:
+            info += "\nNo alignment points (set them in Plywood Scan)"
+        self.lb_file.config(text=info)
         self.lb_result.config(text="")
         self.lb_unplaced.config(text="")
         self.txt.delete("1.0", "end")
         self.redraw(fit=True)
+
+    def alignment(self):
+        return (self.meta or {}).get("alignment") or {}
+
+    def offset(self):
+        off = self.alignment().get("offset_mm", [0.0, 0.0])
+        return float(off[0]), float(off[1])
 
     def _num(self, var, name):
         try:
@@ -308,18 +334,25 @@ class StripPackerApp(ttk.Frame):
                                            os.path.basename(self.path)),
                 "# origin (0,0) = bottom-left corner of the sheet, y up; "
                 "each piece: ADD x y <number> / R 0 0 w h / END"]
+        ox, oy = self.offset()
+        if ox or oy:
+            head.append("# machine offset X %g Y %g mm added to ADD x y "
+                        "(same as alignment gcode)" % (ox, oy))
         if r.get("unplaced"):
             head.append("# did not fit: " + ", ".join(
                 "#%d (%g mm)" % (u["id"], u["length"]) for u in r["unplaced"]))
-        return head + strips_to_dsl(r["strips"])
+        return head + strips_to_dsl(r["strips"], offset=self.offset())
 
     def render(self):
         if self.mask is None:
             return None
         strips = self.result["strips"] if self.result else []
         bg = self.warped if self.v_show_photo.get() else None
+        al = self.alignment()
         return render_result(bg, self.mask, self.meta["mm_per_px"], strips,
-                             scale=2, labels=self.v_labels.get())
+                             scale=2, labels=self.v_labels.get(),
+                             align_points=al.get("points_mm"),
+                             cross_mm=al.get("cross_mm", 5.0))
 
     def redraw(self, fit=False):
         self.view.set_image(self.render(), fit=fit)
