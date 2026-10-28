@@ -55,3 +55,54 @@ def fit_geometry(root, w, h):
     W = min(px(w), int(root.winfo_screenwidth() * 0.95))
     H = min(px(h), int(root.winfo_screenheight() * 0.9))
     root.geometry("%dx%d" % (W, H))
+
+
+# ---------------------------------------------------------------------------
+# Font dung chung cho ca 2 tool (1 ho font duy nhat)
+# ---------------------------------------------------------------------------
+FONT_FAMILY_PREF = ("Segoe UI", "DejaVu Sans", "Helvetica", "Arial")
+MONO_FAMILY_PREF = ("Consolas", "DejaVu Sans Mono", "Courier New", "Courier")
+FONT_FAMILY = "TkDefaultFont"
+MONO_FAMILY = "TkFixedFont"
+
+
+def _pick(root, prefs, default):
+    try:
+        from tkinter import font as tkfont
+        have = set(tkfont.families(root))
+    except Exception:
+        return default
+    for f in prefs:
+        if f in have:
+            return f
+    return default
+
+
+def fonts(size=11):
+    """Tra ve (FONT, FONT_B, FONT_S, FONT_MONO, FONT_L) cung 1 ho font."""
+    return ((FONT_FAMILY, size), (FONT_FAMILY, size, "bold"),
+            (FONT_FAMILY, size - 2), (MONO_FAMILY, size - 2),
+            (FONT_FAMILY, size + 1, "bold"))
+
+
+def init_fonts(root, size=11):
+    """
+    Goi ngay sau tk.Tk(): chon ho font (Segoe UI neu co), dat lam mac dinh
+    cho moi widget tk/ttk. Tra ve fonts(size).
+    """
+    global FONT_FAMILY, MONO_FAMILY
+    FONT_FAMILY = _pick(root, FONT_FAMILY_PREF, "TkDefaultFont")
+    MONO_FAMILY = _pick(root, MONO_FAMILY_PREF, "TkFixedFont")
+    try:
+        from tkinter import font as tkfont
+        for name in ("TkDefaultFont", "TkTextFont", "TkMenuFont",
+                     "TkHeadingFont", "TkCaptionFont", "TkSmallCaptionFont",
+                     "TkIconFont", "TkTooltipFont"):
+            tkfont.nametofont(name, root).configure(family=FONT_FAMILY,
+                                                    size=size)
+        tkfont.nametofont("TkFixedFont", root).configure(family=MONO_FAMILY,
+                                                         size=size - 2)
+    except Exception:
+        pass
+    root.option_add("*Font", (FONT_FAMILY, size))
+    return fonts(size)

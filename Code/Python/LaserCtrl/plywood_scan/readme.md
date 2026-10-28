@@ -115,7 +115,10 @@ Các bước (tên bước như trên giao diện):
    - `mask.png`: mask cuối, 255 = gỗ, 0 = cắt
    - `mask.json`: `{width_mm, height_mm, mm_per_px, px_per_mm, mm_per_px_mode,
      margin_mm, source, corners_px, alignment: {points_mm, cross_mm, power,
-     feed, offset_mm, return_home, gcode_file}, ...}`
+     feed, offset_mm, return_home, gcode_file}, wood_area_mm2, sheet_area_mm2,
+     wood_ratio, wood_area_raw_mm2, wood_ratio_raw, ...}`. `wood_ratio` = diện
+     tích gỗ còn lại (sau margin) / diện tích cả tấm (0..1); `*_raw` là trước
+     margin. Bước 6 và sau khi lưu đều hiện tỉ lệ này.
    - `mask_raw.png`: mask trước khi co margin, để mở lại sửa tiếp
    - `mask_warped.png`: ảnh đã nắn
    - `alignment.gcode`: gcode căn chỉnh
@@ -128,7 +131,12 @@ nền khác màu gỗ (thảm cắt xanh rất tốt).
 
 ## Tool 2: strip_packer.py
 
-Font chữ to hơn scan_app 2pt cho dễ đọc. Có 2 chế độ (*Mode*).
+Cả 2 tool dùng chung **một họ font** (định nghĩa trong `ui_util.py`: ưu tiên
+`Segoe UI`, không có thì `DejaVu Sans` / `Helvetica` / `Arial`; font mono
+`Consolas` / `DejaVu Sans Mono`). Strip Packer cỡ 13, scan_app cỡ 11.
+Khi mở mask, Strip Packer hiện *Wood remaining* (diện tích gỗ / cả tấm, tính
+lại từ mask nên JSON cũ cũng chạy); sau *Compute* hiện thêm *Strip area* = tổng
+diện tích các thanh / diện tích gỗ. Có 2 chế độ (*Mode*).
 
 **Required pieces** (mặc định, chế độ chính):
 - *Piece lengths (mm)*: danh sách độ dài cần cắt, ngăn cách bằng dấu phẩy, dấu
@@ -137,6 +145,21 @@ Font chữ to hơn scan_app 2pt cho dễ đọc. Có 2 chế độ (*Mode*).
   (chữ, số ≤ 0) sẽ báo lỗi.
 - *Strip width*: mặc định 10mm. *Gap / kerf*: khoảng cách tối thiểu giữa 2
   thanh, mặc định 0.5mm. *Orientation*: Both / Horiz. (X) / Vert. (Y).
+- *Compensate* (mặc định 1mm): bù việc đặt tấm lên máy bị lệch 1–2mm. Mỗi
+  thanh w × h khi nới ra `compensate` về cả 4 phía vẫn phải nằm trọn trong gỗ
+  và trong tấm (không chạm phần đã cắt / mép tấm). Vùng nới của các thanh
+  **được phép** chồng lên nhau; bản thân các thanh vẫn cách nhau ≥ *Gap*.
+  Cách làm: co vùng gỗ bằng kernel **vuông** (nên góc cũng đủ compensate),
+  số pixel làm tròn lên, rồi xếp trên vùng đã co; checker kiểm tra lại bằng
+  hình chữ nhật đã nới. Vùng compensate vẽ màu vàng nhạt trong preview; giá
+  trị ghi vào dòng comment đầu DSL.
+- **Margin vs compensate**: *Safety margin* (scan_app, mặc định 1mm) đã co
+  sẵn mask lúc lưu (`mask.png`, khoảng cách Euclid, góc tròn) — dành cho mép
+  cháy / giòn. *Compensate* áp thêm trong Strip Packer lúc xếp — dành cho sai
+  lệch đặt tấm. Hai cái **cộng dồn**: mặc định thanh cách phần đã cắt ≥ 2mm
+  (1 + 1). Muốn chỉ 1 lớp thì đặt một trong hai về 0. Ví dụ ảnh mẫu,
+  `80,80,100,100`: compensate 0 và 1 đều đặt đủ 4/4; auto-fill: 68 thanh
+  (3874.5mm) → 61 thanh (3400mm).
 - Độ dài giữ **đúng như nhập**, làm tròn tới 0.01mm. Số pixel mỗi thanh chiếm
   luôn đủ chứa đúng độ dài đó, kể cả khi mm/px là số lẻ.
 - Thuật toán (`pack_pieces`):
@@ -193,6 +216,9 @@ mm/px tính tự động từ 4 góc. Script chạy các trường hợp sau:
 - Danh sách 93 thanh quá nhiều so với chỗ trống, để kiểm tra báo thanh không vừa.
 - Danh sách có thanh quá dài (500mm).
 - Chế độ Auto-fill.
+- Tất cả chạy 2 lần: compensate 0 và 1mm (checker kiểm tra cả vùng nới).
+- `wood_ratio` trong `mask.json` khớp với mask (mẫu: 40.4% sau margin, 45.2%
+  trước margin).
 Với mỗi trường hợp, script kiểm tra không có thanh nào chồng nhau hoặc nằm ngoài
 gỗ, độ dài đúng như nhập, và các dòng DSL `ADD/R/END` đọc ngược lại khớp vị trí
 và số thứ tự.
@@ -212,6 +238,7 @@ căn chỉnh mẫu, rồi mô phỏng `alignment.gcode` để kiểm tra:
 - `pack_core.py` – thuật toán xếp thanh, kiểm tra, xuất DSL, vẽ kết quả
 - `align_core.py` – điểm căn chỉnh: sinh gcode dấu +, mô phỏng gcode để test
 - `image_view.py` – canvas zoom/pan và kính lúp dùng chung
-- `ui_util.py` – DPI awareness trên Windows và hệ số scale kích thước pixel
+- `ui_util.py` – DPI awareness trên Windows, hệ số scale kích thước pixel, font
+  chung cho cả 2 tool
 - `test_sample.py` – test không GUI
 - `sample/plywood_01.png` – ảnh mẫu

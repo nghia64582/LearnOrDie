@@ -255,8 +255,43 @@ class _Packer:
         return cands
 
 
+def compensate_mask(mask, mm_per_px, compensate_mm):
+    """
+    Vung cho phep dat thanh khi co compensate: pixel (r, c) con lai khi o
+    vuong ban kinh k = ceil(compensate / res) pixel quanh no deu la go va nam
+    trong tam (mep tam coi nhu da cat). Hcn nam tron trong vung nay =>
+    hcn no ra compensate ve 4 phia van nam tron trong go (dung ca o goc,
+    vi dung kernel vuong chu khong phai tron).
+    """
+    m = (np.asarray(mask) > 0).astype(np.uint8)
+    if compensate_mm <= 0:
+        return m > 0
+    k = int(math.ceil(compensate_mm / float(mm_per_px) - 1e-6))
+    if k <= 0:
+        return m > 0
+    padded = cv2.copyMakeBorder(m, k, k, k, k, cv2.BORDER_CONSTANT, value=0)
+    er = cv2.erode(padded, np.ones((2 * k + 1, 2 * k + 1), np.uint8))
+    return er[k:-k, k:-k] > 0
+
+
+def wood_stats(mask, mm_per_px, strips=None):
+    """Dien tich go con lai / tong dien tich tam (va ti le thanh da dat / go)."""
+    m = np.asarray(mask) > 0
+    a = float(mm_per_px) ** 2
+    wood = float(m.sum()) * a
+    sheet = float(m.size) * a
+    out = {"wood_area_mm2": round(wood, 1), "sheet_area_mm2": round(sheet, 1),
+           "wood_ratio": round(wood / sheet, 5) if sheet else 0.0}
+    if strips is not None:
+        used = sum(s["w"] * s["h"] for s in strips)
+        out["used_area_mm2"] = round(used, 1)
+        out["used_ratio"] = round(used / wood, 5) if wood else 0.0
+    return out
+
+
 def pack_strips(mask, mm_per_px, strip_w=10.0, min_len=30.0, max_len=100.0,
-                step=0.0, gap=0.5, orient="both", objective="length"):
+                step=0.0, gap=0.5, orient="both", objective="length",
+                compensate=0.0):
     """
     Xep cac thanh rong strip_w (mm), dai trong [min_len, max_len] (mm, buoc
     step neu > 0) vao vung go cua mask.
@@ -264,13 +299,15 @@ def pack_strips(mask, mm_per_px, strip_w=10.0, min_len=30.0, max_len=100.0,
     orient: "H" (thanh nam ngang, song song Ox), "V" (doc), "both".
     objective: "length" (tong chieu dai lon nhat) hoac "count" (nhieu thanh).
     gap: khoang cach toi thieu giua 2 thanh (mm), vd do rong vet cat.
+    compensate: moi thanh no ra compensate (mm) ve 4 phia van khong cham
+    phan da cat / mep tam (vung no cua cac thanh duoc chong len nhau).
 
     Tra ve dict: strips (list dict x,y,w,h,orient,length), count,
     total_length, strategy, params.
     """
     res = float(mm_per_px)
     strip_w = round(float(strip_w), 2)
-    free = np.asarray(mask) > 0
+    free = compensate_mask(mask, res, compensate)
     lengths = allowed_lengths(min_len, max_len, step, res)
     if not lengths:
         raise ValueError("No valid length in the selected range")
@@ -326,14 +363,16 @@ def pack_strips(mask, mm_per_px, strip_w=10.0, min_len=30.0, max_len=100.0,
         "strategy": best_name,
         "params": dict(strip_w=strip_w, min_len=min_len, max_len=max_len,
                        step=step, gap=gap, orient=orient,
-                       objective=objective, mm_per_px=res),
+                       objective=objective, mm_per_px=res,
+                       compensate=compensate),
     }
 
 
-def verify_strips(mask, mm_per_px, strips, gap):
+def verify_strips(mask, mm_per_px, strips, gap, compensate=0.0):
     """
     Kiem tra ket qua. Tra ve list loi (rong = dung).
-      - moi thanh nam tron trong vung go (tat ca pixel ma no phu deu la go)
+      - moi thanh NO RA compensate ve 4 phia nam tron trong tam va trong vung
+        go (tat ca pixel ma no phu deu la go)
       - 2 thanh bat ky cach nhau >= gap (khoang cach Euclid giua 2 hcn)
     """
     res = float(mm_per_px)
@@ -341,16 +380,17 @@ def verify_strips(mask, mm_per_px, strips, gap):
     H, W = m.shape
     errs = []
     for i, s in enumerate(strips):
-        x0, x1 = s["x"], s["x"] + s["w"]
-        yt = H * res - (s["y"] + s["h"])      # mep tren, tinh tu tren xuong
-        yb = H * res - s["y"]
+        cp = max(0.0, float(compensate))
+        x0, x1 = s["x"] - cp, s["x"] + s["w"] + cp
+        yt = H * res - (s["y"] + s["h"] + cp)  # mep tren, tinh tu tren xuong
+        yb = H * res - (s["y"] - cp)
         c0, c1 = int(math.floor(x0 / res + 1e-6)), int(math.ceil(x1 / res - 1e-6))
         r0, r1 = int(math.floor(yt / res + 1e-6)), int(math.ceil(yb / res - 1e-6))
         if c0 < 0 or r0 < 0 or c1 > W or r1 > H:
-            errs.append("strip %d is outside the sheet" % i)
+            errs.append("strip %d (+compensate) is outside the sheet" % i)
             continue
         if not m[r0:r1, c0:c1].all():
-            errs.append("strip %d overlaps a cut area" % i)
+            errs.append("strip %d (+compensate) touches a cut area" % i)
     # Kiem tra khoang cach tung cap (sap theo x de cat tia)
     idx = sorted(range(len(strips)), key=lambda k: strips[k]["x"])
     for a in range(len(idx)):
@@ -506,7 +546,8 @@ def _best_position(S_av, S_bl, H, W, h, w, rule):
 
 
 def pack_pieces(mask, mm_per_px, lengths, strip_w=10.0, gap=0.5,
-                orient="both", trials=None, seed=0, time_limit=6.0):
+                orient="both", trials=None, seed=0, time_limit=6.0,
+                compensate=0.0):
     """
     Xep DUNG danh sach thanh (do dai trong lengths, mm; be rong strip_w).
     Moi thanh giu nguyen do dai (lam tron 0.01 mm), so thu tu = vi tri trong
@@ -527,7 +568,7 @@ def pack_pieces(mask, mm_per_px, lengths, strip_w=10.0, gap=0.5,
     res = float(mm_per_px)
     strip_w = round(float(strip_w), 2)
     lengths = [round(float(L), 2) for L in lengths]
-    free = np.asarray(mask) > 0
+    free = compensate_mask(mask, res, compensate)
     H, W = free.shape
     q = _grid_slack(res)
     g = _ceil_px(gap, res) if gap > 0 else 0
@@ -625,12 +666,14 @@ def pack_pieces(mask, mm_per_px, lengths, strip_w=10.0, gap=0.5,
         "total_length": round(sum(s["length"] for s in strips), 2),
         "strategy": best_name,
         "params": dict(strip_w=strip_w, gap=gap, orient=orient,
-                       lengths=lengths, mm_per_px=res, mode="pieces"),
+                       lengths=lengths, mm_per_px=res, mode="pieces",
+                       compensate=compensate),
     }
 
 
 def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2,
-                  labels=True, align_points=None, cross_mm=5.0):
+                  labels=True, align_points=None, cross_mm=5.0,
+                  compensate=0.0):
     """Ve ket qua: nen anh (neu co) + vung cat to do + thanh xep to xanh,
     kem so thu tu cua tung thanh."""
     if warped_or_mask is None:
@@ -649,6 +692,16 @@ def render_result(warped_or_mask, mask, mm_per_px, strips, scale=2,
     out = cv2.resize(base, None, fx=scale, fy=scale,
                      interpolation=cv2.INTER_NEAREST)
     k = scale / mm_per_px
+    if compensate > 0 and strips:
+        # vien compensate (vang nhat, mo) quanh tung thanh
+        ov = out.copy()
+        for s in strips:
+            x0 = int(round((s["x"] - compensate) * k))
+            x1 = int(round((s["x"] + s["w"] + compensate) * k))
+            y0 = int(round((H * mm_per_px - s["y"] - s["h"] - compensate) * k))
+            y1 = int(round((H * mm_per_px - s["y"] + compensate) * k))
+            cv2.rectangle(ov, (x0, y0), (x1 - 1, y1 - 1), (120, 230, 255), -1)
+        out = cv2.addWeighted(ov, 0.45, out, 0.55, 0)
     for i, s in enumerate(strips):
         x0 = int(round(s["x"] * k))
         x1 = int(round((s["x"] + s["w"]) * k))

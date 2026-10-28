@@ -31,9 +31,8 @@ import ui_util
 from ui_util import px
 from image_view import ImageView, Magnifier
 
-FONT = ("Times New Roman", 11)
-FONT_B = ("Times New Roman", 11, "bold")
-FONT_S = ("Arial", 9)
+# Font: 1 ho font chung (ui_util), gan lai trong ScanApp.__init__
+FONT, FONT_B, FONT_S, FONT_MONO, FONT_L = ui_util.fonts(11)
 
 STEPS = [
     "1. Open image",
@@ -64,6 +63,9 @@ METHODS = [("combo", "Combined (saturation + light)"),
 class ScanApp(ttk.Frame):
 
     def __init__(self, parent, image_path=None):
+        global FONT, FONT_B, FONT_S, FONT_MONO, FONT_L
+        FONT, FONT_B, FONT_S, FONT_MONO, FONT_L = ui_util.init_fonts(
+            parent.winfo_toplevel(), 11)
         super().__init__(parent)
         self.root = parent
         self.step = 0
@@ -258,7 +260,7 @@ class ScanApp(ttk.Frame):
                   command=self.clear_corners).pack(fill="x", pady=2)
         tk.Button(f, text="Rotate corner order 90 deg", font=FONT,
                   command=lambda: self.rotate_order(1)).pack(fill="x", pady=2)
-        self.lb_corners = tk.Label(f, text="", font=("Courier", 9),
+        self.lb_corners = tk.Label(f, text="", font=FONT_MONO,
                                    justify="left", anchor="w")
         self.lb_corners.pack(fill="x", pady=4)
         self._res_label(f)
@@ -857,10 +859,15 @@ class ScanApp(ttk.Frame):
         res = self.res
         margin = self._f(self.v_margin, 0)
         self.final = sc.erode_margin(self.raw, margin, res)
-        area = (self.final > 0).sum() * res * res
-        total = self.final.size * res * res
-        self.lb_stats.config(text="Usable wood: %.0f cm2 / %.0f cm2 (%.1f%%)"
-                             % (area / 100, total / 100, 100 * area / total))
+        st = sc.wood_area_stats(self.final, res)
+        rs = sc.wood_area_stats(self.raw, res)
+        self.lb_stats.config(
+            text="Remaining wood (before margin): %.0f mm2 = %.1f%% of sheet\n"
+                 "Usable wood (after margin): %.0f mm2 = %.1f%% of sheet\n"
+                 "Sheet area: %.0f mm2" % (
+                     rs["wood_area_mm2"], 100 * rs["wood_ratio"],
+                     st["wood_area_mm2"], 100 * st["wood_ratio"],
+                     st["sheet_area_mm2"]))
         self.refresh_view()
 
     # ------------------------------------------------------------------
@@ -917,8 +924,12 @@ class ScanApp(ttk.Frame):
             corners=self.corners if len(self.corners) == 4 else None,
             extra=extra)
         self.last_saved = js
-        self.lb_saved.config(text="Saved to:\n%s\n\n%s" % (
-            folder, "\n".join(sorted(os.listdir(folder)))))
+        st = sc.wood_area_stats(self.final, self.res)
+        self.lb_saved.config(text="Saved to:\n%s\n\n%s\n\nWood ratio: %.1f%% "
+                             "(%.0f / %.0f mm2)" % (
+            folder, "\n".join(sorted(os.listdir(folder))),
+            100 * st["wood_ratio"], st["wood_area_mm2"],
+            st["sheet_area_mm2"]))
         return js
 
     def open_packer(self):
@@ -972,14 +983,14 @@ class ScanApp(ttk.Frame):
                                       outline=CORNER_COLORS[i], width=3)
                 self.view.create_text(cx + 12, cy - 12, text=str(i + 1),
                                       fill=CORNER_COLORS[i],
-                                      font=("Arial", 14, "bold"))
+                                      font=FONT_L)
         if self.step >= STEP_ALIGN and self.warped is not None and self.res:
             self.draw_align_points()
         if self.step == 3 and self.warped is not None:
             # Danh dau goc (0,0) DSL
             cx, cy = self.view.img_to_canvas(0, self.warped.shape[0])
             self.view.create_text(cx + 4, cy - 4, text="(0,0)", anchor="sw",
-                                  fill="yellow", font=("Arial", 12, "bold"))
+                                  fill="yellow", font=FONT_B)
 
     def update_status(self):
         if self.step == 2:
@@ -1158,7 +1169,7 @@ class ScanApp(ttk.Frame):
             return
         top = tk.Toplevel(self.root)
         top.title("Alignment gcode")
-        t = tk.Text(top, font=("Courier", 10), width=40, height=30)
+        t = tk.Text(top, font=FONT_MONO, width=40, height=30)
         t.pack(fill="both", expand=True)
         t.insert("1.0", "\n".join(lines))
 
@@ -1201,7 +1212,7 @@ class ScanApp(ttk.Frame):
             t = self.view.create_text(
                 cx + half + 4 if right else cx - half - 4, cy - 4,
                 anchor="sw" if right else "se", fill=col,
-                font=("Arial", 11, "bold"),
+                font=FONT_B,
                 text="P%d (%.2f, %.2f)" % (i + 1, *p))
             bb = self.view.bbox(t)
             if bb:
@@ -1216,7 +1227,7 @@ class ScanApp(ttk.Frame):
             self.view.create_line(*a, *b, fill="#ffff00", dash=(4, 3))
             t = self.view.create_text((a[0] + b[0]) / 2, (a[1] + b[1]) / 2,
                                       fill="#ffff00",
-                                      font=("Arial", 11, "bold"),
+                                      font=FONT_B,
                                       text="%.2f mm" % ac.distance(p1, p2))
             bb = self.view.bbox(t)
             if bb:

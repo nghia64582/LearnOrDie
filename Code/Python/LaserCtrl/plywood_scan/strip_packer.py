@@ -30,7 +30,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-from pack_core import (pack_pieces, pack_strips, parse_lengths,
+from pack_core import (wood_stats, pack_pieces, pack_strips, parse_lengths,
                        verify_strips, strips_to_dsl, parse_dsl_strips,
                        render_result)
 from scan_core import (load_mask_file, imread_unicode, imwrite_unicode,
@@ -45,16 +45,17 @@ __all__ = ["pack_pieces", "pack_strips", "parse_lengths", "verify_strips",
            "strips_to_dsl", "parse_dsl_strips", "render_result",
            "load_mask_file", "StripPackerApp"]
 
-# Font lon hon scan_app 2pt cho de doc
-FONT = ("Times New Roman", 13)
-FONT_B = ("Times New Roman", 13, "bold")
-FONT_S = ("Arial", 11)
-FONT_MONO = ("Courier", 11)
+# Font: 1 ho font chung (ui_util), lon hon scan_app 2pt cho de doc
+FONT_SIZE = 13
+FONT, FONT_B, FONT_S, FONT_MONO, FONT_L = ui_util.fonts(FONT_SIZE)
 
 
 class StripPackerApp(ttk.Frame):
 
     def __init__(self, parent, path=None):
+        global FONT, FONT_B, FONT_S, FONT_MONO, FONT_L
+        FONT, FONT_B, FONT_S, FONT_MONO, FONT_L = ui_util.init_fonts(
+            parent.winfo_toplevel(), FONT_SIZE)
         super().__init__(parent)
         self.root = parent
         self.mask = None
@@ -67,6 +68,7 @@ class StripPackerApp(ttk.Frame):
         self.v_lengths = tk.StringVar(value="80,80,100,100")
         self.v_w = tk.StringVar(value="10")
         self.v_gap = tk.StringVar(value="0.5")
+        self.v_comp = tk.StringVar(value="1.0")
         self.v_orient = tk.StringVar(value="both")
         self.v_min = tk.StringVar(value="30")
         self.v_max = tk.StringVar(value="100")
@@ -136,6 +138,13 @@ class StripPackerApp(ttk.Frame):
         self.fr_common = tk.Frame(left)
         self._row(self.fr_common, "Strip width", self.v_w, "mm")
         self._row(self.fr_common, "Gap / kerf", self.v_gap, "mm")
+        self._row(self.fr_common, "Compensate", self.v_comp, "mm")
+        tk.Label(self.fr_common, font=FONT_S, fg="#444", justify="left",
+                 anchor="w", wraplength=self.wrap,
+                 text="Compensate: each piece grown by this on all 4 sides "
+                      "must still be on wood (absorbs 1-2 mm sheet shift). "
+                      "Grown zones may overlap each other."
+                 ).pack(fill="x")
         r = tk.Frame(self.fr_common)
         r.pack(fill="x")
         tk.Label(r, text="Orientation:", font=FONT).pack(side="left")
@@ -185,6 +194,7 @@ class StripPackerApp(ttk.Frame):
         self.view.pack(fill="both", expand=True)
         tk.Label(right, font=FONT_S, fg="#555",
                  text="Green = horizontal, blue = vertical, red = cut, "
+                      "pale yellow = compensate zone, "
                       "number = piece, + = alignment point | wheel: zoom | "
                       "right drag: pan"
                  ).pack(fill="x")
@@ -231,6 +241,9 @@ class StripPackerApp(ttk.Frame):
             os.path.relpath(path, os.path.dirname(os.path.dirname(
                 os.path.abspath(path)))), meta["width_mm"], meta["height_mm"],
             meta["mm_per_px"], meta.get("margin_mm", 0))
+        ws = wood_stats(mask, meta["mm_per_px"])
+        info += "\nWood remaining: %.0f / %.0f mm2 = %.1f%% of sheet" % (
+            ws["wood_area_mm2"], ws["sheet_area_mm2"], 100 * ws["wood_ratio"])
         al = self.alignment()
         pts = al.get("points_mm") or []
         if any(p is not None for p in pts):
@@ -271,8 +284,10 @@ class StripPackerApp(ttk.Frame):
         try:
             w = self._num(self.v_w, "Strip width")
             gap = self._num(self.v_gap, "Gap")
-            if w <= 0 or gap < 0:
-                raise ValueError("Strip width must be > 0 and gap >= 0")
+            comp = self._num(self.v_comp, "Compensate")
+            if w <= 0 or gap < 0 or comp < 0:
+                raise ValueError("Strip width must be > 0, gap and "
+                                 "compensate >= 0")
             res = self.meta["mm_per_px"]
             self.root.config(cursor="watch")
             self.lb_result.config(text="Computing...", fg="#000")
@@ -280,14 +295,16 @@ class StripPackerApp(ttk.Frame):
             if self.v_mode.get() == "pieces":
                 lengths = parse_lengths(self.v_lengths.get())
                 self.result = pack_pieces(self.mask, res, lengths, strip_w=w,
-                                          gap=gap, orient=self.v_orient.get())
+                                          gap=gap, orient=self.v_orient.get(),
+                                          compensate=comp)
             else:
                 self.result = pack_strips(
                     self.mask, res, strip_w=w,
                     min_len=self._num(self.v_min, "Min length"),
                     max_len=self._num(self.v_max, "Max length"),
                     step=self._num(self.v_step, "Length step"), gap=gap,
-                    orient=self.v_orient.get(), objective=self.v_obj.get())
+                    orient=self.v_orient.get(), objective=self.v_obj.get(),
+                    compensate=comp)
                 self.result["unplaced"] = []
                 self.result["requested"] = None
         except Exception as ex:
@@ -297,15 +314,18 @@ class StripPackerApp(ttk.Frame):
         finally:
             self.root.config(cursor="")
         r = self.result
-        errs = verify_strips(self.mask, res, r["strips"], gap)
+        errs = verify_strips(self.mask, res, r["strips"], gap, comp)
+        ws = wood_stats(self.mask, res, r["strips"])
         nh = sum(1 for s in r["strips"] if s["orient"] == "H")
         if r["requested"] is not None:
             head = "Placed %d / %d pieces" % (r["count"], r["requested"])
         else:
             head = "Auto-fill: %d strips" % r["count"]
         txt = ("%s (horizontal %d, vertical %d)\nTotal length: %.1f mm\n"
+               "Strip area: %.0f mm2 = %.1f%% of wood\n"
                "Strategy: %s\nCheck: %s" % (
-                   head, nh, r["count"] - nh, r["total_length"], r["strategy"],
+                   head, nh, r["count"] - nh, r["total_length"],
+                   ws["used_area_mm2"], 100 * ws["used_ratio"], r["strategy"],
                    "OK" if not errs else "%d ERRORS: %s" % (len(errs), errs[0])))
         self.lb_result.config(text=txt, fg="#000" if not errs else "red")
         if r["unplaced"]:
@@ -329,8 +349,9 @@ class StripPackerApp(ttk.Frame):
         r = self.result
         p = r["params"]
         head = ["# strip_packer: %d strips, total %.1f mm, width %g mm, "
-                "gap %g mm, source: %s" % (r["count"], r["total_length"],
-                                           p["strip_w"], p["gap"],
+                "gap %g mm, compensate %g mm, source: %s" % (
+                    r["count"], r["total_length"], p["strip_w"], p["gap"],
+                    p.get("compensate", 0),
                                            os.path.basename(self.path)),
                 "# origin (0,0) = bottom-left corner of the sheet, y up; "
                 "each piece: ADD x y <number> / R 0 0 w h / END"]
@@ -352,7 +373,9 @@ class StripPackerApp(ttk.Frame):
         return render_result(bg, self.mask, self.meta["mm_per_px"], strips,
                              scale=2, labels=self.v_labels.get(),
                              align_points=al.get("points_mm"),
-                             cross_mm=al.get("cross_mm", 5.0))
+                             cross_mm=al.get("cross_mm", 5.0),
+                             compensate=(self.result or {}).get(
+                                 "params", {}).get("compensate", 0.0))
 
     def redraw(self, fit=False):
         self.view.set_image(self.render(), fit=fit)

@@ -333,6 +333,15 @@ def overlay_mask(img, mask, alpha=0.45, cut_color=(0, 0, 255),
 # Luu / doc file mask
 # ---------------------------------------------------------------------------
 
+def wood_area_stats(mask, mm_per_px):
+    """Dien tich go (mask > 0) va ti le so voi ca tam (mm2, 0..1)."""
+    m = np.asarray(mask) > 0
+    a = float(mm_per_px) ** 2
+    wood, sheet = float(m.sum()) * a, float(m.size) * a
+    return {"wood_area_mm2": round(wood, 1), "sheet_area_mm2": round(sheet, 1),
+            "wood_ratio": round(wood / sheet, 5) if sheet else 0.0}
+
+
 def save_mask_file(png_path, mask, width_mm, height_mm, mm_per_px,
                    margin_mm, source="", raw_mask=None, warped=None,
                    corners=None, extra=None):
@@ -353,9 +362,16 @@ def save_mask_file(png_path, mask, width_mm, height_mm, mm_per_px,
         "source": source,
         "mask_file": os.path.basename(base + ".png"),
         "px_per_mm": round(1.0 / float(mm_per_px), 5),
+    }
+    meta.update(wood_area_stats(mask, mm_per_px))
+    if raw_mask is not None:
+        rs = wood_area_stats(raw_mask, mm_per_px)
+        meta["wood_area_raw_mm2"] = rs["wood_area_mm2"]
+        meta["wood_ratio_raw"] = rs["wood_ratio"]
+    meta.update({
         "convention": "255 = wood remaining, 0 = cut; row 0 = top edge; "
                       "DSL origin (0,0) = bottom-left corner, y up",
-    }
+    })
     if raw_mask is not None:
         imwrite_unicode(base + "_raw.png", raw_mask)
         meta["raw_mask_file"] = os.path.basename(base + "_raw.png")
