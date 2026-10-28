@@ -78,14 +78,14 @@ def _pick(root, prefs, default):
     return default
 
 
-def fonts(size=11):
+def fonts(size=10):
     """Tra ve (FONT, FONT_B, FONT_S, FONT_MONO, FONT_L) cung 1 ho font."""
     return ((FONT_FAMILY, size), (FONT_FAMILY, size, "bold"),
             (FONT_FAMILY, size - 2), (MONO_FAMILY, size - 2),
             (FONT_FAMILY, size + 1, "bold"))
 
 
-def init_fonts(root, size=11):
+def init_fonts(root, size=10):
     """
     Goi ngay sau tk.Tk(): chon ho font (Segoe UI neu co), dat lam mac dinh
     cho moi widget tk/ttk. Tra ve fonts(size).

@@ -65,7 +65,7 @@ class ScanApp(ttk.Frame):
     def __init__(self, parent, image_path=None):
         global FONT, FONT_B, FONT_S, FONT_MONO, FONT_L
         FONT, FONT_B, FONT_S, FONT_MONO, FONT_L = ui_util.init_fonts(
-            parent.winfo_toplevel(), 11)
+            parent.winfo_toplevel(), 10)
         super().__init__(parent)
         self.root = parent
         self.step = 0

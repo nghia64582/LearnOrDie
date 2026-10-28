@@ -46,7 +46,7 @@ __all__ = ["pack_pieces", "pack_strips", "parse_lengths", "verify_strips",
            "load_mask_file", "StripPackerApp"]
 
 # Font: 1 ho font chung (ui_util), lon hon scan_app 2pt cho de doc
-FONT_SIZE = 13
+FONT_SIZE = 10
 FONT, FONT_B, FONT_S, FONT_MONO, FONT_L = ui_util.fonts(FONT_SIZE)
 
 
