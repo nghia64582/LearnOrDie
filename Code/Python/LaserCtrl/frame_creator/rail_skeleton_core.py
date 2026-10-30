@@ -64,9 +64,20 @@ def _merge_intervals(intervals):
     return [tuple(m) for m in merged]
 
 
-def build_skeleton(rects):
+def make_rule(rail_width=10.0):
+    """Joint adjustment table scaled to the strip width (half-width = w/2).
+    At rail_width=10 this equals RULE exactly."""
+    hw = rail_width / 2.0
+    if float(hw).is_integer():
+        hw = int(hw)
+    return {k: (hw if a else 0, -hw) for k, (a, _b) in RULE.items()}
+
+
+def build_skeleton(rects, rail_width=10.0):
     """rects: list of (x, y, w, h). Returns dict with merged horizontal /
-    vertical segments, nodes, and final adjusted sub-segments."""
+    vertical segments, nodes, and final adjusted sub-segments.
+    rail_width: strip width in mm; end adjustments use half of it."""
+    RULE = make_rule(rail_width)
 
     h_raw = {}  # y -> list of (x0, x1)
     v_raw = {}  # x -> list of (y0, y1)

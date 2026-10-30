@@ -50,22 +50,28 @@ class SkeletonApp:
         self.rect_text.grid(row=1, column=0, pady=4)
         self.rect_text.insert("1.0", "0 0 90 90")
 
-        self.generate_btn = ttk.Button(frame, text="Generate Skeleton", command=self.on_generate)
-        self.generate_btn.grid(row=2, column=0, pady=8, sticky="ew")
+        wrow = ttk.Frame(frame)
+        wrow.grid(row=2, column=0, pady=(4, 0), sticky="w")
+        ttk.Label(wrow, text="Strip width (mm):").grid(row=0, column=0, sticky="w")
+        self.width_var = tk.StringVar(value="10")
+        ttk.Entry(wrow, textvariable=self.width_var, width=8).grid(row=0, column=1, padx=(6, 0))
 
-        ttk.Label(frame, text="Cut list (rail lengths, mm):").grid(row=3, column=0, sticky="w", pady=(10, 0))
+        self.generate_btn = ttk.Button(frame, text="Generate Skeleton", command=self.on_generate)
+        self.generate_btn.grid(row=3, column=0, pady=8, sticky="ew")
+
+        ttk.Label(frame, text="Cut list (rail lengths, mm):").grid(row=5, column=0, sticky="w", pady=(10, 0))
         self.cutlist_box = tk.Text(frame, width=28, height=6, state="disabled")
-        self.cutlist_box.grid(row=4, column=0, pady=4)
+        self.cutlist_box.grid(row=6, column=0, pady=4)
 
         self.copy_btn = ttk.Button(frame, text="Copy cut-list", command=self.on_copy, state="disabled")
-        self.copy_btn.grid(row=5, column=0, pady=2, sticky="ew")
+        self.copy_btn.grid(row=7, column=0, pady=2, sticky="ew")
 
         self.result_var = tk.StringVar(value="")
         ttk.Label(frame, textvariable=self.result_var, wraplength=220, foreground="#555"
-                  ).grid(row=6, column=0, pady=(8, 0), sticky="w")
+                  ).grid(row=8, column=0, pady=(8, 0), sticky="w")
 
         legend = ttk.Frame(frame)
-        legend.grid(row=7, column=0, pady=(16, 0), sticky="w")
+        legend.grid(row=9, column=0, pady=(16, 0), sticky="w")
         for i, (label, color) in enumerate(NODE_COLOR.items()):
             sw = tk.Canvas(legend, width=14, height=14, highlightthickness=1,
                             highlightbackground="black", bg=color)
@@ -116,7 +122,15 @@ class SkeletonApp:
             messagebox.showerror("Invalid input", "Enter at least one rectangle.")
             return
 
-        sk = build_skeleton(rects)
+        try:
+            rail_width = float(self.width_var.get())
+            if rail_width <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Invalid input", "Strip width must be a positive number.")
+            return
+
+        sk = build_skeleton(rects, rail_width=rail_width)
         lengths = cut_list(sk)
         self.cutlist_text = ",".join(str(round(v, 2)) if v != int(v) else str(int(v)) for v in lengths)
 
