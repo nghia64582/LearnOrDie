@@ -61,19 +61,25 @@ class RailDslApp:
         self.lengths_var = tk.StringVar(value="100,100,80,80")
         ttk.Entry(frame, textvariable=self.lengths_var, width=30).grid(row=1, column=0, pady=4)
 
+        wrow = ttk.Frame(frame)
+        wrow.grid(row=2, column=0, pady=(4, 0), sticky="w")
+        ttk.Label(wrow, text="Strip width (mm):").grid(row=0, column=0, sticky="w")
+        self.width_var = tk.StringVar(value=f"{RAIL_WIDTH:g}")
+        ttk.Entry(wrow, textvariable=self.width_var, width=8).grid(row=0, column=1, padx=(6, 0))
+
         self.generate_btn = ttk.Button(frame, text="Generate (optimize packing)", command=self.on_generate)
-        self.generate_btn.grid(row=2, column=0, pady=10, sticky="ew")
+        self.generate_btn.grid(row=3, column=0, pady=10, sticky="ew")
 
         self.copy_btn = ttk.Button(frame, text="Copy DSL", command=self.on_copy, state="disabled")
-        self.copy_btn.grid(row=3, column=0, pady=2, sticky="ew")
+        self.copy_btn.grid(row=4, column=0, pady=2, sticky="ew")
 
         self.status_var = tk.StringVar(value="Ready.")
         ttk.Label(frame, textvariable=self.status_var, wraplength=220, foreground="#555"
-                  ).grid(row=4, column=0, pady=(10, 0), sticky="w")
+                  ).grid(row=5, column=0, pady=(10, 0), sticky="w")
 
         self.result_var = tk.StringVar(value="")
         ttk.Label(frame, textvariable=self.result_var, wraplength=220, font=(FONT_FAMILY, 9, "bold")
-                  ).grid(row=5, column=0, pady=(6, 0), sticky="w")
+                  ).grid(row=6, column=0, pady=(6, 0), sticky="w")
 
     def _build_canvas_panel(self):
         outer = ttk.Frame(self.root)
@@ -110,6 +116,9 @@ class RailDslApp:
     def on_generate(self):
         try:
             lengths = self._parse_lengths()
+            rail_width = float(self.width_var.get())
+            if rail_width <= 0:
+                raise ValueError("Strip width must be a positive number.")
         except ValueError as e:
             messagebox.showerror("Invalid input", str(e))
             return
@@ -121,8 +130,8 @@ class RailDslApp:
 
         def worker():
             try:
-                placements, total_width, height = optimize_layout(lengths, rail_width=RAIL_WIDTH)
-                self.msg_queue.put(("done", (placements, total_width, height, lengths)))
+                placements, total_width, height = optimize_layout(lengths, rail_width=rail_width)
+                self.msg_queue.put(("done", (placements, total_width, height, lengths, rail_width)))
             except Exception as e:
                 self.msg_queue.put(("error", str(e)))
 
@@ -137,12 +146,12 @@ class RailDslApp:
                     self.generate_btn.config(state="normal")
                     messagebox.showerror("Solver error", payload)
                 elif kind == "done":
-                    placements, total_width, height, lengths = payload
-                    self.dsl_text = build_rail_dsl(placements, RAIL_WIDTH)
+                    placements, total_width, height, lengths, rail_width = payload
+                    self.dsl_text = build_rail_dsl(placements, rail_width)
                     used_area = sum(p["w"] * p["h"] for p in placements)
                     sheet_area = total_width * height
                     waste_pct = 100 * (1 - used_area / sheet_area) if sheet_area else 0
-                    n_cols = round(total_width / RAIL_WIDTH)
+                    n_cols = round(total_width / rail_width)
                     self.status_var.set("Done.")
                     self.result_var.set(
                         f"Sheet size: {total_width:g} x {height:g} mm (~{n_cols} columns)\n"
