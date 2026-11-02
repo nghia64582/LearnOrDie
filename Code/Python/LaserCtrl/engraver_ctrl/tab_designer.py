@@ -50,6 +50,18 @@ class DesignerTab(ttk.Frame):
         self.shapes = []
         self.canvas_width = 1000
         self.canvas_height = 700
+        # Trang thai view: zoom = 1 la vua khit (Fit) toan bo hinh
+        self.zoom = 1.0
+        self.ZOOM_MIN = 1.0
+        self.ZOOM_MAX = 20.0
+        self._add_labels = []
+        self._syncing_slider = False
+        self._resize_job = None
+        self.scale = 1.0
+        self.offset_x = 0.0
+        self.offset_y = 0.0
+        self.view_left, self.view_bottom = -10.0, -10.0
+        self.view_right, self.view_top = 100.0, 100.0
         self.build_gui()
 
     def build_gui(self):
@@ -77,28 +89,22 @@ class DesignerTab(ttk.Frame):
         self.text_input.insert("1.0", sample)
         self.text_input.bind("<Control-Return>", lambda e: self.preview())
 
-        # --- Viewport ---
-        view_frame = tk.LabelFrame(left_frame, text="Viewport (mm)",
-                                    font=self.font)
+        # --- View / Zoom ---
+        view_frame = tk.LabelFrame(left_frame, text="View", font=self.font)
         view_frame.pack(fill="x", pady=5)
-
-        tk.Label(view_frame, text="Left").grid(row=0, column=0)
-        tk.Label(view_frame, text="Bottom").grid(row=0, column=2)
-        self.left_var = tk.StringVar(value="-20")
-        self.bottom_var = tk.StringVar(value="-20")
-        tk.Entry(view_frame, textvariable=self.left_var, width=10)\
-            .grid(row=0, column=1)
-        tk.Entry(view_frame, textvariable=self.bottom_var, width=10)\
-            .grid(row=0, column=3)
-
-        tk.Label(view_frame, text="Right").grid(row=1, column=0)
-        tk.Label(view_frame, text="Top").grid(row=1, column=2)
-        self.right_var = tk.StringVar(value="250")
-        self.top_var = tk.StringVar(value="180")
-        tk.Entry(view_frame, textvariable=self.right_var, width=10)\
-            .grid(row=1, column=1)
-        tk.Entry(view_frame, textvariable=self.top_var, width=10)\
-            .grid(row=1, column=3)
+        tk.Button(view_frame, text="Fit", command=self.fit_view,
+                  font=self.font).grid(row=0, column=0, padx=2)
+        tk.Label(view_frame, text="Zoom").grid(row=0, column=1)
+        self.zoom_var = tk.DoubleVar(value=1.0)
+        self.zoom_scale = tk.Scale(view_frame, from_=self.ZOOM_MIN,
+                                   to=self.ZOOM_MAX, resolution=0.1,
+                                   orient="horizontal", length=200,
+                                   variable=self.zoom_var,
+                                   command=self._on_zoom_slider)
+        self.zoom_scale.grid(row=0, column=2, sticky="we")
+        tk.Label(view_frame, text="Wheel: zoom at cursor, "
+                 "middle-drag: pan", fg="gray")\
+            .grid(row=1, column=0, columnspan=3, sticky="w")
 
         # --- GCODE settings ---
         gcode_frame = tk.LabelFrame(left_frame, text="GCODE", font=self.font)
@@ -140,8 +146,28 @@ class DesignerTab(ttk.Frame):
         # --- Canvas ---
         self.canvas = tk.Canvas(right_frame, bg="white",
                                  width=self.canvas_width,
-                                 height=self.canvas_height)
-        self.canvas.pack(fill="both", expand=True)
+                                 height=self.canvas_height,
+                                 highlightthickness=0)
+        self.hbar = tk.Scrollbar(right_frame, orient="horizontal",
+                                 command=self.canvas.xview)
+        self.vbar = tk.Scrollbar(right_frame, orient="vertical",
+                                 command=self.canvas.yview)
+        self.canvas.configure(xscrollcommand=self.hbar.set,
+                              yscrollcommand=self.vbar.set)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.vbar.grid(row=0, column=1, sticky="ns")
+        self.hbar.grid(row=1, column=0, sticky="we")
+        right_frame.rowconfigure(0, weight=1)
+        right_frame.columnconfigure(0, weight=1)
+
+        self.canvas.bind("<Configure>", self._on_canvas_resize)
+        self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)
+        self.canvas.bind("<Button-4>", self._on_mouse_wheel)
+        self.canvas.bind("<Button-5>", self._on_mouse_wheel)
+        self.canvas.bind("<ButtonPress-2>",
+                         lambda e: self.canvas.scan_mark(e.x, e.y))
+        self.canvas.bind("<B2-Motion>",
+                         lambda e: self.canvas.scan_dragto(e.x, e.y, gain=1))
 
         self.preview()
 
@@ -258,24 +284,155 @@ class DesignerTab(ttk.Frame):
             """
         messagebox.showinfo("Format Help", text)
 
+    # ------------------------------------------------------------------
+    # View transform (world mm -> canvas px). Y huong len, goc O(0,0)
+    # trong toa do may. Moi ham ve deu di qua to_canvas().
+    # ------------------------------------------------------------------
+    @staticmethod
+    def compute_extent(points, margin_ratio=0.10, min_size=10.0):
+        # Bounding box cua moi diem + goc O(0,0), them margin ~10%
+        # moi phia (theo canh lon hon) de luon thay goc va 1 phan
+        # goc phan tu am (x<0, y<0)
+        xs = [0.0] + [p[0] for p in points]
+        ys = [0.0] + [p[1] for p in points]
+        left, right = min(xs), max(xs)
+        bottom, top = min(ys), max(ys)
+        size = max(right - left, top - bottom, min_size)
+        m = size * margin_ratio
+        return left - m, bottom - m, right + m, top + m
+
+    @staticmethod
+    def compute_transform(extent, view_w, view_h, zoom):
+        # Tra ve (scale px/mm, offset_x, offset_y, content_w, content_h).
+        # zoom = 1: hinh vua khit vung nhin, ti le deu 2 truc, can giua.
+        left, bottom, right, top = extent
+        ww, wh = right - left, top - bottom
+        base = min(view_w / ww, view_h / wh)
+        scale = base * zoom
+        cw = max(ww * scale, view_w)
+        ch = max(wh * scale, view_h)
+        ox = (cw - ww * scale) / 2
+        oy = (ch - wh * scale) / 2
+        return scale, ox, oy, cw, ch
+
     def to_canvas(self, x, y):
-        px = (x - self.view_left) / self.view_width * self.canvas_width
-        py = self.canvas_height - (
-            (y - self.view_bottom) / self.view_height * self.canvas_height
-        )
+        px = self.offset_x + (x - self.view_left) * self.scale
+        py = self.offset_y + (self.view_top - y) * self.scale
         return px, py
+
+    def to_world(self, px, py):
+        x = (px - self.offset_x) / self.scale + self.view_left
+        y = self.view_top - (py - self.offset_y) / self.scale
+        return x, y
+
+    def _visible_size(self):
+        w = self.canvas.winfo_width()
+        h = self.canvas.winfo_height()
+        if w <= 1 or h <= 1:
+            w, h = self.canvas_width, self.canvas_height
+        return w, h
+
+    def _update_extent(self):
+        pts = []
+        for _cmd, segs in self.shapes:
+            for x1, y1, x2, y2 in segs:
+                pts.append((x1, y1))
+                pts.append((x2, y2))
+        for x, y, _l in self._add_labels:
+            pts.append((x, y))
+        (self.view_left, self.view_bottom,
+         self.view_right, self.view_top) = self.compute_extent(pts)
+        self.view_width = self.view_right - self.view_left
+        self.view_height = self.view_top - self.view_bottom
+
+    def render(self, anchor=None):
+        # anchor = (screen_x, screen_y, world_x, world_y): giu diem
+        # world nay dung yen duoi con tro sau khi zoom
+        vw, vh = self._visible_size()
+        (self.scale, self.offset_x, self.offset_y,
+         cw, ch) = self.compute_transform(
+            (self.view_left, self.view_bottom,
+             self.view_right, self.view_top), vw, vh, self.zoom)
+        self.canvas_width, self.canvas_height = cw, ch
+        self.canvas.configure(scrollregion=(0, 0, cw, ch))
+
+        self.draw_grid()
+        for x, y, label in self._add_labels:
+            self._draw_add_label(x, y, label)
+        for cmd, segments in self.shapes:
+            self.draw_shape(cmd, segments)
+        self._draw_speed_tab_marks()
+
+        if anchor is not None:
+            sx, sy, wx, wy = anchor
+            px, py = self.to_canvas(wx, wy)
+            self.canvas.xview_moveto(max(0.0, (px - sx) / cw))
+            self.canvas.yview_moveto(max(0.0, (py - sy) / ch))
+
+    def set_zoom(self, zoom, screen_x=None, screen_y=None):
+        zoom = max(self.ZOOM_MIN, min(self.ZOOM_MAX, zoom))
+        if screen_x is None:
+            vw, vh = self._visible_size()
+            screen_x, screen_y = vw / 2, vh / 2
+        wx, wy = self.to_world(self.canvas.canvasx(screen_x),
+                               self.canvas.canvasy(screen_y))
+        self.zoom = zoom
+        self._syncing_slider = True
+        self.zoom_var.set(round(zoom, 1))
+        self._syncing_slider = False
+        self.render(anchor=(screen_x, screen_y, wx, wy))
+
+    def fit_view(self):
+        self.zoom = 1.0
+        self._syncing_slider = True
+        self.zoom_var.set(1.0)
+        self._syncing_slider = False
+        self.render()
+        self.canvas.xview_moveto(0)
+        self.canvas.yview_moveto(0)
+
+    def _on_zoom_slider(self, _value):
+        if self._syncing_slider:
+            return
+        z = float(self.zoom_var.get())
+        if abs(z - self.zoom) > 1e-9:
+            self.set_zoom(z)
+
+    def _on_mouse_wheel(self, event):
+        if getattr(event, "num", None) == 4 or getattr(event, "delta", 0) > 0:
+            factor = 1.2
+        else:
+            factor = 1 / 1.2
+        self.set_zoom(self.zoom * factor, event.x, event.y)
+        return "break"
+
+    def _on_canvas_resize(self, _event):
+        if self._resize_job is not None:
+            self.after_cancel(self._resize_job)
+        self._resize_job = self.after(60, self._resize_render)
+
+    def _resize_render(self):
+        self._resize_job = None
+        self.render()
+
+    def _grid_step(self):
+        # Buoc luoi "dep" nho nhat >= GRID_MM, cach nhau >= ~30px
+        for step in (1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000):
+            if step >= self.GRID_MM / 10 and step * self.scale >= 30:
+                return step
+        return 10000
 
     def draw_grid(self):
         self.canvas.delete("all")
-        step = self.GRID_MM
+        step = self._grid_step()
 
         x = math.floor(self.view_left / step) * step
         while x <= self.view_right:
             px1, py1 = self.to_canvas(x, self.view_bottom)
             px2, py2 = self.to_canvas(x, self.view_top)
             self.canvas.create_line(px1, py1, px2, py2, fill="#dddddd")
-            self.canvas.create_text(px1 + 2, self.canvas_height - 10,
-                                     text=str(x), font=("Arial", 8),
+            self.canvas.create_text(px1 + 2, py1 - 12,
+                                     text=f"{x:g}", font=("Arial", 8),
                                      anchor="nw")
             x += step
 
@@ -284,8 +441,8 @@ class DesignerTab(ttk.Frame):
             px1, py1 = self.to_canvas(self.view_left, y)
             px2, py2 = self.to_canvas(self.view_right, y)
             self.canvas.create_line(px1, py1, px2, py2, fill="#dddddd")
-            self.canvas.create_text(2, py1, text=str(y), font=("Arial", 8),
-                                     anchor="nw")
+            self.canvas.create_text(px1 + 2, py1, text=f"{y:g}",
+                                     font=("Arial", 8), anchor="nw")
             y += step
 
         if self.view_bottom <= 0 <= self.view_top:
@@ -298,18 +455,16 @@ class DesignerTab(ttk.Frame):
             px2, py2 = self.to_canvas(0, self.view_top)
             self.canvas.create_line(px1, py1, px2, py2, fill="blue", width=2)
 
+        ox, oy = self.to_canvas(0, 0)
+        self.canvas.create_oval(ox - 4, oy - 4, ox + 4, oy + 4,
+                                 outline="black", width=2)
+        self.canvas.create_text(ox - 4, oy + 4, text="O(0,0)",
+                                 font=("Arial", 9, "bold"), anchor="ne")
+
     def preview(self):
         try:
-            self.view_left = float(self.left_var.get())
-            self.view_bottom = float(self.bottom_var.get())
-            self.view_right = float(self.right_var.get())
-            self.view_top = float(self.top_var.get())
-            self.view_width = self.view_right - self.view_left
-            self.view_height = self.view_top - self.view_bottom
-
-            self.draw_grid()
-
             self.shapes = []
+            self._add_labels = []
 
             # Key cua cac doan bi ep buoc la tab (vd tab hinh tron
             # lon), dung khi xuat gcode de biet doan nao phai cat
@@ -362,7 +517,7 @@ class DesignerTab(ttk.Frame):
                     delta_stack.append((dx, dy, 0.0, label))
                     cum_x = sum(d[0] for d in delta_stack)
                     cum_y = sum(d[1] for d in delta_stack)
-                    self._draw_add_label(cum_x, cum_y, label)
+                    self._add_labels.append((cum_x, cum_y, label))
                     continue
 
                 if cmd == "ROTATE":
@@ -444,9 +599,10 @@ class DesignerTab(ttk.Frame):
                     next_is_priority = False
 
                 self.shapes.append((cmd, segments))
-                self.draw_shape(cmd, segments)
 
-            self._draw_speed_tab_marks()
+            # Tinh lai khung nhin theo hinh, ve lai (giu muc zoom)
+            self._update_extent()
+            self.render()
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
