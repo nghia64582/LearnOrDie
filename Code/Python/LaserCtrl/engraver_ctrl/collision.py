@@ -92,7 +92,15 @@ def _dist_point_seg(x, y, s):
 class Collider:
     """Chuan bi 1 lan khi bat dau keo; collides(ox, oy) goi nhieu lan."""
 
-    def __init__(self, moving, obstacles):
+    def __init__(self, moving, obstacles, no_overlap=True,
+                 no_cross_x=False, no_cross_y=False):
+        # no_cross_x: khong vuot truc Ox (y = 0); no_cross_y: truc Oy (x = 0).
+        # Truc = duong thang vo han; cham/nam tren truc la hop le, block
+        # co diem nam ca 2 phia truc la giao (tuong duong bbox vat qua).
+        self.no_overlap = no_overlap
+        self.no_cross_x = no_cross_x
+        self.no_cross_y = no_cross_y
+        self.active = no_overlap or no_cross_x or no_cross_y
         # moving / obstacles: list (shape_id, [segments])
         self.m_segs, self.m_sid, self.m_shape = [], [], {}
         for sid, segs in moving:
@@ -133,7 +141,21 @@ class Collider:
     def _shift(self, sid, ox, oy):
         return [(a + ox, b + oy, c + ox, d + oy) for a, b, c, d in self.m_shape[sid]]
 
+    def crosses_axis(self, ox, oy, eps=EPS):
+        x0, y0, x1, y1 = self.m_bbox
+        if not self.m_segs:
+            return False
+        if self.no_cross_x and y0 + oy < -eps and y1 + oy > eps:
+            return True
+        if self.no_cross_y and x0 + ox < -eps and x1 + ox > eps:
+            return True
+        return False
+
     def collides(self, ox, oy):
+        if self.crosses_axis(ox, oy):
+            return True
+        if not self.no_overlap:
+            return False
         idx = self._near_obstacles(ox, oy)
         if len(idx) == 0 or not self.m_segs:
             return False
@@ -242,11 +264,16 @@ class Collider:
     def snap(self, pos, tol=0.02):
         """Hit nhe (< tol mm) toa do x / y cua block vao canh vat can."""
         ox, oy = pos
-        idx = self._near_obstacles(ox, oy, pad=tol * 2)
-        if len(idx) == 0:
-            return pos
+        idx = self._near_obstacles(ox, oy, pad=tol * 2) \
+            if self.no_overlap else []
         oxs = {round(c, 9) for j in idx for c in (self.o_segs[j][0], self.o_segs[j][2])}
         oys = {round(c, 9) for j in idx for c in (self.o_segs[j][1], self.o_segs[j][3])}
+        if self.no_cross_y:
+            oxs.add(0.0)
+        if self.no_cross_x:
+            oys.add(0.0)
+        if not oxs and not oys:
+            return pos
         mxs = {c for s in self.m_segs for c in (s[0], s[2])}
         mys = {c for s in self.m_segs for c in (s[1], s[3])}
 

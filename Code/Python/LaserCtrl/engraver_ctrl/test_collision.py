@@ -35,7 +35,34 @@ def run(use_np):
     assert classify((5, 0, 5, 5), (0, 0, 10, 0)) == "a_end"
     return bad
 
+def test_axis():
+    blk = [(0, rect(5, 5, 10, 10))]
+    c = Collider(blk, [], no_overlap=False, no_cross_x=True, no_cross_y=True)
+    assert not c.collides(0, 0)
+    assert not c.collides(0, -5)        # canh duoi nam tren Ox
+    assert c.collides(0, -5.01)         # vat qua Ox
+    assert not c.collides(-5, -5)       # goc tai O
+    assert c.collides(-5.5, 0)          # vat qua Oy
+    assert not c.collides(0, -15)       # nam han duoi Ox (khong vat)
+    # resolve: keo xuong sau -> dung dung y = -5 (minY = 0)
+    off, b = c.resolve((0, 0), (0, -9))
+    assert b and off == (0, -5.0), off
+    off, b = c.resolve((0, -5.0), (3, -9))   # truot doc Ox
+    assert abs(off[0] - 3) < 1e-2 and off[1] == -5.0, off
+    off, b = c.resolve((0, 0), (-9, -9))     # goc vao O
+    assert off == (-5.0, -5.0), off
+    c2 = Collider(blk, [], no_overlap=False)
+    assert not c2.active and not c2.collides(0, -9)
+    c3 = Collider(blk, [], no_overlap=False, no_cross_x=True)
+    assert not c3.collides(-9, 0) and c3.collides(0, -9)
+    print("axis tests OK")
+
+
+
 if __name__ == "__main__":
     n = run(True) + run(False)
     print("failures:", n)
+    test_axis()
     raise SystemExit(n)
+
+

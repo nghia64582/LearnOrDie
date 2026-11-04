@@ -116,9 +116,14 @@ class DesignerTab(ttk.Frame):
                  fg="gray", wraplength=300, justify="left")\
             .grid(row=2, column=0, columnspan=3, sticky="w")
         self.no_overlap_var = tk.BooleanVar(value=True)
-        tk.Checkbutton(view_frame, text="No overlap",
-                       variable=self.no_overlap_var)\
-            .grid(row=3, column=0, columnspan=3, sticky="w")
+        self.no_cross_x_var = tk.BooleanVar(value=True)
+        self.no_cross_y_var = tk.BooleanVar(value=True)
+        chk = tk.Frame(view_frame)
+        chk.grid(row=3, column=0, columnspan=3, sticky="w")
+        for txt, var in (("No overlap", self.no_overlap_var),
+                         ("No cross X axis", self.no_cross_x_var),
+                         ("No cross Y axis", self.no_cross_y_var)):
+            tk.Checkbutton(chk, text=txt, variable=var).pack(side="left")
         # Do dai co dinh + font mono de label khong lam panel co gian
         self.drag_status_var = tk.StringVar(value="")
         tk.Label(view_frame, textvariable=self.drag_status_var,
@@ -881,7 +886,10 @@ class DesignerTab(ttk.Frame):
         self._drag["collider"] = Collider(
             [(i, self.shapes[i][1]) for i in inside],
             [(i, segs) for i, (_c, segs) in enumerate(self.shapes)
-             if i not in inside])
+             if i not in inside],
+            no_overlap=self.no_overlap_var.get(),
+            no_cross_x=self.no_cross_x_var.get(),
+            no_cross_y=self.no_cross_y_var.get())
         # Neu vi tri ban dau da giao thi cho keo tu do den khi hop le
         self._drag["enforce"] = not self._drag["collider"].collides(0, 0)
         self._drag["off"] = (0.0, 0.0)
@@ -899,7 +907,7 @@ class DesignerTab(ttk.Frame):
         cand = (wx - sx, wy - sy)
         col = d["collider"]
         blocked = False
-        if self.no_overlap_var.get():
+        if col.active:
             if d["enforce"]:
                 off, blocked = col.resolve(d["off"], cand)
             else:
@@ -939,7 +947,7 @@ class DesignerTab(ttk.Frame):
         # floor/ceil, chon cai hop le gan nhat
         x, y = d["new"]
         rx, ry = round(x, 2), round(y, 2)
-        if not (self.no_overlap_var.get() and d["enforce"]):
+        if not (d["collider"].active and d["enforce"]):
             return rx, ry
         col = d["collider"]
         opts = [(rx, ry)] + [(math.floor(x * 100 + fx) / 100,
