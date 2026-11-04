@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+from engraver_ctrl.collision import Collider
 
 
 class DesignerTab(ttk.Frame):
@@ -114,10 +115,15 @@ class DesignerTab(ttk.Frame):
                  "Shift/Alt+click: parent ADD, Esc: cancel, Ctrl+Z: undo",
                  fg="gray", wraplength=300, justify="left")\
             .grid(row=2, column=0, columnspan=3, sticky="w")
+        self.no_overlap_var = tk.BooleanVar(value=True)
+        tk.Checkbutton(view_frame, text="No overlap",
+                       variable=self.no_overlap_var)\
+            .grid(row=3, column=0, columnspan=3, sticky="w")
+        # Do dai co dinh + font mono de label khong lam panel co gian
         self.drag_status_var = tk.StringVar(value="")
         tk.Label(view_frame, textvariable=self.drag_status_var,
-                 fg="blue", font=self.font)\
-            .grid(row=3, column=0, columnspan=3, sticky="w")
+                 fg="blue", font="TkFixedFont", width=40, anchor="w")\
+            .grid(row=4, column=0, columnspan=3, sticky="w")
 
         # --- GCODE settings ---
         gcode_frame = tk.LabelFrame(left_frame, text="GCODE", font=self.font)
@@ -384,6 +390,15 @@ class DesignerTab(ttk.Frame):
             self.draw_shape(cmd, segments, tag=f"shape{i}")
         self._draw_speed_tab_marks()
         self._draw_selection()
+        # Dang keo ma bi ve lai (resize/zoom) -> dat lai block vao vi
+        # tri dang keo de preview khong bi nhay ve cho cu
+        d = getattr(self, "_drag", None)
+        if d and d.get("off") and d.get("tags"):
+            ox, oy = d["off"]
+            for t in d["tags"]:
+                self.canvas.move(t, ox * self.scale, -oy * self.scale)
+            if d.get("blocked"):
+                self.canvas.itemconfigure("selbox", outline="red")
 
         if anchor is not None:
             sx, sy, wx, wy = anchor
@@ -798,7 +813,7 @@ class DesignerTab(ttk.Frame):
         self.canvas.create_rectangle(px1 - pad, py1 - pad, px2 + pad,
                                      py2 + pad, outline="#0078d7",
                                      dash=(4, 3), width=2,
-                                     tags="selection")
+                                     tags=("selection", "selbox"))
         blk = self.add_blocks[line]
         self.canvas.create_text(px1 - pad, py1 - pad - 2, anchor="sw",
                                 text=f"ADD {self._fmt(blk['dx'])} "
@@ -806,6 +821,10 @@ class DesignerTab(ttk.Frame):
                                      f"{blk['label']}  (line {line})",
                                 fill="#0078d7", font=("Arial", 9, "bold"),
                                 tags="selection")
+
+    def _set_status(self, line, x, y, note=""):
+        self.drag_status_var.set(
+            f"ADD L{line:<4d} x={x:8.2f} y={y:8.2f} {note:<8}")
 
     @staticmethod
     def _fmt(v):
@@ -855,40 +874,82 @@ class DesignerTab(ttk.Frame):
         }
         if changed:
             self.render_keep_scroll()
-        self.drag_status_var.set(
-            f"ADD line {line}: x={self._fmt(blk['dx'])} "
-            f"y={self._fmt(blk['dy'])}")
+        # Tinh lai diem bat dau SAU khi ve lai (scale co the doi)
+        self._drag["start_world"] = self.to_world(px, py)
+        # Chuan bi kiem tra giao cat: block keo vs MOI hinh con lai
+        inside = set(self._block_shape_indices(line))
+        self._drag["collider"] = Collider(
+            [(i, self.shapes[i][1]) for i in inside],
+            [(i, segs) for i, (_c, segs) in enumerate(self.shapes)
+             if i not in inside])
+        # Neu vi tri ban dau da giao thi cho keo tu do den khi hop le
+        self._drag["enforce"] = not self._drag["collider"].collides(0, 0)
+        self._drag["off"] = (0.0, 0.0)
+        self._set_status(line, blk["dx"], blk["dy"])
 
     def _on_drag_motion(self, event):
         d = self._drag
         if d is None:
             return
         px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
-        lx, ly = d["last_px"]
-        for t in d["tags"]:
-            self.canvas.move(t, px - lx, py - ly)
-        d["last_px"] = (px, py)
-        wx, wy = self.to_world(px, py)
-        sx, sy = d["start_world"]
-        d["new"] = (d["dx0"] + wx - sx, d["dy0"] + wy - sy)
         if abs(px - d["start_px"][0]) + abs(py - d["start_px"][1]) > 1:
             d["moved"] = True
-        self.drag_status_var.set(
-            f"ADD line {d['line']}: x={self._fmt(d['new'][0])} "
-            f"y={self._fmt(d['new'][1])}  (dragging, Esc to cancel)")
+        wx, wy = self.to_world(px, py)
+        sx, sy = d["start_world"]
+        cand = (wx - sx, wy - sy)
+        col = d["collider"]
+        blocked = False
+        if self.no_overlap_var.get():
+            if d["enforce"]:
+                off, blocked = col.resolve(d["off"], cand)
+            else:
+                off = cand
+                if not col.collides(*off):
+                    d["enforce"] = True
+        else:
+            off = cand
+        # Di chuyen item tren canvas theo offset moi (re, khong ve lai)
+        ox, oy = d["off"]
+        dpx = (off[0] - ox) * self.scale
+        dpy = -(off[1] - oy) * self.scale
+        for t in d["tags"]:
+            self.canvas.move(t, dpx, dpy)
+        d["off"] = off
+        d["blocked"] = blocked
+        d["new"] = (d["dx0"] + off[0], d["dy0"] + off[1])
+        self.canvas.itemconfigure(
+            "selbox", outline="red" if blocked else "#0078d7")
+        self._set_status(d["line"], d["new"][0], d["new"][1],
+                         "BLOCKED" if blocked else "drag")
 
     def _on_drag_release(self, event):
         d = self._drag
         self._drag = None
         if d is None or not d["moved"] or "new" not in d:
             return
-        self._write_add_xy(d["line"], *d["new"])
+        x, y = self._safe_round(d)
+        self._write_add_xy(d["line"], x, y)
         self.preview_keep_scroll()
         blk = self.add_blocks.get(d["line"])
         if blk:
-            self.drag_status_var.set(
-                f"ADD line {d['line']}: x={self._fmt(blk['dx'])} "
-                f"y={self._fmt(blk['dy'])}")
+            self._set_status(d["line"], blk["dx"], blk["dy"])
+
+    def _safe_round(self, d):
+        # Lam tron 0.01mm; neu lam tron gay giao cat thi thu cac to hop
+        # floor/ceil, chon cai hop le gan nhat
+        x, y = d["new"]
+        rx, ry = round(x, 2), round(y, 2)
+        if not (self.no_overlap_var.get() and d["enforce"]):
+            return rx, ry
+        col = d["collider"]
+        opts = [(rx, ry)] + [(math.floor(x * 100 + fx) / 100,
+                              math.floor(y * 100 + fy) / 100)
+                             for fx in (0, 1) for fy in (0, 1)]
+        opts.sort(key=lambda p: math.hypot(p[0] - x, p[1] - y))
+        for px_, py_ in opts:
+            if not col.collides(px_ - d["dx0"], py_ - d["dy0"]):
+                return px_, py_
+        return x, y
 
     def _on_drag_cancel(self, _event=None):
         if self._drag is None:
