@@ -84,11 +84,22 @@ class DesignerTab(ttk.Frame):
         tk.Button(top_btn_frame, text="Help", command=self.show_help,
                   font=self.font).pack(side="left")
 
-        # --- Text input ---
+        # --- Text input (fixed row count; scrollbar instead of a tall field) ---
         tk.Label(left_frame, text="Shapes", font=self.font).pack(anchor="w")
-        self.text_input = tk.Text(left_frame, width=40, height=28,
-                                   font=("Consolas", 11), undo=True)
-        self.text_input.pack(fill="y")
+        editor = ttk.Frame(left_frame)
+        # fill=x only — do not expand vertically or geometry will undo height=14
+        editor.pack(fill="x", pady=(0, 2))
+        self.text_input = tk.Text(
+            editor, width=40, height=14, font=("Consolas", 11), undo=True,
+            wrap="none",
+        )
+        self.text_scroll = ttk.Scrollbar(
+            editor, orient="vertical", command=self.text_input.yview,
+        )
+        self.text_input.configure(yscrollcommand=self.text_scroll.set)
+        self.text_input.grid(row=0, column=0, sticky="nsew")
+        self.text_scroll.grid(row=0, column=1, sticky="ns")
+        editor.columnconfigure(0, weight=1)
 
         sample = ("C 50 50 30\nR 20 30 40 50\nRC 120 100 50 30\n"
                    "LV 10 10 100\nLH 50 50 80\nL 10 10 100 100\n")

@@ -229,6 +229,7 @@ class TkSmokeTests(unittest.TestCase):
 
     def test_custom_designer_preview(self):
         import tkinter as tk
+        from tkinter import ttk
         from engraver_ctrl.tab_designer import DesignerTab
 
         class Host:
@@ -237,17 +238,41 @@ class TkSmokeTests(unittest.TestCase):
 
         win = tk.Toplevel(self.root)
         win.withdraw()
-        nb = tk.ttk.Notebook(win)
+        nb = ttk.Notebook(win)
         nb.pack(fill="both", expand=True)
         tab = DesignerTab(nb, Host())
         nb.add(tab, text="Custom")
-        # Put a simple shape and trigger draw if API exists
-        if hasattr(tab, "text_input"):
-            tab.text_input.delete("1.0", "end")
-            tab.text_input.insert("1.0", "R 0 0 20 20\n")
-            tab.preview()
+        self.assertEqual(int(tab.text_input.cget("height")), 14)
+        self.assertTrue(hasattr(tab, "text_scroll"))
+        # Scrollbar <-> Text wiring (Tcl command names, not Python callables)
+        self.assertTrue(str(tab.text_input.cget("yscrollcommand")))
+        self.assertIn("yview", str(tab.text_scroll.cget("command")))
+        # Scrollbar must move the view when content is taller than 14 rows
+        many = "\n".join(f"R 0 {i} 10 10" for i in range(40))
+        tab.text_input.delete("1.0", "end")
+        tab.text_input.insert("1.0", many + "\n")
+        self.root.update_idletasks()
+        before = tab.text_input.yview()
+        tab.text_input.yview_moveto(1.0)
+        self.root.update_idletasks()
+        after = tab.text_input.yview()
+        self.assertNotEqual(before, after)
+        tab.text_input.delete("1.0", "end")
+        tab.text_input.insert("1.0", "R 0 0 20 20\n")
+        tab.preview()
         self.root.update_idletasks()
         win.destroy()
+
+    def test_notebook_tab_padding_configured(self):
+        from tkinter import ttk
+        from common.ui import style_notebooks, FONT_FAMILY
+
+        style_notebooks(self.root, size=10)
+        style = ttk.Style(self.root)
+        pad = style.lookup("TNotebook.Tab", "padding")
+        self.assertTrue(pad, "TNotebook.Tab padding should be set")
+        # Expect generous horizontal padding (16) somewhere in the value
+        self.assertIn("16", str(pad).replace(" ", ""))
 
     def test_shutdown_closes_fake_serial(self):
         from engraver_ctrl.tab_machine import MachineTab
@@ -296,6 +321,36 @@ def save_screenshots():
         import mss
         import mss.tools
         grabber = mss.mss()
+        # Focus Engraver/Custom with a tall sample DSL so scrollbar is meaningful
+        shell.main_nb.select(0)
+        root.update()
+        engraver_frame = shell.main_nb.nametowidget(shell.main_nb.tabs()[0])
+        from tkinter import ttk as _ttk
+        nested = [c for c in engraver_frame.winfo_children() if isinstance(c, _ttk.Notebook)]
+        if nested and shell.machine_tab is not None:
+            # Custom is index 3
+            nested[0].select(3)
+            custom = nested[0].nametowidget(nested[0].tabs()[3])
+            if hasattr(custom, "text_input"):
+                sample = "\n".join(
+                    ["# sample Custom DSL", "ADD 0 0 Demo"]
+                    + [f"R 0 {i*12} 40 10" for i in range(24)]
+                    + ["END"]
+                )
+                custom.text_input.delete("1.0", "end")
+                custom.text_input.insert("1.0", sample)
+                try:
+                    custom.preview()
+                except Exception:
+                    pass
+            root.update()
+            root.update_idletasks()
+            path = os.path.join(out_dir, "unified_custom_dsl_scrollbar.png")
+            shot = grabber.grab(grabber.monitors[0])
+            mss.tools.to_png(shot.rgb, shot.size, output=path)
+            if os.path.isfile(path) and os.path.getsize(path) > 0:
+                paths.append(path)
+
         for i, name in enumerate(["Engraver", "Frame Toolkit", "DSL Library", "DSL Nesting"]):
             shell.main_nb.select(i)
             root.update()

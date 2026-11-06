@@ -87,4 +87,35 @@ def init_fonts(root, size=10):
     except Exception:
         pass
     root.option_add("*Font", (FONT_FAMILY, size))
+    style_notebooks(root, size=size)
     return fonts(size)
+
+
+def style_notebooks(root, size=10):
+    """Give Notebook tabs more padding so labels are easier to separate.
+
+    Uses the existing theme (does not force clam/alt) so Windows native
+    themes keep working; padding is the portable lever.
+    """
+    try:
+        from tkinter import ttk
+        style = ttk.Style(root)
+        # (horizontal, vertical) padding inside each tab label chip
+        style.configure(
+            "TNotebook.Tab",
+            font=(FONT_FAMILY, size),
+            padding=(16, 7),
+        )
+        # Small inset around the tab strip / content edge
+        style.configure("TNotebook", padding=4)
+        # Selected tab: slightly more padding when the theme allows map expand
+        try:
+            style.map(
+                "TNotebook.Tab",
+                padding=[("selected", (16, 8)), ("!selected", (16, 7))],
+            )
+        except Exception:
+            pass
+    except Exception:
+        pass
+
