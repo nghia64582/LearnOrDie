@@ -4,8 +4,9 @@ Beam Stick DSL Tool - GUI
 Generates DSL for L / T / Plus cross-section beam sticks (finger-jointed
 from flat sheet material, 3mm joint feature size).
 
-Input: number of L sticks, T sticks, Plus sticks, and a single stick length
-(mm) shared by all of them.
+Input: number of L sticks, T sticks, Plus sticks, a single stick length
+(mm) shared by all of them, and strip width (mm, default 10; must be
+greater than the 3mm material thickness).
 
 Output: DSL text (ADD/M/P/R/RC/END blocks) + canvas preview + Copy DSL button.
 
@@ -15,7 +16,7 @@ Run locally with: python beam_dsl_gui.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from frame_creator.beam_dsl_core import build_sheet
+from frame_creator.beam_dsl_core import TOOTH, build_sheet
 
 # ----------------------------------------------------------------------------
 # Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)
@@ -55,23 +56,30 @@ class BeamDslApp:
             self.vars[key] = v
 
         add_row(0, "Stick length (mm):", "length", 60)
-        ttk.Separator(frame).grid(row=1, column=0, columnspan=2, sticky="ew", pady=6)
-        add_row(2, "Number of L sticks:", "n_L", 3)
-        add_row(3, "Number of T sticks:", "n_T", 3)
-        add_row(4, "Number of Plus sticks:", "n_plus", 3)
+
+        wrow = ttk.Frame(frame)
+        wrow.grid(row=1, column=0, columnspan=2, pady=(2, 0), sticky="w")
+        ttk.Label(wrow, text="Strip width (mm):").grid(row=0, column=0, sticky="w")
+        self.width_var = tk.StringVar(value="10")
+        ttk.Entry(wrow, textvariable=self.width_var, width=8).grid(row=0, column=1, padx=(6, 0))
+
+        ttk.Separator(frame).grid(row=2, column=0, columnspan=2, sticky="ew", pady=6)
+        add_row(3, "Number of L sticks:", "n_L", 3)
+        add_row(4, "Number of T sticks:", "n_T", 3)
+        add_row(5, "Number of Plus sticks:", "n_plus", 3)
 
         self.generate_btn = ttk.Button(frame, text="Generate", command=self.on_generate)
-        self.generate_btn.grid(row=5, column=0, columnspan=2, pady=10, sticky="ew")
+        self.generate_btn.grid(row=6, column=0, columnspan=2, pady=10, sticky="ew")
 
         self.copy_btn = ttk.Button(frame, text="Copy DSL", command=self.on_copy, state="disabled")
-        self.copy_btn.grid(row=6, column=0, columnspan=2, pady=2, sticky="ew")
+        self.copy_btn.grid(row=7, column=0, columnspan=2, pady=2, sticky="ew")
 
         self.result_var = tk.StringVar(value="")
         ttk.Label(frame, textvariable=self.result_var, wraplength=200, font=(FONT_FAMILY, 9, "bold")
-                  ).grid(row=7, column=0, columnspan=2, pady=(10, 0), sticky="w")
+                  ).grid(row=8, column=0, columnspan=2, pady=(10, 0), sticky="w")
 
         legend = ttk.Frame(frame)
-        legend.grid(row=8, column=0, columnspan=2, pady=(20, 0), sticky="w")
+        legend.grid(row=9, column=0, columnspan=2, pady=(20, 0), sticky="w")
         for i, (kind, label) in enumerate([("L", "L stick"), ("T", "T stick"), ("P", "Plus stick")]):
             sw = tk.Canvas(legend, width=14, height=14, highlightthickness=1,
                             highlightbackground="black", bg=KIND_COLOR[kind])
@@ -103,17 +111,24 @@ class BeamDslApp:
             n_L = int(self.vars["n_L"].get())
             n_T = int(self.vars["n_T"].get())
             n_plus = int(self.vars["n_plus"].get())
+            strip_width = float(self.width_var.get())
         except ValueError:
             raise ValueError("All inputs must be numbers.")
         if length <= 0:
             raise ValueError("Length must be positive.")
         if min(n_L, n_T, n_plus) < 0:
             raise ValueError("Counts must be >= 0.")
-        return length, n_L, n_T, n_plus
+        if strip_width <= 0:
+            raise ValueError("Strip width must be a positive number.")
+        if strip_width <= TOOTH:
+            raise ValueError(
+                f"Strip width must be greater than material thickness ({TOOTH:g} mm)."
+            )
+        return length, n_L, n_T, n_plus, strip_width
 
     def on_generate(self):
         try:
-            length, n_L, n_T, n_plus = self._read_inputs()
+            length, n_L, n_T, n_plus, strip_width = self._read_inputs()
         except ValueError as e:
             messagebox.showerror("Invalid input", str(e))
             return
@@ -122,7 +137,8 @@ class BeamDslApp:
             messagebox.showerror("Invalid input", "Enter at least one stick.")
             return
 
-        dsl_text, instances, total_width = build_sheet(n_L, n_T, n_plus, length)
+        dsl_text, instances, total_width = build_sheet(
+            n_L, n_T, n_plus, length, strip_width=strip_width)
         self.dsl_text = dsl_text
         self.copy_btn.config(state="normal")
         self.result_var.set(
