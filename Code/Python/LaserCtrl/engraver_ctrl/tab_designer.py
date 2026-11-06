@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+from engraver_ctrl.collision import Collider
 
 
 class DesignerTab(ttk.Frame):
@@ -62,6 +63,11 @@ class DesignerTab(ttk.Frame):
         self.offset_y = 0.0
         self.view_left, self.view_bottom = -10.0, -10.0
         self.view_right, self.view_top = 100.0, 100.0
+        # Drag & drop component (khoi ADD ... END)
+        self.shape_adds = []      # moi shape -> tuple dong ADD (ngoai->trong)
+        self.add_blocks = {}      # dong ADD -> {dx, dy, label, cum}
+        self.selected_add = None  # dong (1-based) cua ADD dang chon
+        self._drag = None
         self.build_gui()
 
     def build_gui(self):
@@ -81,7 +87,7 @@ class DesignerTab(ttk.Frame):
         # --- Text input ---
         tk.Label(left_frame, text="Shapes", font=self.font).pack(anchor="w")
         self.text_input = tk.Text(left_frame, width=40, height=28,
-                                   font=("Consolas", 11))
+                                   font=("Consolas", 11), undo=True)
         self.text_input.pack(fill="y")
 
         sample = ("C 50 50 30\nR 20 30 40 50\nRC 120 100 50 30\n"
@@ -105,6 +111,24 @@ class DesignerTab(ttk.Frame):
         tk.Label(view_frame, text="Wheel: zoom at cursor, "
                  "middle-drag: pan", fg="gray")\
             .grid(row=1, column=0, columnspan=3, sticky="w")
+        tk.Label(view_frame, text="Left-drag shape: move its ADD block, "
+                 "Shift/Alt+click: parent ADD, Esc: cancel, Ctrl+Z: undo",
+                 fg="gray", wraplength=300, justify="left")\
+            .grid(row=2, column=0, columnspan=3, sticky="w")
+        self.no_overlap_var = tk.BooleanVar(value=True)
+        self.no_cross_x_var = tk.BooleanVar(value=True)
+        self.no_cross_y_var = tk.BooleanVar(value=True)
+        chk = tk.Frame(view_frame)
+        chk.grid(row=3, column=0, columnspan=3, sticky="w")
+        for txt, var in (("No overlap", self.no_overlap_var),
+                         ("No cross X axis", self.no_cross_x_var),
+                         ("No cross Y axis", self.no_cross_y_var)):
+            tk.Checkbutton(chk, text=txt, variable=var).pack(side="left")
+        # Do dai co dinh + font mono de label khong lam panel co gian
+        self.drag_status_var = tk.StringVar(value="")
+        tk.Label(view_frame, textvariable=self.drag_status_var,
+                 fg="blue", font="TkFixedFont", width=40, anchor="w")\
+            .grid(row=4, column=0, columnspan=3, sticky="w")
 
         # --- GCODE settings ---
         gcode_frame = tk.LabelFrame(left_frame, text="GCODE", font=self.font)
@@ -168,6 +192,12 @@ class DesignerTab(ttk.Frame):
                          lambda e: self.canvas.scan_mark(e.x, e.y))
         self.canvas.bind("<B2-Motion>",
                          lambda e: self.canvas.scan_dragto(e.x, e.y, gain=1))
+        self.canvas.bind("<ButtonPress-1>", self._on_drag_press)
+        self.canvas.bind("<B1-Motion>", self._on_drag_motion)
+        self.canvas.bind("<ButtonRelease-1>", self._on_drag_release)
+        self.canvas.bind("<Escape>", self._on_drag_cancel)
+        self.canvas.bind("<Control-z>", self._on_undo)
+        self.canvas.bind("<Control-Z>", self._on_undo)
 
         self.preview()
 
@@ -357,11 +387,23 @@ class DesignerTab(ttk.Frame):
         self.canvas.configure(scrollregion=(0, 0, cw, ch))
 
         self.draw_grid()
-        for x, y, label in self._add_labels:
-            self._draw_add_label(x, y, label)
-        for cmd, segments in self.shapes:
-            self.draw_shape(cmd, segments)
+        for i, (x, y, label) in enumerate(self._add_labels):
+            line = (self._add_label_lines[i]
+                    if i < len(self._add_label_lines) else None)
+            self._draw_add_label(x, y, label, tag=f"addlbl{line}")
+        for i, (cmd, segments) in enumerate(self.shapes):
+            self.draw_shape(cmd, segments, tag=f"shape{i}")
         self._draw_speed_tab_marks()
+        self._draw_selection()
+        # Dang keo ma bi ve lai (resize/zoom) -> dat lai block vao vi
+        # tri dang keo de preview khong bi nhay ve cho cu
+        d = getattr(self, "_drag", None)
+        if d and d.get("off") and d.get("tags"):
+            ox, oy = d["off"]
+            for t in d["tags"]:
+                self.canvas.move(t, ox * self.scale, -oy * self.scale)
+            if d.get("blocked"):
+                self.canvas.itemconfigure("selbox", outline="red")
 
         if anchor is not None:
             sx, sy, wx, wy = anchor
@@ -465,6 +507,9 @@ class DesignerTab(ttk.Frame):
         try:
             self.shapes = []
             self._add_labels = []
+            self._add_label_lines = []
+            self.shape_adds = []
+            self.add_blocks = {}
 
             # Key cua cac doan bi ep buoc la tab (vd tab hinh tron
             # lon), dung khi xuat gcode de biet doan nao phai cat
@@ -493,7 +538,9 @@ class DesignerTab(ttk.Frame):
             next_is_priority = False
             priority_counter = 0
 
-            for line in text.strip().splitlines():
+            # Duyet theo so dong that (1-based) cua Text widget de
+            # map tung hinh ve dong ADD chua no (phuc vu keo tha)
+            for lineno, line in enumerate(text.splitlines(), start=1):
                 line = line.strip()
 
                 if not line or line.startswith("#"):
@@ -514,10 +561,14 @@ class DesignerTab(ttk.Frame):
                     except ValueError:
                         continue
                     label = " ".join(parts[3:])
-                    delta_stack.append((dx, dy, 0.0, label))
+                    delta_stack.append((dx, dy, 0.0, label, lineno))
                     cum_x = sum(d[0] for d in delta_stack)
                     cum_y = sum(d[1] for d in delta_stack)
                     self._add_labels.append((cum_x, cum_y, label))
+                    self._add_label_lines.append(lineno)
+                    self.add_blocks[lineno] = {
+                        "dx": dx, "dy": dy, "label": label,
+                        "cum": (cum_x, cum_y)}
                     continue
 
                 if cmd == "ROTATE":
@@ -527,7 +578,7 @@ class DesignerTab(ttk.Frame):
                         angle = float(parts[1])
                     except ValueError:
                         continue
-                    delta_stack.append((0.0, 0.0, angle, None))
+                    delta_stack.append((0.0, 0.0, angle, None, None))
                     continue
 
                 if cmd == "END":
@@ -599,7 +650,11 @@ class DesignerTab(ttk.Frame):
                     next_is_priority = False
 
                 self.shapes.append((cmd, segments))
+                self.shape_adds.append(tuple(
+                    d[4] for d in delta_stack if d[4] is not None))
 
+            if self.selected_add not in self.add_blocks:
+                self.selected_add = None
             # Tinh lai khung nhin theo hinh, ve lai (giu muc zoom)
             self._update_extent()
             self.render()
@@ -692,18 +747,18 @@ class DesignerTab(ttk.Frame):
                                  px + size_px, py - size_px,
                                  fill=color, width=2)
 
-    def _draw_add_label(self, x, y, label):
+    def _draw_add_label(self, x, y, label, tag=None):
         # Cham danh dau + label cho lop ADD, de nguoi dung de hinh
         # dung lop delta nay ap dung tu dau tren canvas
         px, py = self.to_canvas(x, y)
         self.canvas.create_oval(px - 3, py - 3, px + 3, py + 3,
-                                 fill="red", outline="")
+                                 fill="red", outline="", tags=tag)
         if label:
             self.canvas.create_text(px + 5, py - 5, text=label,
                                      font=self.ADD_LABEL_FONT,
-                                     anchor="sw", fill="red")
+                                     anchor="sw", fill="red", tags=tag)
 
-    def draw_shape(self, cmd, segments):
+    def draw_shape(self, cmd, segments, tag=None):
         colors = {"C": "black", "A": "black", "R": "green",
                   "RC": "green", "P": "purple", "M": "orange",
                   "JF": "red", "JM": "blue"}
@@ -713,7 +768,241 @@ class DesignerTab(ttk.Frame):
             px1, py1 = self.to_canvas(x1, y1)
             px2, py2 = self.to_canvas(x2, y2)
             self.canvas.create_line(px1, py1, px2, py2,
-                                     fill=color, width=2)
+                                     fill=color, width=2, tags=tag)
+
+    # ------------------------------------------------------------------
+    # Drag & drop component (phase 1: keo tha thu cong, chua co
+    # kiem tra giao cat / snap)
+    #
+    # Quy tac chon: click trai vao 1 hinh -> chon ADD TRONG CUNG chua
+    # hinh do. Shift+click hoac Alt+click vao hinh dang thuoc khoi dang
+    # chon -> leo len ADD cha (het cha thi quay vong ve trong cung).
+    # Click vao hinh thuoc khoi dang chon (khong giu Shift/Alt) -> giu
+    # nguyen khoi dang chon, de keo duoc khoi cha sau khi leo len.
+    # Hinh nam ngoai moi ADD va vung trong -> bo chon, khong keo.
+    #
+    # Toa do: diem world = R(tong goc) * p + tong(dx, dy) cua MOI lop
+    # trong stack (dx, dy cua ADD khong bi xoay boi ROTATE cha), nen
+    # delta keo tren canvas cong thang vao x y cua dong ADD.
+    # ------------------------------------------------------------------
+    def _block_shape_indices(self, line):
+        return [i for i, adds in enumerate(self.shape_adds) if line in adds]
+
+    def _block_child_lines(self, line):
+        # Dong ADD con (ke ca chinh no) nam trong khoi
+        lines = {line}
+        for adds in self.shape_adds:
+            if line in adds:
+                lines.update(adds[adds.index(line):])
+        return lines
+
+    def _block_bbox(self, line):
+        xs, ys = [], []
+        for i in self._block_shape_indices(line):
+            for x1, y1, x2, y2 in self.shapes[i][1]:
+                xs += [x1, x2]
+                ys += [y1, y2]
+        if not xs:
+            cx, cy = self.add_blocks[line]["cum"]
+            return cx, cy, cx, cy
+        return min(xs), min(ys), max(xs), max(ys)
+
+    def _draw_selection(self):
+        line = self.selected_add
+        if line is None or line not in self.add_blocks:
+            return
+        x1, y1, x2, y2 = self._block_bbox(line)
+        px1, py1 = self.to_canvas(x1, y2)
+        px2, py2 = self.to_canvas(x2, y1)
+        pad = 4
+        self.canvas.create_rectangle(px1 - pad, py1 - pad, px2 + pad,
+                                     py2 + pad, outline="#0078d7",
+                                     dash=(4, 3), width=2,
+                                     tags=("selection", "selbox"))
+        blk = self.add_blocks[line]
+        self.canvas.create_text(px1 - pad, py1 - pad - 2, anchor="sw",
+                                text=f"ADD {self._fmt(blk['dx'])} "
+                                     f"{self._fmt(blk['dy'])} "
+                                     f"{blk['label']}  (line {line})",
+                                fill="#0078d7", font=("Arial", 9, "bold"),
+                                tags="selection")
+
+    def _set_status(self, line, x, y, note=""):
+        self.drag_status_var.set(
+            f"ADD L{line:<4d} x={x:8.2f} y={y:8.2f} {note:<8}")
+
+    @staticmethod
+    def _fmt(v):
+        s = f"{round(v, 2):.2f}".rstrip("0").rstrip(".")
+        return "0" if s in ("-0", "") else s
+
+    def _shape_at(self, px, py, r=5):
+        items = self.canvas.find_overlapping(px - r, py - r, px + r, py + r)
+        for item in reversed(items):
+            for t in self.canvas.gettags(item):
+                if t.startswith("shape"):
+                    return int(t[5:])
+        return None
+
+    def _on_drag_press(self, event):
+        self.canvas.focus_set()
+        px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        idx = self._shape_at(px, py)
+        self._drag = None
+        if idx is None or not self.shape_adds[idx]:
+            if self.selected_add is not None:
+                self.selected_add = None
+                self.drag_status_var.set("")
+                self.render_keep_scroll()
+            return
+        adds = self.shape_adds[idx]
+        walk_up = bool(event.state & 0x0001) or bool(event.state & 0x0008) \
+            or bool(event.state & 0x20000)
+        if self.selected_add in adds:
+            if walk_up:
+                k = adds.index(self.selected_add)
+                line = adds[k - 1] if k > 0 else adds[-1]
+            else:
+                line = self.selected_add
+        else:
+            line = adds[-1]
+        changed = line != self.selected_add
+        self.selected_add = line
+        blk = self.add_blocks[line]
+        self._drag = {
+            "line": line, "start_world": self.to_world(px, py),
+            "start_px": (px, py), "last_px": (px, py),
+            "dx0": blk["dx"], "dy0": blk["dy"], "moved": False,
+            "tags": [f"shape{i}" for i in self._block_shape_indices(line)]
+                    + [f"addlbl{l}" for l in self._block_child_lines(line)]
+                    + ["selection"],
+        }
+        if changed:
+            self.render_keep_scroll()
+        # Tinh lai diem bat dau SAU khi ve lai (scale co the doi)
+        self._drag["start_world"] = self.to_world(px, py)
+        # Chuan bi kiem tra giao cat: block keo vs MOI hinh con lai
+        inside = set(self._block_shape_indices(line))
+        self._drag["collider"] = Collider(
+            [(i, self.shapes[i][1]) for i in inside],
+            [(i, segs) for i, (_c, segs) in enumerate(self.shapes)
+             if i not in inside],
+            no_overlap=self.no_overlap_var.get(),
+            no_cross_x=self.no_cross_x_var.get(),
+            no_cross_y=self.no_cross_y_var.get())
+        # Neu vi tri ban dau da giao thi cho keo tu do den khi hop le
+        self._drag["enforce"] = not self._drag["collider"].collides(0, 0)
+        self._drag["off"] = (0.0, 0.0)
+        self._set_status(line, blk["dx"], blk["dy"])
+
+    def _on_drag_motion(self, event):
+        d = self._drag
+        if d is None:
+            return
+        px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        if abs(px - d["start_px"][0]) + abs(py - d["start_px"][1]) > 1:
+            d["moved"] = True
+        wx, wy = self.to_world(px, py)
+        sx, sy = d["start_world"]
+        cand = (wx - sx, wy - sy)
+        col = d["collider"]
+        blocked = False
+        if col.active:
+            if d["enforce"]:
+                off, blocked = col.resolve(d["off"], cand)
+            else:
+                off = cand
+                if not col.collides(*off):
+                    d["enforce"] = True
+        else:
+            off = cand
+        # Di chuyen item tren canvas theo offset moi (re, khong ve lai)
+        ox, oy = d["off"]
+        dpx = (off[0] - ox) * self.scale
+        dpy = -(off[1] - oy) * self.scale
+        for t in d["tags"]:
+            self.canvas.move(t, dpx, dpy)
+        d["off"] = off
+        d["blocked"] = blocked
+        d["new"] = (d["dx0"] + off[0], d["dy0"] + off[1])
+        self.canvas.itemconfigure(
+            "selbox", outline="red" if blocked else "#0078d7")
+        self._set_status(d["line"], d["new"][0], d["new"][1],
+                         "BLOCKED" if blocked else "drag")
+
+    def _on_drag_release(self, event):
+        d = self._drag
+        self._drag = None
+        if d is None or not d["moved"] or "new" not in d:
+            return
+        x, y = self._safe_round(d)
+        self._write_add_xy(d["line"], x, y)
+        self.preview_keep_scroll()
+        blk = self.add_blocks.get(d["line"])
+        if blk:
+            self._set_status(d["line"], blk["dx"], blk["dy"])
+
+    def _safe_round(self, d):
+        # Lam tron 0.01mm; neu lam tron gay giao cat thi thu cac to hop
+        # floor/ceil, chon cai hop le gan nhat
+        x, y = d["new"]
+        rx, ry = round(x, 2), round(y, 2)
+        if not (d["collider"].active and d["enforce"]):
+            return rx, ry
+        col = d["collider"]
+        opts = [(rx, ry)] + [(math.floor(x * 100 + fx) / 100,
+                              math.floor(y * 100 + fy) / 100)
+                             for fx in (0, 1) for fy in (0, 1)]
+        opts.sort(key=lambda p: math.hypot(p[0] - x, p[1] - y))
+        for px_, py_ in opts:
+            if not col.collides(px_ - d["dx0"], py_ - d["dy0"]):
+                return px_, py_
+        return x, y
+
+    def _on_drag_cancel(self, _event=None):
+        if self._drag is None:
+            return
+        self._drag = None
+        self.drag_status_var.set("Drag cancelled")
+        self.render_keep_scroll()
+
+    def _write_add_xy(self, line, x, y):
+        # Chi thay 2 token x y cua dung dong ADD, giu nguyen indent,
+        # label va phan con lai cua dong
+        import re
+        txt = self.text_input.get(f"{line}.0", f"{line}.end")
+        m = re.match(r"(\s*ADD\s+)(\S+)(\s+)(\S+)(.*)$", txt)
+        if not m:
+            return
+        new = (m.group(1) + self._fmt(x) + m.group(3) + self._fmt(y)
+               + m.group(5))
+        # Gop delete + insert thanh 1 buoc undo
+        self.text_input.configure(autoseparators=False)
+        self.text_input.edit_separator()
+        self.text_input.delete(f"{line}.0", f"{line}.end")
+        self.text_input.insert(f"{line}.0", new)
+        self.text_input.edit_separator()
+        self.text_input.configure(autoseparators=True)
+
+    def _on_undo(self, _event=None):
+        try:
+            self.text_input.edit_undo()
+        except tk.TclError:
+            return "break"
+        self.preview_keep_scroll()
+        return "break"
+
+    def render_keep_scroll(self):
+        xv, yv = self.canvas.xview()[0], self.canvas.yview()[0]
+        self.render()
+        self.canvas.xview_moveto(xv)
+        self.canvas.yview_moveto(yv)
+
+    def preview_keep_scroll(self):
+        xv, yv = self.canvas.xview()[0], self.canvas.yview()[0]
+        self.preview()
+        self.canvas.xview_moveto(xv)
+        self.canvas.yview_moveto(yv)
 
     def _arc_segments_with_tabs(self, cx, cy, r, s_alpha, e_alpha):
         # Sinh segment cho 1 cung tu s_alpha den e_alpha (hinh tron
