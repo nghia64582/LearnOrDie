@@ -1,6 +1,6 @@
 # frame_creator
 
-Frame Toolkit — launcher hợp nhất 4 công cụ chính trong một cửa sổ (ttk.Notebook).
+Frame Toolkit — launcher hợp nhất 5 công cụ chính trong một cửa sổ (ttk.Notebook).
 
 ## Các file
 
@@ -9,6 +9,7 @@ Frame Toolkit — launcher hợp nhất 4 công cụ chính trong một cửa s�
 - **beam_dsl_core.py** + **beam_dsl_gui.py** — Sinh DSL cho thanh dầm L / T / Plus (finger joint, dày 3mm). Core tính hình học, GUI nhập số lượng + chiều dài.
 - **rail_skeleton_core.py** + **rail_skeleton_gui.py** — Công cụ khung xương (skeleton).
 - **rail_cutlist_core.py** + **rail_cutlist_gui.py** — Công cụ dầm ngang / rail cut-list.
+- **box_core.py** + **box_gui.py** — Tab hộp: nhập khung đường tâm + H + số frame, xuất một file DSL (rails/joints/beams).
 
 ## Chạy
 

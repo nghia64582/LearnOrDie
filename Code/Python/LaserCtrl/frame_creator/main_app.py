@@ -1,7 +1,7 @@
 """
 Frame Toolkit - unified launcher
 
-Combines all 4 standalone tools into one window using tabs (ttk.Notebook).
+Combines all 5 standalone tools into one window using tabs (ttk.Notebook).
 Each tool's own code is reused as-is (imported as a module) -- this file
 only wires them together, it does not duplicate any logic.
 
@@ -10,6 +10,7 @@ Place this file in the SAME folder as all of the following:
   beam_dsl_gui.py        + beam_dsl_core.py          (thanh dầm / beam stick tool)
   rail_skeleton_gui.py   + rail_skeleton_core.py     (khung xương / skeleton tool)
   rail_cutlist_gui.py                                (dầm ngang / rail cut-list tool)
+  box_gui.py            + box_core.py               (hộp / box frame tool)
 
 Run locally with: python main_app.py
 Requires: pip install ortools   (only needed for the "Mối nối" tab)
@@ -84,10 +85,15 @@ def main():
         import frame_creator.rail_cutlist_gui as m
         m.RailDslApp(frame)
 
+    def build_box(frame):
+        import frame_creator.box_gui as m
+        m.BoxApp(frame)
+
     add_tab(notebook, "1. Mối nối (Joint)", build_joint)
     add_tab(notebook, "2. Thanh dầm (Beam)", build_beam)
     add_tab(notebook, "3. Khung xương (Skeleton)", build_skeleton)
     add_tab(notebook, "4. Dầm ngang (Rail cut-list)", build_railcut)
+    add_tab(notebook, "5. Hộp (Box)", build_box)
 
     root.mainloop()
 

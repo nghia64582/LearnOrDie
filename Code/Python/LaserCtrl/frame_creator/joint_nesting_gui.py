@@ -19,8 +19,11 @@ Requires: pip install ortools
 import math
 import threading
 import queue
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+try:
+    import tkinter as tk
+    from tkinter import ttk, filedialog, messagebox
+except ImportError:  # allow solver helpers to load headless
+    tk = ttk = filedialog = messagebox = None
 
 from ortools.sat.python import cp_model
 

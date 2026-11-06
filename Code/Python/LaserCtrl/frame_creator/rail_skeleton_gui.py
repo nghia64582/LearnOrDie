@@ -30,6 +30,47 @@ FONT_FAMILY = "Segoe UI"
 FONT_SIZE = 10
 
 
+
+def draw_skeleton(canvas, sk, font_family=FONT_FAMILY, scale=3.0, margin=30):
+    """Draw a skeleton (segments, nodes, free ends) onto a Tk canvas."""
+    canvas.delete("all")
+
+    xs = [n["x"] for n in sk["nodes"]] or [0]
+    ys = [n["y"] for n in sk["nodes"]] or [0]
+    max_x, max_y = max(xs, default=100), max(ys, default=100)
+
+    def to_px(x, y):
+        return x * scale + margin, y * scale + margin
+
+    for s in sk["segments"]:
+        if s["orient"] == "H":
+            x0, y0 = to_px(s["x0"], s["y"])
+            x1, y1 = to_px(s["x1"], s["y"])
+        else:
+            x0, y0 = to_px(s["x"], s["y0"])
+            x1, y1 = to_px(s["x"], s["y1"])
+        canvas.create_line(x0, y0, x1, y1, fill="#333", width=4)
+        mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+        canvas.create_text(mx, my - 8, text=f"{s['length']:g}", fill="#333",
+                           font=(font_family, 8))
+
+    for n in sk["nodes"]:
+        px, py = to_px(n["x"], n["y"])
+        r = 6
+        canvas.create_oval(px - r, py - r, px + r, py + r,
+                           fill=NODE_COLOR[n["label"]], outline="black")
+
+    for (fx, fy) in sk["free_ends"]:
+        px, py = to_px(fx, fy)
+        r = 5
+        canvas.create_oval(px - r, py - r, px + r, py + r,
+                           fill="", outline="red", width=2, dash=(2, 2))
+
+    gw = max_x * scale + margin * 2
+    gh = max_y * scale + margin * 2
+    canvas.config(scrollregion=(0, 0, gw, gh))
+
+
 class SkeletonApp:
     def __init__(self, root):
         self.root = root
@@ -148,43 +189,7 @@ class SkeletonApp:
         self._draw_canvas(sk)
 
     def _draw_canvas(self, sk):
-        self.canvas.delete("all")
-        scale = 3.0
-        margin = 30
-
-        xs = [n["x"] for n in sk["nodes"]] or [0]
-        ys = [n["y"] for n in sk["nodes"]] or [0]
-        max_x, max_y = max(xs, default=100), max(ys, default=100)
-
-        def to_px(x, y):
-            return x * scale + margin, y * scale + margin
-
-        for s in sk["segments"]:
-            if s["orient"] == "H":
-                x0, y0 = to_px(s["x0"], s["y"])
-                x1, y1 = to_px(s["x1"], s["y"])
-            else:
-                x0, y0 = to_px(s["x"], s["y0"])
-                x1, y1 = to_px(s["x"], s["y1"])
-            self.canvas.create_line(x0, y0, x1, y1, fill="#333", width=4)
-            mx, my = (x0 + x1) / 2, (y0 + y1) / 2
-            self.canvas.create_text(mx, my - 8, text=f"{s['length']:g}", fill="#333", font=(FONT_FAMILY, 8))
-
-        for n in sk["nodes"]:
-            px, py = to_px(n["x"], n["y"])
-            r = 6
-            self.canvas.create_oval(px - r, py - r, px + r, py + r,
-                                     fill=NODE_COLOR[n["label"]], outline="black")
-
-        for (fx, fy) in sk["free_ends"]:
-            px, py = to_px(fx, fy)
-            r = 5
-            self.canvas.create_oval(px - r, py - r, px + r, py + r,
-                                     fill="", outline="red", width=2, dash=(2, 2))
-
-        gw = max_x * scale + margin * 2
-        gh = max_y * scale + margin * 2
-        self.canvas.config(scrollregion=(0, 0, gw, gh))
+        draw_skeleton(self.canvas, sk, font_family=FONT_FAMILY)
 
     def on_copy(self):
         if not self.cutlist_text:
