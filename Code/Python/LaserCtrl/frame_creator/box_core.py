@@ -6,13 +6,15 @@ column length H, a shared strip width, and a frame count. Builds:
 
   - rails: cut-list of one frame, repeated `frames` times, packed by
     rail_cutlist_core
-  - joints: one hole-variant joint per node per frame, packed by
-    joint_nesting (cell_size stays 10 mm; not strip-width-aware)
-  - beams: one L/T/Plus stick per node (not per frame), length = H,
-    from beam_dsl_core
+  - beams: `beam_count` sets; each set is one L/T/Plus stick per node,
+    length = H, from beam_dsl_core
+  - joints: each beam needs two hole joints (top and bottom), so
+        hole[type]  = 2 * nodes[type] * beam_count
+        plain[type] = max(0, frames * nodes[type] - hole[type])
+    Packed by joint_nesting (cell_size stays 10 mm; not strip-width-aware).
 
 The three groups are wrapped in top-level ADD ... END blocks and placed
-side by side with a small gap so they do not overlap.
+side by side with no gap (they may touch, but must not overlap).
 """
 
 from frame_creator.beam_dsl_core import (
@@ -23,7 +25,7 @@ from frame_creator.beam_dsl_core import (
 from frame_creator.rail_skeleton_core import build_skeleton, cut_list
 
 CELL_SIZE = 10.0
-GROUP_GAP = 5.0
+GROUP_GAP = 0.0
 JOINT_WARNING = (
     "Joints are not width-aware yet (cell size stays 10 mm; holes are not scaled)."
 )
@@ -118,7 +120,28 @@ def _wrap_group(group):
     return "\n".join(parts)
 
 
-def _header_lines(rects, height, strip_width, frames, nodes, joint_counts,
+def joint_totals(nodes, frames, beam_count):
+    """Return (beam_type_counts, hole_counts, plain_counts, total_counts).
+
+    beams[type] = nodes[type] * beam_count
+    hole[type]  = 2 * beams[type]   # top and bottom of each beam
+    plain[type] = max(0, frames * nodes[type] - hole[type])
+    Extra hole joints beyond the frames' node slots are kept (plain = 0).
+    """
+    beams, hole, plain, total = {}, {}, {}, {}
+    for t, n in nodes.items():
+        b = n * int(beam_count)
+        h = 2 * b
+        p = max(0, int(frames) * n - h)
+        beams[t] = b
+        hole[t] = h
+        plain[t] = p
+        total[t] = h + p
+    return beams, hole, plain, total
+
+
+def _header_lines(rects, height, strip_width, frames, beam_count, nodes,
+                  beam_type_counts, hole_counts, plain_counts,
                   lengths, total_rail_length, groups):
     rect_txt = "; ".join(f"{format_length(x)} {format_length(y)} "
                          f"{format_length(w)} {format_length(h)}"
@@ -132,12 +155,15 @@ def _header_lines(rects, height, strip_width, frames, nodes, joint_counts,
         f"# Centerline rects: {rect_txt}",
         f"# Height H: {format_length(height)} mm (column length)",
         f"# Strip width: {format_length(strip_width)} mm",
-        f"# Frames: {int(frames)}",
+        f"# Frames: {int(frames)} (rail frames)",
+        f"# Beam count: {int(beam_count)}",
         f"# Nodes (per frame): L={nodes['L']} T={nodes['T']} +={nodes['P']}",
-        f"# Joints (all with hole): L={joint_counts['L']} "
-        f"T={joint_counts['T']} +={joint_counts['P']}",
-        f"# Columns (beams): L={nodes['L']} T={nodes['T']} +={nodes['P']} "
-        f"length={format_length(height)}",
+        f"# Beams: L={beam_type_counts['L']} T={beam_type_counts['T']} "
+        f"+={beam_type_counts['P']} length={format_length(height)}",
+        f"# Joints with hole: L={hole_counts['L']} T={hole_counts['T']} "
+        f"+={hole_counts['P']}",
+        f"# Joints without hole: L={plain_counts['L']} T={plain_counts['T']} "
+        f"+={plain_counts['P']}",
         f"# Rails (1 frame): {format_length_list(lengths)}",
         f"# Rails (x{int(frames)}): {len(lengths) * int(frames)} pieces, "
         f"total length {format_length(total_rail_length)} mm",
@@ -149,13 +175,14 @@ def _header_lines(rects, height, strip_width, frames, nodes, joint_counts,
 
 
 def build_box(rects, height, strip_width=STRIP_WIDTH_DEFAULT, frames=2,
-              time_limit=15.0):
+              beam_count=1, time_limit=15.0):
     """Build the packed box-frame DSL and a result dict for the GUI.
 
     rects: list of (x, y, w, h) centerline rectangles (mm).
     height: column / beam length H (mm).
     strip_width: shared rail / beam flange width (mm).
-    frames: number of identical planar frames (1 = bottom only, 2 = bottom+top).
+    frames: number of identical rail frames (multiplies the rail cut-list).
+    beam_count: number of beam sets (one beam per node, per set).
     """
     if not rects:
         raise ValueError("Enter at least one rectangle.")
@@ -172,9 +199,12 @@ def build_box(rects, height, strip_width=STRIP_WIDTH_DEFAULT, frames=2,
     frames = int(frames)
     if frames < 1:
         raise ValueError("Frames must be an integer >= 1.")
+    beam_count = int(beam_count)
+    if beam_count < 1:
+        raise ValueError("Beam count must be an integer >= 1.")
 
     from frame_creator.rail_cutlist_core import build_rail_dsl, optimize_layout
-    from frame_creator.joint_nesting_gui import (
+    from frame_creator.joint_nesting_solver import (
         assign_variants,
         build_dsl,
         solve_min_columns,
@@ -183,7 +213,8 @@ def build_box(rects, height, strip_width=STRIP_WIDTH_DEFAULT, frames=2,
     skeleton = build_skeleton(rects, rail_width=strip_width)
     lengths = list(cut_list(skeleton))
     nodes = count_nodes(skeleton)
-    joint_counts = {k: v * frames for k, v in nodes.items()}
+    beam_type_counts, hole_counts, plain_counts, joint_counts = joint_totals(
+        nodes, frames, beam_count)
     rail_lengths = list(lengths) * frames
     total_rail_length = sum(lengths) * frames
 
@@ -215,9 +246,7 @@ def build_box(rects, height, strip_width=STRIP_WIDTH_DEFAULT, frames=2,
                 last_err = e
         if placed is None:
             raise RuntimeError(f"Could not pack joints: {last_err}")
-        placed_joints = assign_variants(placed, hole_counts=joint_counts)
-        if any(not p["has_hole"] for p in placed_joints):
-            raise RuntimeError("Expected every joint to have a hole.")
+        placed_joints = assign_variants(placed, hole_counts=hole_counts)
         joint_dsl = build_dsl(placed_joints, cell_size=CELL_SIZE)
         joint_w = joint_cols * CELL_SIZE
         joint_h = joint_rows * CELL_SIZE
@@ -226,8 +255,8 @@ def build_box(rects, height, strip_width=STRIP_WIDTH_DEFAULT, frames=2,
     beam_instances = []
     if sum(nodes.values()) > 0:
         beam_dsl, beam_instances, beam_w = build_sheet(
-            nodes["L"], nodes["T"], nodes["P"], height,
-            strip_width=strip_width,
+            beam_type_counts["L"], beam_type_counts["T"], beam_type_counts["P"],
+            height, strip_width=strip_width,
         )
         beam_h = height
 
@@ -238,7 +267,8 @@ def build_box(rects, height, strip_width=STRIP_WIDTH_DEFAULT, frames=2,
     ])
 
     header = _header_lines(
-        rects, height, strip_width, frames, nodes, joint_counts,
+        rects, height, strip_width, frames, beam_count, nodes,
+        beam_type_counts, hole_counts, plain_counts,
         lengths, total_rail_length, groups,
     )
     body = "\n".join(_wrap_group(g) for g in groups)
@@ -249,7 +279,10 @@ def build_box(rects, height, strip_width=STRIP_WIDTH_DEFAULT, frames=2,
         "skeleton": skeleton,
         "nodes": nodes,
         "joint_counts": joint_counts,
-        "beam_counts": dict(nodes),
+        "hole_counts": hole_counts,
+        "plain_counts": plain_counts,
+        "beam_count": beam_count,
+        "beam_type_counts": beam_type_counts,
         "lengths": lengths,
         "rail_lengths": rail_lengths,
         "total_rail_length": total_rail_length,

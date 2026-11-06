@@ -72,37 +72,42 @@ class BoxApp:
         ttk.Entry(fields, textvariable=self.width_var, width=8).grid(
             row=1, column=1, padx=(6, 0), pady=2)
 
-        ttk.Label(fields, text="Frames count:").grid(row=2, column=0, sticky="w")
+        ttk.Label(fields, text="Frames:").grid(row=2, column=0, sticky="w")
         self.frames_var = tk.StringVar(value="2")
         ttk.Entry(fields, textvariable=self.frames_var, width=8).grid(
             row=2, column=1, padx=(6, 0), pady=2)
 
+        ttk.Label(fields, text="Beam count:").grid(row=3, column=0, sticky="w")
+        self.beam_count_var = tk.StringVar(value="1")
+        ttk.Entry(fields, textvariable=self.beam_count_var, width=8).grid(
+            row=3, column=1, padx=(6, 0), pady=2)
+
         self.generate_btn = ttk.Button(frame, text="Generate", command=self.on_generate)
-        self.generate_btn.grid(row=3, column=0, pady=8, sticky="ew")
+        self.generate_btn.grid(row=4, column=0, pady=8, sticky="ew")
 
         self.copy_btn = ttk.Button(frame, text="Copy DSL", command=self.on_copy,
                                    state="disabled")
-        self.copy_btn.grid(row=4, column=0, pady=2, sticky="ew")
+        self.copy_btn.grid(row=5, column=0, pady=2, sticky="ew")
 
         self.save_btn = ttk.Button(frame, text="Save DSL...", command=self.on_save,
                                    state="disabled")
-        self.save_btn.grid(row=5, column=0, pady=2, sticky="ew")
+        self.save_btn.grid(row=6, column=0, pady=2, sticky="ew")
 
         self.warn_var = tk.StringVar(value="")
         ttk.Label(frame, textvariable=self.warn_var, wraplength=220,
-                  foreground="#b06000").grid(row=6, column=0, pady=(8, 0), sticky="w")
+                  foreground="#b06000").grid(row=7, column=0, pady=(8, 0), sticky="w")
 
         self.status_var = tk.StringVar(value="Ready.")
         ttk.Label(frame, textvariable=self.status_var, wraplength=220,
-                  foreground="#555").grid(row=7, column=0, pady=(6, 0), sticky="w")
+                  foreground="#555").grid(row=8, column=0, pady=(6, 0), sticky="w")
 
         self.result_var = tk.StringVar(value="")
         ttk.Label(frame, textvariable=self.result_var, wraplength=230,
                   font=(FONT_FAMILY, 9, "bold")).grid(
-                      row=8, column=0, pady=(6, 0), sticky="w")
+                      row=9, column=0, pady=(6, 0), sticky="w")
 
         legend = ttk.Frame(frame)
-        legend.grid(row=9, column=0, pady=(16, 0), sticky="w")
+        legend.grid(row=10, column=0, pady=(16, 0), sticky="w")
         for i, (label, color) in enumerate(NODE_COLOR.items()):
             sw = tk.Canvas(legend, width=14, height=14, highlightthickness=1,
                            highlightbackground="black", bg=color)
@@ -151,8 +156,11 @@ class BoxApp:
             height = float(self.height_var.get())
             strip_width = float(self.width_var.get())
             frames = int(float(self.frames_var.get()))
+            beam_count = int(float(self.beam_count_var.get()))
         except ValueError:
-            raise ValueError("Height, strip width, and frames must be numbers.")
+            raise ValueError(
+                "Height, strip width, frames, and beam count must be numbers."
+            )
         if height <= 0:
             raise ValueError("Height must be a positive number.")
         if strip_width <= 0:
@@ -163,11 +171,13 @@ class BoxApp:
             )
         if frames < 1:
             raise ValueError("Frames must be an integer >= 1.")
-        return rects, height, strip_width, frames
+        if beam_count < 1:
+            raise ValueError("Beam count must be an integer >= 1.")
+        return rects, height, strip_width, frames, beam_count
 
     def on_generate(self):
         try:
-            rects, height, strip_width, frames = self._read_inputs()
+            rects, height, strip_width, frames, beam_count = self._read_inputs()
         except ValueError as e:
             messagebox.showerror("Invalid input", str(e))
             return
@@ -185,7 +195,7 @@ class BoxApp:
         def worker():
             try:
                 result = build_box(rects, height, strip_width=strip_width,
-                                   frames=frames)
+                                   frames=frames, beam_count=beam_count)
                 self.msg_queue.put(("done", result))
             except Exception as e:
                 self.msg_queue.put(("error", str(e)))
@@ -210,7 +220,9 @@ class BoxApp:
     def _apply_result(self, result):
         self.dsl_text = result["dsl"]
         nodes = result["nodes"]
-        joints = result["joint_counts"]
+        beams = result["beam_type_counts"]
+        hole = result["hole_counts"]
+        plain = result["plain_counts"]
         lengths = result["lengths"]
         frames = result["frames"]
         warn = ""
@@ -222,10 +234,12 @@ class BoxApp:
         self.status_var.set("Done.")
         self.result_var.set(
             f"Nodes (per frame): L={nodes['L']}  T={nodes['T']}  +={nodes['P']}\n"
-            f"Columns: L={nodes['L']}  T={nodes['T']}  +={nodes['P']}\n"
+            f"Beams (x{result['beam_count']}): "
+            f"L={beams['L']}  T={beams['T']}  +={beams['P']}\n"
             f"Column length: {format_length(result['height'])} mm\n"
-            f"Joints (all with hole): "
-            f"L={joints['L']}  T={joints['T']}  +={joints['P']}\n"
+            f"Joints with hole: L={hole['L']}  T={hole['T']}  +={hole['P']}\n"
+            f"Joints without hole: "
+            f"L={plain['L']}  T={plain['T']}  +={plain['P']}\n"
             f"Rails (1 frame): {format_length_list(lengths)}\n"
             f"Rails x {frames}: {len(lengths) * frames} pieces\n"
             f"Total rail length: {format_length(result['total_rail_length'])} mm"
