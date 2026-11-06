@@ -1,0 +1,58 @@
+[NAME]
+Board Frame 1
+
+[DESCRIPTION]
+Khung gắn các thiết bị điện tử
+
+[DSL]
+# Enter DSL here
+ADD 0 0 rail-1
+P 0 0 0 10 75 10 75 0 0 0
+END
+ADD 0 10 rail-2
+P 0 0 0 10 75 10 75 0 0 0
+END
+ADD 0 20 rail-3
+P 0 0 0 10 75 10 75 0 0 0
+C 15 5 1.5
+END
+ADD 0 30 rail-4
+P 0 0 0 10 75 10 75 0 0 0
+C 51.5 5 1.5
+END
+ADD 0 40 rail-5
+P 0 0 0 10 75 10 75 0 0 0
+C 15 5 1.5
+END
+ADD 0 50 rail-6
+P 0 0 0 10 75 10 75 0 0 0
+C 60 5 1.5
+END
+ADD 0 60 rail-7
+P 0 0 0 10 75 10 75 0 0 0
+C 15 5 1.5
+END
+ADD 0 70 rail-8
+P 0 0 0 10 75 10 75 0 0 0
+C 62 5 1.5
+END
+ADD 0 80 rail-9
+P 0 0 0 10 75 10 75 0 0 0
+C 15 5 1.5
+END
+ADD 0 90 rail-10
+P 0 0 0 10 75 10 75 0 0 0
+C 67.5 5 1.5
+END
+ADD 75 0 rail-11
+P 0 0 0 100 10 100 10 0 0 0
+END
+ADD 85 0 rail-12
+P 0 0 0 100 10 100 10 0 0 0
+END
+ADD 95 0 rail-13
+P 0 0 0 100 10 100 10 0 0 0
+END
+ADD 105 0 rail-14
+P 0 0 0 100 10 100 10 0 0 0
+END

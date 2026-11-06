@@ -1,0 +1,14 @@
+[NAME]
+HW095
+
+[DESCRIPTION]
+Module with four corner mounting holes
+
+[DSL]
+ADD 0 0 HW095
+R -18 -18 36 36
+C -14 14 1.5
+C 14 14 1.5
+C -14 -14 1.5
+C 14 -14 1.5
+END

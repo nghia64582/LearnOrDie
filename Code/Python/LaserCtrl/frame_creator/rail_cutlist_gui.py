@@ -24,14 +24,7 @@ from tkinter import ttk, messagebox
 
 from frame_creator.rail_cutlist_core import optimize_layout, build_rail_dsl
 
-# ----------------------------------------------------------------------------
-# Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)
-# ----------------------------------------------------------------------------
-try:
-    from ctypes import windll
-    windll.shcore.SetProcessDpiAwareness(1)
-except Exception:
-    pass
+# DPI awareness is handled once by the app entrypoint (laser_app / main).
 
 # Custom font -- change these two to adjust the whole app's font in one place
 FONT_FAMILY = "Segoe UI"

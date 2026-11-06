@@ -27,11 +27,7 @@ from frame_creator.box_core import (
 from frame_creator.rail_skeleton_core import NODE_COLOR
 from frame_creator.rail_skeleton_gui import draw_skeleton
 
-try:
-    from ctypes import windll
-    windll.shcore.SetProcessDpiAwareness(1)
-except Exception:
-    pass
+# DPI awareness is handled once by the app entrypoint.
 
 FONT_FAMILY = "Segoe UI"
 FONT_SIZE = 10

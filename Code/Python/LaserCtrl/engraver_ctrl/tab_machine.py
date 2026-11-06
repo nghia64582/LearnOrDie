@@ -1,7 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-import serial
-import serial.tools.list_ports
+try:
+    import serial
+    from serial.tools import list_ports as serial_list_ports
+except ImportError:  # optional when pyserial is not installed
+    serial = None
+    serial_list_ports = None
 import os
 import time
 import threading
@@ -278,12 +282,19 @@ class MachineTab(tk.Frame):
     # ---------------- SERIAL ----------------
 
     def refresh_com(self):
-        ports = [p.device for p in serial.tools.list_ports.comports()]
+        if serial_list_ports is None:
+            self.combo_com["values"] = []
+            self.log("pyserial not installed; COM list unavailable.")
+            return
+        ports = [p.device for p in serial_list_ports.comports()]
         self.combo_com["values"] = ports
         if ports:
             self.combo_com.current(0)
 
     def connect_serial(self):
+        if serial is None:
+            messagebox.showerror("Error", "pyserial is not installed.")
+            return
         port = self.combo_com.get()
         try:
             self.app.ser = serial.Serial(port, 115200, timeout=1)
@@ -541,12 +552,29 @@ class MachineTab(tk.Frame):
             for k in (key, key.upper()):
                 root.bind(f"<KeyPress-{k}>", self.on_jog_key, add="+")
 
+    def _is_visible_in_notebooks(self):
+        """True only when every ancestor Notebook has this branch selected.
+
+        Needed when Machine lives under Engraver sub-Notebook inside the
+        unified app main Notebook — selecting Frame Toolkit must disable jog.
+        """
+        widget = self
+        while widget is not None:
+            parent = getattr(widget, "master", None)
+            if parent is None:
+                break
+            if isinstance(parent, ttk.Notebook):
+                try:
+                    if parent.select() != str(widget):
+                        return False
+                except Exception:
+                    return False
+            widget = parent
+        return True
+
     def on_jog_key(self, event):
-        # Chi xu ly khi tab Machine dang duoc chon
-        try:
-            if self.master.select() != str(self):
-                return
-        except Exception:
+        # Chi xu ly khi nhanh tab Machine dang visible (moi notebook cha)
+        if not self._is_visible_in_notebooks():
             return
 
         # Bo qua khi dang go chu trong o nhap (Entry/Combobox/Text...)
@@ -554,12 +582,62 @@ class MachineTab(tk.Frame):
             focus = self.focus_get()
         except Exception:
             focus = None
-        if isinstance(focus, (tk.Entry, tk.Text, tk.Spinbox, ttk.Entry, ttk.Spinbox)):
+        if isinstance(focus, (tk.Entry, tk.Text, tk.Spinbox,
+                              ttk.Entry, ttk.Spinbox, ttk.Combobox)):
             return
+        # scrolledtext.ScrolledText is a Frame subclass hosting a Text
+        try:
+            if focus is not None and focus.winfo_class() in ("Text", "TEntry", "TCombobox"):
+                # already covered by isinstance for most cases; keep soft check
+                if isinstance(focus, (tk.Entry, tk.Text, ttk.Entry, ttk.Combobox)):
+                    return
+        except Exception:
+            pass
 
-        axis, direction = JOG_KEYS[event.keysym.lower()]
+        key = event.keysym.lower()
+        if key not in JOG_KEYS:
+            return
+        axis, direction = JOG_KEYS[key]
         self.jog(axis, direction)
         return "break"
+
+    def shutdown_connection(self):
+        """Conservative close: stop workers and close the serial port.
+
+        Does not send speculative machine commands. If a GCODE run is active,
+        request the existing cooperative stop first (that path already sends
+        the halt sequence the Machine tab uses for Stop).
+        """
+        try:
+            if getattr(self, "is_running", False):
+                # Existing stop path — not speculative; user/app is ending a run.
+                self.stop_event.set()
+        except Exception:
+            pass
+        try:
+            self.stop_event.set()
+        except Exception:
+            pass
+        # Wait briefly for an in-flight jog to finish before closing the port.
+        acquired = False
+        try:
+            acquired = self.jog_lock.acquire(timeout=1.0)
+        except Exception:
+            acquired = False
+        try:
+            ser = getattr(self.app, "ser", None)
+            if ser is not None:
+                try:
+                    ser.close()
+                except Exception:
+                    pass
+                self.app.ser = None
+        finally:
+            if acquired:
+                try:
+                    self.jog_lock.release()
+                except Exception:
+                    pass
 
     def build_jog_lines(self, axis, direction, step):
         # Jog tuong doi: G91 -> G0 truc +/-buoc -> G90 (tra ve tuyet doi,

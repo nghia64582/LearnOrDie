@@ -1,0 +1,12 @@
+[NAME]
+LM2596S-ZX001
+
+[DESCRIPTION]
+DC-DC buck converter, two mounting holes
+
+[DSL]
+ADD 0 0 LM2596
+R -20 -12 40 24
+C -14.6 0 1.5
+C 14.6 0 1.5
+END
