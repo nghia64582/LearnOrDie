@@ -47,7 +47,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
-from engraver_ctrl.dsl_nest import nest_dsl, solve_packing
+from engraver_ctrl.dsl_nest import nest_dsl, solve_packing, pieces_to_dsl
 from engraver_ctrl.dsl_parse import (
     all_segments,
     bbox_from_segments,

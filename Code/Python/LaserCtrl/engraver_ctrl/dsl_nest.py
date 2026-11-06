@@ -17,6 +17,15 @@ from engraver_ctrl.dsl_parse import (
 SCALE = 100  # 0.01 mm -> integer CP-SAT units
 
 
+def _snap(v):
+    return round(v * 2) / 2
+
+
+def fmt_num(v):
+    r = _snap(v)
+    return str(int(r)) if float(r).is_integer() else f"{r:.1f}"
+
+
 def solve_packing(instances, H, time_limit=20.0, scale=None):
     """
     instances: list of dict {id, name, w, h, rotate}
