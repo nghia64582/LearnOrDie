@@ -9,6 +9,7 @@ from tkinter import ttk, messagebox, filedialog
 from dsl_library_tool.dsl_library import DSLLibrary, KVError
 from dsl_library_tool.dsl_parser import parse_dsl
 from dsl_library_tool.dsl_canvas import DSLCanvas
+from common.ui import mono_font, SIZE_SM, attach_scrollbars
 
 DEFAULT_LIBRARY_DIR = Path(__file__).resolve().parent / "data"
 
@@ -82,8 +83,13 @@ class DSLLibraryPanel(ttk.Frame):
         editor.columnconfigure(1, weight=1)
 
         ttk.Label(right, text="DSL").pack(anchor="w", pady=(8, 3))
-        self.dsl_text = tk.Text(right, height=13, undo=True, font=("Consolas", 10))
-        self.dsl_text.pack(fill="x")
+        dsl_box = ttk.Frame(right)
+        dsl_box.pack(fill="x")
+        self.dsl_text = tk.Text(dsl_box, height=13, undo=True, wrap="none",
+                                font=mono_font(SIZE_SM))
+        self.dsl_text_vbar, self.dsl_text_hbar = attach_scrollbars(
+            dsl_box, self.dsl_text, vertical=True, horizontal=True,
+        )
         self.dsl_text.bind("<<Modified>>", self.on_text_modified)
 
         actions = ttk.Frame(right)

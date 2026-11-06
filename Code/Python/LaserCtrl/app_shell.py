@@ -11,7 +11,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from common.ui import enable_dpi_awareness, init_fonts
+from common.ui import enable_dpi_awareness, init_fonts, ui_font, SIZE_SM
 
 
 class EngraverHost:
@@ -30,8 +30,8 @@ class LaserAppShell:
         self.root.geometry("1280x820")
         self.root.minsize(980, 640)
 
-        self.font_specs = init_fonts(root, size=10)
-        self.font = self.font_specs[0]
+        self.font_specs = init_fonts(root, size=SIZE_SM)
+        self.font = ui_font(SIZE_SM)
 
         self.engraver_host = EngraverHost(root, self.font)
         self.machine_tab = None

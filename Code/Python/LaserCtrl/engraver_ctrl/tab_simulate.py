@@ -4,6 +4,7 @@ import re
 import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+from common.ui import canvas_font
 
 
 class TabSimulate(ttk.Frame):
@@ -630,7 +631,7 @@ class TabSimulate(ttk.Frame):
             self.canvas.create_text(
                 px1 + 2, py1 - 2,
                 text=f"{x:g}",
-                font=("Arial", 8),
+                font=canvas_font(),
                 anchor="sw",
                 fill="#888888"
             )
@@ -651,7 +652,7 @@ class TabSimulate(ttk.Frame):
             self.canvas.create_text(
                 px1 + 2, py1 + 2,
                 text=f"{y:g}",
-                font=("Arial", 8),
+                font=canvas_font(),
                 anchor="nw",
                 fill="#888888"
             )

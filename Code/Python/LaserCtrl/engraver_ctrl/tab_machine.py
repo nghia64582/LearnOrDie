@@ -15,6 +15,7 @@ from datetime import datetime
 
 from engraver_ctrl.tab_simulate import TabSimulate
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+from common.ui import ui_font, mono_font, make_button, SIZE_SM
 
 # ---- Cấu hình ước lượng thời gian, chỉnh theo máy thực tế của bạn ----
 RAPID_RATE_MM_MIN = 3000  # tốc độ di chuyển nhanh (G0), tra trong setting $110/$111 của GRBL
@@ -136,7 +137,7 @@ class MachineTab(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-        self.font = app.font
+        self.font = getattr(app, "font", None) or ui_font(SIZE_SM)
         self.is_running = False
         self.line_times = []
         self.total_time = 1.0
@@ -169,26 +170,20 @@ class MachineTab(tk.Frame):
         self.combo_com = ttk.Combobox(controls, values=[], width=12)
         self.combo_com.grid(row=row, column=1, sticky="w")
 
-        tk.Button(controls, text="Refresh", font=self.font,
-                  command=self.refresh_com).grid(row=row, column=2)
+        make_button(controls, "Refresh", command=self.refresh_com).grid(row=row, column=2)
         row += 1
 
-        tk.Button(controls, text="Connect", font=self.font,
-                  command=self.connect_serial).grid(row=row, column=1, pady=5)
+        make_button(controls, "Connect", command=self.connect_serial).grid(row=row, column=1, pady=5)
         row += 1
 
-        tk.Button(controls, text="Laser ON", font=self.font,
-                  command=self.laser_on).grid(row=row, column=0)
-        tk.Button(controls, text="Laser OFF", font=self.font,
-                  command=self.laser_off).grid(row=row, column=1)
+        make_button(controls, "Laser ON", command=self.laser_on).grid(row=row, column=0)
+        make_button(controls, "Laser OFF", command=self.laser_off).grid(row=row, column=1)
         row += 1
 
-        self.btn_run = tk.Button(controls, text="Run GCODE", font=self.font,
-                                  command=self.run_gcode)
+        self.btn_run = make_button(controls, "Run GCODE", command=self.run_gcode)
         self.btn_run.grid(row=row, column=0, pady=10)
 
-        self.btn_stop = tk.Button(controls, text="STOP", font=self.font, fg="white", bg="red",
-                                   command=self.stop_gcode, state="disabled")
+        self.btn_stop = make_button(controls, "STOP", command=self.stop_gcode, state="disabled")
         self.btn_stop.grid(row=row, column=1, pady=10)
         row += 1
 
@@ -211,20 +206,16 @@ class MachineTab(tk.Frame):
                                            values=JOG_STEP_CHOICES, width=6)
         self.combo_jog_step.grid(row=0, column=1, columnspan=2, sticky="w", pady=(0, 5))
 
-        tk.Button(jog_frame, text="Up (W)", font=self.font, width=8,
-                  command=lambda: self.jog("Y", 1)).grid(row=1, column=1)
-        tk.Button(jog_frame, text="Left (A)", font=self.font, width=8,
-                  command=lambda: self.jog("X", -1)).grid(row=2, column=0)
-        tk.Button(jog_frame, text="Right (D)", font=self.font, width=8,
-                  command=lambda: self.jog("X", 1)).grid(row=2, column=2)
-        tk.Button(jog_frame, text="Down (S)", font=self.font, width=8,
-                  command=lambda: self.jog("Y", -1)).grid(row=3, column=1)
+        make_button(jog_frame, "Up (W)", command=lambda: self.jog("Y", 1), width=8).grid(row=1, column=1)
+        make_button(jog_frame, "Left (A)", command=lambda: self.jog("X", -1), width=8).grid(row=2, column=0)
+        make_button(jog_frame, "Right (D)", command=lambda: self.jog("X", 1), width=8).grid(row=2, column=2)
+        make_button(jog_frame, "Down (S)", command=lambda: self.jog("Y", -1), width=8).grid(row=3, column=1)
         row += 1
 
         # ---- Log box, thay cho print() ----
         tk.Label(controls, text="Log:", font=self.font).grid(row=row, column=0, sticky="nw")
         self.log_text = scrolledtext.ScrolledText(controls, width=60, height=10, state="disabled",
-                                                    font=("Consolas", 9))
+                                                    font=mono_font(SIZE_SM))
         self.log_text.grid(row=row, column=1, columnspan=2, sticky="w", pady=5)
 
         # ---- Preview gcode (ben phai) ----
@@ -243,8 +234,7 @@ class MachineTab(tk.Frame):
                                      anchor="w", width=1)
         self.preview_info.grid(row=0, column=0, sticky="ew")
 
-        tk.Button(header, text="Reload preview", font=self.font,
-                  command=self.preview_gcode).grid(row=0, column=1, padx=(5, 0))
+        make_button(header, "Reload preview", command=self.preview_gcode).grid(row=0, column=1, padx=(5, 0))
 
         self.preview_canvas = tk.Canvas(preview_frame, background="white",
                                         highlightthickness=0)

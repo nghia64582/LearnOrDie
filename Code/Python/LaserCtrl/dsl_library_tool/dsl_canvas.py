@@ -1,3 +1,4 @@
+from common.ui import canvas_font
 import tkinter as tk
 import math
 
@@ -9,7 +10,7 @@ class DSLCanvas(tk.Canvas):
         self.scale = 1.0
         self.offset_x = 0
         self.offset_y = 0
-        self.font = ("Segoe UI", 9)
+        self.font = canvas_font()
 
         self.bind("<Configure>", lambda e: self.render(self.result) if self.result else None)
         self.bind("<MouseWheel>", self._wheel)
@@ -85,11 +86,11 @@ class DSLCanvas(tk.Canvas):
         if vx0 <= 0 <= vx1:
             x, _ = xy(0, 0)
             self.create_line(x, 0, x, ch, width=1)
-            self.create_text(x + 8, 12, text="Oy", anchor="w", font=("Segoe UI", 9, "bold"))
+            self.create_text(x + 8, 12, text="Oy", anchor="w", font=canvas_font(bold=True))
         if vy0 <= 0 <= vy1:
             _, y = xy(0, 0)
             self.create_line(0, y, cw, y, width=1)
-            self.create_text(cw - 10, y - 8, text="Ox", anchor="e", font=("Segoe UI", 9, "bold"))
+            self.create_text(cw - 10, y - 8, text="Ox", anchor="e", font=canvas_font(bold=True))
 
         # Grid labels.
         label_step = grid
@@ -120,12 +121,12 @@ class DSLCanvas(tk.Canvas):
         for x, y, label in result.labels:
             px, py = xy(x, y)
             self.create_text(px + 7, py - 7, text=label,
-                             anchor="sw", font=("Segoe UI", 9, "bold"))
+                             anchor="sw", font=canvas_font(bold=True))
 
         if result.errors:
             msg = f"{len(result.errors)} DSL error(s)"
             self.create_text(8, ch - 8, text=msg, anchor="sw",
-                             font=("Segoe UI", 9, "bold"))
+                             font=canvas_font(bold=True))
 
     @staticmethod
     def _grid_step(target):

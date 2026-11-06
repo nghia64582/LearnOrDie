@@ -1,13 +1,45 @@
-"""Shared DPI + font helpers (Segoe UI 10 by default)."""
+"""
+LaserCtrl shared UI config — EDIT THIS FILE to change app-wide look.
+
+One font family + three sizes for every label/button/text widget.
+Buttons stay neutral (native/default ttk); do not paint custom colors
+on controls. Geometry / preview drawing may still use semantic colors.
+"""
+
+from __future__ import annotations
 
 import sys
 
-_SCALE = 1.0
+# ---------------------------------------------------------------------------
+# >>> Easy-to-edit theme knobs (single source of truth)
+# ---------------------------------------------------------------------------
 
+# Preferred UI family (first available on the machine wins).
 FONT_FAMILY_PREF = ("Segoe UI", "DejaVu Sans", "Helvetica", "Arial")
-MONO_FAMILY_PREF = ("Consolas", "DejaVu Sans Mono", "Courier New", "Courier")
+# Preferred monospace for DSL / log editors.
+MONO_FAMILY_PREF = ("Consolas", "Cascadia Mono", "DejaVu Sans Mono",
+                    "Courier New", "Courier")
+
+# Only these three UI sizes are used across the whole app.
+SIZE_SM = 10   # default body / labels / buttons / notebook tabs
+SIZE_MD = 12   # section emphasis / result values
+SIZE_LG = 14   # rare headings
+
+# Buttons: use ttk.Button (native neutral). No custom bg/fg on controls.
+USE_TTK_BUTTONS = True
+
+# Notebook tab chip padding (horizontal, vertical).
+NOTEBOOK_TAB_PADDING = (16, 7)
+NOTEBOOK_TAB_PADDING_SELECTED = (16, 8)
+NOTEBOOK_PADDING = 4
+
+# ---------------------------------------------------------------------------
+# Resolved at runtime by init_fonts()
+# ---------------------------------------------------------------------------
 FONT_FAMILY = "TkDefaultFont"
 MONO_FAMILY = "TkFixedFont"
+_SCALE = 1.0
+_INITIALIZED = False
 
 
 def enable_dpi_awareness():
@@ -55,19 +87,74 @@ def _pick(root, prefs, default):
     return default
 
 
-def fonts(size=10):
+def ui_font(size=None, bold=False):
+    """Tuple font for labels/buttons (UI family)."""
+    sz = SIZE_SM if size is None else size
+    if bold:
+        return (FONT_FAMILY, sz, "bold")
+    return (FONT_FAMILY, sz)
+
+
+def mono_font(size=None):
+    """Tuple font for DSL / log Text widgets."""
+    sz = SIZE_SM if size is None else size
+    return (MONO_FAMILY, sz)
+
+
+def canvas_font(bold=False):
+    """Canvas overlay labels — always SIZE_SM of the UI family."""
+    return ui_font(SIZE_SM, bold=bold)
+
+
+def fonts(size=None):
+    """Back-compat tuple pack: (ui, ui_bold, ui_sm_alias, mono, ui_md_bold)."""
+    base = SIZE_SM if size is None else size
     return (
-        (FONT_FAMILY, size),
-        (FONT_FAMILY, size, "bold"),
-        (FONT_FAMILY, size - 2),
-        (MONO_FAMILY, size - 2),
-        (FONT_FAMILY, size + 1, "bold"),
+        ui_font(base),
+        ui_font(base, bold=True),
+        ui_font(base),
+        mono_font(base),
+        ui_font(SIZE_MD, bold=True),
     )
 
 
-def init_fonts(root, size=10):
-    """Pick Segoe UI when available and set as the app-wide default."""
-    global FONT_FAMILY, MONO_FAMILY
+def make_button(parent, text, command=None, **kwargs):
+    """Neutral control button. Prefers ttk; never applies custom colors."""
+    from tkinter import ttk
+    # Drop any accidental color kwargs so callers cannot reintroduce orange.
+    for key in ("bg", "fg", "activebackground", "activeforeground",
+                "highlightbackground", "highlightcolor", "selectcolor"):
+        kwargs.pop(key, None)
+    if USE_TTK_BUTTONS:
+        opts = {k: v for k, v in kwargs.items()
+                if k in ("state", "width", "padding", "style", "cursor")}
+        return ttk.Button(parent, text=text, command=command, **opts)
+    import tkinter as tk
+    return tk.Button(parent, text=text, command=command, **kwargs)
+
+
+def attach_scrollbars(parent, text_widget, vertical=True, horizontal=True):
+    """Grid a Text with ttk scrollbars. Returns (vbar, hbar) (may be None)."""
+    from tkinter import ttk
+    vbar = hbar = None
+    text_widget.grid(row=0, column=0, sticky="nsew")
+    if vertical:
+        vbar = ttk.Scrollbar(parent, orient="vertical", command=text_widget.yview)
+        text_widget.configure(yscrollcommand=vbar.set)
+        vbar.grid(row=0, column=1, sticky="ns")
+    if horizontal:
+        hbar = ttk.Scrollbar(parent, orient="horizontal", command=text_widget.xview)
+        text_widget.configure(xscrollcommand=hbar.set)
+        hbar.grid(row=1, column=0, sticky="ew")
+    parent.rowconfigure(0, weight=1)
+    parent.columnconfigure(0, weight=1)
+    return vbar, hbar
+
+
+def init_fonts(root, size=None):
+    """Resolve family, install named fonts, set ttk/option defaults."""
+    global FONT_FAMILY, MONO_FAMILY, _INITIALIZED
+    size = SIZE_SM if size is None else size
     FONT_FAMILY = _pick(root, FONT_FAMILY_PREF, "TkDefaultFont")
     MONO_FAMILY = _pick(root, MONO_FAMILY_PREF, "TkFixedFont")
     try:
@@ -80,42 +167,69 @@ def init_fonts(root, size=10):
         ):
             tkfont.nametofont(name, root).configure(family=FONT_FAMILY, size=size)
         tkfont.nametofont("TkFixedFont", root).configure(
-            family=MONO_FAMILY, size=max(size - 2, 8)
+            family=MONO_FAMILY, size=size
         )
+        # Named fonts for explicit use in widgets/canvas
+        for n, sz, weight in (
+            ("AppFont", SIZE_SM, "normal"),
+            ("AppFontBold", SIZE_SM, "bold"),
+            ("AppFontMd", SIZE_MD, "normal"),
+            ("AppFontMdBold", SIZE_MD, "bold"),
+            ("AppFontLg", SIZE_LG, "normal"),
+            ("AppMono", SIZE_SM, "normal"),
+        ):
+            try:
+                existing = tkfont.nametofont(n, root)
+                existing.configure(family=FONT_FAMILY if "Mono" not in n else MONO_FAMILY,
+                                   size=sz, weight=weight)
+            except Exception:
+                tkfont.Font(
+                    root=root, name=n,
+                    family=MONO_FAMILY if "Mono" in n else FONT_FAMILY,
+                    size=sz, weight=weight,
+                )
         style = ttk.Style(root)
-        style.configure(".", font=(FONT_FAMILY, size))
+        style.configure(".", font=ui_font(SIZE_SM))
+        style.configure("TButton", font=ui_font(SIZE_SM))
+        style.configure("TLabel", font=ui_font(SIZE_SM))
+        style.configure("TCheckbutton", font=ui_font(SIZE_SM))
+        style.configure("TRadiobutton", font=ui_font(SIZE_SM))
+        style.configure("TEntry", font=ui_font(SIZE_SM))
+        style.configure("TCombobox", font=ui_font(SIZE_SM))
+        style.configure("Heading.TLabel", font=ui_font(SIZE_MD, bold=True))
     except Exception:
         pass
-    root.option_add("*Font", (FONT_FAMILY, size))
-    style_notebooks(root, size=size)
-    return fonts(size)
+    root.option_add("*Font", ui_font(SIZE_SM))
+    root.option_add("*Text.Font", mono_font(SIZE_SM))
+    root.option_add("*Entry.Font", ui_font(SIZE_SM))
+    root.option_add("*Button.Font", ui_font(SIZE_SM))
+    root.option_add("*Label.Font", ui_font(SIZE_SM))
+    style_notebooks(root, size=SIZE_SM)
+    _INITIALIZED = True
+    return fonts(SIZE_SM)
 
 
-def style_notebooks(root, size=10):
-    """Give Notebook tabs more padding so labels are easier to separate.
-
-    Uses the existing theme (does not force clam/alt) so Windows native
-    themes keep working; padding is the portable lever.
-    """
+def style_notebooks(root, size=None):
+    """Pad Notebook tabs so main/sub labels are easier to separate."""
+    size = SIZE_SM if size is None else size
     try:
         from tkinter import ttk
         style = ttk.Style(root)
-        # (horizontal, vertical) padding inside each tab label chip
         style.configure(
             "TNotebook.Tab",
-            font=(FONT_FAMILY, size),
-            padding=(16, 7),
+            font=ui_font(size),
+            padding=NOTEBOOK_TAB_PADDING,
         )
-        # Small inset around the tab strip / content edge
-        style.configure("TNotebook", padding=4)
-        # Selected tab: slightly more padding when the theme allows map expand
+        style.configure("TNotebook", padding=NOTEBOOK_PADDING)
         try:
             style.map(
                 "TNotebook.Tab",
-                padding=[("selected", (16, 8)), ("!selected", (16, 7))],
+                padding=[
+                    ("selected", NOTEBOOK_TAB_PADDING_SELECTED),
+                    ("!selected", NOTEBOOK_TAB_PADDING),
+                ],
             )
         except Exception:
             pass
     except Exception:
         pass
-

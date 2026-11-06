@@ -7,6 +7,15 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from common.ui import (
+    SIZE_MD,
+    SIZE_SM,
+    attach_scrollbars,
+    canvas_font,
+    make_button,
+    mono_font,
+    ui_font,
+)
 from engraver_ctrl.dsl_nest import nest_dsl
 from engraver_ctrl.dsl_parse import (
     all_segments,
@@ -15,26 +24,15 @@ from engraver_ctrl.dsl_parse import (
     parse_text,
 )
 
-BG = "#f3f5f7"
-PANEL = "#ffffff"
-PANEL_ALT = "#eef1f5"
-BORDER = "#d7dee5"
-BORDER_STRONG = "#b7c2cc"
-TEXT = "#1b232c"
-TEXT_DIM = "#5b6774"
-ACCENT = "#d9590c"
-ACCENT_ON = "#ffffff"
-DANGER = "#b91c1c"
-DANGER_SOFT = "#fdeceb"
-SUCCESS = "#15803d"
+# Preview-only semantic colors (not control chrome).
 CANVAS_BG = "#fbfcfd"
 GRID_LINE = "#e2e8ee"
-
+BORDER_STRONG = "#b7c2cc"
+TEXT = "#1b232c"
 PALETTE = [
     "#d9590c", "#0f8f83", "#7c3aed", "#be185d",
     "#a16207", "#1d4ed8", "#15803d", "#c2410c",
 ]
-
 SHAPE_COLORS = {
     "C": "#111111", "R": "#15803d", "RC": "#0f8f83",
     "L": "#1d4ed8", "LH": "#1d4ed8", "LV": "#1d4ed8",
@@ -56,145 +54,108 @@ class DSLNestingPanel(ttk.Frame):
         self.last_dsl_H = 0.0
         self._build_ui()
 
-    # ---- busy flag for app-level close guard ----
     def is_busy(self):
         return bool(self.dsl_solving)
 
     def _panel(self, parent, title, expand=False):
-        wrap = tk.Frame(parent, bg=BG)
-        wrap.pack(fill="both", expand=expand, pady=(0, 10))
-        tk.Label(wrap, text=title, bg=BG, fg=TEXT_DIM, anchor="w").pack(fill="x")
-        body = tk.Frame(wrap, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
-        body.pack(fill="both", expand=True, pady=(4, 0))
-        inner = tk.Frame(body, bg=PANEL)
-        inner.pack(fill="both", expand=True, padx=10, pady=10)
-        return inner
+        wrap = ttk.LabelFrame(parent, text=title, padding=8)
+        wrap.pack(fill="both", expand=expand, pady=(0, 8))
+        return wrap
 
     def _field(self, parent, label, default, width=10):
-        box = tk.Frame(parent, bg=PANEL)
+        box = ttk.Frame(parent)
         box.pack(side="left", padx=(0, 12))
-        tk.Label(box, text=label, bg=PANEL, fg=TEXT_DIM, anchor="w").pack(anchor="w")
-        e = tk.Entry(box, width=width, bg=PANEL_ALT, relief="flat",
-                     highlightthickness=1, highlightbackground=BORDER)
+        ttk.Label(box, text=label).pack(anchor="w")
+        e = ttk.Entry(box, width=width)
         e.insert(0, default)
         e.pack(anchor="w", pady=(2, 0))
         return e
 
-    def _stat(self, parent, label, accent=False):
-        box = tk.Frame(parent, bg=PANEL)
+    def _stat(self, parent, label):
+        box = ttk.Frame(parent)
         box.pack(side="left", padx=(0, 18))
-        tk.Label(box, text=label, bg=PANEL, fg=TEXT_DIM).pack(anchor="w")
-        val = tk.Label(box, text="—", bg=PANEL,
-                       fg=ACCENT if accent else TEXT)
+        ttk.Label(box, text=label).pack(anchor="w")
+        val = ttk.Label(box, text="—", style="Heading.TLabel")
         val.pack(anchor="w")
         return val
 
     def _build_ui(self):
-        body = tk.Frame(self, bg=BG)
-        body.pack(fill="both", expand=True, padx=16, pady=12)
+        body = ttk.Frame(self, padding=12)
+        body.pack(fill="both", expand=True)
 
-        left = tk.Frame(body, bg=BG, width=440)
-        left.pack(side="left", fill="both", padx=(0, 16))
+        left = ttk.Frame(body, width=440)
+        left.pack(side="left", fill="both", padx=(0, 12))
         left.pack_propagate(False)
 
-        right = tk.Frame(body, bg=BG)
+        right = ttk.Frame(body)
         right.pack(side="left", fill="both", expand=True)
 
         in_panel = self._panel(left, "INPUT DSL", expand=True)
-        in_head = tk.Frame(in_panel, bg=PANEL)
+        in_head = ttk.Frame(in_panel)
         in_head.pack(fill="x", pady=(0, 6))
-        tk.Button(
-            in_head, text="Load file...", command=self.load_dsl_file,
-            bg=PANEL_ALT, fg=TEXT, relief="flat", highlightthickness=1,
-            highlightbackground=BORDER, cursor="hand2", padx=10, pady=4,
-        ).pack(side="left")
+        make_button(in_head, "Load file...", command=self.load_dsl_file).pack(side="left")
 
-        in_box = tk.Frame(in_panel, bg=PANEL)
+        in_box = ttk.Frame(in_panel)
         in_box.pack(fill="both", expand=True)
         self.dsl_in_text = tk.Text(
-            in_box, bg=PANEL_ALT, fg=TEXT, insertbackground=TEXT,
-            relief="flat", highlightthickness=1, highlightbackground=BORDER,
-            height=18, wrap="none",
+            in_box, height=18, wrap="none", undo=True, font=mono_font(SIZE_SM),
         )
-        in_scroll = tk.Scrollbar(in_box, orient="vertical", command=self.dsl_in_text.yview)
-        self.dsl_in_text.configure(yscrollcommand=in_scroll.set)
-        self.dsl_in_text.pack(side="left", fill="both", expand=True)
-        in_scroll.pack(side="right", fill="y")
+        self.dsl_in_vbar, self.dsl_in_hbar = attach_scrollbars(
+            in_box, self.dsl_in_text, vertical=True, horizontal=True,
+        )
 
         cfg_panel = self._panel(left, "SHEET")
-        row = tk.Frame(cfg_panel, bg=PANEL)
+        row = ttk.Frame(cfg_panel)
         row.pack(fill="x")
         self.e_dsl_height = self._field(row, "H (mm, empty = tallest block)", "", width=16)
         self.e_dsl_timelimit = self._field(row, "Time limit (s)", "15", width=8)
-        rot_row = tk.Frame(cfg_panel, bg=PANEL)
+        rot_row = ttk.Frame(cfg_panel)
         rot_row.pack(fill="x", pady=(10, 0))
         self.dsl_rotate_var = tk.BooleanVar(value=True)
-        tk.Checkbutton(
+        ttk.Checkbutton(
             rot_row, text="Allow 90° rotation", variable=self.dsl_rotate_var,
-            bg=PANEL, fg=TEXT, activebackground=PANEL, selectcolor=PANEL,
-            highlightthickness=0,
         ).pack(side="left")
 
-        calc_panel = tk.Frame(left, bg=BG)
+        calc_panel = ttk.Frame(left)
         calc_panel.pack(fill="x", pady=(4, 0))
-        self.dsl_calc_btn = tk.Button(
-            calc_panel, text="Solve", command=self.solve_dsl,
-            bg=ACCENT, fg=ACCENT_ON, activebackground=ACCENT,
-            activeforeground=ACCENT_ON, relief="flat", cursor="hand2", pady=10,
-        )
+        self.dsl_calc_btn = make_button(calc_panel, "Solve", command=self.solve_dsl)
         self.dsl_calc_btn.pack(fill="x")
-        self.dsl_status_lbl = tk.Label(
-            calc_panel, text="", bg=BG, fg=TEXT_DIM, wraplength=400, justify="left",
-        )
+        self.dsl_status_lbl = ttk.Label(calc_panel, text="", wraplength=400)
         self.dsl_status_lbl.pack(fill="x", pady=(6, 0))
 
         canvas_panel = self._panel(right, "PREVIEW", expand=True)
-        cv_wrap = tk.Frame(
-            canvas_panel, bg=CANVAS_BG, highlightbackground=BORDER, highlightthickness=1,
-        )
+        cv_wrap = ttk.Frame(canvas_panel)
         cv_wrap.pack(fill="both", expand=True)
-        self.dsl_canvas = tk.Canvas(cv_wrap, bg=CANVAS_BG, highlightthickness=0, height=420)
-        self.dsl_canvas.pack(fill="both", expand=True, padx=2, pady=2)
+        self.dsl_canvas = tk.Canvas(cv_wrap, bg=CANVAS_BG, highlightthickness=1, height=420)
+        self.dsl_canvas.pack(fill="both", expand=True)
         self.dsl_canvas.bind("<Configure>", lambda e: self.redraw_dsl())
 
-        results = tk.Frame(canvas_panel, bg=PANEL)
+        results = ttk.Frame(canvas_panel)
         results.pack(fill="x", pady=(12, 0))
-        self.dsl_stat_width = self._stat(results, "Result width", accent=True)
+        self.dsl_stat_width = self._stat(results, "Result width")
         self.dsl_stat_height = self._stat(results, "Sheet height H used")
         self.dsl_stat_eff = self._stat(results, "Utilization")
 
-        self.dsl_warn_lbl = tk.Label(
-            canvas_panel, text="", bg=DANGER_SOFT, fg=DANGER,
-            justify="left", anchor="w", wraplength=760,
-        )
+        self.dsl_warn_lbl = ttk.Label(canvas_panel, text="", wraplength=760)
 
         out_panel = self._panel(right, "OUTPUT DSL", expand=True)
-        out_head = tk.Frame(out_panel, bg=PANEL)
+        out_head = ttk.Frame(out_panel)
         out_head.pack(fill="x")
-        tk.Label(out_head, text="", bg=PANEL).pack(side="left", expand=True, fill="x")
-        self.dsl_copy_status = tk.Label(out_head, text="Copied", bg=PANEL, fg=SUCCESS)
-        tk.Button(
-            out_head, text="Copy DSL", command=self.copy_nested_dsl,
-            bg=PANEL_ALT, fg=TEXT, relief="flat", highlightthickness=1,
-            highlightbackground=BORDER, cursor="hand2", padx=10, pady=4,
-        ).pack(side="right")
-        tk.Button(
-            out_head, text="Save DSL...", command=self.save_nested_dsl,
-            bg=PANEL_ALT, fg=TEXT, relief="flat", highlightthickness=1,
-            highlightbackground=BORDER, cursor="hand2", padx=10, pady=4,
-        ).pack(side="right", padx=(0, 8))
+        ttk.Label(out_head, text="").pack(side="left", expand=True, fill="x")
+        self.dsl_copy_status = ttk.Label(out_head, text="Copied")
+        make_button(out_head, "Copy DSL", command=self.copy_nested_dsl).pack(side="right")
+        make_button(out_head, "Save DSL...", command=self.save_nested_dsl).pack(
+            side="right", padx=(0, 8)
+        )
 
-        out_box = tk.Frame(out_panel, bg=PANEL)
+        out_box = ttk.Frame(out_panel)
         out_box.pack(fill="both", expand=True, pady=(6, 0))
         self.dsl_out_text = tk.Text(
-            out_box, bg=PANEL_ALT, fg=TEXT, insertbackground=TEXT,
-            relief="flat", highlightthickness=1, highlightbackground=BORDER,
-            height=10, wrap="none",
+            out_box, height=10, wrap="none", undo=True, font=mono_font(SIZE_SM),
         )
-        out_scroll = tk.Scrollbar(out_box, orient="vertical", command=self.dsl_out_text.yview)
-        self.dsl_out_text.configure(yscrollcommand=out_scroll.set)
-        self.dsl_out_text.pack(side="left", fill="both", expand=True)
-        out_scroll.pack(side="right", fill="y")
+        self.dsl_out_vbar, self.dsl_out_hbar = attach_scrollbars(
+            out_box, self.dsl_out_text, vertical=True, horizontal=True,
+        )
 
     def load_dsl_file(self):
         path = filedialog.askopenfilename(
@@ -355,7 +316,8 @@ class DSLNestingPanel(ttk.Frame):
             canvas.create_rectangle(x1, y1, x2, y2, outline=color, width=1.2, dash=(4, 3))
             label = block.label or f"#{i + 1}"
             canvas.create_text(
-                x1 + 4, y1 + 10, text=label, fill=TEXT, anchor="w"
+                x1 + 4, y1 + 10, text=label, fill=TEXT, anchor="w",
+                font=canvas_font(),
             )
 
     def copy_nested_dsl(self):

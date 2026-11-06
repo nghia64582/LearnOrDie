@@ -30,8 +30,11 @@ if _parent_dir not in sys.path:
 
 
 # Custom font -- change these two to adjust the whole app's font in one place
-FONT_FAMILY = "Segoe UI"
-FONT_SIZE = 10
+try:
+    from common.ui import FONT_FAMILY, SIZE_SM as FONT_SIZE
+except ImportError:
+    FONT_FAMILY = "Segoe UI"
+    FONT_SIZE = 10
 
 
 def add_tab(notebook, title, build_fn):

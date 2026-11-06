@@ -18,14 +18,22 @@ from frame_creator.rail_skeleton_core import build_skeleton, cut_list, NODE_COLO
 
 # DPI awareness is handled once by the app entrypoint (laser_app / main).
 
-# Custom font -- change these two to adjust the whole app's font in one place
-FONT_FAMILY = "Segoe UI"
-FONT_SIZE = 10
+try:
+    from common.ui import FONT_FAMILY, SIZE_SM as FONT_SIZE, ui_font, canvas_font
+except ImportError:  # standalone without LaserCtrl on path
+    FONT_FAMILY = "Segoe UI"
+    FONT_SIZE = 10
+    def ui_font(size=10, bold=False):
+        return (FONT_FAMILY, size, "bold") if bold else (FONT_FAMILY, size)
+    def canvas_font(bold=False):
+        return ui_font(10, bold=bold)
 
 
 
-def draw_skeleton(canvas, sk, font_family=FONT_FAMILY, scale=3.0, margin=30):
+
+def draw_skeleton(canvas, sk, font_family=None, scale=3.0, margin=30):
     """Draw a skeleton (segments, nodes, free ends) onto a Tk canvas."""
+    label_font = canvas_font()
     canvas.delete("all")
 
     xs = [n["x"] for n in sk["nodes"]] or [0]
@@ -45,7 +53,7 @@ def draw_skeleton(canvas, sk, font_family=FONT_FAMILY, scale=3.0, margin=30):
         canvas.create_line(x0, y0, x1, y1, fill="#333", width=4)
         mx, my = (x0 + x1) / 2, (y0 + y1) / 2
         canvas.create_text(mx, my - 8, text=f"{s['length']:g}", fill="#333",
-                           font=(font_family, 8))
+                           font=label_font)
 
     for n in sk["nodes"]:
         px, py = to_px(n["x"], n["y"])

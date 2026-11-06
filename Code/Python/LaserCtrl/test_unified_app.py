@@ -274,6 +274,70 @@ class TkSmokeTests(unittest.TestCase):
         # Expect generous horizontal padding (16) somewhere in the value
         self.assertIn("16", str(pad).replace(" ", ""))
 
+
+    def test_shared_font_config_sizes(self):
+        from common import ui as cui
+        self.assertEqual(cui.SIZE_SM, 10)
+        self.assertEqual(cui.SIZE_MD, 12)
+        self.assertEqual(cui.SIZE_LG, 14)
+        # init_fonts already ran in setUpClass
+        from common.ui import FONT_FAMILY, ui_font, mono_font
+        self.assertTrue(FONT_FAMILY)
+        self.assertEqual(ui_font()[1], 10)
+        self.assertEqual(ui_font(12)[1], 12)
+        self.assertEqual(ui_font(14)[1], 14)
+        self.assertEqual(mono_font()[1], 10)
+        # UI and mono share the allowed size set only
+        for tup in (ui_font(10), ui_font(12), ui_font(14), mono_font(10)):
+            self.assertIn(tup[1], (10, 12, 14))
+
+    def test_nesting_neutral_solve_and_scrollbars(self):
+        import tkinter as tk
+        from tkinter import ttk
+        from dsl_nesting.gui import DSLNestingPanel
+
+        win = tk.Toplevel(self.root)
+        win.withdraw()
+        panel = DSLNestingPanel(win)
+        panel.pack(fill="both", expand=True)
+        self.root.update_idletasks()
+
+        # Solve must be neutral ttk.Button (no custom orange bg)
+        self.assertIsInstance(panel.dsl_calc_btn, ttk.Button)
+        self.assertEqual(str(panel.dsl_calc_btn.cget("text")), "Solve")
+
+        # Dual scrollbars wired on input + output
+        for text, vbar, hbar in (
+            (panel.dsl_in_text, panel.dsl_in_vbar, panel.dsl_in_hbar),
+            (panel.dsl_out_text, panel.dsl_out_vbar, panel.dsl_out_hbar),
+        ):
+            self.assertIsNotNone(vbar)
+            self.assertIsNotNone(hbar)
+            self.assertIn("yview", str(vbar.cget("command")))
+            self.assertIn("xview", str(hbar.cget("command")))
+            self.assertTrue(str(text.cget("yscrollcommand")))
+            self.assertTrue(str(text.cget("xscrollcommand")))
+
+        # Actual vertical scroll on tall input
+        many = "\n".join(f"ADD 0 {i} B{i}" for i in range(60))
+        panel.dsl_in_text.delete("1.0", "end")
+        panel.dsl_in_text.insert("1.0", many + "\n")
+        self.root.update_idletasks()
+        before = panel.dsl_in_text.yview()
+        panel.dsl_in_text.yview_moveto(1.0)
+        self.root.update_idletasks()
+        self.assertNotEqual(before, panel.dsl_in_text.yview())
+
+        # Horizontal scroll on a long line
+        panel.dsl_in_text.delete("1.0", "end")
+        panel.dsl_in_text.insert("1.0", "R " + " ".join(["1.23"] * 80) + "\n")
+        self.root.update_idletasks()
+        before_x = panel.dsl_in_text.xview()
+        panel.dsl_in_text.xview_moveto(1.0)
+        self.root.update_idletasks()
+        self.assertNotEqual(before_x, panel.dsl_in_text.xview())
+        win.destroy()
+
     def test_shutdown_closes_fake_serial(self):
         from engraver_ctrl.tab_machine import MachineTab
         from tkinter import ttk
@@ -320,7 +384,7 @@ def save_screenshots():
     try:
         import mss
         import mss.tools
-        grabber = mss.mss()
+        grabber = mss.MSS()
         # Focus Engraver/Custom with a tall sample DSL so scrollbar is meaningful
         shell.main_nb.select(0)
         root.update()
