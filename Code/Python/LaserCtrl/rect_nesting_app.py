@@ -3,8 +3,11 @@
 """
 Bộ xếp hình cắt - Xếp dải (CP-SAT)
 ====================================
-Công cụ desktop (Tkinter) sinh DSL cắt (RC / R) từ danh sách mảnh chữ nhật,
-tối thiểu chiều rộng cần dùng cho một chiều cao tấm cố định, cho phép xoay 90 độ.
+Tkinter desktop tool with two modes:
+
+- Manual pieces: list rectangles (optional inner C/R/RC) and emit RC/R DSL.
+- DSL nesting: parse a tab_designer DSL, pack top-level ADD ... END blocks
+  with CP-SAT (optional 90° rotation), and rewrite only those ADD lines.
 
 Yêu cầu: pip install ortools
 
@@ -38,9 +41,19 @@ import threading
 import queue
 import tkinter as tk
 import tkinter.font as tkfont
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 
-from ortools.sat.python import cp_model
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+from engraver_ctrl.dsl_nest import nest_dsl, solve_packing
+from engraver_ctrl.dsl_parse import (
+    all_segments,
+    bbox_from_segments,
+    parse_blocks,
+    parse_text,
+)
 
 # --------------------------------------------------------------------------
 # Theme - Light mode
@@ -83,9 +96,6 @@ MONO_FONT_CANDIDATES = ["Cascadia Mono", "Consolas", "Menlo", "Noto Sans Mono",
 # --------------------------------------------------------------------------
 # Packing core (CP-SAT)
 # --------------------------------------------------------------------------
-SCALE = 2  # đơn vị làm việc = 0.5mm -> số nguyên
-
-
 def snap(v):
     return round(v * 2) / 2
 
@@ -93,163 +103,6 @@ def snap(v):
 def fmt_num(v):
     r = snap(v)
     return str(int(r)) if float(r).is_integer() else f"{r:.1f}"
-
-
-def solve_packing(instances, H, time_limit=20.0):
-    """
-    instances: list of dict {id, name, w, h, rotate}
-    H: chiều cao tấm cố định (mm)
-    Trả về dict: placements, infeasible, status, W_used
-    """
-    H_s = round(H * SCALE)
-
-    feasible_items = []
-    infeasible = []
-    for inst in instances:
-        w_s = round(inst["w"] * SCALE)
-        h_s = round(inst["h"] * SCALE)
-        can_normal = w_s <= H_s
-        can_rot = inst["rotate"] and h_s <= H_s
-        if not can_normal and not can_rot:
-            infeasible.append(inst)
-            continue
-        feasible_items.append((inst, w_s, h_s, can_normal, can_rot))
-
-    if not feasible_items:
-        return {"placements": [], "infeasible": infeasible + [i for i in instances if i not in infeasible],
-                "status": "NO_ITEMS", "W_used": 0}
-
-    model = cp_model.CpModel()
-    n = len(feasible_items)
-
-    ub_w = sum((max(w_s, h_s) if inst["rotate"] else w_s) for inst, w_s, h_s, _, _ in feasible_items)
-    ub_w = max(ub_w, 1)
-    total_area = sum(w_s * h_s for _, w_s, h_s, _, _ in feasible_items)
-    lb_w = max(1, math.ceil(total_area / H_s))
-
-    x_vars, y_vars, w_vars, h_vars, rot_vars = [], [], [], [], []
-    x_intervals, y_intervals = [], []
-
-    for idx, (inst, w_s, h_s, can_normal, can_rot) in enumerate(feasible_items):
-        if can_normal and can_rot and w_s != h_s:
-            rot = model.NewBoolVar(f"rot_{idx}")
-            w_v = model.NewIntVar(0, ub_w, f"w_{idx}")
-            h_v = model.NewIntVar(0, H_s, f"h_{idx}")
-            model.Add(w_v == w_s).OnlyEnforceIf(rot.Not())
-            model.Add(w_v == h_s).OnlyEnforceIf(rot)
-            model.Add(h_v == h_s).OnlyEnforceIf(rot.Not())
-            model.Add(h_v == w_s).OnlyEnforceIf(rot)
-        elif can_normal:
-            rot = model.NewConstant(0)
-            w_v = model.NewIntVar(w_s, w_s, f"w_{idx}")
-            h_v = model.NewIntVar(h_s, h_s, f"h_{idx}")
-        else:  # chỉ vừa khi xoay
-            rot = model.NewConstant(1)
-            w_v = model.NewIntVar(h_s, h_s, f"w_{idx}")
-            h_v = model.NewIntVar(w_s, w_s, f"h_{idx}")
-
-        x = model.NewIntVar(0, ub_w, f"x_{idx}")
-        y = model.NewIntVar(0, H_s, f"y_{idx}")
-        model.Add(y + h_v <= H_s)
-
-        x_end = model.NewIntVar(0, ub_w, f"xend_{idx}")
-        model.Add(x_end == x + w_v)
-        y_end = model.NewIntVar(0, H_s, f"yend_{idx}")
-        model.Add(y_end == y + h_v)
-
-        x_iv = model.NewIntervalVar(x, w_v, x_end, f"xi_{idx}")
-        y_iv = model.NewIntervalVar(y, h_v, y_end, f"yi_{idx}")
-
-        x_vars.append(x); y_vars.append(y)
-        w_vars.append(w_v); h_vars.append(h_v); rot_vars.append(rot)
-        x_intervals.append(x_iv); y_intervals.append(y_iv)
-
-    model.AddNoOverlap2D(x_intervals, y_intervals)
-
-    W = model.NewIntVar(lb_w, ub_w, "W")
-    for idx in range(n):
-        model.Add(x_vars[idx] + w_vars[idx] <= W)
-    model.Minimize(W)
-
-    solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = time_limit
-    solver.parameters.num_search_workers = min(8, max(1, os.cpu_count() or 4))
-    status = solver.Solve(model)
-    status_name = solver.StatusName(status)
-
-    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        return {"placements": [], "infeasible": instances, "status": status_name, "W_used": 0}
-
-    placements = []
-    for idx, (inst, w_s, h_s, can_normal, can_rot) in enumerate(feasible_items):
-        xv = solver.Value(x_vars[idx]) / SCALE
-        yv = solver.Value(y_vars[idx]) / SCALE
-        wv = solver.Value(w_vars[idx]) / SCALE
-        hv = solver.Value(h_vars[idx]) / SCALE
-        rotated = solver.Value(rot_vars[idx]) == 1
-        placements.append({
-            "id": inst["id"], "name": inst["name"],
-            "x": snap(xv), "y": snap(yv), "w": snap(wv), "h": snap(hv),
-            "rotated": rotated, "origW": inst["w"], "origH": inst["h"],
-            "innerText": inst.get("innerText", ""),
-        })
-
-    W_used = snap(solver.Value(W) / SCALE)
-    return {"placements": placements, "infeasible": infeasible, "status": status_name, "W_used": W_used}
-
-
-def pieces_to_dsl(placements, W_used, H):
-    lines = [f"# Tam: rong={fmt_num(W_used)} cao={fmt_num(H)} (mm, lam tron 0.5)"]
-    for p in placements:
-        inner_lines = [l.strip() for l in (p.get("innerText") or "").split("\n") if l.strip()]
-        label = f"# {p['name']}" + (" (xoay 90 do)" if p["rotated"] else "")
-        lines.append(label)
-        if not inner_lines:
-            lines.append(f"R {fmt_num(p['x'])} {fmt_num(p['y'])} {fmt_num(p['w'])} {fmt_num(p['h'])}")
-            continue
-        # RC neo tam: tam khung bao = goc trai-duoi + nua kich thuoc
-        cx, cy = p["x"] + p["w"] / 2, p["y"] + p["h"] / 2
-        lines.append(f"RC {fmt_num(cx)} {fmt_num(cy)} {fmt_num(p['w'])} {fmt_num(p['h'])}")
-        for raw in inner_lines:
-            if raw.startswith("#"):
-                lines.append(raw)
-                continue
-            parts = raw.split()
-            cmd = parts[0].upper()
-            if cmd == "R" and len(parts) >= 5:
-                # R: x,y = goc trai-duoi
-                lx, ly, lw, lh = (float(v) for v in parts[1:5])
-                if not p["rotated"]:
-                    nx, ny, nw, nh = p["x"] + lx, p["y"] + ly, lw, lh
-                else:
-                    nx = p["x"] + (p["origH"] - ly - lh)
-                    ny = p["y"] + lx
-                    nw, nh = lh, lw
-                lines.append(f"R {fmt_num(nx)} {fmt_num(ny)} {fmt_num(nw)} {fmt_num(nh)}")
-            elif cmd == "RC" and len(parts) >= 5:
-                # RC: x,y = tam -> phep xoay ap dung truc tiep len diem tam
-                lcx, lcy, lw, lh = (float(v) for v in parts[1:5])
-                if not p["rotated"]:
-                    ncx, ncy, nw, nh = p["x"] + lcx, p["y"] + lcy, lw, lh
-                else:
-                    ncx = p["x"] + (p["origH"] - lcy)
-                    ncy = p["y"] + lcx
-                    nw, nh = lh, lw
-                lines.append(f"RC {fmt_num(ncx)} {fmt_num(ncy)} {fmt_num(nw)} {fmt_num(nh)}")
-            elif cmd == "C" and len(parts) >= 4:
-                lx, ly, lr = (float(v) for v in parts[1:4])
-                if not p["rotated"]:
-                    nx, ny = p["x"] + lx, p["y"] + ly
-                else:
-                    # Xoay quanh goc trai-duoi cua manh (origW x origH),
-                    # ban kinh khong doi vi phep xoay bao toan khoang cach.
-                    nx = p["x"] + (p["origH"] - ly)
-                    ny = p["y"] + lx
-                lines.append(f"C {fmt_num(nx)} {fmt_num(ny)} {fmt_num(lr)}")
-            else:
-                lines.append(f'# CANH BAO: lenh "{cmd}" chua duoc tu dong xoay/dich chuyen - kiem tra tay')
-                lines.append(raw)
-    return "\n".join(lines)
 
 
 # --------------------------------------------------------------------------
@@ -412,12 +265,25 @@ class App:
         self.font_mono_sm = pick_font(MONO_FONT_CANDIDATES, 10)
         self.font_h1 = pick_font(UI_FONT_CANDIDATES, 18, "bold")
 
+        self.root.option_add("*Font", self.font_ui_sm)
+        try:
+            style = ttk.Style(self.root)
+            style.configure("TNotebook", background=BG)
+            style.configure("TNotebook.Tab", font=self.font_ui_sm, padding=(12, 6))
+        except tk.TclError:
+            pass
+
         self.piece_rows = []
         self.result_queue = queue.Queue()
         self.last_placements = []
         self.last_W = 0
         self.last_H = 0
         self.solving = False
+        self.dsl_result_queue = queue.Queue()
+        self.dsl_solving = False
+        self.last_dsl = ""
+        self.last_dsl_W = 0
+        self.last_dsl_H = 0
 
         self._build_ui()
         self._seed_examples()
@@ -425,7 +291,7 @@ class App:
         self.root.after(300, self.calculate)
 
     def on_close(self):
-        if self.solving:
+        if self.solving or self.dsl_solving:
             if not messagebox.askyesno(
                 "Đang tính toán",
                 "CP-SAT đang giải. Đóng bây giờ có thể mất kết quả đang tính. Vẫn đóng?"):
@@ -438,14 +304,24 @@ class App:
         header.pack(fill="x", padx=20, pady=(16, 6))
         tk.Label(header, text="\U0001F4D0 Bộ xếp hình cắt", bg=BG, fg=TEXT,
                   font=self.font_h1).pack(side="left")
-        tk.Label(header, text="  Sinh DSL (RC/R) - CP-SAT tối ưu chiều rộng, chiều cao tấm cố định",
+        tk.Label(header, text="  Strip packing — manual pieces or DSL nesting (CP-SAT)",
                   bg=BG, fg=TEXT_DIM, font=self.font_ui_sm).pack(side="left", padx=(6, 0))
 
         sep = tk.Frame(self.root, bg=BORDER, height=1)
-        sep.pack(fill="x", padx=20, pady=(0, 14))
+        sep.pack(fill="x", padx=20, pady=(0, 10))
 
-        body = tk.Frame(self.root, bg=BG)
-        body.pack(fill="both", expand=True, padx=20, pady=(0, 16))
+        notebook = ttk.Notebook(self.root)
+        notebook.pack(fill="both", expand=True, padx=16, pady=(0, 16))
+        self.notebook = notebook
+
+        manual = tk.Frame(notebook, bg=BG)
+        dsl_tab = tk.Frame(notebook, bg=BG)
+        notebook.add(manual, text="Manual pieces")
+        notebook.add(dsl_tab, text="DSL nesting")
+        self._build_dsl_tab(dsl_tab)
+
+        body = tk.Frame(manual, bg=BG)
+        body.pack(fill="both", expand=True, padx=20, pady=(10, 16))
 
         left = tk.Frame(body, bg=BG, width=400)
         left.pack(side="left", fill="y", padx=(0, 16))
@@ -544,9 +420,9 @@ class App:
         self.dsl_text.pack(side="left", fill="both", expand=True)
         dsl_scroll.pack(side="right", fill="y")
 
-    def _panel(self, parent, title):
+    def _panel(self, parent, title, expand=False):
         panel = tk.Frame(parent, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
-        panel.pack(fill="both", expand=False, pady=(0, 14))
+        panel.pack(fill="both", expand=expand, pady=(0, 14))
         inner = tk.Frame(panel, bg=PANEL)
         inner.pack(fill="both", expand=True, padx=14, pady=12)
         tk.Label(inner, text=title, bg=PANEL, fg=TEXT_DIM, font=self.font_ui_sm).pack(
@@ -759,6 +635,298 @@ class App:
             return
         with open(path, "w", encoding="utf-8") as f:
             f.write(text)
+
+
+    # ---------------- DSL nesting tab ----------------
+    SHAPE_COLORS = {
+        "C": "#111111", "R": "#15803d", "RC": "#0f8f83",
+        "L": "#1d4ed8", "LH": "#1d4ed8", "LV": "#1d4ed8",
+        "A": "#7c3aed", "P": "#7c3aed", "M": "#c2410c",
+        "JF": "#b91c1c", "JM": "#1d4ed8",
+    }
+
+    def _build_dsl_tab(self, parent):
+        body = tk.Frame(parent, bg=BG)
+        body.pack(fill="both", expand=True, padx=20, pady=(10, 16))
+
+        left = tk.Frame(body, bg=BG, width=440)
+        left.pack(side="left", fill="both", padx=(0, 16))
+        left.pack_propagate(False)
+
+        right = tk.Frame(body, bg=BG)
+        right.pack(side="left", fill="both", expand=True)
+
+        in_panel = self._panel(left, "INPUT DSL", expand=True)
+        in_head = tk.Frame(in_panel, bg=PANEL)
+        in_head.pack(fill="x", pady=(0, 6))
+        load_btn = tk.Button(in_head, text="Load file...", command=self.load_dsl_file,
+                              bg=PANEL_ALT, fg=TEXT, activebackground=PANEL_ALT,
+                              relief="flat", highlightthickness=1,
+                              highlightbackground=BORDER, font=self.font_ui_sm,
+                              cursor="hand2", padx=10, pady=4)
+        load_btn.pack(side="left")
+        in_box = tk.Frame(in_panel, bg=PANEL)
+        in_box.pack(fill="both", expand=True)
+        self.dsl_in_text = tk.Text(in_box, bg=PANEL_ALT, fg=TEXT, insertbackground=TEXT,
+                                    relief="flat", highlightthickness=1,
+                                    highlightbackground=BORDER, font=self.font_mono_sm,
+                                    height=18, wrap="none")
+        in_scroll = tk.Scrollbar(in_box, orient="vertical", command=self.dsl_in_text.yview)
+        self.dsl_in_text.configure(yscrollcommand=in_scroll.set)
+        self.dsl_in_text.pack(side="left", fill="both", expand=True)
+        in_scroll.pack(side="right", fill="y")
+
+        cfg_panel = self._panel(left, "SHEET")
+        row = tk.Frame(cfg_panel, bg=PANEL)
+        row.pack(fill="x")
+        self.e_dsl_height = self._field(row, "H (mm, empty = tallest block)", "", width=16)
+        self.e_dsl_kerf = self._field(row, "Kerf (mm)", "0", width=8, disabled=True)
+        self.e_dsl_timelimit = self._field(row, "Time limit (s)", "15", width=8)
+        rot_row = tk.Frame(cfg_panel, bg=PANEL)
+        rot_row.pack(fill="x", pady=(10, 0))
+        self.dsl_rotate_var = tk.BooleanVar(value=True)
+        tk.Checkbutton(rot_row, text="Allow 90° rotation", variable=self.dsl_rotate_var,
+                        bg=PANEL, fg=TEXT, activebackground=PANEL, activeforeground=TEXT,
+                        selectcolor=PANEL, font=self.font_ui_sm,
+                        highlightthickness=0).pack(side="left")
+
+        calc_panel = tk.Frame(left, bg=BG)
+        calc_panel.pack(fill="x", pady=(4, 0))
+        self.dsl_calc_btn = tk.Button(calc_panel, text="Solve", command=self.solve_dsl,
+                                       bg=ACCENT, fg=ACCENT_ON, activebackground=ACCENT,
+                                       activeforeground=ACCENT_ON, relief="flat",
+                                       font=self.font_ui_bold, cursor="hand2", pady=10)
+        self.dsl_calc_btn.pack(fill="x")
+        self.dsl_status_lbl = tk.Label(calc_panel, text="", bg=BG, fg=TEXT_DIM,
+                                        font=self.font_ui_sm, wraplength=400, justify="left")
+        self.dsl_status_lbl.pack(fill="x", pady=(6, 0))
+
+        canvas_panel = self._panel(right, "PREVIEW", expand=True)
+        cv_wrap = tk.Frame(canvas_panel, bg=CANVAS_BG, highlightbackground=BORDER,
+                            highlightthickness=1)
+        cv_wrap.pack(fill="both", expand=True)
+        self.dsl_canvas = tk.Canvas(cv_wrap, bg=CANVAS_BG, highlightthickness=0, height=420)
+        self.dsl_canvas.pack(fill="both", expand=True, padx=2, pady=2)
+        self.dsl_canvas.bind("<Configure>", lambda e: self.redraw_dsl())
+
+        results = tk.Frame(canvas_panel, bg=PANEL)
+        results.pack(fill="x", pady=(12, 0))
+        self.dsl_stat_width = self._stat(results, "Result width", accent=True)
+        self.dsl_stat_height = self._stat(results, "Sheet height H used")
+        self.dsl_stat_eff = self._stat(results, "Utilization")
+
+        self.dsl_warn_lbl = tk.Label(canvas_panel, text="", bg=DANGER_SOFT, fg=DANGER,
+                                      font=self.font_ui_sm, justify="left", anchor="w",
+                                      wraplength=760)
+
+        out_panel = self._panel(right, "OUTPUT DSL", expand=True)
+        out_head = tk.Frame(out_panel, bg=PANEL)
+        out_head.pack(fill="x")
+        tk.Label(out_head, text="", bg=PANEL).pack(side="left", expand=True, fill="x")
+        self.dsl_copy_status = tk.Label(out_head, text="Copied", bg=PANEL, fg=SUCCESS,
+                                         font=self.font_ui_sm)
+        copy_btn = tk.Button(out_head, text="Copy DSL", command=self.copy_nested_dsl,
+                              bg=PANEL_ALT, fg=TEXT, activebackground=PANEL_ALT,
+                              relief="flat", highlightthickness=1,
+                              highlightbackground=BORDER, font=self.font_ui_sm,
+                              cursor="hand2", padx=10, pady=4)
+        copy_btn.pack(side="right")
+        save_btn = tk.Button(out_head, text="Save DSL...", command=self.save_nested_dsl,
+                              bg=PANEL_ALT, fg=TEXT, activebackground=PANEL_ALT,
+                              relief="flat", highlightthickness=1,
+                              highlightbackground=BORDER, font=self.font_ui_sm,
+                              cursor="hand2", padx=10, pady=4)
+        save_btn.pack(side="right", padx=(0, 8))
+
+        out_box = tk.Frame(out_panel, bg=PANEL)
+        out_box.pack(fill="both", expand=True, pady=(8, 0))
+        self.dsl_out_text = tk.Text(out_box, bg=PANEL_ALT, fg=TEXT, insertbackground=TEXT,
+                                     relief="flat", highlightthickness=1,
+                                     highlightbackground=BORDER, font=self.font_mono_sm,
+                                     height=12, wrap="none")
+        out_scroll = tk.Scrollbar(out_box, orient="vertical", command=self.dsl_out_text.yview)
+        self.dsl_out_text.configure(yscrollcommand=out_scroll.set)
+        self.dsl_out_text.pack(side="left", fill="both", expand=True)
+        out_scroll.pack(side="right", fill="y")
+
+    def load_dsl_file(self):
+        path = filedialog.askopenfilename(
+            filetypes=[("Text/DSL", "*.txt"), ("All files", "*.*")])
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            text = f.read()
+        self.dsl_in_text.delete("1.0", "end")
+        self.dsl_in_text.insert("1.0", text)
+
+    def solve_dsl(self):
+        dsl = self.dsl_in_text.get("1.0", "end")
+        if not dsl.strip():
+            messagebox.showwarning("No DSL", "Paste or load a DSL first.")
+            return
+        raw_h = self.e_dsl_height.get().strip()
+        height = None
+        if raw_h:
+            try:
+                height = float(raw_h)
+            except ValueError:
+                messagebox.showerror("Error", "Sheet height H is not a valid number.")
+                return
+            if height <= 0:
+                messagebox.showerror("Error", "Sheet height H must be greater than 0.")
+                return
+        try:
+            time_limit = max(1.0, float(self.e_dsl_timelimit.get()))
+        except ValueError:
+            time_limit = 15.0
+        allow_rotate = bool(self.dsl_rotate_var.get())
+
+        self.dsl_solving = True
+        self.dsl_calc_btn.config(state="disabled", text="Solving...")
+        self.dsl_status_lbl.config(text="CP-SAT is solving, please wait...")
+        self.dsl_warn_lbl.pack_forget()
+
+        def worker():
+            try:
+                result = nest_dsl(dsl, height=height, allow_rotate=allow_rotate,
+                                  time_limit=time_limit)
+                self.dsl_result_queue.put(("ok", result))
+            except Exception as exc:
+                self.dsl_result_queue.put(("err", exc))
+
+        threading.Thread(target=worker, daemon=True).start()
+        self.root.after(150, self._poll_dsl_result)
+
+    def _poll_dsl_result(self):
+        try:
+            kind, payload = self.dsl_result_queue.get_nowait()
+        except queue.Empty:
+            self.root.after(150, self._poll_dsl_result)
+            return
+
+        self.dsl_solving = False
+        self.dsl_calc_btn.config(state="normal", text="Solve")
+        if kind == "err":
+            self.dsl_status_lbl.config(text="Solve failed.")
+            messagebox.showerror("Cannot solve", str(payload))
+            return
+
+        result = payload
+        self.last_dsl = result["dsl"]
+        self.last_dsl_W = result["W"]
+        self.last_dsl_H = result["H"]
+        src = "heuristic fallback" if result.get("heuristic") else result["status"]
+        self.dsl_status_lbl.config(
+            text=f"{src}  •  {result['n_blocks']} blocks  •  {result['elapsed']:.2f}s")
+        self.e_dsl_height.delete(0, "end")
+        self.e_dsl_height.insert(0, f"{result['H']:.2f}".rstrip("0").rstrip("."))
+        self.dsl_stat_width.config(text=f"{result['W']:.2f} mm")
+        self.dsl_stat_height.config(text=f"{result['H']:.2f} mm")
+        area = sum(p["w"] * p["h"] for p in result["placements"])
+        eff = (area / (result["W"] * result["H"] * 100) * 10000) if result["W"] > 0 else 0
+        # area / (W*H) * 100
+        eff = (area / (result["W"] * result["H"]) * 100) if result["W"] > 0 else 0
+        self.dsl_stat_eff.config(text=f"{eff:.1f}%")
+
+        if result["infeasible"]:
+            names = ", ".join(it["name"] for it in result["infeasible"])
+            self.dsl_warn_lbl.config(
+                text=f"Could not place (does not fit H even after rotation, "
+                     f"or solver timed out): {names}")
+            self.dsl_warn_lbl.pack(fill="x", pady=(10, 0))
+        else:
+            self.dsl_warn_lbl.pack_forget()
+
+        self.dsl_out_text.delete("1.0", "end")
+        self.dsl_out_text.insert("1.0", result["dsl"])
+        self.redraw_dsl()
+
+    def redraw_dsl(self):
+        canvas = getattr(self, "dsl_canvas", None)
+        if canvas is None:
+            return
+        canvas.delete("all")
+        dsl = self.last_dsl
+        if not dsl or self.last_dsl_W <= 0:
+            return
+        Wpx = max(canvas.winfo_width(), 100)
+        Hpx = max(canvas.winfo_height(), 100)
+        pad = 20
+        avail_w, avail_h = Wpx - 2 * pad, Hpx - 2 * pad
+        sheet_w, sheet_h = max(self.last_dsl_W, 1), max(self.last_dsl_H, 1)
+        scale = min(avail_w / sheet_w, avail_h / sheet_h)
+        draw_w, draw_h = sheet_w * scale, sheet_h * scale
+        ox = pad + (avail_w - draw_w) / 2
+        oy = pad + (avail_h - draw_h) / 2
+
+        def to_canvas(x, y):
+            return ox + x * scale, oy + draw_h - y * scale
+
+        grid_step = 50
+        while sheet_w / grid_step > 24 or sheet_h / grid_step > 24:
+            grid_step *= 2
+        gx = 0
+        while gx <= sheet_w + 1e-6:
+            x1, y1 = to_canvas(gx, 0)
+            x2, y2 = to_canvas(gx, sheet_h)
+            canvas.create_line(x1, y1, x2, y2, fill=GRID_LINE)
+            gx += grid_step
+        gy = 0
+        while gy <= sheet_h + 1e-6:
+            x1, y1 = to_canvas(0, gy)
+            x2, y2 = to_canvas(sheet_w, gy)
+            canvas.create_line(x1, y1, x2, y2, fill=GRID_LINE)
+            gy += grid_step
+
+        sx, sy = to_canvas(0, sheet_h)
+        canvas.create_rectangle(sx, sy, sx + draw_w, sy + draw_h,
+                                outline=BORDER_STRONG, width=1.5)
+
+        parsed = parse_text(dsl)
+        for cmd, segs in parsed["shapes"]:
+            color = self.SHAPE_COLORS.get(cmd, TEXT)
+            for x1, y1, x2, y2 in segs:
+                canvas.create_line(*to_canvas(x1, y1), *to_canvas(x2, y2),
+                                   fill=color, width=1.4)
+
+        lines = dsl.splitlines()
+        blocks = parse_blocks(dsl).blocks
+        for i, block in enumerate(blocks):
+            chunk = "\n".join(lines[block.start:block.end + 1])
+            box = bbox_from_segments(all_segments(parse_text(chunk)))
+            if not box:
+                continue
+            color = PALETTE[i % len(PALETTE)]
+            x1, y1 = to_canvas(box["minx"], box["maxy"])
+            x2, y2 = to_canvas(box["maxx"], box["miny"])
+            canvas.create_rectangle(x1, y1, x2, y2, outline=color, width=1.2, dash=(4, 3))
+            label = block.label or f"#{i + 1}"
+            canvas.create_text(x1 + 4, y1 + 10, text=label, fill=TEXT,
+                                font=self.font_ui_xs, anchor="w")
+
+    def copy_nested_dsl(self):
+        text = self.dsl_out_text.get("1.0", "end")
+        if not text.strip():
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text if text.endswith("\n") else text)
+        self.root.update()
+        self.dsl_copy_status.pack(side="right", padx=(0, 10))
+        self.root.after(1400, self.dsl_copy_status.pack_forget)
+
+    def save_nested_dsl(self):
+        text = self.dsl_out_text.get("1.0", "end")
+        if not text.strip():
+            messagebox.showinfo("No output", "Solve first, then save the nested DSL.")
+            return
+        path = filedialog.asksaveasfilename(defaultextension=".txt",
+                                             filetypes=[("Text/DSL", "*.txt"),
+                                                        ("All files", "*.*")])
+        if not path:
+            return
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text if text.endswith("\n") else text)
+
 
 
 def main():
