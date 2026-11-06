@@ -281,15 +281,110 @@ class TkSmokeTests(unittest.TestCase):
         self.assertEqual(cui.SIZE_MD, 12)
         self.assertEqual(cui.SIZE_LG, 14)
         # init_fonts already ran in setUpClass
-        from common.ui import FONT_FAMILY, ui_font, mono_font
+        from common.ui import FONT_FAMILY, MONO_FAMILY, ui_font, mono_font
         self.assertTrue(FONT_FAMILY)
+        self.assertEqual(MONO_FAMILY, FONT_FAMILY)
+        self.assertEqual(ui_font()[0], FONT_FAMILY)
+        self.assertEqual(mono_font()[0], FONT_FAMILY)
         self.assertEqual(ui_font()[1], 10)
         self.assertEqual(ui_font(12)[1], 12)
         self.assertEqual(ui_font(14)[1], 14)
         self.assertEqual(mono_font()[1], 10)
-        # UI and mono share the allowed size set only
         for tup in (ui_font(10), ui_font(12), ui_font(14), mono_font(10)):
+            self.assertEqual(tup[0], FONT_FAMILY)
             self.assertIn(tup[1], (10, 12, 14))
+        # Named Tk fonts must resolve to the same shared family
+        from tkinter import font as tkfont
+        families = []
+        for name in ("TkDefaultFont", "TkTextFont", "TkFixedFont",
+                     "AppFont", "AppMono"):
+            try:
+                f = tkfont.nametofont(name, self.root)
+            except Exception:
+                continue
+            families.append((name, f.actual("family")))
+        self.assertTrue(families)
+        shared = {fam for _, fam in families}
+        self.assertEqual(len(shared), 1, families)
+        only = next(iter(shared))
+        self.assertEqual(only, FONT_FAMILY)
+        self.assertFalse(any(b in only.lower()
+                             for b in ("consolas", "courier", "times", "cascadia")))
+
+    def test_loaded_tabs_use_shared_family(self):
+        """Walk widgets in the unified shell; no Consolas/Times/Courier."""
+        import tkinter as tk
+        from tkinter import font as tkfont
+        from app_shell import LaserAppShell
+        from common.ui import FONT_FAMILY
+
+        banned = ("consolas", "courier", "times", "cascadia", "menlo", "monaco")
+        win = tk.Toplevel(self.root)
+        win.withdraw()
+        shell = LaserAppShell(win)
+        self.root.update_idletasks()
+
+        def family_of(widget):
+            try:
+                raw = str(widget.cget("font"))
+            except Exception:
+                return None
+            if not raw:
+                return None
+            try:
+                # May be a font name or a tuple string
+                f = tkfont.nametofont(raw, self.root) if raw in tkfont.names(self.root) else None
+                if f is not None:
+                    return f.actual("family")
+            except Exception:
+                pass
+            try:
+                # Parse tuple-ish "family size ..."
+                parts = widget.tk.splitlist(raw)
+                if parts:
+                    return parts[0]
+            except Exception:
+                pass
+            return raw
+
+        bad = []
+        stack = [win]
+        seen = set()
+        while stack:
+            w = stack.pop()
+            wid = str(w)
+            if wid in seen:
+                continue
+            seen.add(wid)
+            try:
+                kids = w.winfo_children()
+            except Exception:
+                kids = []
+            stack.extend(kids)
+            fam = family_of(w)
+            if not fam:
+                continue
+            low = fam.lower()
+            if any(b in low for b in banned):
+                bad.append((wid, fam, w.winfo_class()))
+            # Soft check: when an explicit family is set, prefer shared
+            # (Tk may report slightly different actual names; allow FONT_FAMILY)
+            if fam not in (FONT_FAMILY, "TkDefaultFont", "TkTextFont", "TkFixedFont"):
+                # Allow if actual resolves to FONT_FAMILY
+                try:
+                    actual = tkfont.Font(font=fam if isinstance(fam, str) else fam, root=self.root).actual("family")
+                    if actual != FONT_FAMILY and not any(
+                        actual.lower().startswith(ok.lower()) for ok in (FONT_FAMILY,)
+                    ):
+                        # Only flag if clearly a different known face
+                        if any(b in actual.lower() for b in banned):
+                            bad.append((wid, actual, w.winfo_class()))
+                except Exception:
+                    pass
+
+        shell.shutdown()
+        win.destroy()
+        self.assertEqual(bad, [], f"banned font families found: {bad[:12]}")
 
     def test_nesting_neutral_solve_and_scrollbars(self):
         import tkinter as tk

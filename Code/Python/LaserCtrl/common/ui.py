@@ -15,10 +15,8 @@ import sys
 # ---------------------------------------------------------------------------
 
 # Preferred UI family (first available on the machine wins).
+# ONE family for every text: labels, buttons, Text editors, canvas labels.
 FONT_FAMILY_PREF = ("Segoe UI", "DejaVu Sans", "Helvetica", "Arial")
-# Preferred monospace for DSL / log editors.
-MONO_FAMILY_PREF = ("Consolas", "Cascadia Mono", "DejaVu Sans Mono",
-                    "Courier New", "Courier")
 
 # Only these three UI sizes are used across the whole app.
 SIZE_SM = 10   # default body / labels / buttons / notebook tabs
@@ -37,7 +35,9 @@ NOTEBOOK_PADDING = 4
 # Resolved at runtime by init_fonts()
 # ---------------------------------------------------------------------------
 FONT_FAMILY = "TkDefaultFont"
-MONO_FAMILY = "TkFixedFont"
+# Alias kept for call-site compatibility; always equals FONT_FAMILY (not a
+# separate monospace face — user requires one family everywhere).
+MONO_FAMILY = FONT_FAMILY
 _SCALE = 1.0
 _INITIALIZED = False
 
@@ -84,7 +84,11 @@ def _pick(root, prefs, default):
     for f in prefs:
         if f in have:
             return f
-    return default
+    for f in ("DejaVu Sans", "Liberation Sans", "FreeSans", "Helvetica", "Arial"):
+        if f in have:
+            return f
+    # Avoid leaving the sentinel name "TkDefaultFont" as a family string.
+    return default if default in have else "Helvetica"
 
 
 def ui_font(size=None, bold=False):
@@ -96,9 +100,12 @@ def ui_font(size=None, bold=False):
 
 
 def mono_font(size=None):
-    """Tuple font for DSL / log Text widgets."""
-    sz = SIZE_SM if size is None else size
-    return (MONO_FAMILY, sz)
+    """Alias of ui_font for DSL / log Text widgets.
+
+    Uses the SAME shared UI family (not Consolas/Courier). Name kept so
+    existing call sites do not need a mass rename.
+    """
+    return ui_font(size)
 
 
 def canvas_font(bold=False):
@@ -155,8 +162,16 @@ def init_fonts(root, size=None):
     """Resolve family, install named fonts, set ttk/option defaults."""
     global FONT_FAMILY, MONO_FAMILY, _INITIALIZED
     size = SIZE_SM if size is None else size
-    FONT_FAMILY = _pick(root, FONT_FAMILY_PREF, "TkDefaultFont")
-    MONO_FAMILY = _pick(root, MONO_FAMILY_PREF, "TkFixedFont")
+    FONT_FAMILY = _pick(root, FONT_FAMILY_PREF, "Helvetica")
+    try:
+        from tkinter import font as tkfont
+        # Normalize to the engine's actual family string (e.g. DejaVu Sans).
+        FONT_FAMILY = tkfont.Font(
+            root=root, family=FONT_FAMILY, size=SIZE_SM
+        ).actual("family")
+    except Exception:
+        pass
+    MONO_FAMILY = FONT_FAMILY  # one family everywhere
     try:
         from tkinter import font as tkfont
         from tkinter import ttk
@@ -166,26 +181,26 @@ def init_fonts(root, size=None):
             "TkIconFont", "TkTooltipFont",
         ):
             tkfont.nametofont(name, root).configure(family=FONT_FAMILY, size=size)
+        # TkFixedFont also forced to the shared UI family (no Courier/Consolas).
         tkfont.nametofont("TkFixedFont", root).configure(
-            family=MONO_FAMILY, size=size
+            family=FONT_FAMILY, size=size
         )
-        # Named fonts for explicit use in widgets/canvas
+        # Named fonts for explicit use in widgets/canvas (all same family).
         for n, sz, weight in (
             ("AppFont", SIZE_SM, "normal"),
             ("AppFontBold", SIZE_SM, "bold"),
             ("AppFontMd", SIZE_MD, "normal"),
             ("AppFontMdBold", SIZE_MD, "bold"),
             ("AppFontLg", SIZE_LG, "normal"),
-            ("AppMono", SIZE_SM, "normal"),
+            ("AppMono", SIZE_SM, "normal"),  # alias name; same family
         ):
             try:
                 existing = tkfont.nametofont(n, root)
-                existing.configure(family=FONT_FAMILY if "Mono" not in n else MONO_FAMILY,
-                                   size=sz, weight=weight)
+                existing.configure(family=FONT_FAMILY, size=sz, weight=weight)
             except Exception:
                 tkfont.Font(
                     root=root, name=n,
-                    family=MONO_FAMILY if "Mono" in n else FONT_FAMILY,
+                    family=FONT_FAMILY,
                     size=sz, weight=weight,
                 )
         style = ttk.Style(root)
