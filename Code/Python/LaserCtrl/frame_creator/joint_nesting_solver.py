@@ -19,8 +19,11 @@ Requires: pip install ortools
 import math
 import threading
 import queue
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+try:
+    import tkinter as tk
+    from tkinter import ttk, filedialog, messagebox
+except ImportError:  # allow solver helpers to load headless
+    tk = ttk = filedialog = messagebox = None
 
 from ortools.sat.python import cp_model
 
@@ -254,6 +257,9 @@ def build_dsl(placed_with_variant, cell_size=10.0):
     only placement offset. The downstream designer tool applies ADD's
     offset to the M points itself, so translating both here would double
     up the offset.
+
+    Hole outlines are preceded by a FIRST line so tab_designer cuts
+    them before the piece outline (FIRST applies to the next shape).
     """
     lines = []
     for p in placed_with_variant:
@@ -263,7 +269,11 @@ def build_dsl(placed_with_variant, cell_size=10.0):
         lines.append(f'ADD {dx:g} {dy:g} {p["name"]}')
         lines.append(format_points_line(outer_closed))
         if hole is not None:
+            # FIRST marks only the immediately following shape (the hole
+            # M command). ADD/END do not consume it, so it must sit
+            # directly above the hole line, not above ADD.
             hole_closed = hole + [hole[0]]
+            lines.append("FIRST")
             lines.append(format_points_line(hole_closed))
         lines.append("END")
     return "\n".join(lines) + "\n"
