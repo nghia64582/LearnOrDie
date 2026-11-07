@@ -433,6 +433,41 @@ class TkSmokeTests(unittest.TestCase):
         self.assertNotEqual(before_x, panel.dsl_in_text.xview())
         win.destroy()
 
+
+    def test_simulate_time_labels(self):
+        import tkinter as tk
+        from tkinter import ttk
+        from engraver_ctrl.tab_simulate import TabSimulate
+
+        class Host:
+            font = ("Segoe UI", 10)
+            ser = None
+
+        path = os.path.join(tempfile.mkdtemp(), "t.gcode")
+        with open(path, "w") as f:
+            f.write("G0 X0 Y50\nG1 X60 Y50 F1200\nG1 X60 Y110\n")
+        win = tk.Toplevel(self.root)
+        win.withdraw()
+        nb = ttk.Notebook(win)
+        nb.pack(fill="both", expand=True)
+        tab = TabSimulate(nb, Host())
+        nb.add(tab, text="Simulate")
+        tab.file_var.set(path)
+        tab.load_gcode()
+        self.assertEqual(tab.total_time_label.cget("text"), "Total time: 7.0 s")
+        self.assertIn("0.0 s", tab.through_time_label.cget("text"))
+        tab.next_step(); tab.next_step()
+        self.assertEqual(tab.through_time_label.cget("text"),
+                         "Time through current step: 4.0 s")
+        self.assertEqual(tab.step_time_label.cget("text"),
+                         "Current step time: 3.0 s")
+        tab.step_slider.set(3); tab.on_slider_move("3")
+        self.assertEqual(tab.through_time_label.cget("text"),
+                         "Time through current step: 7.0 s")
+        tab.reset_simulation()
+        self.assertIn("0.0 s", tab.through_time_label.cget("text"))
+        win.destroy()
+
     def test_shutdown_closes_fake_serial(self):
         from engraver_ctrl.tab_machine import MachineTab
         from tkinter import ttk
@@ -508,6 +543,24 @@ def save_screenshots():
             shot = grabber.grab(grabber.monitors[0])
             mss.tools.to_png(shot.rgb, shot.size, output=path)
             if os.path.isfile(path) and os.path.getsize(path) > 0:
+                paths.append(path)
+
+        # Engraver/Simulate with a loaded program and a selected step
+        if nested:
+            nested[0].select(4)
+            sim = nested[0].nametowidget(nested[0].tabs()[4])
+            if hasattr(sim, "load_gcode"):
+                gpath = os.path.join(tempfile.mkdtemp(), "demo.gcode")
+                with open(gpath, "w") as f:
+                    f.write("G0 X10 Y10\nG1 X110 Y10 F600\nG1 X110 Y80\n"
+                            "G0 X10 Y80\nG1 X10 Y10 F1200\n")
+                sim.file_var.set(gpath)
+                sim.load_gcode()
+                sim.next_step(); sim.next_step(); sim.next_step()
+                root.update(); root.update_idletasks()
+                path = os.path.join(out_dir, "unified_simulate_time.png")
+                shot = grabber.grab(grabber.monitors[0])
+                mss.tools.to_png(shot.rgb, shot.size, output=path)
                 paths.append(path)
 
         for i, name in enumerate(["Engraver", "Frame Toolkit", "DSL Library", "DSL Nesting"]):
