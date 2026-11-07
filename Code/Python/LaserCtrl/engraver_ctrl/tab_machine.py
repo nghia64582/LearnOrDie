@@ -1,7 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-import serial
-import serial.tools.list_ports
+try:
+    import serial
+    from serial.tools import list_ports as serial_list_ports
+except ImportError:  # optional when pyserial is not installed
+    serial = None
+    serial_list_ports = None
 import os
 import time
 import threading
@@ -11,6 +15,7 @@ from datetime import datetime
 
 from engraver_ctrl.tab_simulate import TabSimulate
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+from common.ui import ui_font, mono_font, make_button, SIZE_SM
 
 # ---- Cấu hình ước lượng thời gian, chỉnh theo máy thực tế của bạn ----
 RAPID_RATE_MM_MIN = 3000  # tốc độ di chuyển nhanh (G0), tra trong setting $110/$111 của GRBL
@@ -132,7 +137,7 @@ class MachineTab(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-        self.font = app.font
+        self.font = getattr(app, "font", None) or ui_font(SIZE_SM)
         self.is_running = False
         self.line_times = []
         self.total_time = 1.0
@@ -165,26 +170,20 @@ class MachineTab(tk.Frame):
         self.combo_com = ttk.Combobox(controls, values=[], width=12)
         self.combo_com.grid(row=row, column=1, sticky="w")
 
-        tk.Button(controls, text="Refresh", font=self.font,
-                  command=self.refresh_com).grid(row=row, column=2)
+        make_button(controls, "Refresh", command=self.refresh_com).grid(row=row, column=2)
         row += 1
 
-        tk.Button(controls, text="Connect", font=self.font,
-                  command=self.connect_serial).grid(row=row, column=1, pady=5)
+        make_button(controls, "Connect", command=self.connect_serial).grid(row=row, column=1, pady=5)
         row += 1
 
-        tk.Button(controls, text="Laser ON", font=self.font,
-                  command=self.laser_on).grid(row=row, column=0)
-        tk.Button(controls, text="Laser OFF", font=self.font,
-                  command=self.laser_off).grid(row=row, column=1)
+        make_button(controls, "Laser ON", command=self.laser_on).grid(row=row, column=0)
+        make_button(controls, "Laser OFF", command=self.laser_off).grid(row=row, column=1)
         row += 1
 
-        self.btn_run = tk.Button(controls, text="Run GCODE", font=self.font,
-                                  command=self.run_gcode)
+        self.btn_run = make_button(controls, "Run GCODE", command=self.run_gcode)
         self.btn_run.grid(row=row, column=0, pady=10)
 
-        self.btn_stop = tk.Button(controls, text="STOP", font=self.font, fg="white", bg="red",
-                                   command=self.stop_gcode, state="disabled")
+        self.btn_stop = make_button(controls, "STOP", command=self.stop_gcode, state="disabled")
         self.btn_stop.grid(row=row, column=1, pady=10)
         row += 1
 
@@ -207,20 +206,16 @@ class MachineTab(tk.Frame):
                                            values=JOG_STEP_CHOICES, width=6)
         self.combo_jog_step.grid(row=0, column=1, columnspan=2, sticky="w", pady=(0, 5))
 
-        tk.Button(jog_frame, text="Up (W)", font=self.font, width=8,
-                  command=lambda: self.jog("Y", 1)).grid(row=1, column=1)
-        tk.Button(jog_frame, text="Left (A)", font=self.font, width=8,
-                  command=lambda: self.jog("X", -1)).grid(row=2, column=0)
-        tk.Button(jog_frame, text="Right (D)", font=self.font, width=8,
-                  command=lambda: self.jog("X", 1)).grid(row=2, column=2)
-        tk.Button(jog_frame, text="Down (S)", font=self.font, width=8,
-                  command=lambda: self.jog("Y", -1)).grid(row=3, column=1)
+        make_button(jog_frame, "Up (W)", command=lambda: self.jog("Y", 1), width=8).grid(row=1, column=1)
+        make_button(jog_frame, "Left (A)", command=lambda: self.jog("X", -1), width=8).grid(row=2, column=0)
+        make_button(jog_frame, "Right (D)", command=lambda: self.jog("X", 1), width=8).grid(row=2, column=2)
+        make_button(jog_frame, "Down (S)", command=lambda: self.jog("Y", -1), width=8).grid(row=3, column=1)
         row += 1
 
         # ---- Log box, thay cho print() ----
         tk.Label(controls, text="Log:", font=self.font).grid(row=row, column=0, sticky="nw")
         self.log_text = scrolledtext.ScrolledText(controls, width=60, height=10, state="disabled",
-                                                    font=("Consolas", 9))
+                                                    font=mono_font(SIZE_SM))
         self.log_text.grid(row=row, column=1, columnspan=2, sticky="w", pady=5)
 
         # ---- Preview gcode (ben phai) ----
@@ -239,8 +234,7 @@ class MachineTab(tk.Frame):
                                      anchor="w", width=1)
         self.preview_info.grid(row=0, column=0, sticky="ew")
 
-        tk.Button(header, text="Reload preview", font=self.font,
-                  command=self.preview_gcode).grid(row=0, column=1, padx=(5, 0))
+        make_button(header, "Reload preview", command=self.preview_gcode).grid(row=0, column=1, padx=(5, 0))
 
         self.preview_canvas = tk.Canvas(preview_frame, background="white",
                                         highlightthickness=0)
@@ -278,12 +272,19 @@ class MachineTab(tk.Frame):
     # ---------------- SERIAL ----------------
 
     def refresh_com(self):
-        ports = [p.device for p in serial.tools.list_ports.comports()]
+        if serial_list_ports is None:
+            self.combo_com["values"] = []
+            self.log("pyserial not installed; COM list unavailable.")
+            return
+        ports = [p.device for p in serial_list_ports.comports()]
         self.combo_com["values"] = ports
         if ports:
             self.combo_com.current(0)
 
     def connect_serial(self):
+        if serial is None:
+            messagebox.showerror("Error", "pyserial is not installed.")
+            return
         port = self.combo_com.get()
         try:
             self.app.ser = serial.Serial(port, 115200, timeout=1)
@@ -541,12 +542,29 @@ class MachineTab(tk.Frame):
             for k in (key, key.upper()):
                 root.bind(f"<KeyPress-{k}>", self.on_jog_key, add="+")
 
+    def _is_visible_in_notebooks(self):
+        """True only when every ancestor Notebook has this branch selected.
+
+        Needed when Machine lives under Engraver sub-Notebook inside the
+        unified app main Notebook — selecting Frame Toolkit must disable jog.
+        """
+        widget = self
+        while widget is not None:
+            parent = getattr(widget, "master", None)
+            if parent is None:
+                break
+            if isinstance(parent, ttk.Notebook):
+                try:
+                    if parent.select() != str(widget):
+                        return False
+                except Exception:
+                    return False
+            widget = parent
+        return True
+
     def on_jog_key(self, event):
-        # Chi xu ly khi tab Machine dang duoc chon
-        try:
-            if self.master.select() != str(self):
-                return
-        except Exception:
+        # Chi xu ly khi nhanh tab Machine dang visible (moi notebook cha)
+        if not self._is_visible_in_notebooks():
             return
 
         # Bo qua khi dang go chu trong o nhap (Entry/Combobox/Text...)
@@ -554,12 +572,62 @@ class MachineTab(tk.Frame):
             focus = self.focus_get()
         except Exception:
             focus = None
-        if isinstance(focus, (tk.Entry, tk.Text, tk.Spinbox, ttk.Entry, ttk.Spinbox)):
+        if isinstance(focus, (tk.Entry, tk.Text, tk.Spinbox,
+                              ttk.Entry, ttk.Spinbox, ttk.Combobox)):
             return
+        # scrolledtext.ScrolledText is a Frame subclass hosting a Text
+        try:
+            if focus is not None and focus.winfo_class() in ("Text", "TEntry", "TCombobox"):
+                # already covered by isinstance for most cases; keep soft check
+                if isinstance(focus, (tk.Entry, tk.Text, ttk.Entry, ttk.Combobox)):
+                    return
+        except Exception:
+            pass
 
-        axis, direction = JOG_KEYS[event.keysym.lower()]
+        key = event.keysym.lower()
+        if key not in JOG_KEYS:
+            return
+        axis, direction = JOG_KEYS[key]
         self.jog(axis, direction)
         return "break"
+
+    def shutdown_connection(self):
+        """Conservative close: stop workers and close the serial port.
+
+        Does not send speculative machine commands. If a GCODE run is active,
+        request the existing cooperative stop first (that path already sends
+        the halt sequence the Machine tab uses for Stop).
+        """
+        try:
+            if getattr(self, "is_running", False):
+                # Existing stop path — not speculative; user/app is ending a run.
+                self.stop_event.set()
+        except Exception:
+            pass
+        try:
+            self.stop_event.set()
+        except Exception:
+            pass
+        # Wait briefly for an in-flight jog to finish before closing the port.
+        acquired = False
+        try:
+            acquired = self.jog_lock.acquire(timeout=1.0)
+        except Exception:
+            acquired = False
+        try:
+            ser = getattr(self.app, "ser", None)
+            if ser is not None:
+                try:
+                    ser.close()
+                except Exception:
+                    pass
+                self.app.ser = None
+        finally:
+            if acquired:
+                try:
+                    self.jog_lock.release()
+                except Exception:
+                    pass
 
     def build_jog_lines(self, axis, direction, step):
         # Jog tuong doi: G91 -> G0 truc +/-buoc -> G90 (tra ve tuyet doi,

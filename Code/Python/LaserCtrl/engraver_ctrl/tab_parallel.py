@@ -1,3 +1,4 @@
+from common.ui import ui_font, make_button, SIZE_SM
 import tkinter as tk
 from tkinter import messagebox
 
@@ -8,7 +9,7 @@ class ParallelTab(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-        self.font = app.font
+        self.font = getattr(app, "font", None) or ui_font(SIZE_SM)
         self.build_ui()
 
     def build_ui(self):
@@ -50,11 +51,7 @@ class ParallelTab(tk.Frame):
 
         # -------- Button --------
 
-        tk.Button(
-            self,
-            text="Generate GCODE",
-            font=self.font,
-            command=self.generate_gcode
+        make_button(self, "Generate GCODE", command=self.generate_gcode
         ).grid(row=row, column=1, pady=10)
 
     # ======================================================

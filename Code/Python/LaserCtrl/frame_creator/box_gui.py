@@ -27,14 +27,18 @@ from frame_creator.box_core import (
 from frame_creator.rail_skeleton_core import NODE_COLOR
 from frame_creator.rail_skeleton_gui import draw_skeleton
 
-try:
-    from ctypes import windll
-    windll.shcore.SetProcessDpiAwareness(1)
-except Exception:
-    pass
+# DPI awareness is handled once by the app entrypoint.
 
-FONT_FAMILY = "Segoe UI"
-FONT_SIZE = 10
+try:
+    from common.ui import FONT_FAMILY, SIZE_SM as FONT_SIZE, ui_font, canvas_font
+except ImportError:  # standalone without LaserCtrl on path
+    FONT_FAMILY = "Segoe UI"
+    FONT_SIZE = 10
+    def ui_font(size=10, bold=False):
+        return (FONT_FAMILY, size, "bold") if bold else (FONT_FAMILY, size)
+    def canvas_font(bold=False):
+        return ui_font(10, bold=bold)
+
 
 
 class BoxApp:
@@ -103,7 +107,7 @@ class BoxApp:
 
         self.result_var = tk.StringVar(value="")
         ttk.Label(frame, textvariable=self.result_var, wraplength=230,
-                  font=(FONT_FAMILY, 9, "bold")).grid(
+                  font=ui_font(FONT_SIZE, bold=True)).grid(
                       row=9, column=0, pady=(6, 0), sticky="w")
 
         legend = ttk.Frame(frame)
