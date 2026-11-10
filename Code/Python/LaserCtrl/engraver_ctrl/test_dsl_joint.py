@@ -75,7 +75,7 @@ class JointHelperTests(unittest.TestCase):
         result = apply_joints(EXAMPLE)
         self.assertEqual(result.applied, 1)
         self.assertEqual(result.skipped, 0)
-        self.assertIn("JM 0 0 20 3 10 5 out", result.text)
+        self.assertIn("JM 0 0 20 3 10 5 in", result.text)
         # Centerline of R 0 18.5 20 3 is y=20
         self.assertIn("JF 0 20 20 3 10 5", result.text)
         self.assertIn("# J 0 0 20 3 A", result.text)
@@ -85,6 +85,11 @@ class JointHelperTests(unittest.TestCase):
         self.assertIn("R 0 0 20 40", result.text)
         self.assertNotIn("\nR 0 0 20 20\n", result.text)
         self.assertNotIn("L 0 0 20 0", result.text)
+        # Side edges meet the spine at y=3, not the original y=0 corners
+        self.assertIn("L 20 3 20 20", result.text)
+        self.assertIn("L 0 20 0 3", result.text)
+        self.assertNotIn("L 20 0 20 20", result.text)
+        self.assertNotIn("L 0 20 0 0", result.text)
         teeth, first_d = choose_teeth(20)
         self.assertEqual(teeth, 10.0)
         self.assertEqual(first_d, 5.0)
@@ -95,7 +100,7 @@ class JointHelperTests(unittest.TestCase):
         result = apply_joints(BOTH_EDGE)
         self.assertEqual(result.applied, 1)
         # First mark (p1 bottom) -> JM; second (p2 top) -> JF at y=18.5
-        self.assertIn("JM 0 0 20 3 10 5 out", result.text)
+        self.assertIn("JM 0 0 20 3 10 5 in", result.text)
         self.assertIn("JF 0 18.5 20 3 10 5", result.text)
         self.assertIn("# R 0 0 20 20", result.text)
         # Female R on p2 remains
@@ -115,7 +120,7 @@ END
         result = apply_joints(dsl)
         self.assertEqual(result.applied, 1)
         self.assertIn("JF 0 1.5 20 3 10 5", result.text)
-        self.assertIn("JM 0 17 20 3 10 5 in", result.text)
+        self.assertIn("JM 0 17 20 3 10 5 out", result.text)
 
     def test_both_interior_is_error_and_not_applied(self):
         from engraver_ctrl.dsl_joint import apply_joints
@@ -188,6 +193,205 @@ END
         out2 = insert_j_line(out, 1, 0, 10, 20, 3, "A")
         marks2, _o, _w = parse_joint_file(out2)
         self.assertEqual(next_joint_name(marks2), "B")
+
+
+
+def _stitch_polygon(segments, tol=4):
+    from collections import defaultdict
+
+    def key(p):
+        return (round(p[0], tol), round(p[1], tol))
+
+    adj = defaultdict(list)
+    for x1, y1, x2, y2 in segments:
+        a, b = key((x1, y1)), key((x2, y2))
+        if a == b:
+            continue
+        adj[a].append(b)
+        adj[b].append(a)
+    if not adj:
+        return []
+    start = next(iter(adj))
+    poly = [start]
+    prev, curr = None, start
+    for _ in range(len(segments) + 2):
+        nxt = None
+        for n in adj[curr]:
+            if prev is not None and n == prev:
+                continue
+            nxt = n
+            break
+        if nxt is None or nxt == start:
+            break
+        poly.append(nxt)
+        prev, curr = curr, nxt
+    return poly
+
+
+def _point_in_poly(px, py, poly):
+    n = len(poly)
+    inside = False
+    j = n - 1
+    for i in range(n):
+        xi, yi = poly[i]
+        xj, yj = poly[j]
+        if (yi > py) != (yj > py):
+            xint = (xj - xi) * (py - yi) / ((yj - yi) or 1e-18) + xi
+            if px < xint:
+                inside = not inside
+        j = i
+    return inside
+
+
+def _iter_add_blocks(text):
+    lines = text.splitlines()
+    depth = 0
+    started = False
+    chunk = []
+    for raw in lines:
+        s = raw.strip()
+        if not s or s.startswith("#"):
+            if started:
+                chunk.append(raw)
+            continue
+        cmd = s.split()[0]
+        if cmd == "ADD":
+            if not started:
+                started = True
+                chunk = [raw]
+                depth = 1
+                continue
+            depth += 1
+        elif cmd == "END":
+            if started:
+                chunk.append(raw)
+                depth -= 1
+                if depth == 0:
+                    yield "\n".join(chunk) + "\n"
+                    started = False
+                    chunk = []
+            continue
+        if started:
+            chunk.append(raw)
+
+
+def _first_add_block(text):
+    return next(_iter_add_blocks(text))
+
+
+def _block_local(text, predicate):
+    """Return one ADD block rewritten to ADD 0 0 so geometry is local."""
+    for blk in _iter_add_blocks(text):
+        if predicate(blk):
+            lines = blk.splitlines()
+            for i, raw in enumerate(lines):
+                s = raw.strip()
+                if s.startswith("ADD "):
+                    parts = s.split()
+                    label = " ".join(parts[3:]) if len(parts) > 3 else ""
+                    indent = raw[:len(raw) - len(raw.lstrip())]
+                    lines[i] = indent + ("ADD 0 0 " + label if label else "ADD 0 0")
+                    break
+            return "\n".join(lines) + "\n"
+    return ""
+
+
+class JointGeometryTests(unittest.TestCase):
+    def test_example_tenon_not_notch_fits_jf(self):
+        from engraver_ctrl.dsl_joint import apply_joints, tooth_spans
+        from engraver_ctrl.dsl_parse import parse_text, all_segments
+        from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
+
+        result = apply_joints(EXAMPLE)
+        self.assertIn("JM 0 0 20 3 10 5 in", result.text)
+        spans = tooth_spans(20, 10, 5)
+        self.assertEqual(spans, [(5.0, 15.0)])
+
+        male = _first_add_block(result.text)
+        segs = all_segments(parse_text(male))
+        poly = _stitch_polygon(segs)
+        self.assertGreaterEqual(len(poly), 6)
+        # Tooth material (matches the JF hole) is inside; shoulders are not
+        self.assertTrue(_point_in_poly(10, 1.5, poly), poly)
+        self.assertFalse(_point_in_poly(2.5, 1.5, poly), poly)
+        self.assertFalse(_point_in_poly(17.5, 1.5, poly), poly)
+        self.assertTrue(_point_in_poly(10, 10, poly), poly)
+
+        # Highlight fill is the tooth (material) region, not the notch
+        shapes = parse_text(male)["shapes"]
+        jm = [s for c, s in shapes if c == "JM"]
+        self.assertEqual(len(jm), 1)
+        polys = polygons_from_joint_segments("JM", jm[0])
+        self.assertEqual(len(polys), 1)
+        self.assertTrue(_point_in_poly(10, 1.5, polys[0]))
+        self.assertFalse(_point_in_poly(2.5, 1.5, polys[0]))
+
+        self.assertIn("JF 0 20 20 3 10 5", result.text)
+        female = _block_local(result.text, lambda b: "JF " in b)
+        jf_shapes = [s for c, s in parse_text(female)["shapes"] if c == "JF"]
+        self.assertTrue(jf_shapes)
+        jf_polys = polygons_from_joint_segments("JF", jf_shapes[0])
+        self.assertEqual(len(jf_polys), 1)
+        self.assertTrue(_point_in_poly(10, 20, jf_polys[0]))
+        xs = [p[0] for p in jf_polys[0]]
+        self.assertAlmostEqual(min(xs), 5, places=4)
+        self.assertAlmostEqual(max(xs), 15, places=4)
+
+    def test_both_edge_mortise_slots_match_tenon(self):
+        from engraver_ctrl.dsl_joint import apply_joints, tooth_spans
+        from engraver_ctrl.dsl_parse import parse_text, all_segments
+        from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
+
+        result = apply_joints(BOTH_EDGE)
+        self.assertIn("JM 0 0 20 3 10 5 in", result.text)
+        self.assertIn("JF 0 18.5 20 3 10 5", result.text)
+        self.assertEqual(tooth_spans(20, 10, 5), [(5.0, 15.0)])
+        male = _first_add_block(result.text)
+        poly = _stitch_polygon(all_segments(parse_text(male)))
+        self.assertTrue(_point_in_poly(10, 1.5, poly))
+        self.assertFalse(_point_in_poly(2.5, 1.5, poly))
+        female = _block_local(result.text, lambda b: "JF " in b)
+        jf = [s for c, s in parse_text(female)["shapes"] if c == "JF"]
+        holes = polygons_from_joint_segments("JF", jf[0])
+        self.assertEqual(len(holes), 1)
+        xs = [p[0] for p in holes[0]]
+        ys = [p[1] for p in holes[0]]
+        self.assertAlmostEqual(min(xs), 5, places=4)
+        self.assertAlmostEqual(max(xs), 15, places=4)
+        self.assertAlmostEqual(min(ys), 17, places=4)
+        self.assertAlmostEqual(max(ys), 20, places=4)
+        self.assertTrue(_point_in_poly(10, 18.5, holes[0]))
+
+    def test_all_four_edge_orientations_are_tenons(self):
+        from engraver_ctrl.dsl_joint import apply_joints
+        from engraver_ctrl.dsl_parse import parse_text, all_segments
+
+        cases = [
+            ("bottom", "J 0 0 20 3 A", "in", (10, 1.5), (2.5, 1.5),
+             "J 0 18.5 20 3 A", "R 0 0 20 40"),
+            ("top", "J 0 17 20 3 A", "out", (10, 18.5), (2.5, 18.5),
+             "J 0 18.5 20 3 A", "R 0 0 20 40"),
+            ("left", "J 0 0 3 20 A", "in", (1.5, 10), (1.5, 2.5),
+             "J 18.5 0 3 20 A", "R 0 0 40 20"),
+            ("right", "J 17 0 3 20 A", "out", (18.5, 10), (18.5, 2.5),
+             "J 18.5 0 3 20 A", "R 0 0 40 20"),
+        ]
+        for name, jline, direction, tooth, shoulder, fj, fr in cases:
+            dsl = (
+                f"ADD 0 0 male\nR 0 0 20 20\n{jline}\nEND\n"
+                f"ADD 40 0 female\n{fr}\n{fj}\nEND\n"
+            )
+            result = apply_joints(dsl)
+            self.assertEqual(result.applied, 1, (name, result.warnings, result.text))
+            self.assertTrue(
+                any(f" {direction}" in ln and ln.strip().startswith("JM ")
+                    for ln in result.text.splitlines()),
+                (name, result.text),
+            )
+            male = _first_add_block(result.text)
+            poly = _stitch_polygon(all_segments(parse_text(male)))
+            self.assertTrue(_point_in_poly(*tooth, poly), (name, tooth, poly))
+            self.assertFalse(_point_in_poly(*shoulder, poly), (name, shoulder, poly))
 
 
 class JointTkTests(unittest.TestCase):
@@ -269,7 +473,7 @@ class JointTkTests(unittest.TestCase):
                             flat[:40])
             tab.apply_joints()
             text = tab.text_input.get("1.0", "end")
-            self.assertIn("JM 0 0 20 3 10 5 out", text)
+            self.assertIn("JM 0 0 20 3 10 5 in", text)
             self.assertIn("JF 0 20 20 3 10 5", text)
             tab.preview()
             self.root.update_idletasks()

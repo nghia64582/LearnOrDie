@@ -84,6 +84,18 @@ def comment_line(raw):
     return f"{indent}# {body}"
 
 
+def tooth_spans(length, teeth, first_d):
+    """(start, end) intervals of teeth / JF holes along the joint line."""
+    spans = []
+    t = float(first_d)
+    teeth = float(teeth)
+    length = float(length)
+    while t + teeth <= length + 1e-9:
+        spans.append((t, t + teeth))
+        t += 2 * teeth
+    return spans
+
+
 def choose_teeth(length, teeth_length=DEFAULT_TEETH_LENGTH):
     """Return (teeth_length, first_d) centred on the joint line.
 
@@ -403,12 +415,16 @@ def _jf_params(mark, teeth, first_d):
 
 
 def _jm_params(mark, teeth, first_d, outlines):
-    """JM command with out/in so teeth point into the piece when on an edge."""
+    """JM command: teeth reach the original piece edge; spine is inward.
+
+    `in` = teeth toward v=0 (the strip origin). `out` = teeth toward v=thick.
+    If the free edge is the v=0 long side, use `in` so the tooth tips sit on
+    that edge and the shoulders sit at v=thick (one thickness inward).
+    """
     _kind, _outline, outer = classify_mark(mark, outlines)
-    # outer 0 = v=0 side is the boundary -> out (teeth toward v=thick).
-    # outer 1 = v=thick side is the boundary -> in (teeth toward v=0).
-    # Interior / unknown: default out.
-    direction = "in" if outer == 1 else "out"
+    # outer 0: free edge is v=0 -> in.  outer 1: free edge is v=thick -> out.
+    # Unknown / interior (forced M): default in (teeth toward v=0).
+    direction = "out" if outer == 1 else "in"
     along_x, length, thick, x, y = mark_axes(mark)
     if along_x:
         w, h = length, thick
@@ -421,14 +437,17 @@ def _jm_params(mark, teeth, first_d, outlines):
 
 
 def _replace_r_edges(outline, mark, outlines):
-    """Return extra DSL lines (no original R) for the three uncut edges + stubs.
+    """Replace a male R: keep non-joint edges, drop the outer joint span.
 
-    None if the outline is not an R we can split.
+    Adjacent sides that used to meet the original edge are shortened so they
+    meet the comb spine (one thickness inward). Stubs of a partial-edge mark
+    stay on the original edge and are connected to the spine at the mark
+    ends. Returns None if the outline is not an R we can split.
     """
     if outline is None or outline.cmd != "R":
         return None
     kind, hit, outer = classify_mark(mark, [outline] if outline else outlines)
-    if kind != "edge" or hit is None:
+    if kind != "edge" or hit is None or outer is None:
         return None
     x, y, w, h = outline.nums
     edges = [
@@ -438,44 +457,54 @@ def _replace_r_edges(outline, mark, outlines):
         ((x, y + h), (x, y)),
     ]
     long_sides = mark_long_sides(mark)
-    outer_side = long_sides[outer] if outer is not None else long_sides[0]
-    p0, p1 = outer_side
+    op0, op1 = long_sides[outer]
+    sp0, sp1 = long_sides[1 - outer]
 
     def _key(pt):
         return (round(pt[0], 4), round(pt[1], 4))
 
-    # Walk each rectangle edge; on the affected one, drop the mark span.
+    def _near(p, q, tol=EDGE_TOL):
+        return abs(p[0] - q[0]) <= tol and abs(p[1] - q[1]) <= tol
+
+    def _map_corner(pt):
+        # Move a vertex that sat on the free edge to the matching spine
+        # corner, so side edges start at thickness inward, not at y=0 / etc.
+        if _near(pt, op0):
+            return sp0
+        if _near(pt, op1):
+            return sp1
+        return pt
+
+    def _emit(a, b, dest):
+        if _key(a) != _key(b):
+            dest.append(
+                f"L {fmt_num(a[0])} {fmt_num(a[1])} {fmt_num(b[0])} {fmt_num(b[1])}"
+            )
+
     lines = []
     for a, b in edges:
-        if _segment_on_segment(p0, p1, a, b):
-            # Order a->b along the edge; emit stubs around the mark.
+        if _segment_on_segment(op0, op1, a, b):
             ax, ay = a
             dx, dy = b[0] - ax, b[1] - ay
             length2 = dx * dx + dy * dy or 1.0
-            t0 = ((p0[0] - ax) * dx + (p0[1] - ay) * dy) / length2
-            t1 = ((p1[0] - ax) * dx + (p1[1] - ay) * dy) / length2
+            t0 = ((op0[0] - ax) * dx + (op0[1] - ay) * dy) / length2
+            t1 = ((op1[0] - ax) * dx + (op1[1] - ay) * dy) / length2
+            start_outer, start_spine = op0, sp0
+            end_outer, end_spine = op1, sp1
             if t1 < t0:
                 t0, t1 = t1, t0
-                p0, p1 = p1, p0
-            t0 = max(0.0, min(1.0, t0))
-            t1 = max(0.0, min(1.0, t1))
-            if t0 > 1e-9:
-                qx, qy = ax + t0 * dx, ay + t0 * dy
-                if _key((ax, ay)) != _key((qx, qy)):
-                    lines.append(
-                        f"L {fmt_num(ax)} {fmt_num(ay)} {fmt_num(qx)} {fmt_num(qy)}"
-                    )
-            if t1 < 1 - 1e-9:
-                qx, qy = ax + t1 * dx, ay + t1 * dy
-                if _key((qx, qy)) != _key((b[0], b[1])):
-                    lines.append(
-                        f"L {fmt_num(qx)} {fmt_num(qy)} {fmt_num(b[0])} {fmt_num(b[1])}"
-                    )
+                start_outer, start_spine = op1, sp1
+                end_outer, end_spine = op0, sp0
+            t0c = max(0.0, min(1.0, t0))
+            t1c = max(0.0, min(1.0, t1))
+            if t0c > 1e-9:
+                _emit(a, start_outer, lines)
+                _emit(start_outer, start_spine, lines)
+            if t1c < 1 - 1e-9:
+                _emit(end_spine, end_outer, lines)
+                _emit(end_outer, b, lines)
         else:
-            if _key(a) != _key(b):
-                lines.append(
-                    f"L {fmt_num(a[0])} {fmt_num(a[1])} {fmt_num(b[0])} {fmt_num(b[1])}"
-                )
+            _emit(_map_corner(a), _map_corner(b), lines)
     return lines
 
 
