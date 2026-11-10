@@ -1,8 +1,9 @@
 """Auto-joint marks (J) and expansion to JM/JF.
 
 J is a preview-only marker, never cut geometry. Apply joints rewrites the
-DSL: comment each J, insert matching JM/JF, and on a male R replace the
-shared outline edge so the comb is not double-cut.
+DSL: comment each J and insert matching JM/JF. Piece outlines (R and
+others) are left unchanged; G-code generation already drops duplicate /
+collinear-overlapping cuts.
 """
 
 from __future__ import annotations
@@ -436,80 +437,8 @@ def _jm_params(mark, teeth, first_d, outlines):
     ), direction
 
 
-def _replace_r_edges(outline, mark, outlines):
-    """Replace a male R: keep non-joint edges, drop the outer joint span.
-
-    Adjacent sides that used to meet the original edge are shortened so they
-    meet the comb spine (one thickness inward). Stubs of a partial-edge mark
-    stay on the original edge and are connected to the spine at the mark
-    ends. Returns None if the outline is not an R we can split.
-    """
-    if outline is None or outline.cmd != "R":
-        return None
-    kind, hit, outer = classify_mark(mark, [outline] if outline else outlines)
-    if kind != "edge" or hit is None or outer is None:
-        return None
-    x, y, w, h = outline.nums
-    edges = [
-        ((x, y), (x + w, y)),
-        ((x + w, y), (x + w, y + h)),
-        ((x + w, y + h), (x, y + h)),
-        ((x, y + h), (x, y)),
-    ]
-    long_sides = mark_long_sides(mark)
-    op0, op1 = long_sides[outer]
-    sp0, sp1 = long_sides[1 - outer]
-
-    def _key(pt):
-        return (round(pt[0], 4), round(pt[1], 4))
-
-    def _near(p, q, tol=EDGE_TOL):
-        return abs(p[0] - q[0]) <= tol and abs(p[1] - q[1]) <= tol
-
-    def _map_corner(pt):
-        # Move a vertex that sat on the free edge to the matching spine
-        # corner, so side edges start at thickness inward, not at y=0 / etc.
-        if _near(pt, op0):
-            return sp0
-        if _near(pt, op1):
-            return sp1
-        return pt
-
-    def _emit(a, b, dest):
-        if _key(a) != _key(b):
-            dest.append(
-                f"L {fmt_num(a[0])} {fmt_num(a[1])} {fmt_num(b[0])} {fmt_num(b[1])}"
-            )
-
-    lines = []
-    for a, b in edges:
-        if _segment_on_segment(op0, op1, a, b):
-            ax, ay = a
-            dx, dy = b[0] - ax, b[1] - ay
-            length2 = dx * dx + dy * dy or 1.0
-            t0 = ((op0[0] - ax) * dx + (op0[1] - ay) * dy) / length2
-            t1 = ((op1[0] - ax) * dx + (op1[1] - ay) * dy) / length2
-            start_outer, start_spine = op0, sp0
-            end_outer, end_spine = op1, sp1
-            if t1 < t0:
-                t0, t1 = t1, t0
-                start_outer, start_spine = op1, sp1
-                end_outer, end_spine = op0, sp0
-            t0c = max(0.0, min(1.0, t0))
-            t1c = max(0.0, min(1.0, t1))
-            if t0c > 1e-9:
-                _emit(a, start_outer, lines)
-                _emit(start_outer, start_spine, lines)
-            if t1c < 1 - 1e-9:
-                _emit(end_spine, end_outer, lines)
-                _emit(end_outer, b, lines)
-        else:
-            _emit(_map_corner(a), _map_corner(b), lines)
-    return lines
-
-
 def apply_joints(text, thickness=THICKNESS, teeth_length=DEFAULT_TEETH_LENGTH):
-    """Expand J marks into JM/JF. Comments original J (and replaced R) lines."""
+    """Expand J marks into JM/JF. Comments original J lines only; outlines stay."""
     marks, outlines, warnings = parse_joint_file(text)
     warnings = collect_preview_warnings(marks, outlines, warnings, thickness)
     lines = text.splitlines()
@@ -570,42 +499,15 @@ def apply_joints(text, thickness=THICKNESS, teeth_length=DEFAULT_TEETH_LENGTH):
         for mark, role in ((m1, r1), (m2, r2)):
             if role == "F":
                 cmd = _jf_params(mark, teeth, first_d)
-                plan.append((mark, role, cmd, None, None))
             else:
                 cmd, _direction = _jm_params(mark, teeth, first_d, outlines)
-                kind, outline, _outer = classify_mark(mark, outlines)
-                edge_lines = None
-                if kind == "edge" and outline is not None and outline.cmd == "R":
-                    edge_lines = _replace_r_edges(outline, mark, outlines)
-                elif kind == "edge" and outline is not None:
-                    warnings.append(JointWarning(
-                        "warning",
-                        f"Joint '{name}' male outline on line {outline.line} "
-                        f"is {outline.cmd}, not R; the edge was not replaced "
-                        "(possible double cut)",
-                        outline.line,
-                    ))
-                elif kind != "edge":
-                    warnings.append(JointWarning(
-                        "warning",
-                        f"Joint '{name}' male mark on line {mark.line} has no "
-                        "R edge to replace (possible double cut)",
-                        mark.line,
-                    ))
-                plan.append((mark, role, cmd, outline, edge_lines))
-        for mark, role, cmd, outline, edge_lines in plan:
+            plan.append((mark, cmd))
+        for mark, cmd in plan:
             j_idx = mark.line - 1
             replacements[j_idx] = [
                 comment_line(mark.raw),
                 f"{mark.indent}{cmd}",
             ]
-            if role == "M" and edge_lines is not None and outline is not None:
-                o_idx = outline.line - 1
-                indent = outline.indent
-                replacements[o_idx] = (
-                    [comment_line(outline.raw)]
-                    + [f"{indent}{ln}" for ln in edge_lines]
-                )
         applied += 1
 
     if not replacements:

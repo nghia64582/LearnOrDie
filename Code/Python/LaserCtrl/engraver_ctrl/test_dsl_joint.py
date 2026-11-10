@@ -80,16 +80,11 @@ class JointHelperTests(unittest.TestCase):
         self.assertIn("JF 0 20 20 3 10 5", result.text)
         self.assertIn("# J 0 0 20 3 A", result.text)
         self.assertIn("# J 0 18.5 20 3 A", result.text)
-        self.assertIn("# R 0 0 20 20", result.text)
-        # Female outline kept; male bottom edge not re-emitted
+        # Outlines stay; only J lines are commented and JM/JF inserted
+        self.assertIn("R 0 0 20 20", result.text)
         self.assertIn("R 0 0 20 40", result.text)
-        self.assertNotIn("\nR 0 0 20 20\n", result.text)
-        self.assertNotIn("L 0 0 20 0", result.text)
-        # Side edges meet the spine at y=3, not the original y=0 corners
-        self.assertIn("L 20 3 20 20", result.text)
-        self.assertIn("L 0 20 0 3", result.text)
-        self.assertNotIn("L 20 0 20 20", result.text)
-        self.assertNotIn("L 0 20 0 0", result.text)
+        self.assertNotIn("# R 0 0 20 20", result.text)
+        self.assertNotIn("\nL ", result.text)
         teeth, first_d = choose_teeth(20)
         self.assertEqual(teeth, 10.0)
         self.assertEqual(first_d, 5.0)
@@ -102,9 +97,10 @@ class JointHelperTests(unittest.TestCase):
         # First mark (p1 bottom) -> JM; second (p2 top) -> JF at y=18.5
         self.assertIn("JM 0 0 20 3 10 5 in", result.text)
         self.assertIn("JF 0 18.5 20 3 10 5", result.text)
-        self.assertIn("# R 0 0 20 20", result.text)
-        # Female R on p2 remains
-        self.assertEqual(result.text.count("\nR 0 0 20 20\n"), 1)
+        # Both outlines stay
+        self.assertEqual(result.text.count("R 0 0 20 20"), 2)
+        self.assertNotIn("# R ", result.text)
+        self.assertNotIn("\nL ", result.text)
 
     def test_role_override_token(self):
         from engraver_ctrl.dsl_joint import apply_joints
@@ -299,7 +295,7 @@ def _block_local(text, predicate):
 class JointGeometryTests(unittest.TestCase):
     def test_example_tenon_not_notch_fits_jf(self):
         from engraver_ctrl.dsl_joint import apply_joints, tooth_spans
-        from engraver_ctrl.dsl_parse import parse_text, all_segments
+        from engraver_ctrl.dsl_parse import parse_text
         from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
 
         result = apply_joints(EXAMPLE)
@@ -308,17 +304,18 @@ class JointGeometryTests(unittest.TestCase):
         self.assertEqual(spans, [(5.0, 15.0)])
 
         male = _first_add_block(result.text)
-        segs = all_segments(parse_text(male))
-        poly = _stitch_polygon(segs)
-        self.assertGreaterEqual(len(poly), 6)
-        # Tooth material (matches the JF hole) is inside; shoulders are not
+        self.assertIn("R 0 0 20 20", male)
+        shapes = parse_text(male)["shapes"]
+        jm = [s for c, s in shapes if c == "JM"]
+        self.assertEqual(len(jm), 1)
+        poly = polygons_from_joint_segments("JM", jm[0])[0]
+        # Tooth material (matches the JF hole) is inside the JM fill;
+        # shoulders are not. The R outline is left unchanged.
         self.assertTrue(_point_in_poly(10, 1.5, poly), poly)
         self.assertFalse(_point_in_poly(2.5, 1.5, poly), poly)
         self.assertFalse(_point_in_poly(17.5, 1.5, poly), poly)
-        self.assertTrue(_point_in_poly(10, 10, poly), poly)
 
         # Highlight fill is the tooth (material) region, not the notch
-        shapes = parse_text(male)["shapes"]
         jm = [s for c, s in shapes if c == "JM"]
         self.assertEqual(len(jm), 1)
         polys = polygons_from_joint_segments("JM", jm[0])
@@ -339,7 +336,7 @@ class JointGeometryTests(unittest.TestCase):
 
     def test_both_edge_mortise_slots_match_tenon(self):
         from engraver_ctrl.dsl_joint import apply_joints, tooth_spans
-        from engraver_ctrl.dsl_parse import parse_text, all_segments
+        from engraver_ctrl.dsl_parse import parse_text
         from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
 
         result = apply_joints(BOTH_EDGE)
@@ -347,7 +344,9 @@ class JointGeometryTests(unittest.TestCase):
         self.assertIn("JF 0 18.5 20 3 10 5", result.text)
         self.assertEqual(tooth_spans(20, 10, 5), [(5.0, 15.0)])
         male = _first_add_block(result.text)
-        poly = _stitch_polygon(all_segments(parse_text(male)))
+        self.assertIn("R 0 0 20 20", male)
+        jm = [s for c, s in parse_text(male)["shapes"] if c == "JM"]
+        poly = polygons_from_joint_segments("JM", jm[0])[0]
         self.assertTrue(_point_in_poly(10, 1.5, poly))
         self.assertFalse(_point_in_poly(2.5, 1.5, poly))
         female = _block_local(result.text, lambda b: "JF " in b)
@@ -364,7 +363,8 @@ class JointGeometryTests(unittest.TestCase):
 
     def test_all_four_edge_orientations_are_tenons(self):
         from engraver_ctrl.dsl_joint import apply_joints
-        from engraver_ctrl.dsl_parse import parse_text, all_segments
+        from engraver_ctrl.dsl_parse import parse_text
+        from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
 
         cases = [
             ("bottom", "J 0 0 20 3 A", "in", (10, 1.5), (2.5, 1.5),
@@ -389,7 +389,9 @@ class JointGeometryTests(unittest.TestCase):
                 (name, result.text),
             )
             male = _first_add_block(result.text)
-            poly = _stitch_polygon(all_segments(parse_text(male)))
+            self.assertIn("R 0 0 20 20", male)
+            jm = [s for c, s in parse_text(male)["shapes"] if c == "JM"]
+            poly = polygons_from_joint_segments("JM", jm[0])[0]
             self.assertTrue(_point_in_poly(*tooth, poly), (name, tooth, poly))
             self.assertFalse(_point_in_poly(*shoulder, poly), (name, shoulder, poly))
 
@@ -484,6 +486,70 @@ class JointTkTests(unittest.TestCase):
                                  for t in flat if t != "jmjf_hl"))
             # Highlights for the new JM/JF should be present
             self.assertTrue(any("jmjf_hl" in tab.canvas.gettags(i) for i in items))
+            self.assertIn("R 0 0 20 20", text)
+            self.assertNotIn("# R ", text)
+        finally:
+            win.destroy()
+
+    def test_gcode_merges_r_edge_and_jm_tooth_tip(self):
+        """R bottom (0,0)-(20,0) overlaps JM tooth tip (5,0)-(15,0).
+
+        _remove_duplicate_segments only drops exact same-endpoint copies,
+        so the short tip remains until _merge_collinear_overlaps folds it
+        into the full edge. G-code then cuts y=0 once from x=0 to x=20.
+        """
+        from engraver_ctrl.dsl_joint import apply_joints
+
+        win, tab = self._make_tab()
+        try:
+            dsl = apply_joints(EXAMPLE).text
+            self.assertIn("R 0 0 20 20", dsl)
+            self.assertIn("JM 0 0 20 3 10 5 in", dsl)
+            tab.text_input.delete("1.0", "end")
+            tab.text_input.insert("1.0", dsl)
+            tab.preview()
+            raw = tab._shapes_to_segments()
+
+            def on_y0(seg, xlo, xhi):
+                x1, y1, x2, y2 = seg
+                xs = sorted((x1, x2))
+                return (abs(y1) < 1e-6 and abs(y2) < 1e-6
+                        and abs(xs[0] - xlo) < 1e-6 and abs(xs[1] - xhi) < 1e-6)
+
+            self.assertTrue(any(on_y0(s, 0, 20) for s in raw), raw)
+            self.assertTrue(any(on_y0(s, 5, 15) for s in raw), raw)
+            merged = tab._merge_collinear_overlaps(
+                tab._remove_duplicate_segments(raw)
+            )
+            y0 = [s for s in merged
+                  if abs(s[1]) < 1e-6 and abs(s[3]) < 1e-6
+                  and min(s[0], s[2]) < 25]  # p1, not p2 at x=30
+            self.assertEqual(len(y0), 1, y0)
+            xs = sorted((y0[0][0], y0[0][2]))
+            self.assertAlmostEqual(xs[0], 0, places=6)
+            self.assertAlmostEqual(xs[1], 20, places=6)
+            self.assertFalse(any(on_y0(s, 5, 15) for s in merged))
+
+            gcode = self._gcode(tab, dsl).decode()
+            # No second pass of the tooth tip: at most one G1 along y=0
+            # between x=0 and x=20 (the merged full edge).
+            y0_cuts = []
+            for ln in gcode.splitlines():
+                if not ln.startswith("G1 "):
+                    continue
+                if "Y0.000" in ln and "X" in ln:
+                    # keep cuts whose X is in [0, 20]
+                    try:
+                        x = float([p[1:] for p in ln.split() if p.startswith("X")][0])
+                    except (IndexError, ValueError):
+                        continue
+                    if 0 <= x <= 20 + 1e-6:
+                        y0_cuts.append(ln)
+            # The merged edge may be one G1 X20 Y0, possibly after a start
+            # at X0; there should not also be a distinct X15 or mid-edge
+            # duplicate of the 5-15 tip alone as an extra full pass.
+            self.assertTrue(y0_cuts, gcode)
+            self.assertLessEqual(len(y0_cuts), 3, y0_cuts)
         finally:
             win.destroy()
 
