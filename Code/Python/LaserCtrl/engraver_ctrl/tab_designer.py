@@ -9,6 +9,12 @@ from common.ui import (
     JM_HIGHLIGHT, JF_HIGHLIGHT,
 )
 from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
+from engraver_ctrl.dsl_joint import (
+    THICKNESS, DEFAULT_TEETH_LENGTH,
+    apply_joints, parse_joint_file, collect_preview_warnings,
+    world_mark_corners, world_mark_center, pair_color, group_marks,
+    insert_j_line, next_joint_name, add_local_coords,
+)
 
 
 class DesignerTab(ttk.Frame):
@@ -74,6 +80,10 @@ class DesignerTab(ttk.Frame):
         self.add_blocks = {}      # dong ADD -> {dx, dy, label, cum}
         self.selected_add = None  # dong (1-based) cua ADD dang chon
         self._drag = None
+        self.joint_marks = []
+        self.joint_warnings = []
+        self._mark_mode = False
+        self._mark_drag = None
         self.build_gui()
 
     def build_gui(self):
@@ -144,6 +154,29 @@ class DesignerTab(ttk.Frame):
         tk.Label(view_frame, textvariable=self.drag_status_var,
                  font=mono_font(SIZE_SM), width=40, anchor="w")\
             .grid(row=4, column=0, columnspan=3, sticky="w")
+
+        # --- Joints (J marks -> JM/JF) ---
+        joint_frame = tk.LabelFrame(left_frame, text="Joints", font=self.font)
+        joint_frame.pack(fill="x", pady=5)
+        tk.Label(
+            joint_frame,
+            text=f"Thickness {THICKNESS:g} mm, tooth {DEFAULT_TEETH_LENGTH:g} mm",
+            fg="gray",
+        ).pack(anchor="w")
+        jbtn = tk.Frame(joint_frame)
+        jbtn.pack(fill="x", pady=(2, 0))
+        make_button(jbtn, "Apply joints", command=self.apply_joints)\
+            .pack(side="left", padx=2)
+        self.mark_mode_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(
+            jbtn, text="Mark joint", variable=self.mark_mode_var,
+            command=self._toggle_mark_mode,
+        ).pack(side="left", padx=2)
+        self.joint_status_var = tk.StringVar(value="")
+        tk.Label(
+            joint_frame, textvariable=self.joint_status_var,
+            font=self.font, wraplength=300, justify="left", fg="#8a4b08",
+        ).pack(anchor="w", pady=(2, 0))
 
         # --- GCODE settings ---
         gcode_frame = tk.LabelFrame(left_frame, text="GCODE", font=self.font)
@@ -277,6 +310,13 @@ class DesignerTab(ttk.Frame):
             in  (-): rang nho ve phia x / y (goc cua manh).
             Vd: JF 10 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
 
+            J x y width height NAME [M|F]
+            Joint mark (not cut). Place two J with the same NAME inside
+            ADD blocks to pair an edge of one piece with a region of
+            another. Apply joints expands them to JM/JF (the original
+            J lines are commented). Optional M or F forces male/female.
+            ROTATE around a J is not supported yet.
+
             FIRST
             Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
             Nhieu hinh duoc danh dau FIRST se cat theo dung thu tu
@@ -382,6 +422,11 @@ class DesignerTab(ttk.Frame):
                 pts.append((x2, y2))
         for x, y, _l in self._add_labels:
             pts.append((x, y))
+        for mark in getattr(self, "joint_marks", []):
+            if mark.in_rotate or mark.add_line is None:
+                continue
+            for x, y in world_mark_corners(mark):
+                pts.append((x, y))
         (self.view_left, self.view_bottom,
          self.view_right, self.view_top) = self.compute_extent(pts)
         self.view_width = self.view_right - self.view_left
@@ -406,6 +451,7 @@ class DesignerTab(ttk.Frame):
             self._draw_add_label(x, y, label, tag=f"addlbl{line}")
         for i, (cmd, segments) in enumerate(self.shapes):
             self.draw_shape(cmd, segments, tag=f"shape{i}")
+        self._draw_joint_marks()
         self._draw_speed_tab_marks()
         self._draw_selection()
         # Dang keo ma bi ve lai (resize/zoom) -> dat lai block vao vi
@@ -666,6 +712,8 @@ class DesignerTab(ttk.Frame):
                 self.shape_adds.append(tuple(
                     d[4] for d in delta_stack if d[4] is not None))
 
+            self._refresh_joint_marks(text)
+
             if self.selected_add not in self.add_blocks:
                 self.selected_add = None
             # Tinh lai khung nhin theo hinh, ve lai (giu muc zoom)
@@ -896,9 +944,214 @@ class DesignerTab(ttk.Frame):
                     return int(t[5:])
         return None
 
+    def _refresh_joint_marks(self, text=None):
+        if text is None:
+            text = self.text_input.get("1.0", "end")
+        marks, outlines, warnings = parse_joint_file(text)
+        self.joint_marks = marks
+        self.joint_warnings = collect_preview_warnings(
+            marks, outlines, warnings,
+        )
+        self._set_joint_status()
+
+    def _set_joint_status(self, extra=""):
+        parts = []
+        if extra:
+            parts.append(extra)
+        for w in getattr(self, "joint_warnings", []):
+            tag = "Error" if w.level == "error" else "Warning"
+            parts.append(f"{tag}: {w.message}")
+        n = len([m for m in getattr(self, "joint_marks", [])
+                 if not m.in_rotate and m.add_line is not None])
+        if not parts and n:
+            parts.append(f"{n} joint mark(s). Pair names must match.")
+        self.joint_status_var.set("\n".join(parts))
+
+    def _draw_joint_marks(self):
+        marks = [m for m in getattr(self, "joint_marks", [])
+                 if not m.in_rotate and m.add_line is not None]
+        if not marks:
+            return
+        groups = group_marks(marks)
+        # Stable colour by first appearance order
+        name_order = []
+        for m in marks:
+            if m.name not in name_order:
+                name_order.append(m.name)
+        for m in marks:
+            color = pair_color(m.name, name_order.index(m.name))
+            corners = world_mark_corners(m)
+            # corners are BL, BR, TR, TL in world; canvas y is flipped
+            pts = []
+            for x, y in corners:
+                pts.extend(self.to_canvas(x, y))
+            tags = ("jmark", f"jmark{m.add_line}")
+            self.canvas.create_polygon(
+                *pts, fill="", outline=color, width=2, dash=(6, 3),
+                tags=tags,
+            )
+            cx, cy = world_mark_center(m)
+            px, py = self.to_canvas(cx, cy)
+            self.canvas.create_text(
+                px, py, text=m.name, fill=color,
+                font=canvas_font(bold=True), tags=tags,
+            )
+        # Connector between the two marks of a complete pair
+        for name, items in groups.items():
+            if len(items) != 2:
+                continue
+            color = pair_color(name, name_order.index(name))
+            c1 = world_mark_center(items[0])
+            c2 = world_mark_center(items[1])
+            x1, y1 = self.to_canvas(*c1)
+            x2, y2 = self.to_canvas(*c2)
+            tags = ("jmark", f"jmark{items[0].add_line}",
+                    f"jmark{items[1].add_line}")
+            self.canvas.create_line(
+                x1, y1, x2, y2, fill=color, width=2, dash=(4, 3),
+                tags=tags,
+            )
+            mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+            r = 6
+            self.canvas.create_oval(
+                mx - r, my - r, mx + r, my + r,
+                fill="white", outline=color, width=2, tags=tags,
+            )
+            self.canvas.create_text(
+                mx, my, text="J", fill=color,
+                font=canvas_font(bold=True), tags=tags,
+            )
+
+    def apply_joints(self):
+        text = self.text_input.get("1.0", "end")
+        result = apply_joints(text)
+        self.joint_warnings = result.warnings
+        extra = []
+        if result.applied:
+            extra.append(
+                f"Applied {result.applied} joint pair(s). "
+                "Original J lines were commented."
+            )
+        elif not result.warnings:
+            extra.append("No joint pairs to apply.")
+        if result.skipped and result.applied == 0:
+            extra.append(f"{result.skipped} pair(s) skipped.")
+        if result.text != text:
+            self.text_input.configure(autoseparators=False)
+            self.text_input.edit_separator()
+            self.text_input.delete("1.0", "end")
+            self.text_input.insert("1.0", result.text)
+            self.text_input.edit_separator()
+            self.text_input.configure(autoseparators=True)
+        self.preview_keep_scroll()
+        # preview refreshes warnings; keep the apply summary on top
+        self._set_joint_status("\n".join(extra))
+        errors = [w for w in result.warnings if w.level == "error"]
+        if errors and not result.applied:
+            messagebox.showerror(
+                "Apply joints",
+                "\n".join(w.message for w in errors[:6]),
+            )
+
+    def _toggle_mark_mode(self):
+        self._mark_mode = bool(self.mark_mode_var.get())
+        self._mark_drag = None
+        if self._mark_mode:
+            self.canvas.configure(cursor="crosshair")
+            self.drag_status_var.set("Mark joint: drag a rectangle on a piece")
+        else:
+            self.canvas.configure(cursor="")
+            if self.selected_add is None:
+                self.drag_status_var.set("")
+
+    def _on_mark_press(self, event, px, py):
+        wx, wy = self.to_world(px, py)
+        self._mark_drag = {
+            "x0": wx, "y0": wy, "x1": wx, "y1": wy, "px": px, "py": py,
+        }
+        self.canvas.delete("jmark_rubber")
+
+    def _on_mark_motion(self, event):
+        d = self._mark_drag
+        if d is None:
+            return
+        px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        wx, wy = self.to_world(px, py)
+        d["x1"], d["y1"] = wx, wy
+        self.canvas.delete("jmark_rubber")
+        x0, y0 = self.to_canvas(d["x0"], d["y0"])
+        x1, y1 = self.to_canvas(wx, wy)
+        self.canvas.create_rectangle(
+            x0, y0, x1, y1, outline="#0f766e", dash=(4, 3), width=2,
+            tags="jmark_rubber",
+        )
+
+    def _on_mark_release(self, event):
+        d = self._mark_drag
+        self._mark_drag = None
+        self.canvas.delete("jmark_rubber")
+        if d is None:
+            return
+        px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        wx, wy = self.to_world(px, py)
+        x0, y0, x1, y1 = d["x0"], d["y0"], wx, wy
+        if abs(x1 - x0) < 0.2 or abs(y1 - y0) < 0.2:
+            self.drag_status_var.set("Mark joint: drag was too small")
+            return
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        add_line = self._add_at_world(cx, cy)
+        if add_line is None or add_line not in self.add_blocks:
+            self.drag_status_var.set("Mark joint: drag on a piece (ADD block)")
+            self._set_joint_status("Mark joint: drag the rectangle on a piece.")
+            return
+        blk = self.add_blocks[add_line]
+        cumx, cumy = blk["cum"]
+        lx, ly, lw, lh = add_local_coords((x0, y0, x1, y1), cumx, cumy)
+        text = self.text_input.get("1.0", "end")
+        marks, _outlines, _w = parse_joint_file(text)
+        name = next_joint_name(marks)
+        new_text = insert_j_line(text, add_line, lx, ly, lw, lh, name)
+        if new_text == text:
+            self._set_joint_status("Could not find the END of that ADD block.")
+            return
+        self.text_input.configure(autoseparators=False)
+        self.text_input.edit_separator()
+        self.text_input.delete("1.0", "end")
+        self.text_input.insert("1.0", new_text)
+        self.text_input.edit_separator()
+        self.text_input.configure(autoseparators=True)
+        self.preview_keep_scroll()
+        self.drag_status_var.set(
+            f"Marked J {self._fmt(lx)} {self._fmt(ly)} "
+            f"{self._fmt(lw)} {self._fmt(lh)} {name}"
+        )
+
+    def _add_at_world(self, wx, wy):
+        best, best_depth = None, -1
+        for i, (_cmd, segs) in enumerate(self.shapes):
+            if not segs:
+                continue
+            xs, ys = [], []
+            for x1, y1, x2, y2 in segs:
+                xs.extend((x1, x2))
+                ys.extend((y1, y2))
+            if not xs:
+                continue
+            if min(xs) - 0.5 <= wx <= max(xs) + 0.5 and \
+               min(ys) - 0.5 <= wy <= max(ys) + 0.5:
+                adds = self.shape_adds[i] if i < len(self.shape_adds) else ()
+                if adds and len(adds) > best_depth:
+                    best, best_depth = adds[-1], len(adds)
+        if best is None and self.selected_add in getattr(self, "add_blocks", {}):
+            return self.selected_add
+        return best
+
     def _on_drag_press(self, event):
         self.canvas.focus_set()
         px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        if getattr(self, "_mark_mode", False):
+            self._on_mark_press(event, px, py)
+            return
         idx = self._shape_at(px, py)
         self._drag = None
         if idx is None or not self.shape_adds[idx]:
@@ -927,6 +1180,7 @@ class DesignerTab(ttk.Frame):
             "dx0": blk["dx"], "dy0": blk["dy"], "moved": False,
             "tags": [f"shape{i}" for i in self._block_shape_indices(line)]
                     + [f"addlbl{l}" for l in self._block_child_lines(line)]
+                    + [f"jmark{l}" for l in self._block_child_lines(line)]
                     + ["selection"],
         }
         if changed:
@@ -948,6 +1202,9 @@ class DesignerTab(ttk.Frame):
         self._set_status(line, blk["dx"], blk["dy"])
 
     def _on_drag_motion(self, event):
+        if getattr(self, "_mark_drag", None):
+            self._on_mark_motion(event)
+            return
         d = self._drag
         if d is None:
             return
@@ -983,6 +1240,9 @@ class DesignerTab(ttk.Frame):
                          "BLOCKED" if blocked else "drag")
 
     def _on_drag_release(self, event):
+        if getattr(self, "_mark_drag", None):
+            self._on_mark_release(event)
+            return
         d = self._drag
         self._drag = None
         if d is None or not d["moved"] or "new" not in d:
@@ -1012,6 +1272,11 @@ class DesignerTab(ttk.Frame):
         return x, y
 
     def _on_drag_cancel(self, _event=None):
+        if self._mark_drag is not None:
+            self._mark_drag = None
+            self.canvas.delete("jmark_rubber")
+            self.drag_status_var.set("Mark joint cancelled")
+            return
         if self._drag is None:
             return
         self._drag = None
