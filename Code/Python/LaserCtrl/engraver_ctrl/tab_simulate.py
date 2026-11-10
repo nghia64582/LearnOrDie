@@ -4,6 +4,10 @@ import re
 import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
+from common.ui import canvas_font
+from engraver_ctrl.sim_time import (
+    StepTimes, format_duration, RAPID_RATE_MM_MIN, DEFAULT_FEED_MM_MIN,
+)
 
 
 class TabSimulate(ttk.Frame):
@@ -25,6 +29,7 @@ class TabSimulate(ttk.Frame):
         # Data
         # --------------------------------------------------
         self.steps = []
+        self.step_times = StepTimes([])
         self.current_step = 0
         self.min_x = 0
         self.max_x = 100
@@ -206,6 +211,22 @@ class TabSimulate(ttk.Frame):
             anchor="w"
         )
 
+        # Time estimate (length / rate, no acceleration)
+        self.total_time_label = ttk.Label(control, text="Total time: -")
+        self.total_time_label.pack(anchor="w", pady=(8, 0))
+        self.through_time_label = ttk.Label(
+            control, text="Time through current step: -")
+        self.through_time_label.pack(anchor="w")
+        self.step_time_label = ttk.Label(control, text="Current step time: -")
+        self.step_time_label.pack(anchor="w")
+        self.time_note_label = ttk.Label(
+            control,
+            text=(f"Estimate: G0 at {RAPID_RATE_MM_MIN:g} mm/min, "
+                  f"G1 at its F (mm/min); no acceleration."),
+            wraplength=240,
+        )
+        self.time_note_label.pack(anchor="w")
+
         # --------------------------------------------------
         # Navigation buttons
         # --------------------------------------------------
@@ -355,6 +376,7 @@ class TabSimulate(ttk.Frame):
             return
 
         self.steps = self.parse_gcode(content)
+        self.step_times = StepTimes(self.steps)
         self.current_step = 0
         self.calculate_bounds()
         self.recompute_transform()
@@ -370,6 +392,8 @@ class TabSimulate(ttk.Frame):
         # Current machine position
         current_x = 0.0
         current_y = 0.0
+        # Modal feed (mm/min), updated by F on any line (incl. F-only lines)
+        current_f = None
 
         lines = content.splitlines()
 
@@ -394,6 +418,10 @@ class TabSimulate(ttk.Frame):
 
             if not line:
                 continue
+
+            f_match = re.search(r"F(\d+(?:\.\d+)?)", line, re.IGNORECASE)
+            if f_match:
+                current_f = float(f_match.group(1))
 
             # ------------------------------------------------
             # G0
@@ -426,6 +454,7 @@ class TabSimulate(ttk.Frame):
                     "y1": current_y,
                     "x2": x,
                     "y2": y,
+                    "feed": current_f,
                 })
 
                 current_x = x
@@ -463,6 +492,7 @@ class TabSimulate(ttk.Frame):
                     "y1": current_y,
                     "x2": x,
                     "y2": y,
+                    "feed": current_f,
                 })
 
                 current_x = x
@@ -630,7 +660,7 @@ class TabSimulate(ttk.Frame):
             self.canvas.create_text(
                 px1 + 2, py1 - 2,
                 text=f"{x:g}",
-                font=("Arial", 8),
+                font=canvas_font(),
                 anchor="sw",
                 fill="#888888"
             )
@@ -651,7 +681,7 @@ class TabSimulate(ttk.Frame):
             self.canvas.create_text(
                 px1 + 2, py1 + 2,
                 text=f"{y:g}",
-                font=("Arial", 8),
+                font=canvas_font(),
                 anchor="nw",
                 fill="#888888"
             )
@@ -910,6 +940,7 @@ class TabSimulate(ttk.Frame):
         self.step_label.config(
             text=f"Step: {self.current_step} / {total}"
         )
+        self.update_time_labels()
 
         if self.current_step == 0:
             self.type_label.config(
@@ -992,6 +1023,27 @@ class TabSimulate(ttk.Frame):
             self.next_circle_button.config(
                 state="normal"
             )
+
+    def update_time_labels(self):
+        times = getattr(self, "step_times", None) or StepTimes(self.steps)
+        n = self.current_step
+        if not self.steps:
+            self.total_time_label.config(text="Total time: -")
+            self.through_time_label.config(text="Time through current step: -")
+            self.step_time_label.config(text="Current step time: -")
+            return
+        self.total_time_label.config(
+            text=f"Total time: {format_duration(times.total)}")
+        self.through_time_label.config(
+            text=f"Time through current step: {format_duration(times.through(n))}")
+        self.step_time_label.config(
+            text=f"Current step time: {format_duration(times.step_time(n))}")
+        note = (f"Estimate: G0 at {RAPID_RATE_MM_MIN:g} mm/min, "
+                f"G1 at its F (mm/min); no acceleration.")
+        if times.assumed_feed_steps:
+            note += (f" {times.assumed_feed_steps} cut step(s) had no F yet, "
+                     f"assumed {DEFAULT_FEED_MM_MIN:g} mm/min.")
+        self.time_note_label.config(text=note)
 
     # ======================================================
     # RESIZE

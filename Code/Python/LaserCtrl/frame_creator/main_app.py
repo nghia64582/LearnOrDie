@@ -28,18 +28,13 @@ _parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _parent_dir not in sys.path:
     sys.path.insert(0, _parent_dir)
 
-# ----------------------------------------------------------------------------
-# Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)
-# ----------------------------------------------------------------------------
-try:
-    from ctypes import windll
-    windll.shcore.SetProcessDpiAwareness(1)
-except Exception:
-    pass
 
 # Custom font -- change these two to adjust the whole app's font in one place
-FONT_FAMILY = "Segoe UI"
-FONT_SIZE = 10
+try:
+    from common.ui import FONT_FAMILY, SIZE_SM as FONT_SIZE
+except ImportError:
+    FONT_FAMILY = "Segoe UI"
+    FONT_SIZE = 10
 
 
 def add_tab(notebook, title, build_fn):
@@ -57,7 +52,16 @@ def add_tab(notebook, title, build_fn):
 
 
 def main():
+    try:
+        from common.ui import enable_dpi_awareness, init_fonts
+        enable_dpi_awareness()
+    except Exception:
+        enable_dpi_awareness = None
+        init_fonts = None
     root = tk.Tk()
+    if init_fonts is not None:
+        init_fonts(root, size=FONT_SIZE)
+
     root.title("Frame Toolkit")
     root.geometry("1150x780")
 
@@ -89,11 +93,11 @@ def main():
         import frame_creator.box_gui as m
         m.BoxApp(frame)
 
-    add_tab(notebook, "1. Mối nối (Joint)", build_joint)
-    add_tab(notebook, "2. Thanh dầm (Beam)", build_beam)
-    add_tab(notebook, "3. Khung xương (Skeleton)", build_skeleton)
-    add_tab(notebook, "4. Dầm ngang (Rail cut-list)", build_railcut)
-    add_tab(notebook, "5. Hộp (Box)", build_box)
+    add_tab(notebook, "Joint", build_joint)
+    add_tab(notebook, "Beam", build_beam)
+    add_tab(notebook, "Skeleton", build_skeleton)
+    add_tab(notebook, "Rail cut-list", build_railcut)
+    add_tab(notebook, "Box", build_box)
 
     root.mainloop()
 

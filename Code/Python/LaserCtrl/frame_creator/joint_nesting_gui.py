@@ -24,18 +24,18 @@ try:
 except ImportError:  # allow solver helpers to load headless
     tk = ttk = filedialog = messagebox = None
 
-# ----------------------------------------------------------------------------
-# Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)
-# ----------------------------------------------------------------------------
-try:
-    from ctypes import windll
-    windll.shcore.SetProcessDpiAwareness(1)
-except Exception:
-    pass
+# DPI awareness is handled once by the app entrypoint (laser_app / main).
 
-# Custom font -- change these two to adjust the whole app's font in one place
-FONT_FAMILY = "Segoe UI"
-FONT_SIZE = 10
+try:
+    from common.ui import FONT_FAMILY, SIZE_SM as FONT_SIZE, ui_font, canvas_font
+except ImportError:  # standalone without LaserCtrl on path
+    FONT_FAMILY = "Segoe UI"
+    FONT_SIZE = 10
+    def ui_font(size=10, bold=False):
+        return (FONT_FAMILY, size, "bold") if bold else (FONT_FAMILY, size)
+    def canvas_font(bold=False):
+        return ui_font(10, bold=bold)
+
 
 from frame_creator.joint_nesting_solver import (
     SHAPE_COLOR,
@@ -103,7 +103,7 @@ class JointNestingApp:
                   foreground="#555").grid(row=16, column=0, columnspan=2, pady=(10, 0), sticky="w")
 
         self.result_var = tk.StringVar(value="")
-        ttk.Label(frame, textvariable=self.result_var, wraplength=200, font=(FONT_FAMILY, 9, "bold")
+        ttk.Label(frame, textvariable=self.result_var, wraplength=200, font=ui_font(FONT_SIZE, bold=True)
                   ).grid(row=17, column=0, columnspan=2, pady=(6, 0), sticky="w")
 
     def _build_canvas_panel(self):
@@ -229,7 +229,7 @@ class JointNestingApp:
                 self.canvas.create_polygon(*hpts, fill="white", outline="black")
             cx = sum(x for x, y in outer_t) / len(outer_t) * scale + margin
             cy = sum(y for x, y in outer_t) / len(outer_t) * scale + margin
-            self.canvas.create_text(cx, cy, text=p["name"], font=(FONT_FAMILY, 7))
+            self.canvas.create_text(cx, cy, text=p["name"], font=canvas_font())
 
         # grid boundary
         gw = self.grid_cols * cell_size * scale + margin * 2

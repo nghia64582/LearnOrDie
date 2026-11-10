@@ -24,18 +24,18 @@ from tkinter import ttk, messagebox
 
 from frame_creator.rail_cutlist_core import optimize_layout, build_rail_dsl
 
-# ----------------------------------------------------------------------------
-# Windows DPI-awareness fix (prevents blurry/broken text on high-DPI screens)
-# ----------------------------------------------------------------------------
-try:
-    from ctypes import windll
-    windll.shcore.SetProcessDpiAwareness(1)
-except Exception:
-    pass
+# DPI awareness is handled once by the app entrypoint (laser_app / main).
 
-# Custom font -- change these two to adjust the whole app's font in one place
-FONT_FAMILY = "Segoe UI"
-FONT_SIZE = 10
+try:
+    from common.ui import FONT_FAMILY, SIZE_SM as FONT_SIZE, ui_font, canvas_font
+except ImportError:  # standalone without LaserCtrl on path
+    FONT_FAMILY = "Segoe UI"
+    FONT_SIZE = 10
+    def ui_font(size=10, bold=False):
+        return (FONT_FAMILY, size, "bold") if bold else (FONT_FAMILY, size)
+    def canvas_font(bold=False):
+        return ui_font(10, bold=bold)
+
 
 RAIL_WIDTH = 10.0
 
@@ -78,7 +78,7 @@ class RailDslApp:
                   ).grid(row=5, column=0, pady=(10, 0), sticky="w")
 
         self.result_var = tk.StringVar(value="")
-        ttk.Label(frame, textvariable=self.result_var, wraplength=220, font=(FONT_FAMILY, 9, "bold")
+        ttk.Label(frame, textvariable=self.result_var, wraplength=220, font=ui_font(FONT_SIZE, bold=True)
                   ).grid(row=6, column=0, pady=(6, 0), sticky="w")
 
     def _build_canvas_panel(self):
@@ -176,7 +176,7 @@ class RailDslApp:
             y1 = (p["y"] + p["h"]) * scale + margin
             color = "#f5c99b" if p["rotated"] else "#cfe2f3"
             self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, outline="black")
-            self.canvas.create_text((x0 + x1) / 2, (y0 + y1) / 2, text=f"{p['length']:g}", font=(FONT_FAMILY, 8))
+            self.canvas.create_text((x0 + x1) / 2, (y0 + y1) / 2, text=f"{p['length']:g}", font=canvas_font())
 
         gw = total_width * scale + margin * 2
         gh = height * scale + margin * 2

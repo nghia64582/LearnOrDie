@@ -1,0 +1,242 @@
+"""Embeddable DSL Library panel (list + editor + preview)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
+
+from dsl_library_tool.dsl_library import DSLLibrary, KVError
+from dsl_library_tool.dsl_parser import parse_dsl
+from dsl_library_tool.dsl_canvas import DSLCanvas
+from common.ui import mono_font, SIZE_SM, attach_scrollbars
+
+DEFAULT_LIBRARY_DIR = Path(__file__).resolve().parent / "data"
+
+
+class DSLLibraryPanel(ttk.Frame):
+    """Library manager UI that packs into any parent frame (not a Tk root)."""
+
+    def __init__(self, parent, library_path=None):
+        super().__init__(parent)
+        self.library_path = Path(library_path) if library_path else DEFAULT_LIBRARY_DIR
+        self.library = DSLLibrary(self.library_path)
+        self.current_file = None
+        self.dirty = False
+        self._build_ui()
+        # Do not block UI on network: refresh runs after idle.
+        self.after_idle(self.reload_library)
+
+    def _build_ui(self):
+        top = ttk.Frame(self, padding=8)
+        top.pack(fill="x")
+
+        ttk.Label(top, text="DSL Library:").pack(side="left")
+        self.folder_var = tk.StringVar(value=str(self.library_path))
+        ttk.Entry(top, textvariable=self.folder_var).pack(
+            side="left", fill="x", expand=True, padx=6
+        )
+        ttk.Button(top, text="Choose Folder", command=self.choose_folder).pack(side="left")
+        ttk.Button(top, text="New DSL", command=self.new_dsl).pack(side="left", padx=(6, 0))
+
+        main = ttk.Panedwindow(self, orient="horizontal")
+        main.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+
+        left = ttk.Frame(main, padding=5)
+        right = ttk.Frame(main, padding=5)
+        main.add(left, weight=1)
+        main.add(right, weight=4)
+
+        ttk.Label(left, text="DSL Files").pack(anchor="w")
+        self.search_var = tk.StringVar()
+        search = ttk.Entry(left, textvariable=self.search_var)
+        search.pack(fill="x", pady=(4, 6))
+        search.bind("<KeyRelease>", lambda e: self.refresh_list())
+
+        self.listbox = tk.Listbox(left, activestyle="dotbox")
+        self.listbox.pack(fill="both", expand=True)
+        self.listbox.bind("<<ListboxSelect>>", self.on_select)
+
+        btns = ttk.Frame(left)
+        btns.pack(fill="x", pady=(6, 0))
+        ttk.Button(btns, text="Refresh", command=self.reload_library).pack(
+            side="left", fill="x", expand=True
+        )
+        ttk.Button(btns, text="Delete", command=self.delete_dsl).pack(
+            side="left", fill="x", expand=True, padx=(5, 0)
+        )
+
+        editor = ttk.Frame(right)
+        editor.pack(fill="x")
+
+        ttk.Label(editor, text="Name").grid(row=0, column=0, sticky="w", pady=2)
+        self.name_var = tk.StringVar()
+        ttk.Entry(editor, textvariable=self.name_var).grid(
+            row=0, column=1, sticky="ew", padx=6, pady=2
+        )
+
+        ttk.Label(editor, text="Description").grid(row=1, column=0, sticky="nw", pady=2)
+        self.desc_var = tk.StringVar()
+        ttk.Entry(editor, textvariable=self.desc_var).grid(
+            row=1, column=1, sticky="ew", padx=6, pady=2
+        )
+        editor.columnconfigure(1, weight=1)
+
+        ttk.Label(right, text="DSL").pack(anchor="w", pady=(8, 3))
+        dsl_box = ttk.Frame(right)
+        dsl_box.pack(fill="x")
+        self.dsl_text = tk.Text(dsl_box, height=13, undo=True, wrap="none",
+                                font=mono_font(SIZE_SM))
+        self.dsl_text_vbar, self.dsl_text_hbar = attach_scrollbars(
+            dsl_box, self.dsl_text, vertical=True, horizontal=True,
+        )
+        self.dsl_text.bind("<<Modified>>", self.on_text_modified)
+
+        actions = ttk.Frame(right)
+        actions.pack(fill="x", pady=6)
+        ttk.Button(actions, text="Save", command=self.save_dsl).pack(side="left")
+        ttk.Button(actions, text="Preview", command=self.preview).pack(side="left", padx=5)
+        self.status_var = tk.StringVar(value="Ready")
+        ttk.Label(actions, textvariable=self.status_var).pack(side="right")
+
+        ttk.Label(right, text="Preview").pack(anchor="w")
+        self.canvas = DSLCanvas(right)
+        self.canvas.pack(fill="both", expand=True, pady=(3, 0))
+
+    def choose_folder(self):
+        p = filedialog.askdirectory(initialdir=self.library_path)
+        if not p:
+            return
+        self.library_path = Path(p)
+        self.folder_var.set(str(self.library_path))
+        self.library = DSLLibrary(self.library_path)
+        self.current_file = None
+        self.reload_library()
+
+    def reload_library(self):
+        try:
+            online = self.library.refresh()
+        except Exception as e:
+            online = False
+            self.library.last_error = str(e)
+        self.refresh_list()
+        n = len(self.library.list_files())
+        if online:
+            self.status_var.set(f"Server OK - {n} DSL")
+        else:
+            err = getattr(self.library, "last_error", "") or "offline"
+            self.status_var.set(f"OFFLINE (cache, {n} DSL): {err}")
+
+    def _filtered_files(self):
+        q = self.search_var.get().lower().strip()
+        return [
+            (p, name)
+            for p, name, desc in self.library.list_entries()
+            if not q or q in name.lower() or q in desc.lower()
+        ]
+
+    def refresh_list(self):
+        self.listbox.delete(0, "end")
+        for _, name in self._filtered_files():
+            self.listbox.insert("end", name)
+
+    def on_select(self, _event=None):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+        names = [p for p, _ in self._filtered_files()]
+        if sel[0] >= len(names):
+            return
+        self.load_file(names[sel[0]])
+
+    def load_file(self, path):
+        try:
+            data = self.library.load(path)
+        except KVError as e:
+            messagebox.showerror("Load", str(e))
+            return
+        self.current_file = path
+        self.name_var.set(data["name"])
+        self.desc_var.set(data["description"])
+        self.dsl_text.delete("1.0", "end")
+        self.dsl_text.insert("1.0", data["dsl"])
+        self.dsl_text.edit_modified(False)
+        self.dirty = False
+        self.preview()
+
+    def new_dsl(self):
+        self.current_file = None
+        self.name_var.set("New DSL")
+        self.desc_var.set("")
+        self.dsl_text.delete("1.0", "end")
+        self.dsl_text.insert("1.0", "# Enter DSL here\n")
+        self.dsl_text.edit_modified(False)
+        self.dirty = True
+        self.canvas.clear()
+        self.status_var.set("New DSL")
+
+    def save_dsl(self):
+        name = self.name_var.get().strip()
+        if not name:
+            messagebox.showwarning("Save", "Name cannot be empty.")
+            return
+        if self.current_file is None:
+            filename = self.library.safe_filename(name)
+            self.current_file = self.library.path / filename
+        dsl = self.dsl_text.get("1.0", "end-1c")
+        result = parse_dsl(dsl)
+        if result.errors:
+            msg = "\n".join(f"Line {e.line}: {e.message}" for e in result.errors[:8])
+            if not messagebox.askyesno("DSL has errors", msg + "\n\nSave anyway?"):
+                return
+        try:
+            self.library.save(
+                self.current_file,
+                name,
+                self.desc_var.get().strip(),
+                dsl,
+            )
+        except KVError as e:
+            messagebox.showerror(
+                "Save",
+                f"Save failed, nothing lost locally in the editor.\n\n{e}",
+            )
+            return
+        self.dirty = False
+        self.dsl_text.edit_modified(False)
+        self.status_var.set(f"Saved: {self.current_file.name}")
+        self.refresh_list()
+
+    def delete_dsl(self):
+        if self.current_file is None:
+            return
+        if not messagebox.askyesno("Delete", f"Delete {self.current_file.name}?"):
+            return
+        try:
+            self.library.delete(self.current_file)
+        except KVError as e:
+            messagebox.showerror("Delete", str(e))
+            return
+        self.current_file = None
+        self.new_dsl()
+        self.refresh_list()
+
+    def on_text_modified(self, _event=None):
+        if self.dsl_text.edit_modified():
+            self.dirty = True
+            self.dsl_text.edit_modified(False)
+            self.preview()
+
+    def preview(self):
+        result = parse_dsl(self.dsl_text.get("1.0", "end-1c"))
+        self.canvas.render(result)
+        if result.errors:
+            self.status_var.set(f"DSL errors: {len(result.errors)}")
+        else:
+            self.status_var.set(f"OK - {len(result.segments)} segments")
+
+
+def build_dsl_library_panel(parent):
+    panel = DSLLibraryPanel(parent)
+    panel.pack(fill="both", expand=True)
+    return panel

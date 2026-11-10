@@ -1,0 +1,75 @@
+{
+ "version": 1,
+ "index": {
+  "schema": "dsl_library.index",
+  "version": 1,
+  "updated_at": "2026-10-19T17:43:29Z",
+  "drawings": {
+   "car-frame-1": {
+    "id": "car-frame-1",
+    "name": "Car Frame 1",
+    "description": "Khung xe 1",
+    "key": "dsl_library:v1:file:car-frame-1",
+    "size": 1081,
+    "sha256": "b7c15540831a1af2c203341a7ebef9949b0ff41ab3b14b9b8fdf603c748e04f6",
+    "updated_at": "2026-10-19T17:42:32Z"
+   },
+   "fan-lm2596-button": {
+    "id": "fan-lm2596-button",
+    "name": "Fan+lm2596+button",
+    "description": "",
+    "key": "dsl_library:v1:file:fan-lm2596-button",
+    "size": 1278,
+    "sha256": "d3a84fb19154e23a70e0eea643d1053baadc7f156821b29b96be18b32d6b7f44",
+    "updated_at": "2026-10-19T17:42:33Z"
+   },
+   "hw095": {
+    "id": "hw095",
+    "name": "HW095",
+    "description": "Module with four corner mounting holes",
+    "key": "dsl_library:v1:file:hw095",
+    "size": 160,
+    "sha256": "d2e5774be4ece8f1ee34d815d78f2aaa5e90fe5740b16d8fc8786dfd3d8a45a9",
+    "updated_at": "2026-10-19T17:42:33Z"
+   },
+   "lm2596-zx001": {
+    "id": "lm2596-zx001",
+    "name": "LM2596S-ZX001",
+    "description": "DC-DC buck converter, two mounting holes",
+    "key": "dsl_library:v1:file:lm2596-zx001",
+    "size": 146,
+    "sha256": "673061f2501323a067d51363d510d914f6a4eb79a36c2e8f25207e6997abc68d",
+    "updated_at": "2026-10-19T17:42:33Z"
+   },
+   "new-dsl": {
+    "id": "new-dsl",
+    "name": "Board Frame 1",
+    "description": "Khung gắn các thiết bị điện tử",
+    "key": "dsl_library:v1:file:new-dsl",
+    "size": 852,
+    "sha256": "2408e417b2b0c593fdf9852e86ecd3fab0cfed717752e50218a699b9b17940b7",
+    "updated_at": "2026-10-19T17:42:34Z"
+   },
+   "wheel-for-yellow-motor": {
+    "id": "wheel-for-yellow-motor",
+    "name": "Wheel For Yellow Motor",
+    "description": "",
+    "key": "dsl_library:v1:file:wheel-for-yellow-motor",
+    "size": 171,
+    "sha256": "301db040b8889af6e1e00074b8ed739089d5a7495707efe301a32a58de1ef2b9",
+    "updated_at": "2026-10-19T17:42:34Z"
+   },
+   "yellow-motor-frame": {
+    "id": "yellow-motor-frame",
+    "name": "Yellow motor Frame",
+    "description": "Khung động cơ vàng",
+    "key": "dsl_library:v1:file:yellow-motor-frame",
+    "size": 398,
+    "sha256": "90c804cb26733f42afacb689fc574ae8bbbb1beff2c466ce417c42715175d868",
+    "updated_at": "2026-10-19T17:42:35Z"
+   }
+  }
+ },
+ "files": {},
+ "base_url": "https://purple-field-d024.nghia64582.workers.dev/"
+}

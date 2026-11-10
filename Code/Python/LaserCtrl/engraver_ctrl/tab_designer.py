@@ -4,6 +4,7 @@ import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
 from engraver_ctrl.collision import Collider
+from common.ui import ui_font, mono_font, canvas_font, make_button, SIZE_SM
 
 
 class DesignerTab(ttk.Frame):
@@ -31,8 +32,8 @@ class DesignerTab(ttk.Frame):
     SHORT_SLOW_THRESHOLD = 15  # mm
     SHORT_SLOW_PERCENT = 60  # %
 
-    # Font cho label cua tung lop ADD ve tren canvas
-    ADD_LABEL_FONT = ("Times New Roman", 11)
+    # Font cho label cua tung lop ADD ve tren canvas (shared UI family)
+    ADD_LABEL_FONT = None  # resolved in __init__ via canvas_font()
 
     # Bounds mark: ve dau + tai 4 goc vung hoat dong (min/max x, y)
     # de kiem tra pham vi cat truoc khi chay that
@@ -47,7 +48,8 @@ class DesignerTab(ttk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-        self.font = ("Times New Roman", 11)
+        self.font = getattr(app, "font", None) or ui_font(SIZE_SM)
+        self.ADD_LABEL_FONT = canvas_font()
         self.shapes = []
         self.canvas_width = 1000
         self.canvas_height = 700
@@ -81,14 +83,24 @@ class DesignerTab(ttk.Frame):
         # --- Help button ---
         top_btn_frame = tk.Frame(left_frame)
         top_btn_frame.pack(fill="x")
-        tk.Button(top_btn_frame, text="Help", command=self.show_help,
-                  font=self.font).pack(side="left")
+        make_button(top_btn_frame, "Help", command=self.show_help).pack(side="left")
 
-        # --- Text input ---
+        # --- Text input (fixed row count; scrollbar instead of a tall field) ---
         tk.Label(left_frame, text="Shapes", font=self.font).pack(anchor="w")
-        self.text_input = tk.Text(left_frame, width=40, height=28,
-                                   font=("Consolas", 11), undo=True)
-        self.text_input.pack(fill="y")
+        editor = ttk.Frame(left_frame)
+        # fill=x only — do not expand vertically or geometry will undo height=14
+        editor.pack(fill="x", pady=(0, 2))
+        self.text_input = tk.Text(
+            editor, width=40, height=14, font=mono_font(SIZE_SM), undo=True,
+            wrap="none",
+        )
+        self.text_scroll = ttk.Scrollbar(
+            editor, orient="vertical", command=self.text_input.yview,
+        )
+        self.text_input.configure(yscrollcommand=self.text_scroll.set)
+        self.text_input.grid(row=0, column=0, sticky="nsew")
+        self.text_scroll.grid(row=0, column=1, sticky="ns")
+        editor.columnconfigure(0, weight=1)
 
         sample = ("C 50 50 30\nR 20 30 40 50\nRC 120 100 50 30\n"
                    "LV 10 10 100\nLH 50 50 80\nL 10 10 100 100\n")
@@ -98,8 +110,7 @@ class DesignerTab(ttk.Frame):
         # --- View / Zoom ---
         view_frame = tk.LabelFrame(left_frame, text="View", font=self.font)
         view_frame.pack(fill="x", pady=5)
-        tk.Button(view_frame, text="Fit", command=self.fit_view,
-                  font=self.font).grid(row=0, column=0, padx=2)
+        make_button(view_frame, "Fit", command=self.fit_view).grid(row=0, column=0, padx=2)
         tk.Label(view_frame, text="Zoom").grid(row=0, column=1)
         self.zoom_var = tk.DoubleVar(value=1.0)
         self.zoom_scale = tk.Scale(view_frame, from_=self.ZOOM_MIN,
@@ -127,7 +138,7 @@ class DesignerTab(ttk.Frame):
         # Do dai co dinh + font mono de label khong lam panel co gian
         self.drag_status_var = tk.StringVar(value="")
         tk.Label(view_frame, textvariable=self.drag_status_var,
-                 fg="blue", font="TkFixedFont", width=40, anchor="w")\
+                 font=mono_font(SIZE_SM), width=40, anchor="w")\
             .grid(row=4, column=0, columnspan=3, sticky="w")
 
         # --- GCODE settings ---
@@ -152,20 +163,17 @@ class DesignerTab(ttk.Frame):
         # --- Buttons ---
         btn_frame = tk.Frame(left_frame)
         btn_frame.pack(fill="x", pady=5)
-        tk.Button(btn_frame, text="Preview (Ctrl+Enter)",
-                  command=self.preview, font=self.font)\
+        make_button(btn_frame, "Preview (Ctrl+Enter)", command=self.preview)\
             .pack(side="left", padx=2)
-        tk.Button(btn_frame, text="Generate GCODE",
-                  command=self.generate_gcode, font=self.font)\
+        make_button(btn_frame, "Generate GCODE", command=self.generate_gcode)\
             .pack(side="left", padx=2)
-        tk.Button(btn_frame, text="Ve vung hoat dong",
-                  command=self.generate_bounds_gcode, font=self.font)\
+        make_button(btn_frame, "Ve vung hoat dong", command=self.generate_bounds_gcode)\
             .pack(side="left", padx=2)
 
         # --- Thoi gian uoc luong ---
         self.gcode_time_var = tk.StringVar(value="")
         tk.Label(left_frame, textvariable=self.gcode_time_var,
-                 font=self.font, fg="blue").pack(anchor="w", pady=(0, 5))
+                 font=self.font).pack(anchor="w", pady=(0, 5))
 
         # --- Canvas ---
         self.canvas = tk.Canvas(right_frame, bg="white",
@@ -474,7 +482,7 @@ class DesignerTab(ttk.Frame):
             px2, py2 = self.to_canvas(x, self.view_top)
             self.canvas.create_line(px1, py1, px2, py2, fill="#dddddd")
             self.canvas.create_text(px1 + 2, py1 - 12,
-                                     text=f"{x:g}", font=("Arial", 8),
+                                     text=f"{x:g}", font=canvas_font(),
                                      anchor="nw")
             x += step
 
@@ -484,7 +492,7 @@ class DesignerTab(ttk.Frame):
             px2, py2 = self.to_canvas(self.view_right, y)
             self.canvas.create_line(px1, py1, px2, py2, fill="#dddddd")
             self.canvas.create_text(px1 + 2, py1, text=f"{y:g}",
-                                     font=("Arial", 8), anchor="nw")
+                                     font=canvas_font(), anchor="nw")
             y += step
 
         if self.view_bottom <= 0 <= self.view_top:
@@ -501,7 +509,7 @@ class DesignerTab(ttk.Frame):
         self.canvas.create_oval(ox - 4, oy - 4, ox + 4, oy + 4,
                                  outline="black", width=2)
         self.canvas.create_text(ox - 4, oy + 4, text="O(0,0)",
-                                 font=("Arial", 9, "bold"), anchor="ne")
+                                 font=canvas_font(bold=True), anchor="ne")
 
     def preview(self):
         try:
@@ -824,7 +832,7 @@ class DesignerTab(ttk.Frame):
                                 text=f"ADD {self._fmt(blk['dx'])} "
                                      f"{self._fmt(blk['dy'])} "
                                      f"{blk['label']}  (line {line})",
-                                fill="#0078d7", font=("Arial", 9, "bold"),
+                                fill="#0078d7", font=canvas_font(bold=True),
                                 tags="selection")
 
     def _set_status(self, line, x, y, note=""):

@@ -1,3 +1,4 @@
+from common.ui import ui_font, make_button, SIZE_SM
 import tkinter as tk
 from tkinter import messagebox
 from typing import List
@@ -11,7 +12,7 @@ class SmallPartsTab(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-        self.font = app.font
+        self.font = getattr(app, "font", None) or ui_font(SIZE_SM)
         self.build_ui()
 
     def build_ui(self):
@@ -56,9 +57,7 @@ class SmallPartsTab(tk.Frame):
         self.text_parts = tk.Text(self, width=40, height=8, font=self.font)
         self.text_parts.grid(row=row-1, column=1)
 
-        tk.Button(
-            self, text="Generate GCODE", font=self.font,
-            command=self.on_generate
+        make_button(self, "Generate GCODE", command=self.on_generate
         ).grid(row=row, column=1, pady=10)
 
     def on_generate(self):
