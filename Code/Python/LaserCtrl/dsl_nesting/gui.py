@@ -10,12 +10,15 @@ from tkinter import filedialog, messagebox, ttk
 from common.ui import (
     SIZE_MD,
     SIZE_SM,
+    JF_HIGHLIGHT,
+    JM_HIGHLIGHT,
     attach_scrollbars,
     canvas_font,
     make_button,
     mono_font,
     ui_font,
 )
+from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
 from engraver_ctrl.dsl_nest import nest_dsl
 from engraver_ctrl.dsl_parse import (
     all_segments,
@@ -296,6 +299,20 @@ class DSLNestingPanel(ttk.Frame):
         )
 
         parsed = parse_text(dsl)
+        # JM/JF fills first so G-code strokes paint on top.
+        hl_colors = {"JM": JM_HIGHLIGHT, "JF": JF_HIGHLIGHT}
+        for cmd, segs in parsed["shapes"]:
+            fill = hl_colors.get(cmd)
+            if not fill:
+                continue
+            for poly in polygons_from_joint_segments(cmd, segs):
+                coords = []
+                for x, y in poly:
+                    coords.extend(to_canvas(x, y))
+                if len(coords) >= 6:
+                    canvas.create_polygon(
+                        *coords, fill=fill, outline="", tags="jmjf_hl",
+                    )
         for cmd, segs in parsed["shapes"]:
             color = SHAPE_COLORS.get(cmd, TEXT)
             for x1, y1, x2, y2 in segs:

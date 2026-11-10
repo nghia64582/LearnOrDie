@@ -4,7 +4,11 @@ import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
 from engraver_ctrl.collision import Collider
-from common.ui import ui_font, mono_font, canvas_font, make_button, SIZE_SM
+from common.ui import (
+    ui_font, mono_font, canvas_font, make_button, SIZE_SM,
+    JM_HIGHLIGHT, JF_HIGHLIGHT,
+)
+from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
 
 
 class DesignerTab(ttk.Frame):
@@ -395,6 +399,7 @@ class DesignerTab(ttk.Frame):
         self.canvas.configure(scrollregion=(0, 0, cw, ch))
 
         self.draw_grid()
+        self._draw_joint_highlights()
         for i, (x, y, label) in enumerate(self._add_labels):
             line = (self._add_label_lines[i]
                     if i < len(self._add_label_lines) else None)
@@ -765,6 +770,45 @@ class DesignerTab(ttk.Frame):
             self.canvas.create_text(px + 5, py - 5, text=label,
                                      font=self.ADD_LABEL_FONT,
                                      anchor="sw", fill="red", tags=tag)
+
+    def _draw_joint_highlights(self):
+        # Preview-only fills under G-code strokes. Same shape{i} tag so
+        # drag moves the fill with the block. Does not affect generate_gcode.
+        colors = {"JM": JM_HIGHLIGHT, "JF": JF_HIGHLIGHT}
+        for i, (cmd, segments) in enumerate(self.shapes):
+            fill = colors.get(cmd)
+            if not fill:
+                continue
+            tag = f"shape{i}"
+            for poly in polygons_from_joint_segments(cmd, segments):
+                coords = []
+                for x, y in poly:
+                    coords.extend(self.to_canvas(x, y))
+                if len(coords) < 6:
+                    continue
+                self.canvas.create_polygon(
+                    *coords, fill=fill, outline="",
+                    tags=(tag, "jmjf_hl"),
+                )
+        self._draw_joint_legend()
+
+    def _draw_joint_legend(self):
+        if not any(cmd in ("JM", "JF") for cmd, _segs in self.shapes):
+            return
+        # Viewport-fixed (uses visible canvas origin), not world coordinates.
+        x = self.canvas.canvasx(8)
+        y = self.canvas.canvasy(8)
+        items = (("JM", JM_HIGHLIGHT), ("JF", JF_HIGHLIGHT))
+        for i, (label, color) in enumerate(items):
+            bx = x + i * 54
+            self.canvas.create_rectangle(
+                bx, y, bx + 12, y + 12, fill=color, outline="#888888",
+                tags="jmjf_legend",
+            )
+            self.canvas.create_text(
+                bx + 16, y + 6, text=label, anchor="w",
+                font=canvas_font(), fill="#333333", tags="jmjf_legend",
+            )
 
     def draw_shape(self, cmd, segments, tag=None):
         colors = {"C": "black", "A": "black", "R": "green",

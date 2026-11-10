@@ -31,6 +31,10 @@ NOTEBOOK_TAB_PADDING = (16, 7)
 NOTEBOOK_TAB_PADDING_SELECTED = (16, 8)
 NOTEBOOK_PADDING = 4
 
+# Preview-only fills for male/female mortise-tenon joints (under G-code strokes).
+JM_HIGHLIGHT = "#bbd9f7"  # soft blue (male / tenon)
+JF_HIGHLIGHT = "#f6cbb8"  # soft peach (female / mortise)
+
 # ---------------------------------------------------------------------------
 # Resolved at runtime by init_fonts()
 # ---------------------------------------------------------------------------

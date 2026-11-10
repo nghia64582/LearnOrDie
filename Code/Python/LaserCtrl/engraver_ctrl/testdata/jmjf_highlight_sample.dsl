@@ -1,0 +1,19 @@
+# mixed JM/JF with ADD offsets and ROTATE
+JF 10 0 3 100 10 0
+JM 17 0 3 100 10 0 out
+
+ADD 80 20 blockA
+ROTATE 90
+JF 0 0 80 3 8 4
+JM 0 10 80 3 8 4 in
+END
+END
+
+ADD 0 40 nested
+ADD 10 5 inner
+ROTATE 45
+JM 0 0 40 3 6 2 out
+JF 8 0 3 40 6 2
+END
+END
+END
