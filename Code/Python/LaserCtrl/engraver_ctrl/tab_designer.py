@@ -9,6 +9,7 @@ from common.ui import (
     JM_HIGHLIGHT, JF_HIGHLIGHT,
 )
 from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
+from engraver_ctrl.dsl_card_panel import CardPanel
 from engraver_ctrl.dsl_joint import (
     THICKNESS, DEFAULT_TEETH_LENGTH,
     apply_joints, parse_joint_file, collect_preview_warnings,
@@ -99,8 +100,24 @@ class DesignerTab(ttk.Frame):
         top_btn_frame.pack(fill="x")
         make_button(top_btn_frame, "Help", command=self.show_help).pack(side="left")
 
-        # --- Text input (fixed row count; scrollbar instead of a tall field) ---
+        # --- Shapes: card list (default) or raw DSL ---
         tk.Label(left_frame, text="Shapes", font=self.font).pack(anchor="w")
+        mode_row = ttk.Frame(left_frame)
+        mode_row.pack(fill="x", pady=(0, 2))
+        self.view_mode_var = tk.StringVar(value="cards")
+        ttk.Radiobutton(
+            mode_row, text="Cards", value="cards",
+            variable=self.view_mode_var, command=self._on_view_mode,
+        ).pack(side="left")
+        ttk.Radiobutton(
+            mode_row, text="Raw DSL", value="raw",
+            variable=self.view_mode_var, command=self._on_view_mode,
+        ).pack(side="left", padx=(4, 8))
+        self.add_card_btn = make_button(
+            mode_row, "Add card", command=self._on_add_card,
+        )
+        self.add_card_btn.pack(side="left")
+
         editor = ttk.Frame(left_frame)
         # fill=x only — do not expand vertically or geometry will undo height=14
         editor.pack(fill="x", pady=(0, 2))
@@ -115,11 +132,22 @@ class DesignerTab(ttk.Frame):
         self.text_input.grid(row=0, column=0, sticky="nsew")
         self.text_scroll.grid(row=0, column=1, sticky="ns")
         editor.columnconfigure(0, weight=1)
+        editor.rowconfigure(0, weight=1)
+
+        self.card_panel = CardPanel(
+            editor, font=self.font,
+            on_commit=self._on_cards_commit,
+            on_preview=self.preview_keep_scroll,
+            on_ctrl_return=lambda: self.preview(),
+        )
+        self._last_dsl = None
 
         sample = ("C 50 50 30\nR 20 30 40 50\nRC 120 100 50 30\n"
                    "LV 10 10 100\nLH 50 50 80\nL 10 10 100 100\n")
         self.text_input.insert("1.0", sample)
         self.text_input.bind("<Control-Return>", lambda e: self.preview())
+        self._load_cards_from_current_text(wrap=True)
+        self._show_card_widgets()
 
         # --- View / Zoom ---
         view_frame = tk.LabelFrame(left_frame, text="View", font=self.font)
@@ -244,7 +272,128 @@ class DesignerTab(ttk.Frame):
         self.canvas.bind("<Control-z>", self._on_undo)
         self.canvas.bind("<Control-Z>", self._on_undo)
 
+
         self.preview()
+
+    def get_dsl(self):
+        """Current document DSL (flushes card edits when in card mode)."""
+        return self._dsl_text()
+
+    @property
+    def card_mode(self):
+        return getattr(self, "view_mode_var", None) is not None and \
+            self.view_mode_var.get() == "cards"
+
+    def set_view_mode(self, mode):
+        """Switch the Shapes panel between 'cards' and 'raw'."""
+        self.view_mode_var.set("cards" if mode == "cards" else "raw")
+        self._on_view_mode()
+
+    def _on_add_card(self):
+        if self.card_mode:
+            self.card_panel.add_card()
+
+    def _on_view_mode(self):
+        if self.view_mode_var.get() == "cards":
+            self._enter_card_mode()
+        else:
+            self._enter_raw_mode()
+
+    def _norm_dsl(self, text):
+        return (text or "").replace("\r\n", "\n").replace("\r", "\n").strip("\n") + "\n"
+
+    def _set_text_input(self, text, undo=True):
+        if text and not text.endswith("\n"):
+            text = text + "\n"
+        current = self.text_input.get("1.0", "end")
+        if self._norm_dsl(current) == self._norm_dsl(text):
+            return
+        if undo:
+            self.text_input.configure(autoseparators=False)
+            self.text_input.edit_separator()
+        self.text_input.delete("1.0", "end")
+        self.text_input.insert("1.0", text)
+        if undo:
+            self.text_input.edit_separator()
+            self.text_input.configure(autoseparators=True)
+        self._last_dsl = self._norm_dsl(text)
+
+    def _commit_cards_to_text(self):
+        assembled = self.card_panel.assemble()
+        self.card_panel.dirty = False
+        self._set_text_input(assembled)
+        return self.text_input.get("1.0", "end")
+
+    def _load_cards_from_current_text(self, wrap=True):
+        text = self.text_input.get("1.0", "end")
+        self.card_panel.load_text(text)
+        if wrap:
+            assembled = self.card_panel.assemble()
+            if assembled and self._norm_dsl(assembled) != self._norm_dsl(text):
+                self._set_text_input(assembled)
+        self.card_panel.dirty = False
+        self._last_dsl = self._norm_dsl(self.text_input.get("1.0", "end"))
+
+    def _reload_cards_from_text(self, keep_expand=True):
+        if not hasattr(self, "card_panel"):
+            return
+        text = self.text_input.get("1.0", "end")
+        self.card_panel.load_text(text, keep_expand=keep_expand)
+        self.card_panel.dirty = False
+        self._last_dsl = self._norm_dsl(text)
+
+    def _on_cards_commit(self):
+        assembled = self.card_panel.assemble()
+        self.card_panel.dirty = False
+        self._set_text_input(assembled)
+
+    def _dsl_text(self):
+        if not hasattr(self, "card_panel") or not self.card_mode:
+            return self.text_input.get("1.0", "end")
+        if self.card_panel.dirty:
+            return self._commit_cards_to_text()
+        current = self.text_input.get("1.0", "end")
+        if self._last_dsl is None or self._norm_dsl(current) != self._norm_dsl(self._last_dsl):
+            self._reload_cards_from_text()
+        return self.text_input.get("1.0", "end")
+
+    def _show_card_widgets(self):
+        self.text_input.grid_remove()
+        self.text_scroll.grid_remove()
+        self.card_panel.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        try:
+            self.add_card_btn.configure(state="normal")
+        except tk.TclError:
+            pass
+
+    def _show_raw_widgets(self):
+        self.card_panel.grid_remove()
+        self.text_input.grid(row=0, column=0, sticky="nsew")
+        self.text_scroll.grid(row=0, column=1, sticky="ns")
+        try:
+            self.add_card_btn.configure(state="disabled")
+        except tk.TclError:
+            pass
+
+    def _enter_card_mode(self):
+        if getattr(self.card_panel, "dirty", False):
+            self._commit_cards_to_text()
+        else:
+            self._load_cards_from_current_text(wrap=True)
+        self._show_card_widgets()
+        if getattr(self, "canvas", None):
+            self.preview_keep_scroll()
+
+    def _enter_raw_mode(self):
+        if getattr(self.card_panel, "dirty", False):
+            self._commit_cards_to_text()
+        else:
+            # Keep text_input as the assembled document so a cards->raw
+            # round trip does not drop the loose-command wrap.
+            assembled = self.card_panel.assemble()
+            if assembled:
+                self._set_text_input(assembled)
+        self._show_raw_widgets()
 
     def show_help(self):
         text = """
@@ -316,6 +465,15 @@ class DesignerTab(ttk.Frame):
             another. Apply joints expands them to JM/JF (the original
             J lines are commented). Optional M or F forces male/female.
             ROTATE around a J is not supported yet.
+
+            Cards / Raw DSL
+            The Shapes panel lists each top-level ADD as a card, or shows
+            the full raw DSL. Commands outside any ADD are wrapped into a
+            card (named loose, loose_2, ...) when converting to cards.
+            Nested ADD stays inside the parent card as text. Add card
+            places a new piece at (xmax, 0) or (0, ymax), whichever
+            origin is closer to O(0,0). Duplicate uses the same rule
+            with the copy's bounding-box centre.
 
             FIRST
             Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
@@ -581,7 +739,7 @@ class DesignerTab(ttk.Frame):
             # xuat hien trong file)
             self._priority_keys = {}
 
-            text = self.text_input.get("1.0", "end")
+            text = self._dsl_text()
 
             # Stack chung cho ADD va ROTATE: moi lan ADD/ROTATE day
             # them 1 lop (dx, dy, angle, label), moi lan END chi bo
@@ -946,7 +1104,7 @@ class DesignerTab(ttk.Frame):
 
     def _refresh_joint_marks(self, text=None):
         if text is None:
-            text = self.text_input.get("1.0", "end")
+            text = self._dsl_text()
         marks, outlines, warnings = parse_joint_file(text)
         self.joint_marks = marks
         self.joint_warnings = collect_preview_warnings(
@@ -1023,7 +1181,7 @@ class DesignerTab(ttk.Frame):
             )
 
     def apply_joints(self):
-        text = self.text_input.get("1.0", "end")
+        text = self._dsl_text()
         result = apply_joints(text)
         self.joint_warnings = result.warnings
         extra = []
@@ -1037,12 +1195,9 @@ class DesignerTab(ttk.Frame):
         if result.skipped and result.applied == 0:
             extra.append(f"{result.skipped} pair(s) skipped.")
         if result.text != text:
-            self.text_input.configure(autoseparators=False)
-            self.text_input.edit_separator()
-            self.text_input.delete("1.0", "end")
-            self.text_input.insert("1.0", result.text)
-            self.text_input.edit_separator()
-            self.text_input.configure(autoseparators=True)
+            self._set_text_input(result.text)
+            if self.card_mode:
+                self._reload_cards_from_text()
         self.preview_keep_scroll()
         # preview refreshes warnings; keep the apply summary on top
         self._set_joint_status("\n".join(extra))
@@ -1107,19 +1262,16 @@ class DesignerTab(ttk.Frame):
         blk = self.add_blocks[add_line]
         cumx, cumy = blk["cum"]
         lx, ly, lw, lh = add_local_coords((x0, y0, x1, y1), cumx, cumy)
-        text = self.text_input.get("1.0", "end")
+        text = self._dsl_text()
         marks, _outlines, _w = parse_joint_file(text)
         name = next_joint_name(marks)
         new_text = insert_j_line(text, add_line, lx, ly, lw, lh, name)
         if new_text == text:
             self._set_joint_status("Could not find the END of that ADD block.")
             return
-        self.text_input.configure(autoseparators=False)
-        self.text_input.edit_separator()
-        self.text_input.delete("1.0", "end")
-        self.text_input.insert("1.0", new_text)
-        self.text_input.edit_separator()
-        self.text_input.configure(autoseparators=True)
+        self._set_text_input(new_text)
+        if self.card_mode:
+            self._reload_cards_from_text()
         self.preview_keep_scroll()
         self.drag_status_var.set(
             f"Marked J {self._fmt(lx)} {self._fmt(ly)} "
@@ -1148,6 +1300,9 @@ class DesignerTab(ttk.Frame):
 
     def _on_drag_press(self, event):
         self.canvas.focus_set()
+        if self.card_mode and getattr(self.card_panel, "dirty", False):
+            self._dsl_text()
+            self.preview_keep_scroll()
         px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         if getattr(self, "_mark_mode", False):
             self._on_mark_press(event, px, py)
@@ -1183,6 +1338,8 @@ class DesignerTab(ttk.Frame):
                     + [f"jmark{l}" for l in self._block_child_lines(line)]
                     + ["selection"],
         }
+        if self.card_mode:
+            self.card_panel.select_by_add_line(line)
         if changed:
             self.render_keep_scroll()
         # Tinh lai diem bat dau SAU khi ve lai (scale co the doi)
@@ -1300,12 +1457,18 @@ class DesignerTab(ttk.Frame):
         self.text_input.insert(f"{line}.0", new)
         self.text_input.edit_separator()
         self.text_input.configure(autoseparators=True)
+        if self.card_mode:
+            self._reload_cards_from_text()
+        self._last_dsl = self._norm_dsl(self.text_input.get("1.0", "end"))
 
     def _on_undo(self, _event=None):
         try:
             self.text_input.edit_undo()
         except tk.TclError:
             return "break"
+        if self.card_mode:
+            self._reload_cards_from_text()
+        self._last_dsl = self._norm_dsl(self.text_input.get("1.0", "end"))
         self.preview_keep_scroll()
         return "break"
 
