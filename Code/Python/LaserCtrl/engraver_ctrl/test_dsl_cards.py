@@ -242,6 +242,47 @@ class CardPanelJointTests(unittest.TestCase):
         tab = DesignerTab(nb, Host())
         return win, tab
 
+    def test_card_row_is_compact(self):
+        win, tab = self._make_tab()
+        try:
+            tab.set_view_mode("cards")
+            tab.text_input.delete("1.0", "end")
+            tab.text_input.insert("1.0", PURE_ADD)
+            tab.preview()
+            self.root.update_idletasks()
+            widths, texts = [], []
+
+            def walk(w):
+                for c in w.winfo_children():
+                    cls = c.winfo_class()
+                    if cls in ("TEntry", "Entry"):
+                        widths.append(int(c.cget("width") or 0))
+                    if cls in ("TButton", "Button"):
+                        texts.append(str(c.cget("text")))
+                    walk(c)
+
+            walk(tab.card_panel)
+            self.assertIn(10, widths, widths)
+            self.assertIn(4, widths, widths)
+            self.assertNotIn("Duplicate", texts, texts)
+            self.assertNotIn("Delete", texts, texts)
+
+            labels = []
+
+            def collect(w):
+                for c in w.winfo_children():
+                    if c.winfo_class() == "Label":
+                        labels.append(str(c.cget("text")))
+                    collect(c)
+
+            collect(tab)
+            blob = " ".join(labels)
+            self.assertNotIn("Wheel:", blob)
+            self.assertNotIn("middle-drag", blob)
+            self.assertNotIn("Left-drag", blob)
+        finally:
+            win.destroy()
+
     def test_apply_joints_in_card_mode(self):
         win, tab = self._make_tab()
         try:

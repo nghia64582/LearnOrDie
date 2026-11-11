@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter import font as tkfont
 from tkinter import ttk
 
 from common.ui import make_button, mono_font, ui_font, SIZE_SM
@@ -20,6 +21,68 @@ from engraver_ctrl.dsl_cards import (
 
 LIST_HEIGHT = 270
 INNER_EDITOR_HEIGHT = 7
+
+# Prefer a compact glyph; fall back if the UI font has no glyph (common
+# on Windows Segoe UI for dingbats). Tooltip text is always the full word.
+_DUP_GLYPHS = ("❐", "⧉", "❏", "++")
+_DEL_GLYPHS = ("×", "✕", "x")
+
+
+def _font_has_glyph(font, ch):
+    try:
+        if font.measure(ch) <= 0:
+            return False
+        # A missing glyph is often substituted at the same width as U+FFFD
+        # or a last-resort box; treat equal-to-unknown as missing.
+        if font.measure(ch) == font.measure("\uffff") and ch != "\uffff":
+            return False
+    except tk.TclError:
+        return False
+    return True
+
+
+def _pick_glyph(font, candidates):
+    for ch in candidates:
+        if _font_has_glyph(font, ch):
+            return ch
+    return candidates[-1]
+
+
+def _tooltip(widget, text):
+    """Show English hover text under a compact icon button."""
+    tip = {"win": None}
+
+    def show(_event=None):
+        if tip["win"] is not None:
+            return
+        try:
+            x = widget.winfo_rootx() + 6
+            y = widget.winfo_rooty() + widget.winfo_height() + 2
+        except tk.TclError:
+            return
+        win = tk.Toplevel(widget)
+        win.wm_overrideredirect(True)
+        try:
+            win.wm_attributes("-topmost", True)
+        except tk.TclError:
+            pass
+        win.wm_geometry(f"+{x}+{y}")
+        tk.Label(win, text=text, font=ui_font(SIZE_SM), bd=1, relief="solid",
+                 padx=4, pady=1).pack()
+        tip["win"] = win
+
+    def hide(_event=None):
+        win = tip["win"]
+        tip["win"] = None
+        if win is not None:
+            try:
+                win.destroy()
+            except tk.TclError:
+                pass
+
+    widget.bind("<Enter>", show)
+    widget.bind("<Leave>", hide)
+    widget.bind("<ButtonPress>", hide)
 
 
 class CardPanel(ttk.Frame):
@@ -189,25 +252,34 @@ class CardPanel(ttk.Frame):
         row["frame"] = frame
 
         name_e = ttk.Entry(header, textvariable=name_var, width=10, font=self.font)
-        name_e.pack(side="left", padx=1, fill="x", expand=True)
+        name_e.pack(side="left", padx=1)
         ttk.Label(header, text="dx", font=self.font).pack(side="left")
-        dx_e = ttk.Entry(header, textvariable=dx_var, width=6, font=self.font)
+        dx_e = ttk.Entry(header, textvariable=dx_var, width=4, font=self.font)
         dx_e.pack(side="left", padx=1)
         ttk.Label(header, text="dy", font=self.font).pack(side="left")
-        dy_e = ttk.Entry(header, textvariable=dy_var, width=6, font=self.font)
+        dy_e = ttk.Entry(header, textvariable=dy_var, width=4, font=self.font)
         dy_e.pack(side="left", padx=1)
 
-        btns = ttk.Frame(frame)
-        btns.pack(fill="x", pady=(2, 0))
-        make_button(
-            btns, "Duplicate", command=lambda i=index: self.duplicate_card(i),
-        ).pack(side="left", padx=2)
-        make_button(
-            btns, "Delete", command=lambda i=index: self.delete_card(i),
-        ).pack(side="left", padx=2)
+        try:
+            icon_font = tkfont.Font(font=self.font)
+        except tk.TclError:
+            icon_font = tkfont.nametofont("TkDefaultFont")
+        dup_ch = _pick_glyph(icon_font, _DUP_GLYPHS)
+        del_ch = _pick_glyph(icon_font, _DEL_GLYPHS)
+        dup_btn = make_button(
+            header, dup_ch, command=lambda i=index: self.duplicate_card(i),
+            width=2, padding=(2, 0),
+        )
+        dup_btn.pack(side="left", padx=(4, 1))
+        _tooltip(dup_btn, "Duplicate")
+        del_btn = make_button(
+            header, del_ch, command=lambda i=index: self.delete_card(i),
+            width=2, padding=(2, 0),
+        )
+        del_btn.pack(side="left", padx=1)
+        _tooltip(del_btn, "Delete")
 
-        for w in (header, btns):
-            w.bind("<Button-1>", lambda e, i=index: self._toggle(i))
+        header.bind("<Button-1>", lambda e, i=index: self._toggle(i))
 
         for entry, kind in ((name_e, "name"), (dx_e, "dx"), (dy_e, "dy")):
             entry.bind("<Return>", lambda e, i=index: self._apply_fields(i, preview=True))

@@ -161,18 +161,11 @@ class DesignerTab(ttk.Frame):
                                    variable=self.zoom_var,
                                    command=self._on_zoom_slider)
         self.zoom_scale.grid(row=0, column=2, sticky="we")
-        tk.Label(view_frame, text="Wheel: zoom at cursor, "
-                 "middle-drag: pan", fg="gray")\
-            .grid(row=1, column=0, columnspan=3, sticky="w")
-        tk.Label(view_frame, text="Left-drag shape: move its ADD block, "
-                 "Shift/Alt+click: parent ADD, Esc: cancel, Ctrl+Z: undo",
-                 fg="gray", wraplength=300, justify="left")\
-            .grid(row=2, column=0, columnspan=3, sticky="w")
         self.no_overlap_var = tk.BooleanVar(value=True)
         self.no_cross_x_var = tk.BooleanVar(value=True)
         self.no_cross_y_var = tk.BooleanVar(value=True)
         chk = tk.Frame(view_frame)
-        chk.grid(row=3, column=0, columnspan=3, sticky="w")
+        chk.grid(row=1, column=0, columnspan=3, sticky="w")
         for txt, var in (("No overlap", self.no_overlap_var),
                          ("No cross X axis", self.no_cross_x_var),
                          ("No cross Y axis", self.no_cross_y_var)):
@@ -181,7 +174,7 @@ class DesignerTab(ttk.Frame):
         self.drag_status_var = tk.StringVar(value="")
         tk.Label(view_frame, textvariable=self.drag_status_var,
                  font=mono_font(SIZE_SM), width=40, anchor="w")\
-            .grid(row=4, column=0, columnspan=3, sticky="w")
+            .grid(row=2, column=0, columnspan=3, sticky="w")
 
         # --- Joints (J marks -> JM/JF) ---
         joint_frame = tk.LabelFrame(left_frame, text="Joints", font=self.font)
