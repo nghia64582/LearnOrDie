@@ -359,5 +359,281 @@ class CardPanelJointTests(unittest.TestCase):
             win.destroy()
 
 
+
+class SizeBorderTests(unittest.TestCase):
+    def test_unmarked_dsl_infers_size_without_treating_r_as_border(self):
+        from engraver_ctrl.dsl_cards import parse_cards, assemble_cards
+
+        cards = parse_cards(PURE_ADD)
+        self.assertEqual(len(cards), 2)
+        self.assertEqual(cards[0].inner, "R 0 0 20 20")
+        self.assertFalse(cards[0].border)
+        self.assertEqual((cards[0].w, cards[0].h), (20.0, 20.0))
+        self.assertEqual(cards[1].inner, "R 0 0 20 40")
+        self.assertFalse(cards[1].border)
+        self.assertEqual((cards[1].w, cards[1].h), (20.0, 40.0))
+        # Unmarked files stay byte-for-byte: no meta comment, no stolen R.
+        self.assertEqual(assemble_cards(cards), PURE_ADD)
+        self.assertEqual(assemble_cards(parse_cards(assemble_cards(cards))),
+                         PURE_ADD)
+
+    def test_infer_size_uses_max_extents_from_origin(self):
+        from engraver_ctrl.dsl_cards import infer_size, parse_cards
+
+        # Circle centred at (50,50) r=30 extends to 80,80.
+        self.assertEqual(infer_size("C 50 50 30"), (80.0, 80.0))
+        cards = parse_cards(LOOSE)
+        self.assertEqual(len(cards), 1)
+        self.assertFalse(cards[0].border)
+        # Loose body has C 50 50 30 and R 20 30 40 50 (to 60,80) -> 80,80.
+        self.assertEqual((cards[0].w, cards[0].h), (80.0, 80.0))
+
+    def test_border_round_trip_strips_r_from_inner(self):
+        from engraver_ctrl.dsl_cards import (
+            Card, assemble_cards, parse_cards, extract_card_meta,
+        )
+
+        src = [Card("p1", 0.0, 0.0, "J 0 0 20 3 A", w=20.0, h=20.0, border=True)]
+        raw = assemble_cards(src)
+        self.assertIn("# card w=20 h=20 border=1", raw)
+        self.assertIn("R 0 0 20 20", raw)
+        self.assertTrue(raw.strip().startswith("ADD 0 0 p1"))
+        # Marker and R come first, then the remaining inner.
+        body = raw.split("ADD 0 0 p1", 1)[1]
+        self.assertLess(body.find("# card w=20 h=20 border=1"),
+                        body.find("R 0 0 20 20"))
+        self.assertLess(body.find("R 0 0 20 20"), body.find("J 0 0 20 3 A"))
+
+        cards = parse_cards(raw)
+        self.assertEqual(len(cards), 1)
+        self.assertTrue(cards[0].border)
+        self.assertEqual((cards[0].w, cards[0].h), (20.0, 20.0))
+        self.assertEqual(cards[0].inner, "J 0 0 20 3 A")
+        self.assertEqual(assemble_cards(cards), raw)
+        # extract helper: unmarked R stays in inner
+        inner, w, h, border = extract_card_meta("R 0 0 20 20\nJ 0 0 20 3 A")
+        self.assertFalse(border)
+        self.assertIn("R 0 0 20 20", inner)
+
+    def test_trailing_card_border_comment_on_r_line(self):
+        from engraver_ctrl.dsl_cards import parse_cards, assemble_cards
+
+        text = "ADD 0 0 p1\nR 0 0 30 15  # card-border\nC 5 5 2\nEND\n"
+        cards = parse_cards(text)
+        self.assertEqual(len(cards), 1)
+        self.assertTrue(cards[0].border)
+        self.assertEqual((cards[0].w, cards[0].h), (30.0, 15.0))
+        self.assertEqual(cards[0].inner, "C 5 5 2")
+        raw = assemble_cards(cards)
+        self.assertIn("# card w=30 h=15 border=1", raw)
+        self.assertIn("R 0 0 30 15", raw)
+        self.assertIn("C 5 5 2", raw)
+        self.assertNotIn("# card-border", raw)
+
+    def test_untick_border_removes_r_and_marker(self):
+        from engraver_ctrl.dsl_cards import Card, assemble_cards, parse_cards
+
+        card = Card("p1", 0.0, 0.0, "C 10 10 5", w=20.0, h=20.0, border=True)
+        raw = assemble_cards([card])
+        self.assertIn("R 0 0 20 20", raw)
+        card.border = False
+        raw = assemble_cards([card])
+        self.assertNotIn("R 0 0 20 20", raw)
+        # C 10 10 5 extends to 15,15; w/h 20,20 is custom, so the size
+        # comment is kept (border=0) and the generated R is gone.
+        self.assertIn("# card w=20 h=20 border=0", raw)
+        self.assertIn("C 10 10 5", raw)
+        again = parse_cards(raw)
+        self.assertFalse(again[0].border)
+        self.assertEqual((again[0].w, again[0].h), (20.0, 20.0))
+        self.assertEqual(again[0].inner, "C 10 10 5")
+
+    def test_custom_size_without_border_persists_via_comment_only(self):
+        from engraver_ctrl.dsl_cards import Card, assemble_cards, parse_cards
+
+        # Inferred from R 0 0 20 20 is 20x20; custom 25x30 is persisted.
+        card = Card("p1", 0.0, 0.0, "R 0 0 20 20", w=25.0, h=30.0, border=False)
+        raw = assemble_cards([card])
+        self.assertIn("# card w=25 h=30 border=0", raw)
+        self.assertEqual(raw.count("R 0 0"), 1)
+        self.assertIn("R 0 0 20 20", raw)
+        cards = parse_cards(raw)
+        self.assertFalse(cards[0].border)
+        self.assertEqual((cards[0].w, cards[0].h), (25.0, 30.0))
+        self.assertEqual(cards[0].inner, "R 0 0 20 20")
+
+    def test_changing_wh_updates_assembled_border_rect(self):
+        from engraver_ctrl.dsl_cards import Card, assemble_cards
+
+        card = Card("p1", 0.0, 0.0, "", w=10.0, h=12.0, border=True)
+        self.assertIn("R 0 0 10 12", assemble_cards([card]))
+        card.w, card.h = 40.0, 15.5
+        raw = assemble_cards([card])
+        self.assertIn("R 0 0 40 15.5", raw)
+        self.assertIn("# card w=40 h=15.5 border=1", raw)
+        self.assertNotIn("R 0 0 10 12", raw)
+
+    def test_placement_uses_wh_when_set(self):
+        from engraver_ctrl.dsl_cards import Card, place_new_card, add_card
+
+        # Empty inner, size 40x10 at origin: envelope xmax=40, ymax=10.
+        cards = [Card("wide", 0.0, 0.0, "", w=40.0, h=10.0, border=True)]
+        self.assertEqual(place_new_card(cards), (0.0, 10.0))
+        _, added = add_card(cards)
+        self.assertEqual((added.dx, added.dy), (0.0, 10.0))
+
+        cards = [Card("tall", 0.0, 0.0, "", w=10.0, h=40.0, border=True)]
+        self.assertEqual(place_new_card(cards), (10.0, 0.0))
+
+    def test_duplicate_copies_size_and_border(self):
+        from engraver_ctrl.dsl_cards import Card, duplicate_card, assemble_cards
+
+        src = [Card("p1", 0.0, 0.0, "C 2 2 1", w=40.0, h=10.0, border=True)]
+        cards, dup = duplicate_card(src, 0)
+        self.assertEqual(dup.name, "p1_2")
+        self.assertEqual(dup.inner, "C 2 2 1")
+        self.assertTrue(dup.border)
+        self.assertEqual((dup.w, dup.h), (40.0, 10.0))
+        # 40x10: duplicate centre at (0,10) is closer than (40,0)
+        self.assertEqual((dup.dx, dup.dy), (0.0, 10.0))
+        raw = assemble_cards(cards)
+        self.assertEqual(raw.count("# card w=40 h=10 border=1"), 2)
+        self.assertEqual(raw.count("R 0 0 40 10"), 2)
+
+    def test_nested_add_r_is_not_a_border(self):
+        from engraver_ctrl.dsl_cards import parse_cards
+
+        cards = parse_cards(NESTED)
+        self.assertEqual(len(cards), 1)
+        self.assertFalse(cards[0].border)
+        self.assertIn("ADD 5 5 inner", cards[0].inner)
+        self.assertIn("R 0 0 30 30", cards[0].inner)
+        # Outer extents include the 30x30 rect.
+        self.assertEqual((cards[0].w, cards[0].h), (30.0, 30.0))
+
+    def test_line_ranges_include_border_prefix(self):
+        from engraver_ctrl.dsl_cards import (
+            Card, assemble_cards, assemble_line_ranges, card_index_for_line,
+        )
+
+        cards = [Card("p1", 0.0, 0.0, "C 1 1 1", w=10.0, h=10.0, border=True)]
+        raw = assemble_cards(cards)
+        # ADD, # card, R, C, END  => 5 lines, then trailing newline
+        self.assertEqual(assemble_line_ranges(cards), [(1, 5)])
+        self.assertEqual(card_index_for_line(cards, 3), 0)
+        self.assertEqual(len(raw.strip().splitlines()), 5)
+
+
+class CardPanelSizeBorderTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import tkinter as tk
+        from common.ui import enable_dpi_awareness, init_fonts
+
+        enable_dpi_awareness()
+        cls.root = tk.Tk()
+        cls.root.withdraw()
+        init_fonts(cls.root, size=10)
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            cls.root.destroy()
+        except Exception:
+            pass
+
+    def _make_tab(self):
+        import tkinter as tk
+        from tkinter import ttk
+        from engraver_ctrl.tab_designer import DesignerTab
+
+        class Host:
+            font = None
+            ser = None
+
+        win = tk.Toplevel(self.root)
+        win.withdraw()
+        nb = ttk.Notebook(win)
+        tab = DesignerTab(nb, Host())
+        return win, tab
+
+    def test_row_has_w_h_border_controls(self):
+        win, tab = self._make_tab()
+        try:
+            tab.set_view_mode("cards")
+            tab.text_input.delete("1.0", "end")
+            tab.text_input.insert("1.0", PURE_ADD)
+            tab.preview()
+            self.root.update_idletasks()
+            labels, check_texts, widths = [], [], []
+
+            def walk(w):
+                for c in w.winfo_children():
+                    cls = c.winfo_class()
+                    if cls in ("TLabel", "Label"):
+                        labels.append(str(c.cget("text")))
+                    if cls in ("TCheckbutton", "Checkbutton"):
+                        check_texts.append(str(c.cget("text")))
+                    if cls in ("TEntry", "Entry"):
+                        widths.append(int(c.cget("width") or 0))
+                    walk(c)
+
+            walk(tab.card_panel)
+            self.assertIn("w", labels, labels)
+            self.assertIn("h", labels, labels)
+            self.assertIn("dx", labels, labels)
+            self.assertIn("border", check_texts, check_texts)
+            self.assertIn(10, widths)
+            self.assertGreaterEqual(widths.count(4), 4)  # dx dy w h
+            cards = tab.card_panel.cards()
+            self.assertEqual((cards[0].w, cards[0].h), (20.0, 20.0))
+            self.assertFalse(cards[0].border)
+        finally:
+            win.destroy()
+
+    def test_tick_border_adds_rect_and_untick_removes_it(self):
+        win, tab = self._make_tab()
+        try:
+            tab.set_view_mode("cards")
+            tab.text_input.delete("1.0", "end")
+            tab.text_input.insert("1.0", "ADD 0 0 p1\nC 10 10 5\nEND\n")
+            tab.preview()
+            self.root.update_idletasks()
+            cards = tab.card_panel.cards()
+            self.assertEqual(len(cards), 1)
+            self.assertFalse(cards[0].border)
+            self.assertEqual((cards[0].w, cards[0].h), (15.0, 15.0))
+            self.assertEqual(cards[0].inner, "C 10 10 5")
+
+            row = tab.card_panel._rows[0]
+            row["border_var"].set(True)
+            tab.card_panel._apply_fields(0, preview=True)
+            self.root.update_idletasks()
+            cards = tab.card_panel.cards()
+            self.assertTrue(cards[0].border)
+            raw = tab.card_panel.assemble()
+            self.assertIn("# card w=15 h=15 border=1", raw)
+            self.assertIn("R 0 0 15 15", raw)
+            self.assertIn("C 10 10 5", raw)
+            # Inner editor still shows only the original geometry.
+            self.assertEqual(cards[0].inner, "C 10 10 5")
+
+            row["w_var"].set("25")
+            row["h_var"].set("18")
+            tab.card_panel._apply_fields(0, preview=True)
+            raw = tab.card_panel.assemble()
+            self.assertIn("R 0 0 25 18", raw)
+            self.assertIn("# card w=25 h=18 border=1", raw)
+
+            row["border_var"].set(False)
+            tab.card_panel._apply_fields(0, preview=True)
+            raw = tab.card_panel.assemble()
+            self.assertNotIn("R 0 0 25 18", raw)
+            self.assertIn("C 10 10 5", raw)
+            self.assertFalse(tab.card_panel.cards()[0].border)
+        finally:
+            win.destroy()
+
+
 if __name__ == "__main__":
     unittest.main()
