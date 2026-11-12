@@ -4,7 +4,18 @@ import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
 from engraver_ctrl.collision import Collider
-from common.ui import ui_font, mono_font, canvas_font, make_button, SIZE_SM
+from common.ui import (
+    ui_font, mono_font, canvas_font, make_button, SIZE_SM,
+    JM_HIGHLIGHT, JF_HIGHLIGHT,
+)
+from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
+from engraver_ctrl.dsl_card_panel import CardPanel
+from engraver_ctrl.dsl_joint import (
+    THICKNESS, DEFAULT_TEETH_LENGTH,
+    apply_joints, parse_joint_file, collect_preview_warnings,
+    world_mark_corners, world_mark_center, pair_color, group_marks,
+    insert_j_line, next_joint_name, add_local_coords,
+)
 
 
 class DesignerTab(ttk.Frame):
@@ -70,6 +81,10 @@ class DesignerTab(ttk.Frame):
         self.add_blocks = {}      # dong ADD -> {dx, dy, label, cum}
         self.selected_add = None  # dong (1-based) cua ADD dang chon
         self._drag = None
+        self.joint_marks = []
+        self.joint_warnings = []
+        self._mark_mode = False
+        self._mark_drag = None
         self.build_gui()
 
     def build_gui(self):
@@ -85,8 +100,24 @@ class DesignerTab(ttk.Frame):
         top_btn_frame.pack(fill="x")
         make_button(top_btn_frame, "Help", command=self.show_help).pack(side="left")
 
-        # --- Text input (fixed row count; scrollbar instead of a tall field) ---
+        # --- Shapes: card list (default) or raw DSL ---
         tk.Label(left_frame, text="Shapes", font=self.font).pack(anchor="w")
+        mode_row = ttk.Frame(left_frame)
+        mode_row.pack(fill="x", pady=(0, 2))
+        self.view_mode_var = tk.StringVar(value="cards")
+        ttk.Radiobutton(
+            mode_row, text="Cards", value="cards",
+            variable=self.view_mode_var, command=self._on_view_mode,
+        ).pack(side="left")
+        ttk.Radiobutton(
+            mode_row, text="Raw DSL", value="raw",
+            variable=self.view_mode_var, command=self._on_view_mode,
+        ).pack(side="left", padx=(4, 8))
+        self.add_card_btn = make_button(
+            mode_row, "Add card", command=self._on_add_card,
+        )
+        self.add_card_btn.pack(side="left")
+
         editor = ttk.Frame(left_frame)
         # fill=x only — do not expand vertically or geometry will undo height=14
         editor.pack(fill="x", pady=(0, 2))
@@ -101,11 +132,22 @@ class DesignerTab(ttk.Frame):
         self.text_input.grid(row=0, column=0, sticky="nsew")
         self.text_scroll.grid(row=0, column=1, sticky="ns")
         editor.columnconfigure(0, weight=1)
+        editor.rowconfigure(0, weight=1)
+
+        self.card_panel = CardPanel(
+            editor, font=self.font,
+            on_commit=self._on_cards_commit,
+            on_preview=self.preview_keep_scroll,
+            on_ctrl_return=lambda: self.preview(),
+        )
+        self._last_dsl = None
 
         sample = ("C 50 50 30\nR 20 30 40 50\nRC 120 100 50 30\n"
                    "LV 10 10 100\nLH 50 50 80\nL 10 10 100 100\n")
         self.text_input.insert("1.0", sample)
         self.text_input.bind("<Control-Return>", lambda e: self.preview())
+        self._load_cards_from_current_text(wrap=True)
+        self._show_card_widgets()
 
         # --- View / Zoom ---
         view_frame = tk.LabelFrame(left_frame, text="View", font=self.font)
@@ -119,18 +161,11 @@ class DesignerTab(ttk.Frame):
                                    variable=self.zoom_var,
                                    command=self._on_zoom_slider)
         self.zoom_scale.grid(row=0, column=2, sticky="we")
-        tk.Label(view_frame, text="Wheel: zoom at cursor, "
-                 "middle-drag: pan", fg="gray")\
-            .grid(row=1, column=0, columnspan=3, sticky="w")
-        tk.Label(view_frame, text="Left-drag shape: move its ADD block, "
-                 "Shift/Alt+click: parent ADD, Esc: cancel, Ctrl+Z: undo",
-                 fg="gray", wraplength=300, justify="left")\
-            .grid(row=2, column=0, columnspan=3, sticky="w")
         self.no_overlap_var = tk.BooleanVar(value=True)
         self.no_cross_x_var = tk.BooleanVar(value=True)
         self.no_cross_y_var = tk.BooleanVar(value=True)
         chk = tk.Frame(view_frame)
-        chk.grid(row=3, column=0, columnspan=3, sticky="w")
+        chk.grid(row=1, column=0, columnspan=3, sticky="w")
         for txt, var in (("No overlap", self.no_overlap_var),
                          ("No cross X axis", self.no_cross_x_var),
                          ("No cross Y axis", self.no_cross_y_var)):
@@ -139,7 +174,30 @@ class DesignerTab(ttk.Frame):
         self.drag_status_var = tk.StringVar(value="")
         tk.Label(view_frame, textvariable=self.drag_status_var,
                  font=mono_font(SIZE_SM), width=40, anchor="w")\
-            .grid(row=4, column=0, columnspan=3, sticky="w")
+            .grid(row=2, column=0, columnspan=3, sticky="w")
+
+        # --- Joints (J marks -> JM/JF) ---
+        joint_frame = tk.LabelFrame(left_frame, text="Joints", font=self.font)
+        joint_frame.pack(fill="x", pady=5)
+        tk.Label(
+            joint_frame,
+            text=f"Thickness {THICKNESS:g} mm, tooth {DEFAULT_TEETH_LENGTH:g} mm",
+            fg="gray",
+        ).pack(anchor="w")
+        jbtn = tk.Frame(joint_frame)
+        jbtn.pack(fill="x", pady=(2, 0))
+        make_button(jbtn, "Apply joints", command=self.apply_joints)\
+            .pack(side="left", padx=2)
+        self.mark_mode_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(
+            jbtn, text="Mark joint", variable=self.mark_mode_var,
+            command=self._toggle_mark_mode,
+        ).pack(side="left", padx=2)
+        self.joint_status_var = tk.StringVar(value="")
+        tk.Label(
+            joint_frame, textvariable=self.joint_status_var,
+            font=self.font, wraplength=300, justify="left", fg="#8a4b08",
+        ).pack(anchor="w", pady=(2, 0))
 
         # --- GCODE settings ---
         gcode_frame = tk.LabelFrame(left_frame, text="GCODE", font=self.font)
@@ -207,7 +265,128 @@ class DesignerTab(ttk.Frame):
         self.canvas.bind("<Control-z>", self._on_undo)
         self.canvas.bind("<Control-Z>", self._on_undo)
 
+
         self.preview()
+
+    def get_dsl(self):
+        """Current document DSL (flushes card edits when in card mode)."""
+        return self._dsl_text()
+
+    @property
+    def card_mode(self):
+        return getattr(self, "view_mode_var", None) is not None and \
+            self.view_mode_var.get() == "cards"
+
+    def set_view_mode(self, mode):
+        """Switch the Shapes panel between 'cards' and 'raw'."""
+        self.view_mode_var.set("cards" if mode == "cards" else "raw")
+        self._on_view_mode()
+
+    def _on_add_card(self):
+        if self.card_mode:
+            self.card_panel.add_card()
+
+    def _on_view_mode(self):
+        if self.view_mode_var.get() == "cards":
+            self._enter_card_mode()
+        else:
+            self._enter_raw_mode()
+
+    def _norm_dsl(self, text):
+        return (text or "").replace("\r\n", "\n").replace("\r", "\n").strip("\n") + "\n"
+
+    def _set_text_input(self, text, undo=True):
+        if text and not text.endswith("\n"):
+            text = text + "\n"
+        current = self.text_input.get("1.0", "end")
+        if self._norm_dsl(current) == self._norm_dsl(text):
+            return
+        if undo:
+            self.text_input.configure(autoseparators=False)
+            self.text_input.edit_separator()
+        self.text_input.delete("1.0", "end")
+        self.text_input.insert("1.0", text)
+        if undo:
+            self.text_input.edit_separator()
+            self.text_input.configure(autoseparators=True)
+        self._last_dsl = self._norm_dsl(text)
+
+    def _commit_cards_to_text(self):
+        assembled = self.card_panel.assemble()
+        self.card_panel.dirty = False
+        self._set_text_input(assembled)
+        return self.text_input.get("1.0", "end")
+
+    def _load_cards_from_current_text(self, wrap=True):
+        text = self.text_input.get("1.0", "end")
+        self.card_panel.load_text(text)
+        if wrap:
+            assembled = self.card_panel.assemble()
+            if assembled and self._norm_dsl(assembled) != self._norm_dsl(text):
+                self._set_text_input(assembled)
+        self.card_panel.dirty = False
+        self._last_dsl = self._norm_dsl(self.text_input.get("1.0", "end"))
+
+    def _reload_cards_from_text(self, keep_expand=True):
+        if not hasattr(self, "card_panel"):
+            return
+        text = self.text_input.get("1.0", "end")
+        self.card_panel.load_text(text, keep_expand=keep_expand)
+        self.card_panel.dirty = False
+        self._last_dsl = self._norm_dsl(text)
+
+    def _on_cards_commit(self):
+        assembled = self.card_panel.assemble()
+        self.card_panel.dirty = False
+        self._set_text_input(assembled)
+
+    def _dsl_text(self):
+        if not hasattr(self, "card_panel") or not self.card_mode:
+            return self.text_input.get("1.0", "end")
+        if self.card_panel.dirty:
+            return self._commit_cards_to_text()
+        current = self.text_input.get("1.0", "end")
+        if self._last_dsl is None or self._norm_dsl(current) != self._norm_dsl(self._last_dsl):
+            self._reload_cards_from_text()
+        return self.text_input.get("1.0", "end")
+
+    def _show_card_widgets(self):
+        self.text_input.grid_remove()
+        self.text_scroll.grid_remove()
+        self.card_panel.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        try:
+            self.add_card_btn.configure(state="normal")
+        except tk.TclError:
+            pass
+
+    def _show_raw_widgets(self):
+        self.card_panel.grid_remove()
+        self.text_input.grid(row=0, column=0, sticky="nsew")
+        self.text_scroll.grid(row=0, column=1, sticky="ns")
+        try:
+            self.add_card_btn.configure(state="disabled")
+        except tk.TclError:
+            pass
+
+    def _enter_card_mode(self):
+        if getattr(self.card_panel, "dirty", False):
+            self._commit_cards_to_text()
+        else:
+            self._load_cards_from_current_text(wrap=True)
+        self._show_card_widgets()
+        if getattr(self, "canvas", None):
+            self.preview_keep_scroll()
+
+    def _enter_raw_mode(self):
+        if getattr(self.card_panel, "dirty", False):
+            self._commit_cards_to_text()
+        else:
+            # Keep text_input as the assembled document so a cards->raw
+            # round trip does not drop the loose-command wrap.
+            assembled = self.card_panel.assemble()
+            if assembled:
+                self._set_text_input(assembled)
+        self._show_raw_widgets()
 
     def show_help(self):
         text = """
@@ -272,6 +451,22 @@ class DesignerTab(ttk.Frame):
             out (+): rang nho ve phia x+width / y+height.
             in  (-): rang nho ve phia x / y (goc cua manh).
             Vd: JF 10 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
+
+            J x y width height NAME [M|F]
+            Joint mark (not cut). Place two J with the same NAME inside
+            ADD blocks to pair an edge of one piece with a region of
+            another. Apply joints expands them to JM/JF (the original
+            J lines are commented). Optional M or F forces male/female.
+            ROTATE around a J is not supported yet.
+
+            Cards / Raw DSL
+            The Shapes panel lists each top-level ADD as a card, or shows
+            the full raw DSL. Commands outside any ADD are wrapped into a
+            card (named loose, loose_2, ...) when converting to cards.
+            Nested ADD stays inside the parent card as text. Add card
+            places a new piece at (xmax, 0) or (0, ymax), whichever
+            origin is closer to O(0,0). Duplicate uses the same rule
+            with the copy's bounding-box centre.
 
             FIRST
             Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
@@ -378,6 +573,11 @@ class DesignerTab(ttk.Frame):
                 pts.append((x2, y2))
         for x, y, _l in self._add_labels:
             pts.append((x, y))
+        for mark in getattr(self, "joint_marks", []):
+            if mark.in_rotate or mark.add_line is None:
+                continue
+            for x, y in world_mark_corners(mark):
+                pts.append((x, y))
         (self.view_left, self.view_bottom,
          self.view_right, self.view_top) = self.compute_extent(pts)
         self.view_width = self.view_right - self.view_left
@@ -395,12 +595,14 @@ class DesignerTab(ttk.Frame):
         self.canvas.configure(scrollregion=(0, 0, cw, ch))
 
         self.draw_grid()
+        self._draw_joint_highlights()
         for i, (x, y, label) in enumerate(self._add_labels):
             line = (self._add_label_lines[i]
                     if i < len(self._add_label_lines) else None)
             self._draw_add_label(x, y, label, tag=f"addlbl{line}")
         for i, (cmd, segments) in enumerate(self.shapes):
             self.draw_shape(cmd, segments, tag=f"shape{i}")
+        self._draw_joint_marks()
         self._draw_speed_tab_marks()
         self._draw_selection()
         # Dang keo ma bi ve lai (resize/zoom) -> dat lai block vao vi
@@ -530,7 +732,7 @@ class DesignerTab(ttk.Frame):
             # xuat hien trong file)
             self._priority_keys = {}
 
-            text = self.text_input.get("1.0", "end")
+            text = self._dsl_text()
 
             # Stack chung cho ADD va ROTATE: moi lan ADD/ROTATE day
             # them 1 lop (dx, dy, angle, label), moi lan END chi bo
@@ -661,6 +863,8 @@ class DesignerTab(ttk.Frame):
                 self.shape_adds.append(tuple(
                     d[4] for d in delta_stack if d[4] is not None))
 
+            self._refresh_joint_marks(text)
+
             if self.selected_add not in self.add_blocks:
                 self.selected_add = None
             # Tinh lai khung nhin theo hinh, ve lai (giu muc zoom)
@@ -766,6 +970,45 @@ class DesignerTab(ttk.Frame):
                                      font=self.ADD_LABEL_FONT,
                                      anchor="sw", fill="red", tags=tag)
 
+    def _draw_joint_highlights(self):
+        # Preview-only fills under G-code strokes. Same shape{i} tag so
+        # drag moves the fill with the block. Does not affect generate_gcode.
+        colors = {"JM": JM_HIGHLIGHT, "JF": JF_HIGHLIGHT}
+        for i, (cmd, segments) in enumerate(self.shapes):
+            fill = colors.get(cmd)
+            if not fill:
+                continue
+            tag = f"shape{i}"
+            for poly in polygons_from_joint_segments(cmd, segments):
+                coords = []
+                for x, y in poly:
+                    coords.extend(self.to_canvas(x, y))
+                if len(coords) < 6:
+                    continue
+                self.canvas.create_polygon(
+                    *coords, fill=fill, outline="",
+                    tags=(tag, "jmjf_hl"),
+                )
+        self._draw_joint_legend()
+
+    def _draw_joint_legend(self):
+        if not any(cmd in ("JM", "JF") for cmd, _segs in self.shapes):
+            return
+        # Viewport-fixed (uses visible canvas origin), not world coordinates.
+        x = self.canvas.canvasx(8)
+        y = self.canvas.canvasy(8)
+        items = (("JM", JM_HIGHLIGHT), ("JF", JF_HIGHLIGHT))
+        for i, (label, color) in enumerate(items):
+            bx = x + i * 54
+            self.canvas.create_rectangle(
+                bx, y, bx + 12, y + 12, fill=color, outline="#888888",
+                tags="jmjf_legend",
+            )
+            self.canvas.create_text(
+                bx + 16, y + 6, text=label, anchor="w",
+                font=canvas_font(), fill="#333333", tags="jmjf_legend",
+            )
+
     def draw_shape(self, cmd, segments, tag=None):
         colors = {"C": "black", "A": "black", "R": "green",
                   "RC": "green", "P": "purple", "M": "orange",
@@ -852,9 +1095,211 @@ class DesignerTab(ttk.Frame):
                     return int(t[5:])
         return None
 
+    def _refresh_joint_marks(self, text=None):
+        if text is None:
+            text = self._dsl_text()
+        marks, outlines, warnings = parse_joint_file(text)
+        self.joint_marks = marks
+        self.joint_warnings = collect_preview_warnings(
+            marks, outlines, warnings,
+        )
+        self._set_joint_status()
+
+    def _set_joint_status(self, extra=""):
+        parts = []
+        if extra:
+            parts.append(extra)
+        for w in getattr(self, "joint_warnings", []):
+            tag = "Error" if w.level == "error" else "Warning"
+            parts.append(f"{tag}: {w.message}")
+        n = len([m for m in getattr(self, "joint_marks", [])
+                 if not m.in_rotate and m.add_line is not None])
+        if not parts and n:
+            parts.append(f"{n} joint mark(s). Pair names must match.")
+        self.joint_status_var.set("\n".join(parts))
+
+    def _draw_joint_marks(self):
+        marks = [m for m in getattr(self, "joint_marks", [])
+                 if not m.in_rotate and m.add_line is not None]
+        if not marks:
+            return
+        groups = group_marks(marks)
+        # Stable colour by first appearance order
+        name_order = []
+        for m in marks:
+            if m.name not in name_order:
+                name_order.append(m.name)
+        for m in marks:
+            color = pair_color(m.name, name_order.index(m.name))
+            corners = world_mark_corners(m)
+            # corners are BL, BR, TR, TL in world; canvas y is flipped
+            pts = []
+            for x, y in corners:
+                pts.extend(self.to_canvas(x, y))
+            tags = ("jmark", f"jmark{m.add_line}")
+            self.canvas.create_polygon(
+                *pts, fill="", outline=color, width=2, dash=(6, 3),
+                tags=tags,
+            )
+            cx, cy = world_mark_center(m)
+            px, py = self.to_canvas(cx, cy)
+            self.canvas.create_text(
+                px, py, text=m.name, fill=color,
+                font=canvas_font(bold=True), tags=tags,
+            )
+        # Connector between the two marks of a complete pair
+        for name, items in groups.items():
+            if len(items) != 2:
+                continue
+            color = pair_color(name, name_order.index(name))
+            c1 = world_mark_center(items[0])
+            c2 = world_mark_center(items[1])
+            x1, y1 = self.to_canvas(*c1)
+            x2, y2 = self.to_canvas(*c2)
+            tags = ("jmark", f"jmark{items[0].add_line}",
+                    f"jmark{items[1].add_line}")
+            self.canvas.create_line(
+                x1, y1, x2, y2, fill=color, width=2, dash=(4, 3),
+                tags=tags,
+            )
+            mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+            r = 6
+            self.canvas.create_oval(
+                mx - r, my - r, mx + r, my + r,
+                fill="white", outline=color, width=2, tags=tags,
+            )
+            self.canvas.create_text(
+                mx, my, text="J", fill=color,
+                font=canvas_font(bold=True), tags=tags,
+            )
+
+    def apply_joints(self):
+        text = self._dsl_text()
+        result = apply_joints(text)
+        self.joint_warnings = result.warnings
+        extra = []
+        if result.applied:
+            extra.append(
+                f"Applied {result.applied} joint pair(s). "
+                "Original J lines were commented."
+            )
+        elif not result.warnings:
+            extra.append("No joint pairs to apply.")
+        if result.skipped and result.applied == 0:
+            extra.append(f"{result.skipped} pair(s) skipped.")
+        if result.text != text:
+            self._set_text_input(result.text)
+            if self.card_mode:
+                self._reload_cards_from_text()
+        self.preview_keep_scroll()
+        # preview refreshes warnings; keep the apply summary on top
+        self._set_joint_status("\n".join(extra))
+        errors = [w for w in result.warnings if w.level == "error"]
+        if errors and not result.applied:
+            messagebox.showerror(
+                "Apply joints",
+                "\n".join(w.message for w in errors[:6]),
+            )
+
+    def _toggle_mark_mode(self):
+        self._mark_mode = bool(self.mark_mode_var.get())
+        self._mark_drag = None
+        if self._mark_mode:
+            self.canvas.configure(cursor="crosshair")
+            self.drag_status_var.set("Mark joint: drag a rectangle on a piece")
+        else:
+            self.canvas.configure(cursor="")
+            if self.selected_add is None:
+                self.drag_status_var.set("")
+
+    def _on_mark_press(self, event, px, py):
+        wx, wy = self.to_world(px, py)
+        self._mark_drag = {
+            "x0": wx, "y0": wy, "x1": wx, "y1": wy, "px": px, "py": py,
+        }
+        self.canvas.delete("jmark_rubber")
+
+    def _on_mark_motion(self, event):
+        d = self._mark_drag
+        if d is None:
+            return
+        px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        wx, wy = self.to_world(px, py)
+        d["x1"], d["y1"] = wx, wy
+        self.canvas.delete("jmark_rubber")
+        x0, y0 = self.to_canvas(d["x0"], d["y0"])
+        x1, y1 = self.to_canvas(wx, wy)
+        self.canvas.create_rectangle(
+            x0, y0, x1, y1, outline="#0f766e", dash=(4, 3), width=2,
+            tags="jmark_rubber",
+        )
+
+    def _on_mark_release(self, event):
+        d = self._mark_drag
+        self._mark_drag = None
+        self.canvas.delete("jmark_rubber")
+        if d is None:
+            return
+        px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        wx, wy = self.to_world(px, py)
+        x0, y0, x1, y1 = d["x0"], d["y0"], wx, wy
+        if abs(x1 - x0) < 0.2 or abs(y1 - y0) < 0.2:
+            self.drag_status_var.set("Mark joint: drag was too small")
+            return
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        add_line = self._add_at_world(cx, cy)
+        if add_line is None or add_line not in self.add_blocks:
+            self.drag_status_var.set("Mark joint: drag on a piece (ADD block)")
+            self._set_joint_status("Mark joint: drag the rectangle on a piece.")
+            return
+        blk = self.add_blocks[add_line]
+        cumx, cumy = blk["cum"]
+        lx, ly, lw, lh = add_local_coords((x0, y0, x1, y1), cumx, cumy)
+        text = self._dsl_text()
+        marks, _outlines, _w = parse_joint_file(text)
+        name = next_joint_name(marks)
+        new_text = insert_j_line(text, add_line, lx, ly, lw, lh, name)
+        if new_text == text:
+            self._set_joint_status("Could not find the END of that ADD block.")
+            return
+        self._set_text_input(new_text)
+        if self.card_mode:
+            self._reload_cards_from_text()
+        self.preview_keep_scroll()
+        self.drag_status_var.set(
+            f"Marked J {self._fmt(lx)} {self._fmt(ly)} "
+            f"{self._fmt(lw)} {self._fmt(lh)} {name}"
+        )
+
+    def _add_at_world(self, wx, wy):
+        best, best_depth = None, -1
+        for i, (_cmd, segs) in enumerate(self.shapes):
+            if not segs:
+                continue
+            xs, ys = [], []
+            for x1, y1, x2, y2 in segs:
+                xs.extend((x1, x2))
+                ys.extend((y1, y2))
+            if not xs:
+                continue
+            if min(xs) - 0.5 <= wx <= max(xs) + 0.5 and \
+               min(ys) - 0.5 <= wy <= max(ys) + 0.5:
+                adds = self.shape_adds[i] if i < len(self.shape_adds) else ()
+                if adds and len(adds) > best_depth:
+                    best, best_depth = adds[-1], len(adds)
+        if best is None and self.selected_add in getattr(self, "add_blocks", {}):
+            return self.selected_add
+        return best
+
     def _on_drag_press(self, event):
         self.canvas.focus_set()
+        if self.card_mode and getattr(self.card_panel, "dirty", False):
+            self._dsl_text()
+            self.preview_keep_scroll()
         px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        if getattr(self, "_mark_mode", False):
+            self._on_mark_press(event, px, py)
+            return
         idx = self._shape_at(px, py)
         self._drag = None
         if idx is None or not self.shape_adds[idx]:
@@ -883,8 +1328,11 @@ class DesignerTab(ttk.Frame):
             "dx0": blk["dx"], "dy0": blk["dy"], "moved": False,
             "tags": [f"shape{i}" for i in self._block_shape_indices(line)]
                     + [f"addlbl{l}" for l in self._block_child_lines(line)]
+                    + [f"jmark{l}" for l in self._block_child_lines(line)]
                     + ["selection"],
         }
+        if self.card_mode:
+            self.card_panel.select_by_add_line(line)
         if changed:
             self.render_keep_scroll()
         # Tinh lai diem bat dau SAU khi ve lai (scale co the doi)
@@ -904,6 +1352,9 @@ class DesignerTab(ttk.Frame):
         self._set_status(line, blk["dx"], blk["dy"])
 
     def _on_drag_motion(self, event):
+        if getattr(self, "_mark_drag", None):
+            self._on_mark_motion(event)
+            return
         d = self._drag
         if d is None:
             return
@@ -939,6 +1390,9 @@ class DesignerTab(ttk.Frame):
                          "BLOCKED" if blocked else "drag")
 
     def _on_drag_release(self, event):
+        if getattr(self, "_mark_drag", None):
+            self._on_mark_release(event)
+            return
         d = self._drag
         self._drag = None
         if d is None or not d["moved"] or "new" not in d:
@@ -968,6 +1422,11 @@ class DesignerTab(ttk.Frame):
         return x, y
 
     def _on_drag_cancel(self, _event=None):
+        if self._mark_drag is not None:
+            self._mark_drag = None
+            self.canvas.delete("jmark_rubber")
+            self.drag_status_var.set("Mark joint cancelled")
+            return
         if self._drag is None:
             return
         self._drag = None
@@ -991,12 +1450,18 @@ class DesignerTab(ttk.Frame):
         self.text_input.insert(f"{line}.0", new)
         self.text_input.edit_separator()
         self.text_input.configure(autoseparators=True)
+        if self.card_mode:
+            self._reload_cards_from_text()
+        self._last_dsl = self._norm_dsl(self.text_input.get("1.0", "end"))
 
     def _on_undo(self, _event=None):
         try:
             self.text_input.edit_undo()
         except tk.TclError:
             return "break"
+        if self.card_mode:
+            self._reload_cards_from_text()
+        self._last_dsl = self._norm_dsl(self.text_input.get("1.0", "end"))
         self.preview_keep_scroll()
         return "break"
 

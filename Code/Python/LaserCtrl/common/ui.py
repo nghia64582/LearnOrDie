@@ -26,10 +26,15 @@ SIZE_LG = 14   # rare headings
 # Buttons: use ttk.Button (native neutral). No custom bg/fg on controls.
 USE_TTK_BUTTONS = True
 
-# Notebook tab chip padding (horizontal, vertical).
-NOTEBOOK_TAB_PADDING = (16, 7)
-NOTEBOOK_TAB_PADDING_SELECTED = (16, 8)
+# Notebook tab chip padding (horizontal, vertical). Compact: a little
+# space beyond the label, slightly taller when selected.
+NOTEBOOK_TAB_PADDING = (4, 3)
+NOTEBOOK_TAB_PADDING_SELECTED = (4, 4)
 NOTEBOOK_PADDING = 4
+
+# Preview-only fills for male/female mortise-tenon joints (under G-code strokes).
+JM_HIGHLIGHT = "#bbd9f7"  # soft blue (male / tenon)
+JF_HIGHLIGHT = "#f6cbb8"  # soft peach (female / mortise)
 
 # ---------------------------------------------------------------------------
 # Resolved at runtime by init_fonts()
@@ -225,7 +230,7 @@ def init_fonts(root, size=None):
 
 
 def style_notebooks(root, size=None):
-    """Pad Notebook tabs so main/sub labels are easier to separate."""
+    """Style Notebook tabs: compact padding, slightly taller when selected."""
     size = SIZE_SM if size is None else size
     try:
         from tkinter import ttk
