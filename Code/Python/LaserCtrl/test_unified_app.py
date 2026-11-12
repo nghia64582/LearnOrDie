@@ -271,8 +271,15 @@ class TkSmokeTests(unittest.TestCase):
         style = ttk.Style(self.root)
         pad = style.lookup("TNotebook.Tab", "padding")
         self.assertTrue(pad, "TNotebook.Tab padding should be set")
-        # Expect generous horizontal padding (16) somewhere in the value
-        self.assertIn("16", str(pad).replace(" ", ""))
+        from common.ui import NOTEBOOK_TAB_PADDING, NOTEBOOK_TAB_PADDING_SELECTED
+        compact = str(pad).replace(" ", "")
+        # Horizontal padding is small (a little space beyond the label)
+        self.assertIn(str(NOTEBOOK_TAB_PADDING[0]), compact)
+        self.assertNotIn("16", compact)
+        self.assertLess(NOTEBOOK_TAB_PADDING[0], 10)
+        self.assertLess(NOTEBOOK_TAB_PADDING[1], NOTEBOOK_TAB_PADDING_SELECTED[1] + 1)
+        self.assertLessEqual(NOTEBOOK_TAB_PADDING[1], NOTEBOOK_TAB_PADDING_SELECTED[1])
+        self.assertNotEqual(NOTEBOOK_TAB_PADDING, NOTEBOOK_TAB_PADDING_SELECTED)
 
 
     def test_shared_font_config_sizes(self):
