@@ -8,5 +8,6 @@ Thư mục chứa các file DSL mẫu (định dạng text).
 - **New DSL.txt** — File mẫu mới.
 - **hw095.txt** — Mẫu linh kiện HW095.
 - **lm2596_zx001.txt** — Mẫu module LM2596.
+- **JM JF Joints.txt** — Mẫu mộng âm (JF) / mộng dương (JM) và dấu J.
 
 Các file này được tool `dsl_library_tool_v1` load và chỉnh sửa.

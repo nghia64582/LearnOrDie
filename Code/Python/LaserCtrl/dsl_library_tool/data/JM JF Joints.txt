@@ -1,0 +1,28 @@
+[NAME]
+JM JF Joints
+
+[DESCRIPTION]
+Sample mortise (JF) and tenon (JM) pair, plus a J mark (never cut)
+
+[DSL]
+# JF x y width height teeth_length first_d
+#    (x, y) is the centreline of the strip. Cuts the holes only.
+# JM x y width height teeth_length first_d out|in
+#    out: teeth toward x+width / y+height; in: toward x / y.
+# J  x y width height NAME [M|F]
+#    Joint mark, never cut. Custom can expand a pair to JM/JF.
+
+ADD 0 0 mortise
+R 0 0 20 40
+JF 20 0 3 40 10 5
+END
+
+ADD 28 0 tenon
+R 0 0 20 40
+JM 0 0 3 40 10 5 out
+END
+
+ADD 0 50 marked
+R 0 0 20 40
+J 20 0 3 40 edgeA F
+END

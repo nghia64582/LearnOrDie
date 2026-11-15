@@ -1,4 +1,10 @@
 from common.ui import canvas_font
+from engraver_ctrl.dsl_highlight import (
+    JointHighlight,
+    draw_joint_highlights,
+    polygons_from_joint_segments,
+)
+from engraver_ctrl.dsl_joint import pair_color
 import tkinter as tk
 import math
 
@@ -11,13 +17,19 @@ class DSLCanvas(tk.Canvas):
         self.offset_x = 0
         self.offset_y = 0
         self.font = canvas_font()
+        self._redrawing = False
+        self._needs_redraw = False
 
-        self.bind("<Configure>", lambda e: self.render(self.result) if self.result else None)
+        self.bind("<Configure>", self._on_configure)
         self.bind("<MouseWheel>", self._wheel)
 
     def clear(self):
         self.delete("all")
         self.result = None
+
+    def _on_configure(self, _event=None):
+        if self.result:
+            self._redraw()
 
     def _wheel(self, event):
         if not self.result:
@@ -32,6 +44,22 @@ class DSLCanvas(tk.Canvas):
         self._redraw()
 
     def _redraw(self):
+        # Creating or deleting items can fire <Configure>. Skip re-entrant
+        # calls and do one follow-up pass so labels stay in the same
+        # coordinate system as the paths.
+        if self._redrawing:
+            self._needs_redraw = True
+            return
+        self._redrawing = True
+        self._needs_redraw = False
+        try:
+            self._redraw_body()
+        finally:
+            self._redrawing = False
+        if self._needs_redraw:
+            self._redraw()
+
+    def _redraw_body(self):
         self.delete("all")
         result = self.result
         if not result or not result.bounds:
@@ -110,12 +138,42 @@ class DSLCanvas(tk.Canvas):
                              text=self._fmt(y), anchor="sw", font=self.font)
             y += label_step
 
-        # Geometry.
+        # JM/JF fills first so path strokes paint on top.
+        highlights = []
+        for cmd, segs in getattr(result, "shapes", ()):
+            if cmd not in ("JM", "JF"):
+                continue
+            for poly in polygons_from_joint_segments(cmd, segs):
+                highlights.append(JointHighlight(kind=cmd, polygon=poly))
+        draw_joint_highlights(self, highlights, xy)
+
+        # Geometry (cut paths).
         for seg in result.segments:
             x1, y1, x2, y2 = seg
             a, b = xy(x1, y1)
             c, d = xy(x2, y2)
-            self.create_line(a, b, c, d, width=2)
+            self.create_line(a, b, c, d, width=2, tags="dsl_path")
+
+        # J marks are never cut: dashed outline + name only.
+        for mark in getattr(result, "marks", ()):
+            if len(mark.polygon) < 4:
+                continue
+            coords = []
+            for mx, my in mark.polygon:
+                coords.extend(xy(mx, my))
+            color = pair_color(mark.name)
+            self.create_polygon(
+                *coords, fill="", outline=color, width=1, dash=(5, 3),
+                tags="jmark",
+            )
+            mark_cx = sum(p[0] for p in mark.polygon) / len(mark.polygon)
+            mark_cy = sum(p[1] for p in mark.polygon) / len(mark.polygon)
+            px, py = xy(mark_cx, mark_cy)
+            label = mark.name if not mark.role else f"{mark.name} {mark.role}"
+            self.create_text(
+                px, py, text=label, fill=color, font=canvas_font(),
+                tags="jmark",
+            )
 
         # ADD labels.
         for x, y, label in result.labels:
