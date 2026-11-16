@@ -242,14 +242,40 @@ class TkSmokeTests(unittest.TestCase):
         nb.pack(fill="both", expand=True)
         tab = DesignerTab(nb, Host())
         nb.add(tab, text="Custom")
-        from engraver_ctrl.tab_designer import EDITOR_MIN_LINES, HELP_LINES, FORMAT_HELP_TEXT
+        from engraver_ctrl.tab_designer import EDITOR_MIN_LINES, FORMAT_HELP_TEXT
         self.assertEqual(int(tab.text_input.cget("height")), EDITOR_MIN_LINES)
         self.assertTrue(hasattr(tab, "text_scroll"))
-        self.assertEqual(int(tab.help_text.cget("height")), HELP_LINES)
-        self.assertIn("yview", str(tab.help_scroll.cget("command")))
-        self.assertIn("JF x y", tab.help_text.get("1.0", "end"))
-        self.assertIn("JM x y", FORMAT_HELP_TEXT)
+        self.assertFalse(hasattr(tab, "help_frame"))
         self.assertFalse(hasattr(tab, "generate_bounds_gcode"))
+        self.assertIn("JM x y", FORMAT_HELP_TEXT)
+        # Help is a button that opens a small scrollable popup, not an inline panel
+        win.deiconify()
+        win.update()
+        help_win = tab.show_help()
+        self.root.update()
+        self.root.update_idletasks()
+        self.assertTrue(help_win.winfo_exists())
+        self.assertEqual(help_win.title(), "Format Help")
+        body = help_win.help_text.get("1.0", "end")
+        self.assertIn("JF x y", body)
+        self.assertIn("JM x y", body)
+        self.assertEqual(str(help_win.help_text.cget("state")), "disabled")
+        self.assertIn("yview", str(help_win.help_scroll.cget("command")))
+        first = help_win.help_text.yview()
+        help_win.help_text.configure(state="normal")
+        help_win.help_text.yview_moveto(1.0)
+        self.root.update_idletasks()
+        after = help_win.help_text.yview()
+        help_win.help_text.configure(state="disabled")
+        self.assertNotEqual(first, after)
+        geom = help_win.geometry()  # e.g. 520x360+n+n
+        self.assertTrue(geom.startswith("520x360"), geom)
+        self.assertTrue(help_win.resizable()[0] and help_win.resizable()[1])
+        self.assertEqual(str(help_win.close_btn.cget("text")), "Close")
+        # A second click reuses the same window
+        again = tab.show_help()
+        self.assertEqual(again, help_win)
+        help_win.destroy()
         # Scrollbar <-> Text wiring (Tcl command names, not Python callables)
         self.assertTrue(str(tab.text_input.cget("yscrollcommand")))
         self.assertIn("yview", str(tab.text_scroll.cget("command")))
@@ -341,16 +367,12 @@ class TkSmokeTests(unittest.TestCase):
                     self._fully_visible_in(custom.generate_gcode_btn, win),
                     f"Generate GCODE hidden at {width}x{height}",
                 )
-                self.assertTrue(self._fully_visible_in(custom.help_frame, win))
-                self.assertEqual(int(custom.help_text.cget("height")), 4)
-                # Scrollbar is wired and the help text is taller than the view
-                first = custom.help_text.yview()
-                custom.help_text.configure(state="normal")
-                custom.help_text.yview_moveto(1.0)
-                win.update_idletasks()
-                after = custom.help_text.yview()
-                custom.help_text.configure(state="disabled")
-                self.assertNotEqual(first, after)
+                self.assertIn("Help", texts)
+                self.assertTrue(
+                    self._fully_visible_in(custom.help_btn, win),
+                    f"Help button hidden at {width}x{height}",
+                )
+                self.assertFalse(hasattr(custom, "help_frame"))
                 shell.shutdown()
                 win.destroy()
 

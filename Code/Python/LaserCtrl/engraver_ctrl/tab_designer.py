@@ -18,10 +18,9 @@ from engraver_ctrl.dsl_joint import (
 )
 
 
-# Compact Help panel: a few visible lines, full text behind a scrollbar.
-HELP_LINES = 4
 # Requested editor height; the Shapes panel expands to fill leftover space.
 EDITOR_MIN_LINES = 6
+HELP_POPUP_SIZE = "520x360"
 
 FORMAT_HELP_TEXT = """\
 C x y r
@@ -353,26 +352,11 @@ class DesignerTab(ttk.Frame):
             left_frame, textvariable=self.gcode_time_var, font=self.font,
         )
 
-        # --- Help (compact, scrollable) ---
-        help_frame = tk.LabelFrame(left_frame, text="Help", font=self.font)
-        self.help_frame = help_frame
-        self.help_text = tk.Text(
-            help_frame, width=40, height=HELP_LINES, font=ui_font(SIZE_SM),
-            wrap="word", relief="flat", borderwidth=0, highlightthickness=0,
-        )
-        self.help_scroll = ttk.Scrollbar(
-            help_frame, orient="vertical", command=self.help_text.yview,
-        )
-        self.help_text.configure(yscrollcommand=self.help_scroll.set)
-        self.help_text.grid(row=0, column=0, sticky="nsew")
-        self.help_scroll.grid(row=0, column=1, sticky="ns")
-        help_frame.columnconfigure(0, weight=1)
-        help_frame.rowconfigure(0, weight=0)
-        self.help_text.insert("1.0", FORMAT_HELP_TEXT)
-        self.help_text.configure(state="disabled")
-        self.help_text.bind("<MouseWheel>", self._on_help_wheel)
-        self.help_text.bind("<Button-4>", self._on_help_wheel)
-        self.help_text.bind("<Button-5>", self._on_help_wheel)
+        # --- Help button (opens a small scrollable popup) ---
+        top_btn_frame = tk.Frame(left_frame)
+        self.help_btn = make_button(top_btn_frame, "Help", command=self.show_help)
+        self.help_btn.pack(side="left")
+        self._help_win = None
 
         # Pack bottom-critical controls first so a short window clips the
         # expandable Shapes editor instead of hiding Preview / Generate GCODE.
@@ -381,7 +365,7 @@ class DesignerTab(ttk.Frame):
         gcode_frame.pack(side="bottom", fill="x", pady=5)
         joint_frame.pack(side="bottom", fill="x", pady=5)
         view_frame.pack(side="bottom", fill="x", pady=5)
-        help_frame.pack(side="top", fill="x")
+        top_btn_frame.pack(side="top", fill="x")
         shapes_label.pack(side="top", anchor="w")
         mode_row.pack(side="top", fill="x", pady=(0, 2))
         editor.pack(side="top", fill="both", expand=True, pady=(0, 2))
@@ -541,12 +525,86 @@ class DesignerTab(ttk.Frame):
                 self._set_text_input(assembled)
         self._show_raw_widgets()
 
-    def _on_help_wheel(self, event):
-        if getattr(event, "num", None) == 5 or getattr(event, "delta", 0) < 0:
-            self.help_text.yview_scroll(1, "units")
-        else:
-            self.help_text.yview_scroll(-1, "units")
-        return "break"
+    def show_help(self):
+        """Open a modest, scrollable Format Help popup (reuse if already open)."""
+        existing = getattr(self, "_help_win", None)
+        if existing is not None:
+            try:
+                if existing.winfo_exists():
+                    existing.deiconify()
+                    existing.lift()
+                    existing.focus_set()
+                    return existing
+            except tk.TclError:
+                pass
+
+        parent = self.winfo_toplevel()
+        win = tk.Toplevel(parent)
+        self._help_win = win
+        win.title("Format Help")
+        win.geometry(HELP_POPUP_SIZE)
+        win.minsize(360, 240)
+        win.resizable(True, True)
+        try:
+            win.transient(parent)
+        except tk.TclError:
+            pass
+
+        body = ttk.Frame(win)
+        body.pack(fill="both", expand=True, padx=8, pady=(8, 4))
+        body.columnconfigure(0, weight=1)
+        body.rowconfigure(0, weight=1)
+
+        text = tk.Text(
+            body, wrap="word", font=ui_font(SIZE_SM),
+            width=48, height=16, relief="solid", borderwidth=1,
+        )
+        scroll = ttk.Scrollbar(body, orient="vertical", command=text.yview)
+        text.configure(yscrollcommand=scroll.set)
+        text.grid(row=0, column=0, sticky="nsew")
+        scroll.grid(row=0, column=1, sticky="ns")
+        text.insert("1.0", FORMAT_HELP_TEXT)
+        text.configure(state="disabled")
+
+        def on_wheel(event):
+            if getattr(event, "num", None) == 5 or getattr(event, "delta", 0) < 0:
+                text.yview_scroll(1, "units")
+            else:
+                text.yview_scroll(-1, "units")
+            return "break"
+
+        text.bind("<MouseWheel>", on_wheel)
+        text.bind("<Button-4>", on_wheel)
+        text.bind("<Button-5>", on_wheel)
+
+        btn_row = ttk.Frame(win)
+        btn_row.pack(fill="x", padx=8, pady=(0, 8))
+        close_btn = make_button(btn_row, "Close", command=win.destroy)
+        close_btn.pack(side="right")
+
+        win.help_text = text
+        win.help_scroll = scroll
+        win.close_btn = close_btn
+
+        def _on_close():
+            try:
+                if getattr(self, "_help_win", None) is win:
+                    self._help_win = None
+            except Exception:
+                pass
+            try:
+                win.destroy()
+            except tk.TclError:
+                pass
+
+        win.protocol("WM_DELETE_WINDOW", _on_close)
+        close_btn.configure(command=_on_close)
+        win.bind("<Escape>", lambda e: _on_close())
+        try:
+            win.focus_set()
+        except tk.TclError:
+            pass
+        return win
 
     # ------------------------------------------------------------------
     # View transform (world mm -> canvas px). Y huong len, goc O(0,0)
