@@ -8,11 +8,12 @@ from tkinter import ttk
 
 from common.ui import make_button, mono_font, ui_font, SIZE_SM
 from engraver_ctrl.dsl_cards import (
-    Card,
     add_card as logic_add_card,
+    apply_inferred_size,
     assemble_cards,
     assemble_line_ranges,
     card_index_for_line,
+    copy_card,
     duplicate_card as logic_duplicate_card,
     fmt_delta,
     parse_cards,
@@ -130,7 +131,7 @@ class CardPanel(ttk.Frame):
     def set_cards(self, cards, expand=None, keep_expand=True):
         self._harvest()
         prev = self._expanded
-        self._cards = [Card(c.name, float(c.dx), float(c.dy), c.inner) for c in cards]
+        self._cards = [copy_card(c) for c in cards]
         if expand is not None:
             self._expanded = expand
         elif keep_expand and prev is not None and prev < len(self._cards):
@@ -246,9 +247,15 @@ class CardPanel(ttk.Frame):
         name_var = tk.StringVar(value=card.name)
         dx_var = tk.StringVar(value=fmt_delta(card.dx))
         dy_var = tk.StringVar(value=fmt_delta(card.dy))
+        w_var = tk.StringVar(value="" if card.w is None else fmt_delta(card.w))
+        h_var = tk.StringVar(value="" if card.h is None else fmt_delta(card.h))
+        border_var = tk.BooleanVar(value=bool(card.border))
         row["name_var"] = name_var
         row["dx_var"] = dx_var
         row["dy_var"] = dy_var
+        row["w_var"] = w_var
+        row["h_var"] = h_var
+        row["border_var"] = border_var
         row["frame"] = frame
 
         name_e = ttk.Entry(header, textvariable=name_var, width=10, font=self.font)
@@ -286,6 +293,41 @@ class CardPanel(ttk.Frame):
             entry.bind("<FocusOut>", lambda e, i=index: self._apply_fields(i, preview=True))
             entry.bind("<KeyRelease>", lambda e, i=index: self._mark_dirty())
 
+        # w / h / border sit on a second line: the first row (name, dx, dy,
+        # icon buttons) already fills a typical 40-char Shapes column.
+        size_row = ttk.Frame(frame)
+        size_row.pack(fill="x", padx=(22, 0), pady=(2, 0))
+        ttk.Label(size_row, text="w", font=self.font).pack(side="left")
+        w_e = ttk.Entry(size_row, textvariable=w_var, width=4, font=self.font)
+        w_e.pack(side="left", padx=1)
+        ttk.Label(size_row, text="h", font=self.font).pack(side="left")
+        h_e = ttk.Entry(size_row, textvariable=h_var, width=4, font=self.font)
+        h_e.pack(side="left", padx=1)
+        ttk.Checkbutton(
+            size_row, text="border", variable=border_var,
+            command=lambda i=index: self._apply_fields(i, preview=True),
+        ).pack(side="left", padx=(6, 0))
+
+        def _live_size(_event=None, i=index):
+            self._mark_dirty()
+            if i >= len(self._rows):
+                return
+            row_ = self._rows[i]
+            for key in ("w_var", "h_var"):
+                raw = row_[key].get().strip()
+                if raw == "":
+                    continue
+                try:
+                    float(raw)
+                except (ValueError, tk.TclError):
+                    return
+            self._apply_fields(i, preview=True)
+
+        for entry in (w_e, h_e):
+            entry.bind("<Return>", lambda e, i=index: self._apply_fields(i, preview=True))
+            entry.bind("<FocusOut>", lambda e, i=index: self._apply_fields(i, preview=True))
+            entry.bind("<KeyRelease>", _live_size)
+
         if expanded:
             editor = tk.Text(
                 frame, width=36, height=INNER_EDITOR_HEIGHT,
@@ -304,6 +346,7 @@ class CardPanel(ttk.Frame):
         for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
             frame.bind(seq, self._on_mousewheel)
             header.bind(seq, self._on_mousewheel)
+            size_row.bind(seq, self._on_mousewheel)
         return row
 
     def _toggle(self, index):
@@ -320,6 +363,20 @@ class CardPanel(ttk.Frame):
         self._harvest()
         if self.dirty:
             self._fire_commit(preview=preview)
+
+    def _read_opt_float(self, var, current):
+        """Parse an optional float entry; empty means unset (None)."""
+        try:
+            raw = var.get().strip()
+        except tk.TclError:
+            return current
+        if raw == "":
+            return None
+        try:
+            return float(raw)
+        except ValueError:
+            var.set("" if current is None else fmt_delta(current))
+            return current
 
     def _harvest(self):
         if not self._rows or len(self._rows) != len(self._cards):
@@ -349,6 +406,21 @@ class CardPanel(ttk.Frame):
             if dy != card.dy:
                 card.dy = dy
                 changed = True
+            w = self._read_opt_float(row["w_var"], card.w)
+            if w != card.w:
+                card.w = w
+                changed = True
+            h = self._read_opt_float(row["h_var"], card.h)
+            if h != card.h:
+                card.h = h
+                changed = True
+            try:
+                border = bool(row["border_var"].get())
+            except (tk.TclError, KeyError):
+                border = card.border
+            if border != card.border:
+                card.border = border
+                changed = True
             editor = row.get("editor")
             if editor is not None:
                 try:
@@ -357,6 +429,16 @@ class CardPanel(ttk.Frame):
                     inner = card.inner
                 if inner != card.inner:
                     card.inner = inner
+                    changed = True
+            # Ticking border with empty w/h: fill from the current inner bbox.
+            if card.border and (card.w is None or card.h is None):
+                prev = (card.w, card.h)
+                apply_inferred_size(card)
+                if (card.w, card.h) != prev:
+                    if card.w is not None:
+                        row["w_var"].set(fmt_delta(card.w))
+                    if card.h is not None:
+                        row["h_var"].set(fmt_delta(card.h))
                     changed = True
         if changed:
             self.dirty = True
