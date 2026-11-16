@@ -41,8 +41,8 @@ Vertical line
 L x1 y1 x2 y2
 Any line
 
-A x y s_alpha e_alpha
-Arc, tam (x, y), goc bat dau s_alpha, goc ket thuc e_alpha.
+A x y r s_alpha e_alpha
+Arc, tam (x, y), ban kinh r, goc bat dau s_alpha, goc ket thuc e_alpha.
 Goc 0 = huong len (truc +y), 180 = huong xuong (truc -y),
 90 = huong phai (truc +x), 270 = huong trai (truc -x),
 360 = trung voi 0 (mot vong tron day du).
