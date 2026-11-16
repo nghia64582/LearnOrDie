@@ -1,8 +1,12 @@
 from dataclasses import dataclass, field
 import math
 
+from engraver_ctrl.dsl_joint import parse_j_tokens
+from engraver_ctrl.dsl_parse import shape_to_segments as engraver_shape_to_segments
 
-KNOWN = {"C", "R", "RC", "LH", "LV", "L", "A", "P", "M"}
+
+KNOWN = {"C", "R", "RC", "LH", "LV", "L", "A", "P", "M", "JF", "JM", "J"}
+_JM_DIR = {"out": 1.0, "+": 1.0, "in": -1.0, "-": -1.0}
 
 
 @dataclass
@@ -12,14 +16,27 @@ class DSLError:
 
 
 @dataclass
+class JointMarkPreview:
+    """Preview-only J mark (never cut). polygon is world-space corners."""
+    name: str
+    role: str | None
+    polygon: tuple
+
+
+@dataclass
 class ParseResult:
     segments: list = field(default_factory=list)
+    shapes: list = field(default_factory=list)  # (cmd, segments)
+    marks: list = field(default_factory=list)
     labels: list = field(default_factory=list)
     errors: list = field(default_factory=list)
     bounds: object = None
 
 
 def shape_to_segments(cmd, nums):
+    if cmd in ("JF", "JM"):
+        return engraver_shape_to_segments(cmd, nums)
+
     if cmd == "L":
         if len(nums) != 4:
             raise ValueError("L requires 4 numbers")
@@ -101,6 +118,39 @@ def transform_segment(seg, dx, dy, angle):
     return (*p1, *p2)
 
 
+def _stack_transform(stack):
+    dx = sum(x[0] for x in stack)
+    dy = sum(x[1] for x in stack)
+    angle = sum(x[2] for x in stack)
+    return dx, dy, angle
+
+
+def _parse_joint_command(cmd, parts):
+    """Return (nums, error_message). nums is ready for shape_to_segments."""
+    if cmd == "JF":
+        try:
+            nums = list(map(float, parts[1:]))
+        except ValueError:
+            return None, "JF x y width height teeth_length first_d must be numbers"
+        if len(nums) != 6:
+            return None, "JF requires x y width height teeth_length first_d"
+        return nums, None
+
+    if len(parts) != 8:
+        return None, "JM requires x y width height teeth_length first_d out|in"
+    jm_dir = _JM_DIR.get(parts[-1].lower())
+    if jm_dir is None:
+        return None, "JM direction must be out, in, + or -"
+    try:
+        nums = list(map(float, parts[1:-1]))
+    except ValueError:
+        return None, "JM x y width height teeth_length first_d must be numbers"
+    if len(nums) != 6:
+        return None, "JM requires x y width height teeth_length first_d out|in"
+    nums.append(jm_dir)
+    return nums, None
+
+
 def parse_dsl(text):
     result = ParseResult()
     stack = []
@@ -158,28 +208,56 @@ def parse_dsl(text):
             result.errors.append(DSLError(line_no, f"Unknown command: {cmd}"))
             continue
 
-        try:
-            nums = list(map(float, parts[1:]))
-            raw_segments = shape_to_segments(cmd, nums)
-        except ValueError as e:
-            result.errors.append(DSLError(line_no, str(e)))
+        dx, dy, angle = _stack_transform(stack)
+
+        if cmd == "J":
+            parsed = parse_j_tokens(parts)
+            if parsed is None:
+                result.errors.append(
+                    DSLError(line_no, "J requires x y width height NAME [M|F]")
+                )
+                continue
+            x, y, w, h = parsed["x"], parsed["y"], parsed["w"], parsed["h"]
+            local = [
+                (x, y, x + w, y),
+                (x + w, y, x + w, y + h),
+                (x + w, y + h, x, y + h),
+                (x, y + h, x, y),
+            ]
+            world = [transform_segment(seg, dx, dy, angle) for seg in local]
+            polygon = tuple((seg[0], seg[1]) for seg in world)
+            result.marks.append(JointMarkPreview(
+                name=parsed["name"], role=parsed["role"], polygon=polygon,
+            ))
             continue
 
-        dx = sum(x[0] for x in stack)
-        dy = sum(x[1] for x in stack)
-        angle = sum(x[2] for x in stack)
+        if cmd in ("JF", "JM"):
+            nums, err = _parse_joint_command(cmd, parts)
+            if err:
+                result.errors.append(DSLError(line_no, err))
+                continue
+            raw_segments = shape_to_segments(cmd, nums)
+        else:
+            try:
+                nums = list(map(float, parts[1:]))
+                raw_segments = shape_to_segments(cmd, nums)
+            except ValueError as e:
+                result.errors.append(DSLError(line_no, str(e)))
+                continue
 
-        for seg in raw_segments:
-            result.segments.append(transform_segment(seg, dx, dy, angle))
+        world_segs = [transform_segment(seg, dx, dy, angle) for seg in raw_segments]
+        result.shapes.append((cmd, world_segs))
+        result.segments.extend(world_segs)
+        priority_next = False
 
     if stack:
         result.errors.append(DSLError(len(text.splitlines()) or 1, "Unclosed ADD/ROTATE block"))
 
-    result.bounds = calculate_bounds(result.segments, result.labels)
+    result.bounds = calculate_bounds(result.segments, result.labels, result.marks)
     return result
 
 
-def calculate_bounds(segments, labels):
+def calculate_bounds(segments, labels, marks=None):
     xs, ys = [], []
     for x1, y1, x2, y2 in segments:
         xs += [x1, x2]
@@ -187,6 +265,10 @@ def calculate_bounds(segments, labels):
     for x, y, _ in labels:
         xs.append(x)
         ys.append(y)
+    for mark in marks or ():
+        for x, y in mark.polygon:
+            xs.append(x)
+            ys.append(y)
 
     if not xs:
         return None

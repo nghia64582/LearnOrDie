@@ -286,9 +286,32 @@ class DSLLibrary:
         return sorted(self.index["drawings"].values(), key=lambda e: e["id"].lower())
 
     def list_entries(self):
-        """List (path, name, description) de hien thi/tim kiem, khong goi mang."""
-        return [(self.path / f"{e['id']}.txt", e.get("name", e["id"]), e.get("description", ""))
-                for e in self.entries()]
+        """List (path, name, description) de hien thi/tim kiem, khong goi mang.
+
+        Local *.txt files that are not in the KV index (bundled samples
+        or unsynced drawings) are appended so they still appear offline.
+        """
+        items = [
+            (self.path / f"{e['id']}.txt", e.get("name", e["id"]),
+             e.get("description", ""))
+            for e in self.entries()
+        ]
+        known = {path.stem for path, _, _ in items}
+        if self.path.is_dir():
+            for path in sorted(self.path.glob("*.txt"),
+                               key=lambda q: q.name.lower()):
+                if path.stem in known:
+                    continue
+                try:
+                    data = parse_sections(path.read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                items.append((
+                    path,
+                    (data.get("name") or path.stem).strip(),
+                    (data.get("description") or "").strip(),
+                ))
+        return items
 
     def list_files(self):
         return [p for p, _, _ in self.list_entries()]
