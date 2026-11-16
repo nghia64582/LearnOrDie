@@ -20,7 +20,9 @@ from engraver_ctrl.dsl_cards import (
 )
 
 
-LIST_HEIGHT = 270
+# Minimum list height; the Custom tab expands the panel to fill leftover space
+# so Preview / Generate GCODE stay visible on short laptop screens.
+LIST_HEIGHT = 80
 INNER_EDITOR_HEIGHT = 7
 
 # Prefer a compact glyph; fall back if the UI font has no glyph (common

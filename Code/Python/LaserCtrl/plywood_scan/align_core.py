@@ -10,7 +10,7 @@ tam => tam nam dung vi tri nhu luc chup, roi moi chay gcode cat.
 Offset: toa do may = toa do tam + offset (mac dinh 0, 0). Gcode can chinh va
 DSL xuat tu strip_packer dung CHUNG offset nay.
 
-Quy uoc gcode giong engraver_ctrl/tab_designer.py (generate_bounds_gcode):
+Quy uoc gcode giong engraver_ctrl/tab_designer.py:
 G21, G90, moi doan: G0 toi diem dau, M3 S<power>, G1 ... F<feed>, M5.
 Ket thuc: M5 va G0 ve goc (giong tab Machine tu them M5 + G0 X0 Y0).
 """

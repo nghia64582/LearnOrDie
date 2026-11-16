@@ -242,8 +242,14 @@ class TkSmokeTests(unittest.TestCase):
         nb.pack(fill="both", expand=True)
         tab = DesignerTab(nb, Host())
         nb.add(tab, text="Custom")
-        self.assertEqual(int(tab.text_input.cget("height")), 14)
+        from engraver_ctrl.tab_designer import EDITOR_MIN_LINES, HELP_LINES, FORMAT_HELP_TEXT
+        self.assertEqual(int(tab.text_input.cget("height")), EDITOR_MIN_LINES)
         self.assertTrue(hasattr(tab, "text_scroll"))
+        self.assertEqual(int(tab.help_text.cget("height")), HELP_LINES)
+        self.assertIn("yview", str(tab.help_scroll.cget("command")))
+        self.assertIn("JF x y", tab.help_text.get("1.0", "end"))
+        self.assertIn("JM x y", FORMAT_HELP_TEXT)
+        self.assertFalse(hasattr(tab, "generate_bounds_gcode"))
         # Scrollbar <-> Text wiring (Tcl command names, not Python callables)
         self.assertTrue(str(tab.text_input.cget("yscrollcommand")))
         self.assertIn("yview", str(tab.text_scroll.cget("command")))
@@ -262,6 +268,91 @@ class TkSmokeTests(unittest.TestCase):
         tab.preview()
         self.root.update_idletasks()
         win.destroy()
+
+    def _iter_buttons(self, widget):
+        from tkinter import ttk
+        yield widget
+        for child in widget.winfo_children():
+            yield from self._iter_buttons(child)
+
+    def _button_texts(self, widget):
+        from tkinter import ttk
+        texts = []
+        for w in self._iter_buttons(widget):
+            try:
+                if isinstance(w, (ttk.Button,)):
+                    texts.append(str(w.cget("text")))
+            except Exception:
+                pass
+        return texts
+
+    def _fully_visible_in(self, widget, root):
+        self.root.update_idletasks()
+        if not widget.winfo_ismapped() or not widget.winfo_viewable():
+            return False
+        if widget.winfo_height() < 2 or widget.winfo_width() < 2:
+            return False
+        top = widget.winfo_rooty()
+        bot = top + widget.winfo_height()
+        left = widget.winfo_rootx()
+        right = left + widget.winfo_width()
+        rt, rl = root.winfo_rooty(), root.winfo_rootx()
+        rb, rr = rt + root.winfo_height(), rl + root.winfo_width()
+        return top >= rt - 1 and left >= rl - 1 and bot <= rb + 1 and right <= rr + 1
+
+    def test_custom_action_buttons_visible_on_short_screens(self):
+        """Preview / Generate GCODE stay on-screen at typical laptop heights."""
+        import tkinter as tk
+        from app_shell import LaserAppShell
+
+        for width, height in ((1280, 720), (1366, 768)):
+            with self.subTest(geometry=f"{width}x{height}"):
+                win = tk.Toplevel(self.root)
+                shell = LaserAppShell(win)
+                # Shell sets a default 1280x820; apply the short laptop size after.
+                win.geometry(f"{width}x{height}")
+                win.deiconify()
+                shell.main_nb.select(0)
+                win.update()
+                engraver_frame = shell.main_nb.nametowidget(shell.main_nb.tabs()[0])
+                from tkinter import ttk
+                nested = [c for c in engraver_frame.winfo_children()
+                          if isinstance(c, ttk.Notebook)]
+                self.assertTrue(nested)
+                nested[0].select(3)
+                custom = nested[0].nametowidget(nested[0].tabs()[3])
+                win.update()
+                win.update_idletasks()
+                texts = self._button_texts(custom)
+                self.assertIn("Preview (Ctrl+Enter)", texts)
+                self.assertIn("Generate GCODE", texts)
+                self.assertNotIn("Ve vung hoat dong", texts)
+                self.assertTrue(
+                    self._fully_visible_in(custom.preview_btn, win),
+                    f"Preview hidden at {width}x{height}: "
+                    f"btn=({custom.preview_btn.winfo_rootx()},"
+                    f"{custom.preview_btn.winfo_rooty()},"
+                    f"{custom.preview_btn.winfo_width()}x"
+                    f"{custom.preview_btn.winfo_height()}) "
+                    f"win=({win.winfo_rootx()},{win.winfo_rooty()},"
+                    f"{win.winfo_width()}x{win.winfo_height()})",
+                )
+                self.assertTrue(
+                    self._fully_visible_in(custom.generate_gcode_btn, win),
+                    f"Generate GCODE hidden at {width}x{height}",
+                )
+                self.assertTrue(self._fully_visible_in(custom.help_frame, win))
+                self.assertEqual(int(custom.help_text.cget("height")), 4)
+                # Scrollbar is wired and the help text is taller than the view
+                first = custom.help_text.yview()
+                custom.help_text.configure(state="normal")
+                custom.help_text.yview_moveto(1.0)
+                win.update_idletasks()
+                after = custom.help_text.yview()
+                custom.help_text.configure(state="disabled")
+                self.assertNotEqual(first, after)
+                shell.shutdown()
+                win.destroy()
 
     def test_notebook_tab_padding_configured(self):
         from tkinter import ttk

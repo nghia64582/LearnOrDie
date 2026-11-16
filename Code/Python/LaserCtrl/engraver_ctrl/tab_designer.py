@@ -18,6 +18,139 @@ from engraver_ctrl.dsl_joint import (
 )
 
 
+# Compact Help panel: a few visible lines, full text behind a scrollbar.
+HELP_LINES = 4
+# Requested editor height; the Shapes panel expands to fill leftover space.
+EDITOR_MIN_LINES = 6
+
+FORMAT_HELP_TEXT = """\
+C x y r
+Circle
+
+R x y w h
+Rectangle (bottom-left)
+
+RC cx cy w h
+Rectangle (center)
+
+LH x y length
+Horizontal line
+
+LV x y length
+Vertical line
+
+L x1 y1 x2 y2
+Any line
+
+A x y s_alpha e_alpha
+Arc, tam (x, y), goc bat dau s_alpha, goc ket thuc e_alpha.
+Goc 0 = huong len (truc +y), 180 = huong xuong (truc -y),
+90 = huong phai (truc +x), 270 = huong trai (truc -x),
+360 = trung voi 0 (mot vong tron day du).
+
+ADD x y label
+Day them 1 lop delta (x, y) len stack, ap dung cho moi
+hinh phia sau cho den khi gap dong END tuong ung. Co
+the long nhau nhieu tang ADD (delta se cong don tat ca
+cac lop dang mo). label la mot chuoi tuy y, duoc ve
+kem cham danh dau tren canvas de de nhan biet.
+END chi bo di lop ADD/ROTATE gan nhat (giong dong ngoac).
+
+ROTATE goc
+Day them 1 lop xoay (theo do, chieu kim dong ho) len
+CUNG 1 stack voi ADD. Co the long nhieu lop ROTATE, goc
+se duoc cong don tuyen tinh. Neu dang co delta (x, y) tu
+ADD, hinh se duoc dich chuyen den (x, y) truoc, roi xoay
+quanh tam (x, y) do. END cung bo di lop ROTATE gan nhat.
+
+P x1 y1 x2 y2 ... xn yn
+Da giac (polygon) tuy y so dinh, tu dong noi dinh cuoi
+ve dinh dau de dong kin hinh.
+
+M x1 y1 x2 y2 ... xn yn
+Day doan thang (polyline) tuy y so dinh, giong P nhung
+KHONG noi diem cuoi ve diem dau (hinh ho).
+
+JF x y width height teeth_length first_d
+Mong am: cac lo chu nhat tren dai (x, y, width, height).
+Huong tu dong: canh dai hon la truc doc dai, canh ngan
+la do day. Lo dai teeth_length, cach nhau teeth_length,
+lo dau bat dau cach dau dai first_d. Lo cuoi bi le
+(vuot qua cuoi dai) se bi bo. Chi cat cac lo.
+
+JM x y width height teeth_length first_d out|in
+Mong duong: duong zigzag (ho, giong M) chay het dai,
+rang trung vi tri voi lo cua JF (cung teeth_length,
+first_d). Do cao rang = do day dai.
+out (+): rang nho ve phia x+width / y+height.
+in  (-): rang nho ve phia x / y (goc cua manh).
+Vd: JF 10 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
+
+J x y width height NAME [M|F]
+Joint mark (not cut). Place two J with the same NAME inside
+ADD blocks to pair an edge of one piece with a region of
+another. Apply joints expands them to JM/JF (the original
+J lines are commented). Optional M or F forces male/female.
+ROTATE around a J is not supported yet.
+
+Cards / Raw DSL
+The Shapes panel lists each top-level ADD as a card, or shows
+the full raw DSL. Commands outside any ADD are wrapped into a
+card (named loose, loose_2, ...) when converting to cards.
+Nested ADD stays inside the parent card as text. Add card
+places a new piece at (xmax, 0) or (0, ymax), whichever
+origin is closer to O(0,0). Duplicate uses the same rule
+with the copy's bounding-box centre.
+
+FIRST
+Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
+Nhieu hinh duoc danh dau FIRST se cat theo dung thu tu
+xuat hien trong file. Cac hinh con lai van toi uu
+duong di nhu thuong (greedy), nhung bat dau tu diem
+cuoi cung cua nhom uu tien.
+
+# ...
+Dong bat dau bang # la comment, se bi bo qua. Dong
+trong hoac dong khong dung format (lenh la, sai so
+tham so, ...) cung se tu dong bi bo qua, khong lam
+gian doan preview.
+
+Examples:
+
+C 50 50 30
+R 20 30 40 50
+RC 100 100 80 40
+LV 10 20 50
+LH 30 40 80
+L 0 0 100 100
+A 50 50 0 180
+P 0 0 40 0 40 40 20 60 0 40
+M 0 0 20 30 40 0 60 30
+
+# Vi du FIRST: cat hinh tron nho nay truoc tien
+FIRST
+C 5 5 3
+
+# Vi du long 2 tang ADD
+ADD 20 20 Ban le ngoai
+C 0 0 10
+ADD 5 5 Ban le trong
+C 0 0 3
+END
+C 0 0 5
+END
+C 0 0 5
+
+# Vi du ADD + ROTATE: dich den (50, 0) roi xoay 45 do
+# quanh diem (50, 0)
+ADD 50 0 Xoay 45 do
+ROTATE 45
+R 0 0 20 10
+END
+END
+"""
+
+
 class DesignerTab(ttk.Frame):
 
     GRID_MM = 10
@@ -45,12 +178,6 @@ class DesignerTab(ttk.Frame):
 
     # Font cho label cua tung lop ADD ve tren canvas (shared UI family)
     ADD_LABEL_FONT = None  # resolved in __init__ via canvas_font()
-
-    # Bounds mark: ve dau + tai 4 goc vung hoat dong (min/max x, y)
-    # de kiem tra pham vi cat truoc khi chay that
-    BOUNDS_MARK_LENGTH = 4  # mm, do dai moi doan cua dau +
-    BOUNDS_MARK_POWER = 200
-    BOUNDS_MARK_FEED = 600  # mm/min
 
     # Toc do di chuyen khong cat (G0), dung de uoc luong thoi gian
     # chay khi khong co tham so F (chi G1 moi co F)
@@ -91,19 +218,14 @@ class DesignerTab(ttk.Frame):
 
         left_frame = tk.Frame(self)
         left_frame.pack(side="left", fill="y", padx=5, pady=5)
+        self.left_frame = left_frame
 
         right_frame = tk.Frame(self)
         right_frame.pack(side="right", fill="both", expand=True)
 
-        # --- Help button ---
-        top_btn_frame = tk.Frame(left_frame)
-        top_btn_frame.pack(fill="x")
-        make_button(top_btn_frame, "Help", command=self.show_help).pack(side="left")
-
         # --- Shapes: card list (default) or raw DSL ---
-        tk.Label(left_frame, text="Shapes", font=self.font).pack(anchor="w")
+        shapes_label = tk.Label(left_frame, text="Shapes", font=self.font)
         mode_row = ttk.Frame(left_frame)
-        mode_row.pack(fill="x", pady=(0, 2))
         self.view_mode_var = tk.StringVar(value="cards")
         ttk.Radiobutton(
             mode_row, text="Cards", value="cards",
@@ -119,11 +241,9 @@ class DesignerTab(ttk.Frame):
         self.add_card_btn.pack(side="left")
 
         editor = ttk.Frame(left_frame)
-        # fill=x only — do not expand vertically or geometry will undo height=14
-        editor.pack(fill="x", pady=(0, 2))
         self.text_input = tk.Text(
-            editor, width=40, height=14, font=mono_font(SIZE_SM), undo=True,
-            wrap="none",
+            editor, width=40, height=EDITOR_MIN_LINES, font=mono_font(SIZE_SM),
+            undo=True, wrap="none",
         )
         self.text_scroll = ttk.Scrollbar(
             editor, orient="vertical", command=self.text_input.yview,
@@ -151,7 +271,6 @@ class DesignerTab(ttk.Frame):
 
         # --- View / Zoom ---
         view_frame = tk.LabelFrame(left_frame, text="View", font=self.font)
-        view_frame.pack(fill="x", pady=5)
         make_button(view_frame, "Fit", command=self.fit_view).grid(row=0, column=0, padx=2)
         tk.Label(view_frame, text="Zoom").grid(row=0, column=1)
         self.zoom_var = tk.DoubleVar(value=1.0)
@@ -178,7 +297,6 @@ class DesignerTab(ttk.Frame):
 
         # --- Joints (J marks -> JM/JF) ---
         joint_frame = tk.LabelFrame(left_frame, text="Joints", font=self.font)
-        joint_frame.pack(fill="x", pady=5)
         tk.Label(
             joint_frame,
             text=f"Thickness {THICKNESS:g} mm, tooth {DEFAULT_TEETH_LENGTH:g} mm",
@@ -201,7 +319,6 @@ class DesignerTab(ttk.Frame):
 
         # --- GCODE settings ---
         gcode_frame = tk.LabelFrame(left_frame, text="GCODE", font=self.font)
-        gcode_frame.pack(fill="x", pady=5)
 
         tk.Label(gcode_frame, text="Speed_x").grid(row=0, column=0)
         self.speed_x_var = tk.StringVar(value="250")
@@ -218,20 +335,56 @@ class DesignerTab(ttk.Frame):
         tk.Entry(gcode_frame, textvariable=self.power_var, width=10)\
             .grid(row=2, column=1)
 
-        # --- Buttons ---
+        # --- Buttons (packed later at the bottom so they stay visible) ---
         btn_frame = tk.Frame(left_frame)
-        btn_frame.pack(fill="x", pady=5)
-        make_button(btn_frame, "Preview (Ctrl+Enter)", command=self.preview)\
-            .pack(side="left", padx=2)
-        make_button(btn_frame, "Generate GCODE", command=self.generate_gcode)\
-            .pack(side="left", padx=2)
-        make_button(btn_frame, "Ve vung hoat dong", command=self.generate_bounds_gcode)\
-            .pack(side="left", padx=2)
+        self.btn_frame = btn_frame
+        self.preview_btn = make_button(
+            btn_frame, "Preview (Ctrl+Enter)", command=self.preview,
+        )
+        self.preview_btn.pack(side="left", padx=2)
+        self.generate_gcode_btn = make_button(
+            btn_frame, "Generate GCODE", command=self.generate_gcode,
+        )
+        self.generate_gcode_btn.pack(side="left", padx=2)
 
         # --- Thoi gian uoc luong ---
         self.gcode_time_var = tk.StringVar(value="")
-        tk.Label(left_frame, textvariable=self.gcode_time_var,
-                 font=self.font).pack(anchor="w", pady=(0, 5))
+        time_label = tk.Label(
+            left_frame, textvariable=self.gcode_time_var, font=self.font,
+        )
+
+        # --- Help (compact, scrollable) ---
+        help_frame = tk.LabelFrame(left_frame, text="Help", font=self.font)
+        self.help_frame = help_frame
+        self.help_text = tk.Text(
+            help_frame, width=40, height=HELP_LINES, font=ui_font(SIZE_SM),
+            wrap="word", relief="flat", borderwidth=0, highlightthickness=0,
+        )
+        self.help_scroll = ttk.Scrollbar(
+            help_frame, orient="vertical", command=self.help_text.yview,
+        )
+        self.help_text.configure(yscrollcommand=self.help_scroll.set)
+        self.help_text.grid(row=0, column=0, sticky="nsew")
+        self.help_scroll.grid(row=0, column=1, sticky="ns")
+        help_frame.columnconfigure(0, weight=1)
+        help_frame.rowconfigure(0, weight=0)
+        self.help_text.insert("1.0", FORMAT_HELP_TEXT)
+        self.help_text.configure(state="disabled")
+        self.help_text.bind("<MouseWheel>", self._on_help_wheel)
+        self.help_text.bind("<Button-4>", self._on_help_wheel)
+        self.help_text.bind("<Button-5>", self._on_help_wheel)
+
+        # Pack bottom-critical controls first so a short window clips the
+        # expandable Shapes editor instead of hiding Preview / Generate GCODE.
+        time_label.pack(side="bottom", fill="x", pady=(0, 5))
+        btn_frame.pack(side="bottom", fill="x", pady=5)
+        gcode_frame.pack(side="bottom", fill="x", pady=5)
+        joint_frame.pack(side="bottom", fill="x", pady=5)
+        view_frame.pack(side="bottom", fill="x", pady=5)
+        help_frame.pack(side="top", fill="x")
+        shapes_label.pack(side="top", anchor="w")
+        mode_row.pack(side="top", fill="x", pady=(0, 2))
+        editor.pack(side="top", fill="both", expand=True, pady=(0, 2))
 
         # --- Canvas ---
         self.canvas = tk.Canvas(right_frame, bg="white",
@@ -388,134 +541,12 @@ class DesignerTab(ttk.Frame):
                 self._set_text_input(assembled)
         self._show_raw_widgets()
 
-    def show_help(self):
-        text = """
-            C x y r
-            Circle
-
-            R x y w h
-            Rectangle (bottom-left)
-
-            RC cx cy w h
-            Rectangle (center)
-
-            LH x y length
-            Horizontal line
-
-            LV x y length
-            Vertical line
-
-            L x1 y1 x2 y2
-            Any line
-
-            A x y s_alpha e_alpha
-            Arc, tam (x, y), goc bat dau s_alpha, goc ket thuc e_alpha.
-            Goc 0 = huong len (truc +y), 180 = huong xuong (truc -y),
-            90 = huong phai (truc +x), 270 = huong trai (truc -x),
-            360 = trung voi 0 (mot vong tron day du).
-
-            ADD x y label
-            Day them 1 lop delta (x, y) len stack, ap dung cho moi
-            hinh phia sau cho den khi gap dong END tuong ung. Co
-            the long nhau nhieu tang ADD (delta se cong don tat ca
-            cac lop dang mo). label la mot chuoi tuy y, duoc ve
-            kem cham danh dau tren canvas de de nhan biet.
-            END chi bo di lop ADD/ROTATE gan nhat (giong dong ngoac).
-
-            ROTATE goc
-            Day them 1 lop xoay (theo do, chieu kim dong ho) len
-            CUNG 1 stack voi ADD. Co the long nhieu lop ROTATE, goc
-            se duoc cong don tuyen tinh. Neu dang co delta (x, y) tu
-            ADD, hinh se duoc dich chuyen den (x, y) truoc, roi xoay
-            quanh tam (x, y) do. END cung bo di lop ROTATE gan nhat.
-
-            P x1 y1 x2 y2 ... xn yn
-            Da giac (polygon) tuy y so dinh, tu dong noi dinh cuoi
-            ve dinh dau de dong kin hinh.
-
-            M x1 y1 x2 y2 ... xn yn
-            Day doan thang (polyline) tuy y so dinh, giong P nhung
-            KHONG noi diem cuoi ve diem dau (hinh ho).
-
-            JF x y width height teeth_length first_d
-            Mong am: cac lo chu nhat tren dai (x, y, width, height).
-            Huong tu dong: canh dai hon la truc doc dai, canh ngan
-            la do day. Lo dai teeth_length, cach nhau teeth_length,
-            lo dau bat dau cach dau dai first_d. Lo cuoi bi le
-            (vuot qua cuoi dai) se bi bo. Chi cat cac lo.
-
-            JM x y width height teeth_length first_d out|in
-            Mong duong: duong zigzag (ho, giong M) chay het dai,
-            rang trung vi tri voi lo cua JF (cung teeth_length,
-            first_d). Do cao rang = do day dai.
-            out (+): rang nho ve phia x+width / y+height.
-            in  (-): rang nho ve phia x / y (goc cua manh).
-            Vd: JF 10 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
-
-            J x y width height NAME [M|F]
-            Joint mark (not cut). Place two J with the same NAME inside
-            ADD blocks to pair an edge of one piece with a region of
-            another. Apply joints expands them to JM/JF (the original
-            J lines are commented). Optional M or F forces male/female.
-            ROTATE around a J is not supported yet.
-
-            Cards / Raw DSL
-            The Shapes panel lists each top-level ADD as a card, or shows
-            the full raw DSL. Commands outside any ADD are wrapped into a
-            card (named loose, loose_2, ...) when converting to cards.
-            Nested ADD stays inside the parent card as text. Add card
-            places a new piece at (xmax, 0) or (0, ymax), whichever
-            origin is closer to O(0,0). Duplicate uses the same rule
-            with the copy's bounding-box centre.
-
-            FIRST
-            Danh dau hinh NGAY SAU dong nay se duoc cat truoc tien.
-            Nhieu hinh duoc danh dau FIRST se cat theo dung thu tu
-            xuat hien trong file. Cac hinh con lai van toi uu
-            duong di nhu thuong (greedy), nhung bat dau tu diem
-            cuoi cung cua nhom uu tien.
-
-            # ...
-            Dong bat dau bang # la comment, se bi bo qua. Dong
-            trong hoac dong khong dung format (lenh la, sai so
-            tham so, ...) cung se tu dong bi bo qua, khong lam
-            gian doan preview.
-
-            Examples:
-
-            C 50 50 30
-            R 20 30 40 50
-            RC 100 100 80 40
-            LV 10 20 50
-            LH 30 40 80
-            L 0 0 100 100
-            A 50 50 0 180
-            P 0 0 40 0 40 40 20 60 0 40
-            M 0 0 20 30 40 0 60 30
-
-            # Vi du FIRST: cat hinh tron nho nay truoc tien
-            FIRST
-            C 5 5 3
-
-            # Vi du long 2 tang ADD
-            ADD 20 20 Ban le ngoai
-            C 0 0 10
-            ADD 5 5 Ban le trong
-            C 0 0 3
-            END
-            C 0 0 5
-            END
-            C 0 0 5
-
-            # Vi du ADD + ROTATE: dich den (50, 0) roi xoay 45 do
-            # quanh diem (50, 0)
-            ADD 50 0 Xoay 45 do
-            ROTATE 45
-            R 0 0 20 10
-            END
-            END
-            """
-        messagebox.showinfo("Format Help", text)
+    def _on_help_wheel(self, event):
+        if getattr(event, "num", None) == 5 or getattr(event, "delta", 0) < 0:
+            self.help_text.yview_scroll(1, "units")
+        else:
+            self.help_text.yview_scroll(-1, "units")
+        return "break"
 
     # ------------------------------------------------------------------
     # View transform (world mm -> canvas px). Y huong len, goc O(0,0)
@@ -2151,62 +2182,4 @@ class DesignerTab(ttk.Frame):
 
         messagebox.showinfo(
             "Done", f"Generated cut_plan.gcode\n{time_text}"
-        )
-
-    def generate_bounds_gcode(self):
-
-        # B1: dam bao self.shapes khop noi dung text hien tai, roi
-        # tim min/max x, y tren toan bo segment cua tat ca cac hinh
-        self.preview()
-
-        segments = self._shapes_to_segments()
-        if not segments:
-            messagebox.showerror(
-                "Error", "Khong co hinh nao de tinh vung hoat dong"
-            )
-            return
-
-        xs, ys = [], []
-        for x1, y1, x2, y2 in segments:
-            xs.extend([x1, x2])
-            ys.extend([y1, y2])
-
-        min_x, max_x = min(xs), max(xs)
-        min_y, max_y = min(ys), max(ys)
-
-        # B2: generate gcode ve dau + (2 doan thang, moi doan dai
-        # BOUNDS_MARK_LENGTH mm) tai 4 goc vung hoat dong, cong
-        # suat va toc do chi du de tao vet cat nhe, khong cat sau
-        half = self.BOUNDS_MARK_LENGTH / 2
-        power = self.BOUNDS_MARK_POWER
-        feed = self.BOUNDS_MARK_FEED
-
-        corners = [(min_x, min_y), (max_x, min_y),
-                   (min_x, max_y), (max_x, max_y)]
-
-        lines = ["G21", "G90"]
-
-        for cx, cy in corners:
-            # Doan ngang cua dau +
-            lines.append(f"G0 X{cx - half:.3f} Y{cy:.3f}")
-            lines.append(f"M3 S{power}")
-            lines.append(f"G1 X{cx + half:.3f} Y{cy:.3f} F{feed}")
-            lines.append("M5")
-
-            # Doan doc cua dau +
-            lines.append(f"G0 X{cx:.3f} Y{cy - half:.3f}")
-            lines.append(f"M3 S{power}")
-            lines.append(f"G1 X{cx:.3f} Y{cy + half:.3f} F{feed}")
-            lines.append("M5")
-
-        with open("bounds_plan.gcode", "w") as f:
-            f.write("\n".join(lines))
-
-        time_text = self._format_time_estimate(
-            self._estimate_gcode_time(lines)
-        )
-        self.gcode_time_var.set(time_text)
-
-        messagebox.showinfo(
-            "Done", f"Generated bounds_plan.gcode\n{time_text}"
         )
