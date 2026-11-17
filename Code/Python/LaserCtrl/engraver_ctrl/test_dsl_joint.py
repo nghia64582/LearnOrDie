@@ -182,13 +182,19 @@ END
     def test_insert_and_next_name(self):
         from engraver_ctrl.dsl_joint import insert_j_line, next_joint_name, parse_joint_file
         text = "ADD 0 0 p1\nR 0 0 20 20\nEND\n"
-        out = insert_j_line(text, 1, 0, 0, 20, 3, "A")
-        self.assertIn("J 0 0 20 3 A", out)
+        marks0, _o, _w = parse_joint_file(text)
+        self.assertEqual(next_joint_name(marks0), "J1")
+        out = insert_j_line(text, 1, 0, 0, 20, 3, "J1")
+        self.assertIn("J 0 0 20 3 J1", out)
         marks, _o, _w = parse_joint_file(out)
-        self.assertEqual(next_joint_name(marks), "A")  # unpaired, reuse
-        out2 = insert_j_line(out, 1, 0, 10, 20, 3, "A")
+        self.assertEqual(next_joint_name(marks), "J1")  # unpaired, reuse
+        out2 = insert_j_line(out, 1, 0, 10, 20, 3, "J1")
         marks2, _o, _w = parse_joint_file(out2)
-        self.assertEqual(next_joint_name(marks2), "B")
+        self.assertEqual(next_joint_name(marks2), "J2")
+        # An existing unpaired custom name is still reused first
+        custom = insert_j_line(text, 1, 0, 0, 20, 3, "A")
+        marks_a, _o, _w = parse_joint_file(custom)
+        self.assertEqual(next_joint_name(marks_a), "A")
 
 
 

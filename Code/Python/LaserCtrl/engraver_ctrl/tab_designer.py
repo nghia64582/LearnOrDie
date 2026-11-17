@@ -14,7 +14,12 @@ from engraver_ctrl.dsl_joint import (
     THICKNESS, DEFAULT_TEETH_LENGTH,
     apply_joints, parse_joint_file, collect_preview_warnings,
     world_mark_corners, world_mark_center, pair_color, group_marks,
-    insert_j_line, next_joint_name, add_local_coords,
+    insert_j_line,
+)
+from engraver_ctrl.dsl_mark_ux import (
+    collect_pieces, owning_piece, draft_from_drag,
+    apply_dialog_values, pair_placement_error, format_draft_label,
+    refresh_on_edge,
 )
 
 
@@ -94,6 +99,15 @@ ADD blocks to pair an edge of one piece with a region of
 another. Apply joints expands them to JM/JF (the original
 J lines are commented). Optional M or F forces male/female.
 ROTATE around a J is not supported yet.
+
+Mark joint (Custom): drag on a piece. Coordinates snap to
+1 mm and to a nearby outline edge. Thickness is always the
+sheet thickness (3 mm); only length and position come from
+the drag. After release, a dialog lets you fine-tune x, y,
+length, and name. Names are J1, J2, ...; the second mark of
+a pair reuses the pending name and copies the first mark's
+length. A mark off the edge is the female (JF) side; one
+mark of each pair must lie on an edge (male / JM).
 
 Cards / Raw DSL
 The Shapes panel lists each top-level ADD as a card, or shows
@@ -214,6 +228,7 @@ class DesignerTab(ttk.Frame):
         self.joint_warnings = []
         self._mark_mode = False
         self._mark_drag = None
+        self._mark_dialog_wait = True
         self.build_gui()
 
     def build_gui(self):
@@ -712,6 +727,19 @@ class DesignerTab(ttk.Frame):
             px, py = self.to_canvas(wx, wy)
             self.canvas.xview_moveto(max(0.0, (px - sx) / cw))
             self.canvas.yview_moveto(max(0.0, (py - sy) / ch))
+        self._restore_mark_preview()
+
+    def _restore_mark_preview(self):
+        d = getattr(self, "_mark_preview_state", None)
+        dlg = getattr(self, "_mark_dialog", None)
+        if d is None or dlg is None:
+            return
+        try:
+            if not dlg.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        self._draw_mark_preview(d)
 
     def set_zoom(self, zoom, screen_x=None, screen_y=None):
         zoom = max(self.ZOOM_MIN, min(self.ZOOM_MAX, zoom))
@@ -1296,9 +1324,15 @@ class DesignerTab(ttk.Frame):
     def _toggle_mark_mode(self):
         self._mark_mode = bool(self.mark_mode_var.get())
         self._mark_drag = None
+        self.canvas.delete("jmark_rubber")
+        self.canvas.delete("jmark_hover")
+        self.canvas.delete("jmark_tip")
         if self._mark_mode:
             self.canvas.configure(cursor="crosshair")
-            self.drag_status_var.set("Mark joint: drag a rectangle on a piece")
+            self.drag_status_var.set(
+                "Mark joint: drag on a piece (1 mm snap, thickness "
+                f"{THICKNESS:g} mm)"
+            )
         else:
             self.canvas.configure(cursor="")
             if self.selected_add is None:
@@ -1306,10 +1340,17 @@ class DesignerTab(ttk.Frame):
 
     def _on_mark_press(self, event, px, py):
         wx, wy = self.to_world(px, py)
+        text = self._dsl_text()
+        pieces = collect_pieces(text)
+        marks, outlines, _w = parse_joint_file(text)
+        piece = owning_piece(pieces, wx, wy)
         self._mark_drag = {
-            "x0": wx, "y0": wy, "x1": wx, "y1": wy, "px": px, "py": py,
+            "x0": wx, "y0": wy, "x1": wx, "y1": wy,
+            "px": px, "py": py,
+            "text": text, "pieces": pieces, "piece": piece,
+            "marks": marks, "outlines": outlines,
         }
-        self.canvas.delete("jmark_rubber")
+        self._draw_mark_preview(self._mark_drag)
 
     def _on_mark_motion(self, event):
         d = self._mark_drag
@@ -1318,50 +1359,268 @@ class DesignerTab(ttk.Frame):
         px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         wx, wy = self.to_world(px, py)
         d["x1"], d["y1"] = wx, wy
+        d["px"], d["py"] = px, py
+        self._draw_mark_preview(d)
+
+    def _clear_mark_preview(self):
+        self._mark_preview_state = None
         self.canvas.delete("jmark_rubber")
-        x0, y0 = self.to_canvas(d["x0"], d["y0"])
-        x1, y1 = self.to_canvas(wx, wy)
-        self.canvas.create_rectangle(
-            x0, y0, x1, y1, outline="#0f766e", dash=(4, 3), width=2,
-            tags="jmark_rubber",
+        self.canvas.delete("jmark_hover")
+        self.canvas.delete("jmark_tip")
+
+    def _draft_from_state(self, d):
+        piece = d.get("piece")
+        if piece is None:
+            return None
+        return draft_from_drag(
+            piece, d["x0"], d["y0"], d["x1"], d["y1"],
+            marks=d.get("marks") or [],
         )
+
+    def _draw_mark_preview(self, d):
+        self._clear_mark_preview()
+        self._mark_preview_state = d
+        piece = d.get("piece")
+        if piece is not None:
+            self._draw_piece_hover(piece)
+        draft = self._draft_from_state(d)
+        if draft is not None and (draft.valid or draft.copied_length):
+            x0, y0 = self.to_canvas(draft.world_x, draft.world_y)
+            x1, y1 = self.to_canvas(
+                draft.world_x + draft.world_w,
+                draft.world_y + draft.world_h,
+            )
+            self.canvas.create_rectangle(
+                x0, y0, x1, y1, outline="#0f766e", dash=(4, 3), width=2,
+                tags="jmark_rubber",
+            )
+            label = format_draft_label(draft)
+            self.drag_status_var.set(label)
+            self._draw_mark_tip(d["px"], d["py"], label)
+        elif piece is None:
+            self.drag_status_var.set("Mark joint: drag on a piece")
+            self._draw_mark_tip(d["px"], d["py"], "not on a piece")
+        else:
+            self.drag_status_var.set("Mark joint: drag to set length")
+
+    def _draw_piece_hover(self, piece):
+        # Fill sits under the G-code strokes already drawn; this overlay
+        # is temporary during the drag only.
+        for poly in piece.polygons:
+            coords = []
+            for x, y in poly:
+                coords.extend(self.to_canvas(x, y))
+            if len(coords) < 6:
+                continue
+            self.canvas.create_polygon(
+                *coords, fill="#fef3c7", outline="#d97706", width=3,
+                stipple="gray50", tags="jmark_hover",
+            )
+        for cx, cy, r in piece.circles:
+            x0, y0 = self.to_canvas(cx - r, cy + r)
+            x1, y1 = self.to_canvas(cx + r, cy - r)
+            self.canvas.create_oval(
+                x0, y0, x1, y1, fill="#fef3c7", outline="#d97706",
+                width=3, stipple="gray50", tags="jmark_hover",
+            )
+
+    def _draw_mark_tip(self, px, py, text):
+        if not text:
+            return
+        # Keep the caption off the cursor, inside the current viewport.
+        tx, ty = px + 16, py - 28
+        item = self.canvas.create_text(
+            tx, ty, text=text, anchor="sw",
+            font=canvas_font(bold=True), fill="#111827",
+            tags="jmark_tip",
+        )
+        x1, y1, x2, y2 = self.canvas.bbox(item)
+        pad = 3
+        bg = self.canvas.create_rectangle(
+            x1 - pad, y1 - pad, x2 + pad, y2 + pad,
+            fill="#fffbeb", outline="#d97706", tags="jmark_tip",
+        )
+        self.canvas.tag_lower(bg, item)
 
     def _on_mark_release(self, event):
         d = self._mark_drag
         self._mark_drag = None
-        self.canvas.delete("jmark_rubber")
         if d is None:
+            self._clear_mark_preview()
             return
         px, py = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         wx, wy = self.to_world(px, py)
-        x0, y0, x1, y1 = d["x0"], d["y0"], wx, wy
-        if abs(x1 - x0) < 0.2 or abs(y1 - y0) < 0.2:
-            self.drag_status_var.set("Mark joint: drag was too small")
-            return
-        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-        add_line = self._add_at_world(cx, cy)
-        if add_line is None or add_line not in self.add_blocks:
+        d["x1"], d["y1"] = wx, wy
+        d["px"], d["py"] = px, py
+        piece = d.get("piece")
+        if piece is None:
+            self._clear_mark_preview()
             self.drag_status_var.set("Mark joint: drag on a piece (ADD block)")
-            self._set_joint_status("Mark joint: drag the rectangle on a piece.")
+            self._set_joint_status("Mark joint: start the drag on a piece.")
             return
-        blk = self.add_blocks[add_line]
-        cumx, cumy = blk["cum"]
-        lx, ly, lw, lh = add_local_coords((x0, y0, x1, y1), cumx, cumy)
-        text = self._dsl_text()
-        marks, _outlines, _w = parse_joint_file(text)
-        name = next_joint_name(marks)
-        new_text = insert_j_line(text, add_line, lx, ly, lw, lh, name)
+        draft = self._draft_from_state(d)
+        if draft is None or not draft.valid:
+            self._clear_mark_preview()
+            msg = (draft.message if draft is not None
+                   else "Mark joint: drag on a piece")
+            self.drag_status_var.set(msg)
+            return
+        marks, outlines = d.get("marks") or [], d.get("outlines") or []
+        err = pair_placement_error(draft, marks, outlines)
+        if err:
+            self._clear_mark_preview()
+            self.drag_status_var.set(err)
+            self._set_joint_status(err)
+            messagebox.showwarning("Mark joint", err)
+            return
+        # Leave the rubber band visible under the dialog so the user can
+        # still see the mark while fine-tuning.
+        self._draw_mark_preview(d)
+        self._show_mark_dialog(
+            draft, marks, outlines, d["text"],
+            wait=getattr(self, "_mark_dialog_wait", True),
+        )
+
+    def _show_mark_dialog(self, draft, marks, outlines, text, wait=True):
+        parent = self.winfo_toplevel()
+        win = tk.Toplevel(parent)
+        self._mark_dialog = win
+        win.title("Joint mark")
+        win.resizable(False, False)
+        try:
+            win.transient(parent)
+        except tk.TclError:
+            pass
+        win.result = None
+
+        body = ttk.Frame(win)
+        body.pack(fill="both", expand=True, padx=10, pady=(10, 6))
+
+        kind = ("On edge (male / JM)" if draft.on_edge
+                else "Interior (female / JF)")
+        ttk.Label(body, text=kind, font=self.font).grid(
+            row=0, column=0, columnspan=2, sticky="w",
+        )
+        ttk.Label(
+            body, text=f"Thickness {THICKNESS:g} mm (fixed)",
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 4))
+        if draft.copied_length:
+            ttk.Label(
+                body, text=f"Length copied from {draft.name}",
+            ).grid(row=2, column=0, columnspan=2, sticky="w")
+
+        name_var = tk.StringVar(value=draft.name)
+        x_var = tk.StringVar(value=self._fmt(draft.x))
+        y_var = tk.StringVar(value=self._fmt(draft.y))
+        length_var = tk.StringVar(value=self._fmt(draft.length))
+
+        rows = (("Name", name_var, False),
+                ("X", x_var, False),
+                ("Y", y_var, False),
+                ("Length", length_var, draft.copied_length))
+        entries = {}
+        for i, (label, var, locked) in enumerate(rows, start=3):
+            ttk.Label(body, text=label).grid(
+                row=i, column=0, sticky="w", padx=(0, 8), pady=2,
+            )
+            ent = ttk.Entry(body, textvariable=var, width=12)
+            ent.grid(row=i, column=1, sticky="we", pady=2)
+            if locked:
+                ent.configure(state="disabled")
+            entries[label] = ent
+        body.columnconfigure(1, weight=1)
+        try:
+            (entries["Length"] if not draft.copied_length
+             else entries["Name"]).focus_set()
+        except tk.TclError:
+            pass
+
+        def cancel(_event=None):
+            win.result = None
+            if getattr(self, "_mark_dialog", None) is win:
+                self._mark_dialog = None
+            try:
+                win.destroy()
+            except tk.TclError:
+                pass
+            self._clear_mark_preview()
+            if self._mark_mode:
+                self.drag_status_var.set(
+                    "Mark joint: drag on a piece (1 mm snap, thickness "
+                    f"{THICKNESS:g} mm)"
+                )
+
+        def accept(_event=None):
+            updated, err = apply_dialog_values(
+                draft, x_var.get(), y_var.get(),
+                length_var.get(), name_var.get(),
+            )
+            if err:
+                messagebox.showerror("Joint mark", err, parent=win)
+                return
+            refresh_on_edge(updated, outlines)
+            pair_err = pair_placement_error(updated, marks, outlines)
+            if pair_err:
+                messagebox.showwarning("Joint mark", pair_err, parent=win)
+                return
+            self._clear_mark_preview()
+            if not self._commit_mark(updated, text):
+                return
+            win.result = updated
+            if getattr(self, "_mark_dialog", None) is win:
+                self._mark_dialog = None
+            try:
+                win.destroy()
+            except tk.TclError:
+                pass
+
+        btn_row = ttk.Frame(win)
+        btn_row.pack(fill="x", padx=10, pady=(0, 10))
+        cancel_btn = make_button(btn_row, "Cancel", command=cancel)
+        cancel_btn.pack(side="right")
+        ok_btn = make_button(btn_row, "OK", command=accept)
+        ok_btn.pack(side="right", padx=(0, 6))
+        win.cancel_btn = cancel_btn
+        win.ok_btn = ok_btn
+        win.vars = {
+            "name": name_var, "x": x_var, "y": y_var, "length": length_var,
+        }
+        win.bind("<Escape>", cancel)
+        win.bind("<Return>", accept)
+        win.protocol("WM_DELETE_WINDOW", cancel)
+        if wait:
+            try:
+                win.grab_set()
+            except tk.TclError:
+                pass
+            try:
+                win.wait_window()
+            except tk.TclError:
+                pass
+            self._clear_mark_preview()
+        return win
+
+    def _commit_mark(self, draft, text):
+        new_text = insert_j_line(
+            text, draft.add_line, draft.x, draft.y, draft.w, draft.h,
+            draft.name,
+        )
         if new_text == text:
             self._set_joint_status("Could not find the END of that ADD block.")
-            return
+            messagebox.showerror(
+                "Mark joint",
+                "Could not find the END of that ADD block.",
+            )
+            return False
         self._set_text_input(new_text)
         if self.card_mode:
             self._reload_cards_from_text()
         self.preview_keep_scroll()
         self.drag_status_var.set(
-            f"Marked J {self._fmt(lx)} {self._fmt(ly)} "
-            f"{self._fmt(lw)} {self._fmt(lh)} {name}"
+            f"Marked J {self._fmt(draft.x)} {self._fmt(draft.y)} "
+            f"{self._fmt(draft.w)} {self._fmt(draft.h)} {draft.name}"
         )
+        return True
 
     def _add_at_world(self, wx, wy):
         best, best_depth = None, -1
@@ -1516,7 +1775,7 @@ class DesignerTab(ttk.Frame):
     def _on_drag_cancel(self, _event=None):
         if self._mark_drag is not None:
             self._mark_drag = None
-            self.canvas.delete("jmark_rubber")
+            self._clear_mark_preview()
             self.drag_status_var.set("Mark joint cancelled")
             return
         if self._drag is None:

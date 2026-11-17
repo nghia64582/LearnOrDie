@@ -522,7 +522,7 @@ def apply_joints(text, thickness=THICKNESS, teeth_length=DEFAULT_TEETH_LENGTH):
 
 
 def next_joint_name(marks):
-    """Reuse a currently unpaired name, else A, B, ... Z, A2, ..."""
+    """Reuse a currently unpaired name, else J1, J2, J3, ..."""
     groups = group_marks(marks)
     unpaired = [name for name, items in groups.items()
                 if len([m for m in items if not m.in_rotate]) == 1]
@@ -530,9 +530,9 @@ def next_joint_name(marks):
         # Prefer the most recently written unpaired name (highest line).
         unpaired.sort(key=lambda n: max(m.line for m in groups[n]), reverse=True)
         return unpaired[0]
-    n = 0
+    n = 1
     while True:
-        name = chr(ord("A") + (n % 26)) + ("" if n < 26 else str(n // 26 + 1))
+        name = f"J{n}"
         if name not in groups:
             return name
         n += 1
