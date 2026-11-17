@@ -1,4 +1,5 @@
 # mixed JM/JF with ADD offsets and ROTATE
+# JF x y w h is the rectangle (corner, like R), not the centreline
 JF 10 0 3 100 10 0
 JM 17 0 3 100 10 0 out
 

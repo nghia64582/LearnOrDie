@@ -403,14 +403,9 @@ def _roles_for_pair(m1, m2, outlines):
 
 
 def _jf_params(mark, teeth, first_d):
-    """Centerline-mapped JF command (local coords)."""
-    along_x, length, thick, x, y = mark_axes(mark)
-    if along_x:
-        cx, cy, w, h = x, y + thick / 2, length, thick
-    else:
-        cx, cy, w, h = x + thick / 2, y, thick, length
+    """JF uses the J region rectangle (x, y, w, h), same convention as R/JM."""
     return (
-        f"JF {fmt_num(cx)} {fmt_num(cy)} {fmt_num(w)} {fmt_num(h)} "
+        f"JF {fmt_num(mark.x)} {fmt_num(mark.y)} {fmt_num(mark.w)} {fmt_num(mark.h)} "
         f"{fmt_num(teeth)} {fmt_num(first_d)}"
     )
 

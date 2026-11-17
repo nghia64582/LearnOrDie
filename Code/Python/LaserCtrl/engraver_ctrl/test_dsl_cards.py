@@ -297,7 +297,7 @@ class CardPanelJointTests(unittest.TestCase):
             tab.apply_joints()
             text = tab.get_dsl()
             self.assertIn("JM 0 0 20 3 10 5 in", text)
-            self.assertIn("JF 0 20 20 3 10 5", text)
+            self.assertIn("JF 0 18.5 20 3 10 5", text)
             self.assertIn("# J 0 0 20 3 A", text)
             self.assertIn("R 0 0 20 20", text)
             self.assertNotIn("# R ", text)
@@ -305,7 +305,7 @@ class CardPanelJointTests(unittest.TestCase):
             self.assertEqual(len(cards), 2)
             self.assertIn("JM 0 0 20 3 10 5 in", cards[0].inner)
             self.assertIn("# J 0 0 20 3 A", cards[0].inner)
-            self.assertIn("JF 0 20 20 3 10 5", cards[1].inner)
+            self.assertIn("JF 0 18.5 20 3 10 5", cards[1].inner)
         finally:
             win.destroy()
 

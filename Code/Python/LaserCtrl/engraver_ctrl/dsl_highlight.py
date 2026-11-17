@@ -55,10 +55,10 @@ def _joint_polygons_local(cmd, nums):
         return (x + u, y + v) if along_x else (x + v, y + u)
 
     if cmd == "JF":
+        # (x, y, w, h) is the rectangle corner+size, same as R.
         polys = []
-        hv = thick / 2
         for a, b in teeth_pos:
-            corners = (pt(a, -hv), pt(b, -hv), pt(b, hv), pt(a, hv))
+            corners = (pt(a, 0.0), pt(b, 0.0), pt(b, thick), pt(a, thick))
             polys.append(corners)
         return polys
 

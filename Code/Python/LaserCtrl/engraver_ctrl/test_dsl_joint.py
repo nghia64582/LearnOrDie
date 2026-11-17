@@ -64,7 +64,7 @@ END
 
 
 class JointHelperTests(unittest.TestCase):
-    def test_example_edge_interior_roles_and_centerline(self):
+    def test_example_edge_interior_roles_and_rect(self):
         from engraver_ctrl.dsl_joint import (
             apply_joints, choose_teeth, classify_mark, parse_joint_file,
         )
@@ -76,8 +76,8 @@ class JointHelperTests(unittest.TestCase):
         self.assertEqual(result.applied, 1)
         self.assertEqual(result.skipped, 0)
         self.assertIn("JM 0 0 20 3 10 5 in", result.text)
-        # Centerline of R 0 18.5 20 3 is y=20
-        self.assertIn("JF 0 20 20 3 10 5", result.text)
+        # J region rect 0 18.5 20 3 is also the JF rectangle
+        self.assertIn("JF 0 18.5 20 3 10 5", result.text)
         self.assertIn("# J 0 0 20 3 A", result.text)
         self.assertIn("# J 0 18.5 20 3 A", result.text)
         # Outlines stay; only J lines are commented and JM/JF inserted
@@ -94,9 +94,9 @@ class JointHelperTests(unittest.TestCase):
         from engraver_ctrl.dsl_joint import apply_joints
         result = apply_joints(BOTH_EDGE)
         self.assertEqual(result.applied, 1)
-        # First mark (p1 bottom) -> JM; second (p2 top) -> JF at y=18.5
+        # First mark (p1 bottom) -> JM; second (p2 top) -> JF at the J rect
         self.assertIn("JM 0 0 20 3 10 5 in", result.text)
-        self.assertIn("JF 0 18.5 20 3 10 5", result.text)
+        self.assertIn("JF 0 17 20 3 10 5", result.text)
         # Both outlines stay
         self.assertEqual(result.text.count("R 0 0 20 20"), 2)
         self.assertNotIn("# R ", result.text)
@@ -115,7 +115,7 @@ END
 """
         result = apply_joints(dsl)
         self.assertEqual(result.applied, 1)
-        self.assertIn("JF 0 1.5 20 3 10 5", result.text)
+        self.assertIn("JF 0 0 20 3 10 5", result.text)
         self.assertIn("JM 0 17 20 3 10 5 out", result.text)
 
     def test_both_interior_is_error_and_not_applied(self):
@@ -163,7 +163,7 @@ END
         self.assertEqual(result.applied, 1)
         self.assertTrue(any("short side" in w.message and "4" in w.message
                             for w in result.warnings))
-        self.assertIn("JF 0 20 20 4 10 5", result.text)
+        self.assertIn("JF 0 18 20 4 10 5", result.text)
 
     def test_parse_text_ignores_j(self):
         from engraver_ctrl.dsl_parse import parse_text, all_segments
@@ -323,7 +323,7 @@ class JointGeometryTests(unittest.TestCase):
         self.assertTrue(_point_in_poly(10, 1.5, polys[0]))
         self.assertFalse(_point_in_poly(2.5, 1.5, polys[0]))
 
-        self.assertIn("JF 0 20 20 3 10 5", result.text)
+        self.assertIn("JF 0 18.5 20 3 10 5", result.text)
         female = _block_local(result.text, lambda b: "JF " in b)
         jf_shapes = [s for c, s in parse_text(female)["shapes"] if c == "JF"]
         self.assertTrue(jf_shapes)
@@ -341,7 +341,7 @@ class JointGeometryTests(unittest.TestCase):
 
         result = apply_joints(BOTH_EDGE)
         self.assertIn("JM 0 0 20 3 10 5 in", result.text)
-        self.assertIn("JF 0 18.5 20 3 10 5", result.text)
+        self.assertIn("JF 0 17 20 3 10 5", result.text)
         self.assertEqual(tooth_spans(20, 10, 5), [(5.0, 15.0)])
         male = _first_add_block(result.text)
         self.assertIn("R 0 0 20 20", male)
@@ -476,7 +476,7 @@ class JointTkTests(unittest.TestCase):
             tab.apply_joints()
             text = tab.text_input.get("1.0", "end")
             self.assertIn("JM 0 0 20 3 10 5 in", text)
-            self.assertIn("JF 0 20 20 3 10 5", text)
+            self.assertIn("JF 0 18.5 20 3 10 5", text)
             tab.preview()
             self.root.update_idletasks()
             # After apply, J marks are commented so no jmark overlays

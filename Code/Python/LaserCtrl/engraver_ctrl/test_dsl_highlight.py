@@ -41,7 +41,7 @@ class HighlightHelperTests(unittest.TestCase):
         self.assertTrue(all(h.kind == "JF" for h in hls))
         self.assertTrue(_almost_pts(
             hls[0].polygon,
-            ((8.5, 0.0), (8.5, 10.0), (11.5, 10.0), (11.5, 0.0)),
+            ((10.0, 0.0), (10.0, 10.0), (13.0, 10.0), (13.0, 0.0)),
         ))
 
     def test_jm_closed_comb(self):
@@ -66,10 +66,10 @@ class HighlightHelperTests(unittest.TestCase):
         hls = joint_highlights(dsl)
         self.assertGreaterEqual(len(hls), 1)
         self.assertEqual(hls[0].kind, "JF")
-        # Clockwise 90 about origin, then + (80, 20): (4, -1.5) -> (78.5, 16)
+        # Clockwise 90 about origin, then + (80, 20): (4, 0) -> (80, 16)
         self.assertTrue(_almost_pts(
             hls[0].polygon[:2],
-            ((78.5, 16.0), (78.5, 8.0)),
+            ((80.0, 16.0), (80.0, 8.0)),
         ))
 
     def test_helper_matches_segment_rebuild(self):
@@ -98,6 +98,65 @@ class HighlightHelperTests(unittest.TestCase):
         self.assertTrue(JM_HIGHLIGHT.startswith("#"))
         self.assertTrue(JF_HIGHLIGHT.startswith("#"))
         self.assertNotEqual(JM_HIGHLIGHT, JF_HIGHLIGHT)
+
+    def test_jf_holes_bbox_matches_rectangle(self):
+        from engraver_ctrl.dsl_highlight import joint_highlights
+        from engraver_ctrl.dsl_parse import parse_text, segments_bbox
+
+        # One tooth filling the whole strip: union bbox == the rectangle.
+        cases = [
+            ("JF 0 0 20 3 20 0\n", 0, 0, 20, 3),
+            ("JF 5 8 3 40 40 0\n", 5, 8, 3, 40),
+        ]
+        for dsl, x, y, w, h in cases:
+            with self.subTest(dsl=dsl.strip()):
+                hls = joint_highlights(dsl)
+                self.assertTrue(hls)
+                xs = [px for hl in hls for px, _py in hl.polygon]
+                ys = [py for hl in hls for _px, py in hl.polygon]
+                self.assertAlmostEqual(min(xs), x, places=6)
+                self.assertAlmostEqual(max(xs), x + w, places=6)
+                self.assertAlmostEqual(min(ys), y, places=6)
+                self.assertAlmostEqual(max(ys), y + h, places=6)
+                segs = parse_text(dsl)["shapes"][0][1]
+                bbox = segments_bbox(segs)
+                self.assertAlmostEqual(bbox[0], x, places=6)
+                self.assertAlmostEqual(bbox[1], y, places=6)
+                self.assertAlmostEqual(bbox[2], x + w, places=6)
+                self.assertAlmostEqual(bbox[3], y + h, places=6)
+
+        # Typical multi-hole strip: every vertex stays inside the rectangle
+        # and the holes span the full short side (thickness).
+        dsl = "JF 10 20 50 3 10 5\n"
+        hls = joint_highlights(dsl)
+        self.assertGreaterEqual(len(hls), 1)
+        xs = [px for hl in hls for px, _py in hl.polygon]
+        ys = [py for hl in hls for _px, py in hl.polygon]
+        self.assertGreaterEqual(min(xs), 10 - 1e-9)
+        self.assertLessEqual(max(xs), 60 + 1e-9)
+        self.assertAlmostEqual(min(ys), 20, places=6)
+        self.assertAlmostEqual(max(ys), 23, places=6)
+
+    def test_jf_jm_same_params_share_rectangle(self):
+        from engraver_ctrl.dsl_highlight import joint_highlights
+
+        jf = joint_highlights("JF 0 0 20 3 10 5\n")
+        jm = joint_highlights("JM 0 0 20 3 10 5 out\n")
+        self.assertEqual(len(jf), 1)
+        self.assertEqual(len(jm), 1)
+        jfx = [p[0] for p in jf[0].polygon]
+        jfy = [p[1] for p in jf[0].polygon]
+        jmx = [p[0] for p in jm[0].polygon]
+        jmy = [p[1] for p in jm[0].polygon]
+        self.assertAlmostEqual(min(jfx), 5, places=6)
+        self.assertAlmostEqual(max(jfx), 15, places=6)
+        self.assertAlmostEqual(min(jfy), 0, places=6)
+        self.assertAlmostEqual(max(jfy), 3, places=6)
+        # JM comb occupies the same rectangle as the JF holes.
+        self.assertAlmostEqual(min(jmx), 0, places=6)
+        self.assertAlmostEqual(max(jmx), 20, places=6)
+        self.assertAlmostEqual(min(jmy), 0, places=6)
+        self.assertAlmostEqual(max(jmy), 3, places=6)
 
     def test_invalid_and_non_joint_ignored(self):
         from engraver_ctrl.dsl_highlight import joint_highlights

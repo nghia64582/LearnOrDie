@@ -73,9 +73,10 @@ def _joint_segments(cmd, nums):
 
     segments = []
     if cmd == "JF":
+        # (x, y, w, h) is the rectangle corner+size, same as R.
+        # Holes lie inside it and span the full short side (thickness).
         for a, b in teeth_pos:
-            hv = thick / 2
-            corners = [pt(a, -hv), pt(b, -hv), pt(b, hv), pt(a, hv)]
+            corners = [pt(a, 0.0), pt(b, 0.0), pt(b, thick), pt(a, thick)]
             for i in range(4):
                 p1, p2 = corners[i], corners[(i + 1) % 4]
                 segments.append((p1[0], p1[1], p2[0], p2[1]))

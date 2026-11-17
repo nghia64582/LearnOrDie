@@ -71,19 +71,22 @@ Day doan thang (polyline) tuy y so dinh, giong P nhung
 KHONG noi diem cuoi ve diem dau (hinh ho).
 
 JF x y width height teeth_length first_d
-Mong am: cac lo chu nhat tren dai (x, y, width, height).
-Huong tu dong: canh dai hon la truc doc dai, canh ngan
-la do day. Lo dai teeth_length, cach nhau teeth_length,
-lo dau bat dau cach dau dai first_d. Lo cuoi bi le
-(vuot qua cuoi dai) se bi bo. Chi cat cac lo.
+Mong am: cac lo chu nhat nam dung trong hinh chu nhat
+(x, y, width, height), giong R (x, y la goc, khong phai
+duong trung truc). Duong trung truc la duong giua theo
+canh dai. Huong tu dong: canh dai hon la truc doc dai,
+canh ngan la do day. Lo dai teeth_length, cach nhau
+teeth_length, lo dau bat dau cach dau dai first_d.
+Lo cuoi bi le (vuot qua cuoi dai) se bi bo. Chi cat cac lo.
 
 JM x y width height teeth_length first_d out|in
-Mong duong: duong zigzag (ho, giong M) chay het dai,
-rang trung vi tri voi lo cua JF (cung teeth_length,
-first_d). Do cao rang = do day dai.
+Mong duong: duong zigzag (ho, giong M) chay het dai.
+Cung x y width height teeth_length first_d voi JF thi
+rang va lo khop nhau trong cung hinh chu nhat.
+Do cao rang = do day dai.
 out (+): rang nho ve phia x+width / y+height.
 in  (-): rang nho ve phia x / y (goc cua manh).
-Vd: JF 10 0 3 100 10 0  va  JM 17 0 3 100 10 0 out
+Vd: JF 0 0 3 100 10 0  va  JM 0 0 3 100 10 0 out
 
 J x y width height NAME [M|F]
 Joint mark (not cut). Place two J with the same NAME inside
@@ -1743,10 +1746,9 @@ class DesignerTab(ttk.Frame):
 
         segments = []
         if cmd == "JF":
+            # (x, y, w, h) la hinh chu nhat (goc, giong R); lo nam ben trong.
             for a, b in teeth_pos:
-                # x (doc) / y (ngang) la truc doi xung cua lo
-                hv = thick / 2
-                corners = [pt(a, -hv), pt(b, -hv), pt(b, hv), pt(a, hv)]
+                corners = [pt(a, 0.0), pt(b, 0.0), pt(b, thick), pt(a, thick)]
                 for i in range(4):
                     p1, p2 = corners[i], corners[(i + 1) % 4]
                     segments.append((p1[0], p1[1], p2[0], p2[1]))

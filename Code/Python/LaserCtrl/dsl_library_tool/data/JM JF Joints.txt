@@ -6,15 +6,17 @@ Sample mortise (JF) and tenon (JM) pair, plus a J mark (never cut)
 
 [DSL]
 # JF x y width height teeth_length first_d
-#    (x, y) is the centreline of the strip. Cuts the holes only.
+#    (x, y) is the rectangle corner, same as R. Holes lie inside
+#    [x, x+width] x [y, y+height]. Cuts the holes only.
 # JM x y width height teeth_length first_d out|in
-#    out: teeth toward x+width / y+height; in: toward x / y.
+#    Same rectangle convention. out: teeth toward x+width / y+height;
+#    in: toward x / y. Same params as JF -> teeth and holes mate.
 # J  x y width height NAME [M|F]
 #    Joint mark, never cut. Custom can expand a pair to JM/JF.
 
 ADD 0 0 mortise
 R 0 0 20 40
-JF 20 0 3 40 10 5
+JF 17 0 3 40 10 5
 END
 
 ADD 28 0 tenon
