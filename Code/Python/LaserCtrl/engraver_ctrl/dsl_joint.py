@@ -13,9 +13,11 @@ from dataclasses import dataclass, field
 
 # Sheet thickness (mm). Adjustable later; used to validate the mark short side.
 THICKNESS = 3.0
-# Default tooth length (mm). first_d is chosen so the tooth/gap pattern
-# (same length teeth and gaps, as in JM/JF) is centred on the joint.
-DEFAULT_TEETH_LENGTH = 10.0
+# Odd integer k: the joint length L is split into k equal segments.
+# teeth_length = first_d = L/k, so JF holes sit on even segments
+# (2, 4, ...) with solid material at both ends. Default 5.
+DEFAULT_TEETH_DIVISIONS = 5
+MIN_TEETH_DIVISIONS = 3
 THICKNESS_TOL = 0.05
 EDGE_TOL = 0.05
 LENGTH_TOL = 0.05
@@ -97,25 +99,36 @@ def tooth_spans(length, teeth, first_d):
     return spans
 
 
-def choose_teeth(length, teeth_length=DEFAULT_TEETH_LENGTH):
-    """Return (teeth_length, first_d) centred on the joint line.
+def normalize_teeth_divisions(k):
+    """Return (odd k >= 3, error_or_None)."""
+    try:
+        value = float(k)
+    except (TypeError, ValueError):
+        return None, "k must be an odd integer >= 3"
+    if abs(value - round(value)) > 1e-9:
+        return None, "k must be an odd integer >= 3"
+    value = int(round(value))
+    if value < MIN_TEETH_DIVISIONS or value % 2 == 0:
+        return None, "k must be an odd integer >= 3"
+    return value, None
 
-    Uses the existing JM/JF convention: teeth of equal length, gaps of the
-    same length, a leftover last tooth is not emitted (so first_d is set
-    so the used span (2n-1)*teeth sits in the middle).
+
+def choose_teeth(length, k=DEFAULT_TEETH_DIVISIONS):
+    """Return (teeth_length, first_d) = (L/k, L/k) for an odd k >= 3.
+
+    The joint of length L is split into k equal segments. JF holes and
+    matching JM teeth occupy the even segments 2, 4, ..., leaving solid
+    material at both ends (and in the odd gaps). The pattern is symmetric,
+    so the two pieces mate in either orientation.
     """
     length = float(length)
-    teeth = float(teeth_length)
     if length <= 0:
         return None
-    if teeth > length + 1e-9:
-        return (length, 0.0)
-    n = max(1, int((length / teeth + 1) // 2))
-    while n > 1 and (2 * n - 1) * teeth > length + 1e-9:
-        n -= 1
-    used = (2 * n - 1) * teeth
-    first_d = max(0.0, (length - used) / 2)
-    return (teeth, first_d)
+    k_val, err = normalize_teeth_divisions(k)
+    if err:
+        return None
+    teeth = length / k_val
+    return (teeth, teeth)
 
 
 def mark_axes(mark):
@@ -432,10 +445,14 @@ def _jm_params(mark, teeth, first_d, outlines):
     ), direction
 
 
-def apply_joints(text, thickness=THICKNESS, teeth_length=DEFAULT_TEETH_LENGTH):
+def apply_joints(text, thickness=THICKNESS, k=DEFAULT_TEETH_DIVISIONS):
     """Expand J marks into JM/JF. Comments original J lines only; outlines stay."""
+    k_val, k_err = normalize_teeth_divisions(k)
     marks, outlines, warnings = parse_joint_file(text)
     warnings = collect_preview_warnings(marks, outlines, warnings, thickness)
+    if k_err:
+        warnings.append(JointWarning("error", k_err))
+        return ApplyResult(text=text, warnings=warnings, applied=0, skipped=1)
     lines = text.splitlines()
     # Keep a trailing newline if the original had one (splitlines drops it).
     had_trailing = text.endswith("\n")
@@ -481,7 +498,7 @@ def apply_joints(text, thickness=THICKNESS, teeth_length=DEFAULT_TEETH_LENGTH):
                 warnings.append(JointWarning("error", err + "; not applied", m1.line))
             skipped += 1
             continue
-        chosen = choose_teeth(min(len1, len2), teeth_length)
+        chosen = choose_teeth(min(len1, len2), k_val)
         if not chosen:
             warnings.append(JointWarning(
                 "error", f"Joint '{name}' has non-positive length; not applied",

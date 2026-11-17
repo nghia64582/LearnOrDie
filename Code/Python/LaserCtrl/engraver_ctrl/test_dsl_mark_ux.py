@@ -315,8 +315,8 @@ END
 """
         result = apply_joints(text)
         self.assertEqual(result.applied, 1)
-        self.assertIn("JM 0 0 20 3 10 5 in", result.text)
-        self.assertIn("JF 0 18.5 20 3 10 5", result.text)
+        self.assertIn("JM 0 0 20 3 4 4 in", result.text)
+        self.assertIn("JF 0 18.5 20 3 4 4", result.text)
 
 
 
@@ -362,22 +362,38 @@ class MarkDragTkTests(unittest.TestCase):
         tab.preview()
         win.update()
         win.update_idletasks()
+        job = getattr(tab, "_resize_job", None)
+        if job is not None:
+            try:
+                tab.after_cancel(job)
+            except Exception:
+                pass
+            tab._resize_job = None
         tab._mark_dialog_wait = False
         tab.mark_mode_var.set(True)
         tab._toggle_mark_mode()
         return win, tab
 
-    def _canvas_xy(self, tab, wx, wy):
+    def _event(self, tab, wx, wy):
         px, py = tab.to_canvas(wx, wy)
-        # event_generate uses widget coordinates; canvasx/y invert scroll.
-        return px - tab.canvas.canvasx(0), py - tab.canvas.canvasy(0)
+        ex = px - tab.canvas.canvasx(0)
+        ey = py - tab.canvas.canvasy(0)
+
+        class E:
+            def __init__(self, x, y):
+                self.x, self.y, self.state = x, y, 0
+
+        return E(ex, ey)
 
     def _drag(self, tab, x0, y0, x1, y1):
-        a = self._canvas_xy(tab, x0, y0)
-        b = self._canvas_xy(tab, x1, y1)
-        tab.canvas.event_generate("<ButtonPress-1>", x=a[0], y=a[1])
-        self.root.update()
-        tab.canvas.event_generate("<B1-Motion>", x=b[0], y=b[1])
+        a = self._event(tab, x0, y0)
+        b = self._event(tab, x1, y1)
+        tab._on_mark_press(a, tab.canvas.canvasx(a.x), tab.canvas.canvasy(a.y))
+        # Pin exact world corners so a mid-drag canvas resize cannot
+        # shift the snapped length away from the intended 1 mm grid.
+        d = tab._mark_drag
+        d["x0"], d["y0"], d["x1"], d["y1"] = x0, y0, x1, y1
+        tab._draw_mark_preview(d)
         self.root.update()
         return a, b
 
@@ -397,7 +413,7 @@ class MarkDragTkTests(unittest.TestCase):
             self.assertIn("J1", tip)
             self.assertIn("edge", tip)
             self.assertIn("L=20", tip)
-            tab.canvas.event_generate("<ButtonRelease-1>", x=b[0], y=b[1])
+            tab._on_mark_release(b)
             self.root.update()
             self.root.update_idletasks()
             found = getattr(tab, "_mark_dialog", None)

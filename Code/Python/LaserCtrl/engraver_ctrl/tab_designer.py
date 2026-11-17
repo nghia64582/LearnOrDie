@@ -11,8 +11,9 @@ from common.ui import (
 from engraver_ctrl.dsl_highlight import polygons_from_joint_segments
 from engraver_ctrl.dsl_card_panel import CardPanel
 from engraver_ctrl.dsl_joint import (
-    THICKNESS, DEFAULT_TEETH_LENGTH,
+    THICKNESS, DEFAULT_TEETH_DIVISIONS,
     apply_joints, parse_joint_file, collect_preview_warnings,
+    normalize_teeth_divisions,
     world_mark_corners, world_mark_center, pair_color, group_marks,
     insert_j_line,
 )
@@ -91,7 +92,8 @@ rang va lo khop nhau trong cung hinh chu nhat.
 Do cao rang = do day dai.
 out (+): rang nho ve phia x+width / y+height.
 in  (-): rang nho ve phia x / y (goc cua manh).
-Vd: JF 0 0 3 100 10 0  va  JM 0 0 3 100 10 0 out
+Vd: JF 0 0 3 100 20 20  va  JM 0 0 3 100 20 20 out
+(L=100, k=5: teeth_length = first_d = 20).
 
 J x y width height NAME [M|F]
 Joint mark (not cut). Place two J with the same NAME inside
@@ -99,6 +101,12 @@ ADD blocks to pair an edge of one piece with a region of
 another. Apply joints expands them to JM/JF (the original
 J lines are commented). Optional M or F forces male/female.
 ROTATE around a J is not supported yet.
+Apply joints uses teeth_length = L/k and first_d = L/k,
+where L is the joint length and k is an odd integer >= 3
+(default 5, set in the Joints panel). The joint is split
+into k equal segments; JF holes and matching JM teeth
+occupy segments 2, 4, ... so both ends stay solid and the
+pieces mate in either orientation.
 
 Mark joint (Custom): drag on a piece. Coordinates snap to
 1 mm and to a nearby outline edge. Thickness is always the
@@ -314,11 +322,20 @@ class DesignerTab(ttk.Frame):
 
         # --- Joints (J marks -> JM/JF) ---
         joint_frame = tk.LabelFrame(left_frame, text="Joints", font=self.font)
+        jinfo = tk.Frame(joint_frame)
+        jinfo.pack(anchor="w")
         tk.Label(
-            joint_frame,
-            text=f"Thickness {THICKNESS:g} mm, tooth {DEFAULT_TEETH_LENGTH:g} mm",
-            fg="gray",
-        ).pack(anchor="w")
+            jinfo, text=f"Thickness {THICKNESS:g} mm", fg="gray",
+        ).pack(side="left")
+        tk.Label(jinfo, text="k", fg="gray").pack(side="left", padx=(8, 2))
+        self.teeth_k_var = tk.StringVar(value=str(int(DEFAULT_TEETH_DIVISIONS)))
+        self.teeth_k_entry = ttk.Entry(
+            jinfo, textvariable=self.teeth_k_var, width=4,
+        )
+        self.teeth_k_entry.pack(side="left")
+        tk.Label(
+            jinfo, text="(odd, >= 3)", fg="gray",
+        ).pack(side="left", padx=(4, 0))
         jbtn = tk.Frame(joint_frame)
         jbtn.pack(fill="x", pady=(2, 0))
         make_button(jbtn, "Apply joints", command=self.apply_joints)\
@@ -1293,9 +1310,20 @@ class DesignerTab(ttk.Frame):
                 font=canvas_font(bold=True), tags=tags,
             )
 
+    def _teeth_k(self):
+        raw = "5"
+        if hasattr(self, "teeth_k_var"):
+            raw = self.teeth_k_var.get()
+        return normalize_teeth_divisions(raw)
+
     def apply_joints(self):
         text = self._dsl_text()
-        result = apply_joints(text)
+        k, err = self._teeth_k()
+        if err:
+            messagebox.showerror("Apply joints", err)
+            self._set_joint_status(err)
+            return
+        result = apply_joints(text, k=k)
         self.joint_warnings = result.warnings
         extra = []
         if result.applied:

@@ -13,15 +13,18 @@ Sample mortise (JF) and tenon (JM) pair, plus a J mark (never cut)
 #    in: toward x / y. Same params as JF -> teeth and holes mate.
 # J  x y width height NAME [M|F]
 #    Joint mark, never cut. Custom can expand a pair to JM/JF.
+# Apply joints uses teeth_length = L/k and first_d = L/k, k odd
+# (default 5). For L=40, k=5: teeth=8, first_d=8. Holes at
+# [8,16] and [24,32]; solid material at both ends.
 
 ADD 0 0 mortise
 R 0 0 20 40
-JF 17 0 3 40 10 5
+JF 17 0 3 40 8 8
 END
 
 ADD 28 0 tenon
 R 0 0 20 40
-JM 0 0 3 40 10 5 out
+JM 0 0 3 40 8 8 out
 END
 
 ADD 0 50 marked
