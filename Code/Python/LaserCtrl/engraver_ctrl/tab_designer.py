@@ -483,6 +483,15 @@ class DesignerTab(ttk.Frame):
             self.text_input.configure(autoseparators=True)
         self._last_dsl = self._norm_dsl(text)
 
+    def load_dsl(self, text):
+        """Replace the editor contents with ``text`` and refresh preview/cards."""
+        self._set_text_input(text or "")
+        if self.card_mode:
+            self._load_cards_from_current_text(wrap=True)
+        else:
+            self._last_dsl = self._norm_dsl(self.text_input.get("1.0", "end"))
+        self.preview()
+
     def _commit_cards_to_text(self):
         assembled = self.card_panel.assemble()
         self.card_panel.dirty = False
