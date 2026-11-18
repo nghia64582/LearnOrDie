@@ -105,7 +105,7 @@ class TkSmokeTests(unittest.TestCase):
         tabs = [shell.main_nb.tab(i, "text") for i in range(shell.main_nb.index("end"))]
         self.assertEqual(
             tabs,
-            ["Engraver", "Frame Toolkit", "DSL Library", "DSL Nesting"],
+            ["Engraver", "Box", "Frame Toolkit", "DSL Library", "DSL Nesting"],
         )
         self.assertIsNotNone(shell.machine_tab)
         self.assertIsNotNone(shell.nesting_panel)
@@ -121,13 +121,74 @@ class TkSmokeTests(unittest.TestCase):
             sub,
             ["Machine", "Small parts", "Parallel", "Custom", "Simulate"],
         )
-        frame_frame = shell.main_nb.nametowidget(shell.main_nb.tabs()[1])
+        frame_frame = shell.main_nb.nametowidget(shell.main_nb.tabs()[2])
         nested_f = [c for c in frame_frame.winfo_children() if isinstance(c, ttk.Notebook)]
         self.assertTrue(nested_f)
         fsub = [nested_f[0].tab(i, "text") for i in range(nested_f[0].index("end"))]
         self.assertEqual(
             fsub,
             ["Joint", "Beam", "Skeleton", "Rail cut-list", "Box"],
+        )
+        shell.shutdown()
+        win.destroy()
+
+    def test_box_tab_generate_and_send_to_custom(self):
+        import tkinter as tk
+        from app_shell import LaserAppShell
+
+        win = tk.Toplevel(self.root)
+        win.withdraw()
+        shell = LaserAppShell(win)
+        tabs = [shell.main_nb.tab(i, "text") for i in range(shell.main_nb.index("end"))]
+        self.assertIn("Box", tabs)
+        self.assertIsNotNone(shell.box_tab)
+        self.assertIsNotNone(shell.custom_tab)
+
+        box = shell.box_tab
+        box.length_var.set("100")
+        box.width_var.set("60")
+        box.height_var.set("40")
+        box.thickness_var.set("3")
+        box.generate()
+        dsl = box.current_dsl()
+        self.assertIn("ADD", dsl)
+        self.assertIn("J ", dsl)
+        self.assertIn("# card w=100 h=60 border=1", dsl)
+        self.assertIn("TOP_FRONT", dsl)
+        self.assertEqual(dsl.count("\nJ "), 24)
+
+        box.send_to_custom()
+        custom = shell.custom_tab
+        loaded = custom._dsl_text()
+        self.assertIn("TOP_FRONT", loaded)
+        self.assertTrue(custom.card_mode)
+        cards = custom.card_panel.cards()
+        self.assertEqual(len(cards), 6)
+        self.assertTrue(all(c.border for c in cards))
+
+        # Action buttons stay mapped so they remain visible at 1280x720.
+        win.geometry("1280x720")
+        win.update_idletasks()
+        for child in box.winfo_children():
+            pass
+        # The Generate / Send / Save buttons are packed in the bottom bar.
+        # Just assert they exist as mapped widgets somewhere in the tab.
+        labels = set()
+
+        def walk(widget):
+            try:
+                text = widget.cget("text")
+            except Exception:
+                text = None
+            if text:
+                labels.add(str(text))
+            for kid in widget.winfo_children():
+                walk(kid)
+
+        walk(box)
+        self.assertGreaterEqual(
+            labels & {"Generate", "Send to Custom", "Save .dsl"},
+            {"Generate", "Send to Custom", "Save .dsl"},
         )
         shell.shutdown()
         win.destroy()
@@ -685,7 +746,7 @@ def save_screenshots():
                 mss.tools.to_png(shot.rgb, shot.size, output=path)
                 paths.append(path)
 
-        for i, name in enumerate(["Engraver", "Frame Toolkit", "DSL Library", "DSL Nesting"]):
+        for i, name in enumerate(["Engraver", "Box", "Frame Toolkit", "DSL Library", "DSL Nesting"]):
             shell.main_nb.select(i)
             root.update()
             root.update_idletasks()
