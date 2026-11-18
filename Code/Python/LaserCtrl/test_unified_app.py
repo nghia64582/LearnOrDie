@@ -248,6 +248,7 @@ class TkSmokeTests(unittest.TestCase):
         self.assertFalse(hasattr(tab, "help_frame"))
         self.assertFalse(hasattr(tab, "generate_bounds_gcode"))
         self.assertIn("JM x y", FORMAT_HELP_TEXT)
+        self.assertIn("L/k", FORMAT_HELP_TEXT)
         # Help is a button that opens a small scrollable popup, not an inline panel
         win.deiconify()
         win.update()
@@ -259,6 +260,7 @@ class TkSmokeTests(unittest.TestCase):
         body = help_win.help_text.get("1.0", "end")
         self.assertIn("JF x y", body)
         self.assertIn("JM x y", body)
+        self.assertIn("L/k", body)
         self.assertEqual(str(help_win.help_text.cget("state")), "disabled")
         self.assertIn("yview", str(help_win.help_scroll.cget("command")))
         first = help_win.help_text.yview()
