@@ -1,0 +1,19 @@
+{
+  "name": "kafka-sim",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mô phỏng trực quan cách Apache Kafka hoạt động (producer, broker, topic, partition, replication, consumer group, rebalance, lag) bằng HTML Canvas.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "start": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

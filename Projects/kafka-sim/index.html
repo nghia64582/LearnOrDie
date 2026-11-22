@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Kafka Simulator – mô phỏng Apache Kafka</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header id="topbar">
+      <h1>🛰️ Kafka Simulator</h1>
+      <div class="controls">
+        <button id="btn-run" class="primary">▶ Chạy</button>
+        <button id="btn-pause">⏸ Tạm dừng</button>
+        <button id="btn-stop">⏹ Dừng</button>
+        <label class="speed">Tốc độ
+          <input id="speed" type="range" min="0.25" max="5" step="0.25" value="1" />
+          <span id="speed-val">1x</span>
+        </label>
+        <label>Kịch bản
+          <select id="preset"></select>
+        </label>
+      </div>
+      <div id="clock">⏱ 0.0s · <span id="status">Đã dừng</span></div>
+    </header>
+    <div id="layout">
+      <aside id="sidebar">
+        <div id="params"></div>
+        <p id="pending" class="pending" hidden>⚠️ Có thay đổi cấu trúc cụm. Bấm <b>⏹ Dừng</b> để áp dụng.</p>
+      </aside>
+      <main>
+        <div id="hint" class="hint"></div>
+        <div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+        <section id="metrics"></section>
+        <section class="panels">
+          <div class="panel">
+            <h3>📈 Throughput (message/giây)</h3>
+            <canvas id="chart-tp" class="chart"></canvas>
+          </div>
+          <div class="panel">
+            <h3>📉 Tổng lag theo group</h3>
+            <canvas id="chart-lag" class="chart"></canvas>
+          </div>
+        </section>
+        <section class="panels">
+          <div class="panel">
+            <h3>📊 Lag từng partition</h3>
+            <div id="lag-table"></div>
+          </div>
+          <div class="panel">
+            <h3>📜 Nhật ký sự kiện</h3>
+            <ul id="events"></ul>
+          </div>
+        </section>
+        <section class="panel legend">
+          <h3>📘 Chú giải &amp; khái niệm</h3>
+          <div class="legend-grid">
+            <div><span class="dot" style="background:#38bdf8"></span><b>Chấm tròn bay</b>: message từ producer tới leader của partition.</div>
+            <div><span class="sq"></span><b>Ô vuông viền màu group</b>: lô message consumer vừa poll (số = số message trong lô).</div>
+            <div><span class="tick">✓</span><b>Dấu ✓ xanh</b>: ack trả về producer (acks=1 hoặc all).</div>
+            <div><span class="cell"></span><b>Ô màu trong partition</b>: 1 message ở 1 offset. Ô mờ: leader có nhưng chưa đủ ISR sao chép (trên HW).</div>
+            <div><span class="hw"></span><b>Vạch đỏ nét đứt HW</b> (high watermark): consumer chỉ đọc được message dưới vạch này.</div>
+            <div><span class="tri" style="border-bottom-color:#f59e0b"></span><b>Tam giác màu group</b>: offset đã commit của group trên partition. Khoảng cách tới HW là <b>lag</b>.</div>
+            <div><span class="tri small" style="border-top-color:#60a5fa;border-bottom:0"></span><b>Tam giác nhỏ phía trên</b>: LEO của follower (đã sao chép tới đâu), màu theo broker.</div>
+            <div><span class="chip lead">★B1</span><span class="chip isr">B2</span><span class="chip out">B3</span> Leader · follower trong ISR · follower ngoài ISR (xám: broker sập).</div>
+          </div>
+          <details>
+            <summary>Giải thích nhanh các khái niệm Kafka</summary>
+            <ul class="concepts">
+              <li><b>Producer</b>: ứng dụng gửi message. Chọn partition theo key (hash) hoặc round-robin / sticky nếu không có key.</li>
+              <li><b>Broker</b>: một server Kafka. Nhiều broker = cluster.</li>
+              <li><b>Topic / Partition</b>: topic chia thành các partition; mỗi partition là log chỉ ghi nối, message được đánh số <b>offset</b> tăng dần. Thứ tự chỉ được đảm bảo trong một partition.</li>
+              <li><b>Replication, leader, follower, ISR</b>: mỗi partition có RF bản sao. Leader nhận ghi/đọc, follower sao chép. ISR (in-sync replicas) là các bản sao theo kịp leader. Leader sập thì một follower trong ISR được bầu làm leader mới.</li>
+              <li><b>LEO / HW</b>: LEO là offset tiếp theo sẽ ghi. HW là offset mà mọi ISR đều đã có, consumer chỉ thấy message dưới HW.</li>
+              <li><b>acks</b>: 0 (không chờ), 1 (leader ghi xong), all (mọi ISR ghi xong). acks càng cao càng an toàn nhưng độ trễ càng lớn.</li>
+              <li><b>Consumer group</b>: các consumer cùng group chia nhau partition (mỗi partition đúng 1 consumer). Các group khác nhau đọc độc lập.</li>
+              <li><b>Offset commit &amp; lag</b>: consumer lưu lại offset đã xử lý. Lag = HW − offset đã commit, tức số message còn chờ xử lý.</li>
+              <li><b>Rebalance</b>: khi consumer vào/ra group, partition được chia lại; trong lúc đó group ngừng đọc.</li>
+              <li><b>Retention</b>: Kafka không xoá message khi đã đọc, mà xoá theo thời gian/dung lượng. Consumer quá chậm có thể mất message.</li>
+            </ul>
+          </details>
+        </section>
+      </main>
+    </div>
+    <div id="tooltip" hidden></div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
