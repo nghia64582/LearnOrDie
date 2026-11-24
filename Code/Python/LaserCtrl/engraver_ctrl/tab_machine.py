@@ -13,6 +13,7 @@ import re
 import math
 from datetime import datetime
 
+from engraver_ctrl.gcode_arcs import arc_length
 from engraver_ctrl.tab_simulate import TabSimulate
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
 from common.ui import ui_font, mono_font, make_button, SIZE_SM
@@ -44,7 +45,7 @@ JOG_KEYS = {
 def estimate_gcode_times(lines):
     """
     Ước lượng thời gian thực thi (giây) cho từng dòng gcode, dựa trên khoảng cách
-    di chuyển và feedrate hiện hành (modal). Trả về list song song với `lines`.
+    di chuyển và feedrate hiện hành (modal). G2/G3 dùng độ dài cung (I/J hoặc R), không dùng dây cung. Trả về list song song với `lines`.
     """
     times = []
     pos = {"X": 0.0, "Y": 0.0, "Z": 0.0}
@@ -81,6 +82,23 @@ def estimate_gcode_times(lines):
         dy = target["Y"] - pos["Y"]
         dz = target["Z"] - pos["Z"]
         distance = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+        # G2/G3: use the arc length, not the chord (a cap or hole
+        # would otherwise be badly underestimated).
+        if motion in (2, 3):
+            try:
+                xy_len = arc_length(
+                    pos["X"], pos["Y"],
+                    target["X"], target["Y"],
+                    clockwise=(motion == 2),
+                    i=params.get("I"),
+                    j=params.get("J"),
+                    r=params.get("R"),
+                )
+                distance = math.hypot(xy_len, dz)
+            except ValueError:
+                pass
+
         pos = target
 
         if motion is not None and distance > 0:
@@ -502,7 +520,7 @@ class MachineTab(tk.Frame):
         self.preview.load(content)
 
         if not self.preview.steps:
-            self._show_preview_message(f"No G0/G1 moves in:\n{path}")
+            self._show_preview_message(f"No G0/G1/G2/G3 moves in:\n{path}")
 
         self.preview_info.config(
             text=f"Preview: {path} ({len(self.preview.steps)} moves)"

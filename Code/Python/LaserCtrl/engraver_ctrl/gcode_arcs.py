@@ -1,4 +1,4 @@
-"""G2/G3 arc interpolation for the Simulate tab (G17 / XY, Y up).
+"""G2/G3 arc interpolation for Simulate and Machine (G17 / XY, Y up).
 
 I/J are offsets from the start point to the centre (GRBL / LinuxCNC).
 R is a signed radius: positive = arc of at most 180 deg, negative = the
@@ -154,6 +154,34 @@ def interpolate_g2g3(
         x1, y1, x2, y2, cx, cy, clockwise,
         max_chord=max_chord, min_segs=min_segs,
     )
+
+
+
+def arc_length(
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    clockwise: bool,
+    i: Optional[float] = None,
+    j: Optional[float] = None,
+    r: Optional[float] = None,
+) -> float:
+    """Exact XY arc length (mm) of a G2/G3 move. I/J wins over R."""
+    has_ij = i is not None or j is not None
+    if has_ij:
+        cx, cy = center_from_ij(x1, y1, float(i or 0.0), float(j or 0.0))
+    elif r is not None:
+        cx, cy = center_from_r(x1, y1, x2, y2, float(r), clockwise)
+    else:
+        return _hypot(x2 - x1, y2 - y1)
+    radius = _hypot(x1 - cx, y1 - cy)
+    if radius <= _TOL:
+        return _hypot(x2 - x1, y2 - y1)
+    a0 = math.atan2(y1 - cy, x1 - cx)
+    a1 = math.atan2(y2 - cy, x2 - cx)
+    full = _hypot(x2 - x1, y2 - y1) <= _TOL
+    return radius * arc_sweep(a0, a1, clockwise, full)
 
 
 def word_value(text: str, letter: str) -> Optional[float]:

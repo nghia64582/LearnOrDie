@@ -11,6 +11,7 @@ from engraver_ctrl.gcode_arcs import (
     center_from_r,
     interpolate_arc,
     interpolate_g2g3,
+    arc_length,
 )
 
 
@@ -187,6 +188,70 @@ class ParseGcodeArcTests(unittest.TestCase):
         # with equal Y).
         y_span = max(s["y2"] for s in arc_steps) - min(s["y2"] for s in arc_steps)
         self.assertGreater(y_span, 1.0)
+
+
+
+class MachineEstimateTests(unittest.TestCase):
+    def test_arc_length_semicircle(self):
+        length = arc_length(0, 5, 10, 5, clockwise=False, i=5, j=0)
+        self.assertAlmostEqual(length, math.pi * 5, places=6)
+
+    def test_estimate_uses_arc_not_chord(self):
+        from engraver_ctrl.tab_machine import estimate_gcode_times
+        lines = [
+            "G90",
+            "G0 X0 Y5",
+            "G3 X10 Y5 I5 J0 F300",
+        ]
+        times = estimate_gcode_times(lines)
+        self.assertEqual(len(times), 3)
+        # Semicircle 5*pi mm at 300 mm/min; must not use the 10 mm chord.
+        expected = (5 * math.pi) / 300 * 60
+        self.assertAlmostEqual(times[2], expected, places=5)
+        chord_time = 10 / 300 * 60
+        self.assertNotAlmostEqual(times[2], chord_time, places=3)
+
+    def test_estimate_r_word_and_g1_still_chord(self):
+        from engraver_ctrl.tab_machine import estimate_gcode_times, MIN_LINE_TIME
+        lines = [
+            "G0 X0 Y0",
+            "G1 X10 Y0 F600",
+            "G2 X0 Y0 R5",
+        ]
+        times = estimate_gcode_times(lines)
+        self.assertAlmostEqual(times[1], 10 / 600 * 60, places=5)
+        # G2 R5 back to origin: semicircle length 5*pi at last feed 600.
+        self.assertAlmostEqual(times[2], (5 * math.pi) / 600 * 60, places=4)
+
+    def test_machine_preview_loads_arcs(self):
+        from engraver_ctrl.tab_machine import GcodePreviewRenderer
+        import tkinter as tk
+        try:
+            root = tk.Tk()
+            root.withdraw()
+        except tk.TclError as e:
+            self.skipTest(f"Tk not available: {e}")
+        try:
+            canvas = tk.Canvas(root, width=200, height=200)
+            preview = GcodePreviewRenderer(canvas)
+            g = (
+                "G0 X0 Y5\n"
+                "G3 X10 Y5 I5 J0 F250\n"
+                "G0 X6.5 Y40\n"
+                "G2 X3.5 Y40 I-1.5 J0\n"
+            )
+            preview.load(g)
+            self.assertGreater(preview.current_step, 0)
+            self.assertEqual(preview.current_step, len(preview.steps))
+            arc_steps = [s for s in preview.steps if s.get("arc")]
+            self.assertGreater(len(arc_steps), 8)
+            ys = [s["y2"] for s in arc_steps]
+            # The G3 cap bulges down toward Y=0; the hole has Y around 40.
+            self.assertLess(min(ys), 1.0)
+            self.assertGreater(max(ys), 38.0)
+        finally:
+            root.destroy()
+
 
 
 if __name__ == "__main__":
