@@ -17,6 +17,8 @@ from engraver_ctrl.cut_plan_builder import (
     CUT_EXTRA_MARGIN,
     CutPlan,
     Part,
+    arch_polyline,
+    piece_polygon,
     build_cut_plan,
     format_hole_field,
     format_parts_text,
@@ -61,7 +63,9 @@ PACKING_HELP = (
     "adjusted if needed. Usable length is the full stock length L "
     "(including both semicircles). Leftover waste is kept as one block; "
     "a piece with a rounded end is placed at a stick tip when that does "
-    "not use an extra stick."
+    "not use an extra stick. A rounded end is a convex cap whose apex "
+    "sits on that end; the arc replaces the straight cut there, except "
+    "at the factory stick tips (Y=0 and Y=L)."
 )
 
 
@@ -733,8 +737,9 @@ class SmallPartsTab(tk.Frame):
                         self._text(cx, mid, text="waste", fill="#666666")
 
             for p in stick.placements:
-                poly = stadium_slice_polygon(
-                    stick.x_left, stick.width, stick.length, p.y_start, p.y_end,
+                poly = piece_polygon(
+                    stick.x_left, stick.width, p.y_start, p.y_end,
+                    p.is_cut_down, p.is_cut_up,
                 )
                 coords = self._poly(poly)
                 color = PIECE_COLORS[p.part_index % len(PIECE_COLORS)]
@@ -769,12 +774,9 @@ class SmallPartsTab(tk.Frame):
             )
 
         half = plan.stick_width / 2.0
-        for cx, cy, is_up in plan.arches:
-            # Semicircle of radius width/2, matching G-code.
-            if is_up:
-                points = self._arc_points(cx, cy, half, 0.0, math.pi, 18)
-            else:
-                points = self._arc_points(cx, cy, half, math.pi, 2 * math.pi, 18)
+        for cx, cy, bulge_up in plan.arches:
+            # Convex cap, same path as the G2/G3 export (apex on the end cut).
+            points = arch_polyline(cx, cy, half, bulge_up, n=18)
             coords = self._poly(points)
             if len(coords) >= 4:
                 self.canvas.create_line(
@@ -787,9 +789,3 @@ class SmallPartsTab(tk.Frame):
                 fill=CUT_COLOR, width=2, capstyle=tk.ROUND,
             )
 
-    def _arc_points(self, cx, cy, r, a0, a1, n):
-        pts = []
-        for i in range(n + 1):
-            a = a0 + (a1 - a0) * i / n
-            pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
-        return pts

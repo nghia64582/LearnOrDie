@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
@@ -14,8 +15,8 @@ class Part:
     """One piece to cut from a stick.
 
     - length: finished piece length along the stick (mm)
-    - is_cut_down: cut a 180° arch at the bottom (low-Y) end
-    - is_cut_up: cut a 180° arch at the top (high-Y) end
+    - is_cut_down: convex rounded cap at the bottom (low-Y) end
+    - is_cut_up: convex rounded cap at the top (high-Y) end
     - hole_centers: hole positions (mm) measured from the bottom of the piece
     """
     length: float
@@ -54,9 +55,12 @@ class CutPlan:
 
     - cuts: (start_x, y, length_of_cut) horizontal G-code cuts
     - holes: (center_x, center_y)
-    - arches: (center_x, center_y, is_up)
-        is_up True  => lower arch, opening upward (G3)
-        is_up False => upper arch, opening downward (G2)
+    - arches: (center_x, center_y, bulge_up)
+        A convex stadium cap of radius width/2.
+        bulge_up False => rounded bottom: centre at y0 + W/2, arc
+            spans y0 .. y0+W/2 and bulges down (apex on the y0 cut).
+        bulge_up True  => rounded top: centre at y1 - W/2, arc
+            spans y1-W/2 .. y1 and bulges up (apex on the y1 cut).
     """
     stick_width: float
     cuts: List[Tuple[float, float, float]]
@@ -94,9 +98,9 @@ class CutPlan:
             s += f"  CenterX: {cx:.3f}, CenterY: {cy:.3f}\n"
         s += f"Radius: {self.radius:.3f}\n"
         s += "Arches:\n"
-        for (cx, cy, is_up) in self.arches:
-            dir_str = "Up" if is_up else "Down"
-            s += f"  CenterX: {cx:.3f}, CenterY: {cy:.3f}, Direction: {dir_str}\n"
+        for (cx, cy, bulge_up) in self.arches:
+            dir_str = "bulge +Y" if bulge_up else "bulge -Y"
+            s += f"  CenterX: {cx:.3f}, CenterY: {cy:.3f}, {dir_str}\n"
         if self.unplaced:
             s += f"Unplaced: {self.unplaced}\n"
         return s
@@ -236,6 +240,111 @@ def arrange_bin(
     return ordered, y0
 
 
+
+def rounded_end_arches(
+    x_center: float,
+    y_start: float,
+    y_end: float,
+    width: float,
+    is_cut_down: bool,
+    is_cut_up: bool,
+) -> List[Tuple[float, float, bool]]:
+    """Return (center_x, center_y, bulge_up) caps for one piece.
+
+    The cap is convex (stadium-like): the semicircle's apex sits on the
+    nearest end (y_start or y_end) and bulges toward that end, not into
+    a concave notch in the piece.
+    """
+    r = width / 2.0
+    out: List[Tuple[float, float, bool]] = []
+    if is_cut_down:
+        # Centre in the piece, apex at y_start, bulge toward -Y.
+        out.append((x_center, y_start + r, False))
+    if is_cut_up:
+        out.append((x_center, y_end - r, True))
+    return out
+
+
+def arch_apex_y(center_y: float, bulge_up: bool, width: float) -> float:
+    r = width / 2.0
+    return center_y + r if bulge_up else center_y - r
+
+
+def arch_polyline(
+    cx: float,
+    cy: float,
+    radius: float,
+    bulge_up: bool,
+    n: int = 18,
+) -> List[Tuple[float, float]]:
+    """Points from the left diameter end to the right, along the cap.
+
+    Matches G-code: start (cx - r, cy) -> end (cx + r, cy).
+    bulge_up True  travels through (cx, cy + r) (G2, CW, Y up).
+    bulge_up False travels through (cx, cy - r) (G3, CCW, Y up).
+    """
+    a0 = math.pi
+    a1 = 0.0 if bulge_up else (2.0 * math.pi)
+    pts = []
+    for i in range(n + 1):
+        a = a0 + (a1 - a0) * i / n
+        pts.append((cx + radius * math.cos(a), cy + radius * math.sin(a)))
+    return pts
+
+
+
+def piece_polygon(
+    x_left: float,
+    width: float,
+    y_start: float,
+    y_end: float,
+    round_bottom: bool,
+    round_top: bool,
+    n: int = 16,
+) -> List[Tuple[float, float]]:
+    """Outline of a finished piece, with convex caps when flagged.
+
+    Walks left side (top to bottom), bottom end, right side (bottom to
+    top), then the top end, so the fill matches the cut shape.
+    """
+    r = width / 2.0
+    cx = x_left + r
+    left, right = x_left, x_left + width
+    y_start = float(y_start)
+    y_end = float(y_end)
+    if y_end <= y_start + 1e-12:
+        return []
+
+    def cap(cy: float, bulge_up: bool, reverse: bool = False):
+        pts = arch_polyline(cx, cy, r, bulge_up, n=n)
+        return list(reversed(pts)) if reverse else pts
+
+    pts: List[Tuple[float, float]] = []
+    # Left side, top toward bottom.
+    left_top = y_end - r if round_top else y_end
+    left_bot = y_start + r if round_bottom else y_start
+    pts.append((left, left_top))
+    if left_bot < left_top:
+        pts.append((left, left_bot))
+    # Bottom end: straight, or convex cap bulging down (left to right).
+    if round_bottom:
+        pts.extend(cap(y_start + r, bulge_up=False)[1:])
+    else:
+        pts.append((right, y_start))
+    # Right side, bottom toward top.
+    right_top = y_end - r if round_top else y_end
+    if right_top > (y_start + r if round_bottom else y_start):
+        pts.append((right, right_top))
+    # Top end: straight, or convex cap bulging up, right to left.
+    if round_top:
+        # arch_polyline is left->right through +Y; reverse for right->left.
+        top = cap(y_end - r, bulge_up=True, reverse=True)
+        pts.extend(top[1:])
+    else:
+        pts.append((left, y_end))
+    return pts
+
+
 def build_cut_plan(
     stock_length: float,
     parts: List[Part],
@@ -314,10 +423,11 @@ def build_cut_plan(
             for hole_rel in part.hole_centers:
                 holes_out.append((x_center, y_start + hole_rel))
 
-            if part.is_cut_down:
-                arches_out.append((x_center, y_start + (width / 2.0), True))
-            if part.is_cut_up:
-                arches_out.append((x_center, y_end - (width / 2.0), False))
+            for arch in rounded_end_arches(
+                x_center, y_start, y_end, width,
+                part.is_cut_down, part.is_cut_up,
+            ):
+                arches_out.append(arch)
 
             y_cursor = y_end
 
@@ -333,6 +443,20 @@ def build_cut_plan(
             # extra tip cut at L when leftover sits at the top.
             pass
 
+        # A convex cap's apex sits on the end Y. A straight cut there
+        # would nick or flatten the tip, so the arc replaces that cut
+        # when the end is interior. Factory tips (Y=0 and Y=L) keep the
+        # optional end cut: it only touches the existing rounded tip.
+        rounded_apex = set()
+        for pl in layout.placements:
+            if pl.is_cut_down:
+                rounded_apex.add(round(pl.y_start, 6))
+            if pl.is_cut_up:
+                rounded_apex.add(round(pl.y_end, 6))
+
+        def _is_factory_tip(y: float) -> bool:
+            return abs(y) <= _TOL or abs(y - stock_length) <= _TOL
+
         # Dedup cut Ys while preserving order.
         seen = set()
         for y in cut_ys:
@@ -340,6 +464,8 @@ def build_cut_plan(
             if key in seen:
                 continue
             if y < -_TOL or y > stock_length + _TOL:
+                continue
+            if key in rounded_apex and not _is_factory_tip(y):
                 continue
             if (y < stock_length - _TOL) or include_end_cut:
                 seen.add(key)

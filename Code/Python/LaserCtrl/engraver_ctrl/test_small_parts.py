@@ -18,11 +18,15 @@ from engraver_ctrl.cut_handler import (
 from engraver_ctrl.cut_plan_builder import (
     CUT_EXTRA_MARGIN,
     Part,
+    arch_apex_y,
+    arch_polyline,
     arrange_bin,
     build_cut_plan,
     format_parts_text,
     parse_hole_field,
     parse_parts_text,
+    piece_polygon,
+    rounded_end_arches,
 )
 from engraver_ctrl.extended_cut_export import export_gcode_extended
 
@@ -213,15 +217,86 @@ class ArrangeAndPlanTests(unittest.TestCase):
         self.assertAlmostEqual(plan.waste_percent(), 20.0)
         self.assertAlmostEqual(plan.used_length(), 80.0)
 
-    def test_arch_positions(self):
+    def test_arch_positions_and_convex_direction(self):
         parts = [P(50, down=True, up=True)]
         plan = build_cut_plan(50, parts, width=10, gap=5, hole_radius=1.5,
                               method="heuristic")
-        # Lower arch center at y=5, upper at y=45, x=5.
+        # Bottom cap centre at y0+W/2=5, bulge down; top centre at 45, bulge up.
         self.assertEqual(len(plan.arches), 2)
-        ups = {(round(x, 5), round(y, 5), u) for x, y, u in plan.arches}
-        self.assertIn((5.0, 5.0, True), ups)
-        self.assertIn((5.0, 45.0, False), ups)
+        arches = {(round(x, 5), round(y, 5), b) for x, y, b in plan.arches}
+        self.assertIn((5.0, 5.0, False), arches)
+        self.assertIn((5.0, 45.0, True), arches)
+        # Apex of each cap sits on the nearest end cut.
+        by_flag = {b: (cx, cy) for cx, cy, b in plan.arches}
+        self.assertAlmostEqual(arch_apex_y(by_flag[False][1], False, 10), 0.0)
+        self.assertAlmostEqual(arch_apex_y(by_flag[True][1], True, 10), 50.0)
+
+    def test_arch_polyline_bulges_toward_the_cut(self):
+        # Midpoint of the polyline is the apex.
+        down = arch_polyline(5, 15, 5, bulge_up=False, n=18)
+        self.assertAlmostEqual(down[0][0], 0.0)
+        self.assertAlmostEqual(down[0][1], 15.0)
+        self.assertAlmostEqual(down[-1][0], 10.0)
+        self.assertAlmostEqual(down[-1][1], 15.0)
+        mid = down[len(down) // 2]
+        self.assertAlmostEqual(mid[0], 5.0, places=5)
+        self.assertAlmostEqual(mid[1], 10.0, places=5)  # y0 = 10, bulges down
+
+        up = arch_polyline(5, 35, 5, bulge_up=True, n=18)
+        mid = up[len(up) // 2]
+        self.assertAlmostEqual(mid[0], 5.0, places=5)
+        self.assertAlmostEqual(mid[1], 40.0, places=5)  # y1 = 40, bulges up
+        # Every interior point stays on the bulge side (not a notch).
+        self.assertTrue(all(pt[1] <= 15.0 + 1e-9 for pt in down))
+        self.assertTrue(all(pt[1] >= 35.0 - 1e-9 for pt in up))
+
+    def test_interior_rounded_end_omits_straight_cut(self):
+        # Two rounded-bottom pieces: the first sits at the factory tip,
+        # the second has an interior rounded bottom at Y=30 whose arc
+        # must replace the straight cut (a line at 30 would clip the tip).
+        parts = [P(30, down=True), P(30, down=True), P(20)]
+        plan = build_cut_plan(100, parts, width=10, gap=5, hole_radius=1.5,
+                              include_end_cut=True, method="heuristic")
+        cut_ys = sorted(y for _x, y, _l in plan.cuts)
+        self.assertTrue(any(abs(y - 0.0) < 1e-9 for y in cut_ys), cut_ys)
+        self.assertTrue(any(abs(y - 60.0) < 1e-9 for y in cut_ys), cut_ys)
+        self.assertFalse(any(abs(y - 30.0) < 1e-9 for y in cut_ys), cut_ys)
+        interior = [
+            (cy, bulge)
+            for cx, cy, bulge in plan.arches
+            if abs(arch_apex_y(cy, bulge, 10) - 30.0) < 1e-9
+        ]
+        self.assertEqual(len(interior), 1)
+        self.assertFalse(interior[0][1])
+        self.assertAlmostEqual(interior[0][0], 35.0)
+
+    def test_factory_tip_keeps_end_cut(self):
+        # Rounded bottom at the factory tip still gets the Y=0 straight cut.
+        parts = [P(50, down=True)]
+        plan = build_cut_plan(114, parts, width=10, gap=5, hole_radius=1.5,
+                              include_end_cut=True, method="heuristic")
+        cut_ys = [y for _x, y, _l in plan.cuts]
+        self.assertTrue(any(abs(y - 0.0) < 1e-9 for y in cut_ys))
+        self.assertTrue(any(abs(y - 50.0) < 1e-9 for y in cut_ys))
+        cx, cy, bulge_up = plan.arches[0]
+        self.assertFalse(bulge_up)
+        self.assertAlmostEqual(cy, 5.0)
+        self.assertAlmostEqual(arch_apex_y(cy, bulge_up, 10), 0.0)
+
+    def test_piece_polygon_has_convex_caps(self):
+        poly = piece_polygon(0, 10, 20, 60, True, True, n=16)
+        ys = [y for x, y in poly]
+        self.assertAlmostEqual(min(ys), 20.0, places=5)
+        self.assertAlmostEqual(max(ys), 60.0, places=5)
+        # Apex of each cap is on the centreline, not a square corner.
+        bottom = min(poly, key=lambda p: p[1])
+        top = max(poly, key=lambda p: p[1])
+        self.assertAlmostEqual(bottom[0], 5.0, places=5)
+        self.assertAlmostEqual(top[0], 5.0, places=5)
+
+    def test_rounded_end_helper_matches_plan(self):
+        arches = rounded_end_arches(5, 20, 70, 10, True, True)
+        self.assertEqual(arches, [(5, 25.0, False), (5, 65.0, True)])
 
 
 class GcodeExportTests(unittest.TestCase):
@@ -238,9 +313,80 @@ class GcodeExportTests(unittest.TestCase):
         self.assertIn("M3 S1000", text)
         self.assertIn("F250", text)
         self.assertIn("G1 X", text)
-        self.assertIn("G2 ", text)  # hole and/or upper arch
-        self.assertIn("G3 ", text)  # lower arch
+        self.assertIn("G2 ", text)  # hole
+        self.assertIn("G3 ", text)  # rounded bottom bulges -Y
         self.assertTrue(text.strip().endswith("; END"))
+
+    def _arch_moves(self, text, width=10.0):
+        """Return (cmd, x0, y0, x1, y1, i, j) for rounded-cap G2/G3 moves."""
+        lines = []
+        for ln in text.splitlines():
+            ln = ln.split(";", 1)[0].strip()
+            if ln:
+                lines.append(ln)
+        out = []
+        last_xy = (None, None)
+        half = width / 2.0
+        for ln in lines:
+            parts = ln.replace("G0+", "G0 ").split()
+            cmd = parts[0].upper()
+            coords = {}
+            for tok in parts[1:]:
+                coords[tok[0].upper()] = float(tok[1:])
+            if cmd in ("G0", "G00") and "X" in coords:
+                last_xy = (coords.get("X", last_xy[0]), coords.get("Y", last_xy[1]))
+            if cmd in ("G2", "G3", "G02", "G03") and abs(coords.get("I", 0) - half) < 1e-6:
+                x1, y1 = coords["X"], coords["Y"]
+                out.append((cmd[:2], last_xy[0], last_xy[1], x1, y1,
+                            coords.get("I", 0.0), coords.get("J", 0.0)))
+                last_xy = (x1, y1)
+        return out
+
+    def test_gcode_bottom_arc_bulges_down(self):
+        # Interior piece with only a rounded bottom: G3 from left to right.
+        parts = [P(40), P(40, down=True)]
+        plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
+        # Find the rounded piece placement.
+        rounded = [p for s in plan.sticks for p in s.placements if p.is_cut_down]
+        self.assertEqual(len(rounded), 1)
+        y0 = rounded[0].y_start
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "cut_plan.gcode")
+            export_gcode_extended(plan, path, feedrate=250, power=1000)
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        moves = self._arch_moves(text, width=10)
+        self.assertEqual(len(moves), 1)
+        cmd, x0, y0c, x1, y1, i, j = moves[0]
+        self.assertEqual(cmd, "G3")
+        self.assertAlmostEqual(y0c, y0 + 5.0)
+        self.assertAlmostEqual(y1, y0 + 5.0)
+        self.assertAlmostEqual(x1 - x0, 10.0)
+        self.assertAlmostEqual(i, 5.0)
+        self.assertAlmostEqual(j, 0.0)
+        # CCW from left to right, Y up, bulges toward y0 (down).
+        self.assertAlmostEqual(y0c - 5.0, y0)
+
+    def test_gcode_top_arc_bulges_up(self):
+        parts = [P(40, up=True), P(40)]
+        plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
+        rounded = [p for s in plan.sticks for p in s.placements if p.is_cut_up]
+        self.assertEqual(len(rounded), 1)
+        y1p = rounded[0].y_end
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "cut_plan.gcode")
+            export_gcode_extended(plan, path, feedrate=250, power=1000)
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        moves = self._arch_moves(text, width=10)
+        self.assertEqual(len(moves), 1)
+        cmd, x0, yc, x1, y1, i, j = moves[0]
+        self.assertEqual(cmd, "G2")
+        self.assertAlmostEqual(yc, y1p - 5.0)
+        self.assertAlmostEqual(y1, y1p - 5.0)
+        self.assertAlmostEqual(x1 - x0, 10.0)
+        self.assertAlmostEqual(i, 5.0)
+        self.assertAlmostEqual(j, 0.0)
 
 
 class TabModeSyncTests(unittest.TestCase):

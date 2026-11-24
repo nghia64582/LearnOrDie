@@ -49,22 +49,20 @@ def export_gcode_extended(
             )
             f.write("M5\n\n")
 
-        for (center_x, center_y, is_up) in plan.arches:
+        # Rounded caps: start at the left of the diameter (cx - W/2, cy),
+        # end at the right (cx + W/2, cy), I=W/2 J=0. In G17 (Y up):
+        # G2 CW bulges +Y (rounded top), G3 CCW bulges -Y (rounded bottom).
+        for (center_x, center_y, bulge_up) in plan.arches:
             start_x = center_x - plan.stick_width / 2
             end_x = center_x + plan.stick_width / 2
             y = center_y
+            cmd = "G2" if bulge_up else "G3"
             f.write(f"G0 X{start_x:.3f} Y{y:.3f}\n")
             f.write(f"M3 S{pwr}\n")
-            if is_up:
-                f.write(
-                    f"G3 X{end_x:.3f} Y{y:.3f} "
-                    f"I{plan.stick_width / 2:.3f} J0.000 F{feed}\n"
-                )
-            else:
-                f.write(
-                    f"G2 X{end_x:.3f} Y{y:.3f} "
-                    f"I{plan.stick_width / 2:.3f} J0.000 F{feed}\n"
-                )
+            f.write(
+                f"{cmd} X{end_x:.3f} Y{y:.3f} "
+                f"I{plan.stick_width / 2:.3f} J0.000 F{feed}\n"
+            )
             f.write("M5\n\n")
 
         f.write("G0 X0 Y0\n")
