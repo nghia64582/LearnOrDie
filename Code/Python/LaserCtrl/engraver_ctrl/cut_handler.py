@@ -1,144 +1,217 @@
-import random
-from typing import List, Tuple
-import xml.etree.ElementTree as ET
+"""1D cutting-stock helpers for the Small parts tab.
 
-def generate(d: int, n: int = 20) -> List[int]:
-    # Generate a list of n random
-    # Try to repeat a number
-    result = []
-    while len(result) < n:
-        for n_bars in range(1, 4):
-            bar_length = random.randint(10, random.randint(10, d))
-            result += [bar_length] * n_bars
-            if len(result) >= n:
-                result = result[:n]
-                break
-    return result
+Packs piece lengths into the fewest sticks of a given capacity.
+No kerf is applied; the caller treats usable stick length as L.
+"""
 
-def place_into_bin(bins: List[List[int]], d: int, item: int, idx: int):
-    """Try to place item into bins[idx]. Return True if success."""
-    if sum(bins[idx]) + item <= d:
-        bins[idx].append(item)
-        return True
-    return False
+from __future__ import annotations
 
-def cut_ffd(d: int, a: List[int]) -> List[List[int]]:
-    """First Fit Decreasing. Very fast, near-optimal."""
-    pieces = sorted(a, reverse=True)
-    bins = []
+from typing import List, Optional, Sequence, Tuple
 
-    for item in pieces:
-        placed = False
-        for i in range(len(bins)):
-            if place_into_bin(bins, d, item, i):
-                placed = True
-                break
-        if not placed:
-            bins.append([item])
+# Lengths within this tolerance are treated as fitting / equal.
+_TOL = 1e-9
 
-    return bins
 
-def cut_bfd(d: int, a: List[int]) -> List[List[int]]:
-    """Best Fit Decreasing."""
-    pieces = sorted(a, reverse=True)
-    bins = []
+def _fits(used: float, item: float, capacity: float) -> bool:
+    return used + item <= capacity + _TOL
 
-    for item in pieces:
-        best_idx = -1
-        best_remain = d + 1
 
-        for i in range(len(bins)):
-            cur_sum = sum(bins[i])
-            if cur_sum + item <= d:
-                remain = d - (cur_sum + item)
-                if remain < best_remain:
-                    best_remain = remain
-                    best_idx = i
+def _pack_decreasing(
+    capacity: float,
+    lengths: Sequence[float],
+    indices: Sequence[int],
+    pick: str,
+) -> List[List[int]]:
+    """Place the given indices, longest first.
 
-        if best_idx == -1:
-            bins.append([item])
+    pick='first' is First Fit Decreasing; pick='best' is Best Fit Decreasing.
+    Each returned bin is a list of original part indices (placement order
+    is pack order, not a geometric arrangement).
+    """
+    order = sorted(indices, key=lambda i: (-float(lengths[i]), i))
+    bins: List[List[int]] = []
+    used: List[float] = []
+
+    for i in order:
+        item = float(lengths[i])
+        if pick == "best":
+            best_idx = -1
+            best_remain = capacity + 1.0
+            for b, u in enumerate(used):
+                if _fits(u, item, capacity):
+                    remain = capacity - (u + item)
+                    if remain < best_remain - _TOL:
+                        best_remain = remain
+                        best_idx = b
+            if best_idx >= 0:
+                bins[best_idx].append(i)
+                used[best_idx] += item
+            else:
+                bins.append([i])
+                used.append(item)
         else:
-            bins[best_idx].append(item)
-
+            placed = False
+            for b, u in enumerate(used):
+                if _fits(u, item, capacity):
+                    bins[b].append(i)
+                    used[b] += item
+                    placed = True
+                    break
+            if not placed:
+                bins.append([i])
+                used.append(item)
     return bins
 
-def local_optimize_swap(bins: List[List[int]], d: int) -> List[List[int]]:
-    """Try simple 1-1 swaps to reduce number of bins."""
-    improved = True
-    count = 10000
 
-    while improved:
-        improved = False
-        count -= 1
-        if count % 10000 == 0:
-            print(count)
-        if count <= 0:
-            break
-        for i in range(len(bins)):
-            for j in range(i + 1, len(bins)):
-                A, B = bins[i], bins[j]
+def cut_ffd(capacity: float, lengths: Sequence[float]) -> List[List[int]]:
+    """First Fit Decreasing. Returns bins of original indices."""
+    return _pack_decreasing(
+        capacity, lengths, range(len(lengths)), pick="first"
+    )
 
-                # Try swap each pair a in A, b in B
-                for ai in range(len(A)):
-                    for bi in range(len(B)):
-                        a_item = A[ai]
-                        b_item = B[bi]
 
-                        new_A_sum = sum(A) - a_item + b_item
-                        new_B_sum = sum(B) - b_item + a_item
+def cut_bfd(capacity: float, lengths: Sequence[float]) -> List[List[int]]:
+    """Best Fit Decreasing. Returns bins of original indices."""
+    return _pack_decreasing(
+        capacity, lengths, range(len(lengths)), pick="best"
+    )
 
-                        if new_A_sum <= d and new_B_sum <= d:
-                            # Accept swap
-                            A[ai], B[bi] = B[bi], A[ai]
-                            improved = True
 
-                # After swapping, if one bin becomes empty, remove it
-                if sum(bins[j]) == 0:
-                    bins.pop(j)
-                    return bins  # restructure => restart
+def _bin_score(bins: List[List[int]]) -> Tuple[int, int]:
+    """Fewer bins is better. Tie-break: stable (0)."""
+    return (len(bins), 0)
 
-    # Finally sort bins by fill level (optional)
-    bins.sort(key=lambda x: sum(x), reverse=True)
+
+def pack_heuristic(
+    capacity: float,
+    lengths: Sequence[float],
+    indices: Optional[Sequence[int]] = None,
+) -> List[List[int]]:
+    """Best of FFD and BFD (fewer sticks; FFD on a tie)."""
+    if indices is None:
+        indices = list(range(len(lengths)))
+    ffd = _pack_decreasing(capacity, lengths, indices, pick="first")
+    bfd = _pack_decreasing(capacity, lengths, indices, pick="best")
+    if _bin_score(bfd) < _bin_score(ffd):
+        return bfd
+    return ffd
+
+
+def pack_exact(
+    capacity: float,
+    lengths: Sequence[float],
+    indices: Optional[Sequence[int]] = None,
+    time_limit: float = 2.0,
+) -> List[List[int]]:
+    """Exact min-stick packing via CP-SAT. Raises if ortools is missing."""
+    from ortools.sat.python import cp_model
+
+    if indices is None:
+        indices = list(range(len(lengths)))
+    items = list(indices)
+    n = len(items)
+    if n == 0:
+        return []
+
+    # Scale to integers for CP-SAT.
+    def decimals(x: float) -> int:
+        s = f"{float(x):.6f}".rstrip("0").rstrip(".")
+        return len(s.split(".")[1]) if "." in s else 0
+
+    max_dec = max([decimals(capacity)] + [decimals(lengths[i]) for i in items])
+    scale = 10 ** min(max_dec, 4)
+    cap = int(round(float(capacity) * scale))
+    L = [int(round(float(lengths[i]) * scale)) for i in items]
+    max_bins = n
+
+    model = cp_model.CpModel()
+    # x[j][b] = item j assigned to bin b
+    x = [[model.NewBoolVar(f"x_{j}_{b}") for b in range(max_bins)]
+         for j in range(n)]
+    used = [model.NewBoolVar(f"u_{b}") for b in range(max_bins)]
+
+    for j in range(n):
+        model.Add(sum(x[j][b] for b in range(max_bins)) == 1)
+
+    for b in range(max_bins):
+        model.Add(sum(L[j] * x[j][b] for j in range(n)) <= cap * used[b])
+        # Force bin order so the assignment is unique up to permutation.
+        if b + 1 < max_bins:
+            model.Add(used[b] >= used[b + 1])
+
+    model.Minimize(sum(used))
+
+    solver = cp_model.CpSolver()
+    solver.parameters.max_time_in_seconds = time_limit
+    solver.parameters.num_search_workers = 1
+    status = solver.Solve(model)
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        raise RuntimeError("Exact packer found no feasible layout")
+
+    bins: List[List[int]] = []
+    for b in range(max_bins):
+        if solver.Value(used[b]):
+            group = [items[j] for j in range(n) if solver.Value(x[j][b])]
+            bins.append(group)
     return bins
 
-def cut_optimize(d: int, a: List[int]) -> List[List[int]]:
-    """FFD + Local Optimization"""
-    bins = cut_ffd(d, a)
-    bins = local_optimize_swap(bins, d)
-    return bins
 
-def compute_cut_lines_fixed(bins: List[List[int]], d: int, r: int, c: int,
-                            include_end_cut: bool = False) -> List[Tuple[float, float, float]]:
+def pack_pieces(
+    capacity: float,
+    lengths: Sequence[float],
+    method: str = "auto",
+    time_limit: float = 2.0,
+) -> Tuple[List[List[int]], List[int]]:
+    """Pack lengths into sticks of `capacity`.
+
+    method:
+      - 'heuristic' or 'ffd' / 'bfd': no ortools
+      - 'exact': CP-SAT (requires ortools)
+      - 'auto': exact when ortools is available, else best of FFD/BFD;
+        falls back to the heuristic if the exact solve fails
+
+    Returns (bins, unplaced). Unplaced indices are pieces with length
+    <= 0 or longer than capacity. No kerf is subtracted.
     """
-    Trả về danh sách các đường cắt cần thực hiện theo định dạng:
-        (start_x, y, length)
-    - start_x: toạ độ x bắt đầu đường cắt (mm)
-    - y: toạ độ theo chiều dài que (mm) nơi đặt đường cắt (đường song song Ox)
-    - length: độ dài đường cắt (mm)
+    unplaced = [
+        i for i, raw in enumerate(lengths)
+        if float(raw) <= _TOL or float(raw) > float(capacity) + _TOL
+    ]
+    placeable = [i for i in range(len(lengths)) if i not in set(unplaced)]
+    if not placeable:
+        return [], unplaced
 
-    Quy ước:
-    - Que i (i = 0,1,2,...) có cạnh trái tại x = i*(r+c)
-      Ta bắt đầu cut ở start_x = i*(r+c) - 1 (dư 1 mm về phía trái)
-    - Chiều dài cut = r + 2 (dư 1 mm hai đầu)
-    - Với mỗi que: tạo cut tại y = 0 (đầu que) rồi các vị trí cumsum sau mỗi miếng (nếu pos < d)
-    - Nếu include_end_cut=True thì cũng tạo cut tại pos == d
-    """
-    cut_lines: List[Tuple[float, float, float]] = []
+    method = (method or "auto").lower()
+    bins: List[List[int]]
+    if method == "ffd":
+        bins = _pack_decreasing(capacity, lengths, placeable, pick="first")
+    elif method == "bfd":
+        bins = _pack_decreasing(capacity, lengths, placeable, pick="best")
+    elif method == "heuristic":
+        bins = pack_heuristic(capacity, lengths, placeable)
+    elif method == "exact":
+        bins = pack_exact(capacity, lengths, placeable, time_limit=time_limit)
+    elif method == "auto":
+        try:
+            bins = pack_exact(
+                capacity, lengths, placeable, time_limit=time_limit
+            )
+        except Exception:
+            bins = pack_heuristic(capacity, lengths, placeable)
+    else:
+        raise ValueError(f"Unknown packing method: {method}")
+    return bins, unplaced
 
-    cut_len = r + 2  # mỗi đường cắt dài r + 2 mm (1mm mỗi đầu)
 
-    for i, pieces in enumerate(bins):
-        start_x = i * (r + c) - 1  # que 0 => -1 ; que 1 => (r+c)-1 ; ...
-        # luôn cần cắt ở y = 0 để cắt phần thừa đầu
-        cut_lines.append((start_x, 0.0, cut_len))
-
-        pos = 0
-        for piece in pieces:
-            pos += piece
-            # Nếu pos == d thì thường không cần cắt (mép cuối),
-            # nhưng nếu người dùng muốn, bật include_end_cut=True
-            if pos < d or (include_end_cut and pos == d):
-                cut_lines.append((start_x, float(pos), cut_len))
-            # nếu pos > d => input không hợp lệ (miếng > d), ta vẫn bỏ qua
-
-    return cut_lines
+def cut_optimize(
+    capacity: float,
+    lengths: Sequence[float],
+) -> List[List[int]]:
+    """Backward-compatible wrapper: heuristic bins of original indices."""
+    bins, unplaced = pack_pieces(capacity, lengths, method="heuristic")
+    if unplaced:
+        # Previous API always opened a new bin; pieces longer than the
+        # stick cannot be placed and are omitted here. Call pack_pieces
+        # directly if you need the unplaced list.
+        pass
+    return bins

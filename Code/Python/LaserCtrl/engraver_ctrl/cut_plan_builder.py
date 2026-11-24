@@ -1,20 +1,23 @@
-from dataclasses import dataclass
-from typing import List, Tuple
-import math
+from __future__ import annotations
 
-# IMPORT cut_optimize từ module hiện có (cut_handler)
-# sửa import nếu tên module khác
-from engraver_ctrl.cut_handler import cut_optimize
+import math
+from dataclasses import dataclass, field
+from typing import List, Optional, Sequence, Tuple
+
+from engraver_ctrl.cut_handler import pack_pieces
+
+_TOL = 1e-9
+CUT_EXTRA_MARGIN = 1.0  # mm overcut on each side of a stick
 
 
 @dataclass
 class Part:
-    """
-    Mô tả một chi tiết nhỏ cần cắt.
-    - length: chiều dài chi tiết (mm)
-    - is_cut_down: True nếu bo/cắt ở đầu dưới (mép dưới) (bo 180°)
-    - is_cut_up: True nếu bo/cắt ở đầu trên (mép trên) (bo 180°)
-    - hole_centers: danh sách vị trí các tâm lỗ (mm) tính từ mép dưới của chi tiết
+    """One piece to cut from a stick.
+
+    - length: finished piece length along the stick (mm)
+    - is_cut_down: convex rounded cap at the bottom (low-Y) end
+    - is_cut_up: convex rounded cap at the top (high-Y) end
+    - hole_centers: hole positions (mm) measured from the bottom of the piece
     """
     length: float
     is_cut_down: bool
@@ -23,26 +26,70 @@ class Part:
 
 
 @dataclass
+class Placement:
+    """A part laid out on one stick."""
+    part_index: int
+    stick_index: int
+    y_start: float
+    y_end: float
+    length: float
+    is_cut_down: bool
+    is_cut_up: bool
+    hole_centers: List[float]
+
+
+@dataclass
+class StickLayout:
+    """One physical stick on the bed."""
+    index: int
+    x_left: float
+    width: float
+    length: float
+    placements: List[Placement] = field(default_factory=list)
+    waste: List[Tuple[float, float]] = field(default_factory=list)
+
+
+@dataclass
 class CutPlan:
-    """
-    Kết quả kế hoạch cắt:
-    - stick_width: chiều rộng que
-    - cuts: list các đoạn cắt ngang, tuple (start_x, y, length_of_cut)
-    - holes: list các tâm lỗ, tuple (center_x, center_y)
-    - radius: bán kính lỗ (dùng chung cho tất cả lỗ)
-    - arches: list các arch (center_x, center_y, is_up)
-        is_up = True => cung 180° mở lên (arch hướng lên)
-        is_up = False => cung 180° mở xuống (arch hướng xuống)
+    """Cutting plan plus layout used by the preview canvas.
+
+    - cuts: (start_x, y, length_of_cut) horizontal G-code cuts
+    - holes: (center_x, center_y)
+    - arches: (center_x, center_y, bulge_up)
+        A convex stadium cap of radius width/2.
+        bulge_up False => rounded bottom: centre at y0 + W/2, arc
+            spans y0 .. y0+W/2 and bulges down (apex on the y0 cut).
+        bulge_up True  => rounded top: centre at y1 - W/2, arc
+            spans y1-W/2 .. y1 and bulges up (apex on the y1 cut).
     """
     stick_width: float
     cuts: List[Tuple[float, float, float]]
     holes: List[Tuple[float, float]]
     radius: float
     arches: List[Tuple[float, float, bool]]
-    # print cut plan
+    stock_length: float = 0.0
+    gap: float = 0.0
+    sticks: List[StickLayout] = field(default_factory=list)
+    unplaced: List[int] = field(default_factory=list)
+    parts: List[Part] = field(default_factory=list)
+
+    def used_length(self) -> float:
+        return sum(p.length for s in self.sticks for p in s.placements)
+
+    def waste_length(self) -> float:
+        return sum(b - a for s in self.sticks for a, b in s.waste)
+
+    def waste_percent(self) -> float:
+        total = self.stock_length * len(self.sticks)
+        if total <= _TOL:
+            return 0.0
+        return 100.0 * self.waste_length() / total
+
     def __str__(self):
         s = "CutPlan:\n"
         s += f"Stick Width: {self.stick_width:.3f}\n"
+        s += f"Stock Length: {self.stock_length:.3f}\n"
+        s += f"Sticks: {len(self.sticks)}\n"
         s += "Cuts:\n"
         for (sx, y, length) in self.cuts:
             s += f"  StartX: {sx:.3f}, Y: {y:.3f}, Length: {length:.3f}\n"
@@ -51,10 +98,251 @@ class CutPlan:
             s += f"  CenterX: {cx:.3f}, CenterY: {cy:.3f}\n"
         s += f"Radius: {self.radius:.3f}\n"
         s += "Arches:\n"
-        for (cx, cy, is_up) in self.arches:
-            dir_str = "Up" if is_up else "Down"
-            s += f"  CenterX: {cx:.3f}, CenterY: {cy:.3f}, Direction: {dir_str}\n"
+        for (cx, cy, bulge_up) in self.arches:
+            dir_str = "bulge +Y" if bulge_up else "bulge -Y"
+            s += f"  CenterX: {cx:.3f}, CenterY: {cy:.3f}, {dir_str}\n"
+        if self.unplaced:
+            s += f"Unplaced: {self.unplaced}\n"
         return s
+
+
+def parse_parts_text(txt: str) -> List[Part]:
+    """Parse the Small parts text format.
+
+    One piece per line:
+        length, round_bottom, round_top[, hole1, hole2, ...]
+    round_bottom / round_top must be 0 or 1. Hole positions are mm
+    from the bottom of the piece. Blank lines and # comments are ignored.
+    """
+    parts: List[Part] = []
+    for lineno, raw in enumerate(txt.splitlines(), start=1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        tokens = [t.strip() for t in line.split(",")]
+        if len(tokens) < 3:
+            raise ValueError(
+                f"Line {lineno}: expected 'length, round_bottom, round_top[, holes...]', "
+                f"got {raw!r}"
+            )
+        try:
+            length = float(tokens[0])
+        except ValueError as e:
+            raise ValueError(f"Line {lineno}: invalid length {tokens[0]!r}") from e
+        if length <= _TOL:
+            raise ValueError(f"Line {lineno}: length must be positive")
+
+        def _flag(value: str, name: str) -> bool:
+            if value not in ("0", "1"):
+                raise ValueError(
+                    f"Line {lineno}: {name} must be 0 or 1, got {value!r}"
+                )
+            return value == "1"
+
+        is_cut_down = _flag(tokens[1], "round_bottom")
+        is_cut_up = _flag(tokens[2], "round_top")
+        hole_centers: List[float] = []
+        for h in tokens[3:]:
+            if h == "":
+                continue
+            try:
+                hole_centers.append(float(h))
+            except ValueError as e:
+                raise ValueError(f"Line {lineno}: invalid hole {h!r}") from e
+        parts.append(Part(
+            length=length,
+            is_cut_down=is_cut_down,
+            is_cut_up=is_cut_up,
+            hole_centers=hole_centers,
+        ))
+    return parts
+
+
+def format_parts_text(parts: Sequence[Part]) -> str:
+    """Serialize parts back to the text format (one piece per line)."""
+    lines = []
+    for p in parts:
+        flags = f"{p.length:g}, {int(bool(p.is_cut_down))}, {int(bool(p.is_cut_up))}"
+        if p.hole_centers:
+            holes = ", ".join(f"{h:g}" for h in p.hole_centers)
+            flags = f"{flags}, {holes}"
+        lines.append(flags)
+    return "\n".join(lines)
+
+
+def parse_hole_field(text: str) -> List[float]:
+    """Parse a card hole field: commas and/or whitespace separated numbers."""
+    raw = text.replace(",", " ").split()
+    holes: List[float] = []
+    for tok in raw:
+        holes.append(float(tok))
+    return holes
+
+
+def format_hole_field(holes: Sequence[float]) -> str:
+    return ", ".join(f"{h:g}" for h in holes)
+
+
+def arrange_bin(
+    indices: Sequence[int],
+    parts: Sequence[Part],
+    stock_length: float,
+) -> Tuple[List[int], float]:
+    """Order pieces on one stick and choose where leftover waste goes.
+
+    Simple policy (usable length = L, leftover is a single block):
+    - If any piece wants a rounded top and none wants a rounded bottom,
+      put waste at the bottom so the last piece ends at Y=L.
+    - Otherwise put waste at the top (first piece starts at Y=0).
+    - Prefer a round-bottom piece at the factory bottom when waste is
+      at the top; prefer a round-top piece at the factory top when the
+      used span reaches Y=L.
+    A piece that wants both rounded ends only sits at both factory tips
+    when it occupies the whole stick.
+
+    Returns (ordered_indices, y_start_of_first_piece).
+    """
+    items = list(indices)
+    if not items:
+        return [], 0.0
+    used = sum(float(parts[i].length) for i in items)
+    leftover = max(0.0, float(stock_length) - used)
+    has_down = any(parts[i].is_cut_down for i in items)
+    has_up = any(parts[i].is_cut_up for i in items)
+    waste_at_bottom = leftover > _TOL and has_up and not has_down
+    y0 = leftover if waste_at_bottom else 0.0
+
+    def take(pred) -> Optional[int]:
+        for pos, idx in enumerate(items):
+            if pred(parts[idx]):
+                return items.pop(pos)
+        return None
+
+    ordered: List[int] = []
+    if y0 <= _TOL:
+        first = take(lambda p: p.is_cut_down and not p.is_cut_up)
+        if first is None:
+            first = take(lambda p: p.is_cut_down)
+        if first is not None:
+            ordered.append(first)
+
+    last = None
+    end_reaches_stock = abs((y0 + used) - float(stock_length)) <= _TOL
+    if end_reaches_stock:
+        last = take(lambda p: p.is_cut_up and not p.is_cut_down)
+        if last is None:
+            last = take(lambda p: p.is_cut_up)
+
+    # Keep remaining pieces in pack order (stable, already by FFD/BFD).
+    ordered.extend(items)
+    if last is not None:
+        ordered.append(last)
+    return ordered, y0
+
+
+
+def rounded_end_arches(
+    x_center: float,
+    y_start: float,
+    y_end: float,
+    width: float,
+    is_cut_down: bool,
+    is_cut_up: bool,
+) -> List[Tuple[float, float, bool]]:
+    """Return (center_x, center_y, bulge_up) caps for one piece.
+
+    The cap is convex (stadium-like): the semicircle's apex sits on the
+    nearest end (y_start or y_end) and bulges toward that end, not into
+    a concave notch in the piece.
+    """
+    r = width / 2.0
+    out: List[Tuple[float, float, bool]] = []
+    if is_cut_down:
+        # Centre in the piece, apex at y_start, bulge toward -Y.
+        out.append((x_center, y_start + r, False))
+    if is_cut_up:
+        out.append((x_center, y_end - r, True))
+    return out
+
+
+def arch_apex_y(center_y: float, bulge_up: bool, width: float) -> float:
+    r = width / 2.0
+    return center_y + r if bulge_up else center_y - r
+
+
+def arch_polyline(
+    cx: float,
+    cy: float,
+    radius: float,
+    bulge_up: bool,
+    n: int = 18,
+) -> List[Tuple[float, float]]:
+    """Points from the left diameter end to the right, along the cap.
+
+    Matches G-code: start (cx - r, cy) -> end (cx + r, cy).
+    bulge_up True  travels through (cx, cy + r) (G2, CW, Y up).
+    bulge_up False travels through (cx, cy - r) (G3, CCW, Y up).
+    """
+    a0 = math.pi
+    a1 = 0.0 if bulge_up else (2.0 * math.pi)
+    pts = []
+    for i in range(n + 1):
+        a = a0 + (a1 - a0) * i / n
+        pts.append((cx + radius * math.cos(a), cy + radius * math.sin(a)))
+    return pts
+
+
+
+def piece_polygon(
+    x_left: float,
+    width: float,
+    y_start: float,
+    y_end: float,
+    round_bottom: bool,
+    round_top: bool,
+    n: int = 16,
+) -> List[Tuple[float, float]]:
+    """Outline of a finished piece, with convex caps when flagged.
+
+    Walks left side (top to bottom), bottom end, right side (bottom to
+    top), then the top end, so the fill matches the cut shape.
+    """
+    r = width / 2.0
+    cx = x_left + r
+    left, right = x_left, x_left + width
+    y_start = float(y_start)
+    y_end = float(y_end)
+    if y_end <= y_start + 1e-12:
+        return []
+
+    def cap(cy: float, bulge_up: bool, reverse: bool = False):
+        pts = arch_polyline(cx, cy, r, bulge_up, n=n)
+        return list(reversed(pts)) if reverse else pts
+
+    pts: List[Tuple[float, float]] = []
+    # Left side, top toward bottom.
+    left_top = y_end - r if round_top else y_end
+    left_bot = y_start + r if round_bottom else y_start
+    pts.append((left, left_top))
+    if left_bot < left_top:
+        pts.append((left, left_bot))
+    # Bottom end: straight, or convex cap bulging down (left to right).
+    if round_bottom:
+        pts.extend(cap(y_start + r, bulge_up=False)[1:])
+    else:
+        pts.append((right, y_start))
+    # Right side, bottom toward top.
+    right_top = y_end - r if round_top else y_end
+    if right_top > (y_start + r if round_bottom else y_start):
+        pts.append((right, right_top))
+    # Top end: straight, or convex cap bulging up, right to left.
+    if round_top:
+        # arch_polyline is left->right through +Y; reverse for right->left.
+        top = cap(y_end - r, bulge_up=True, reverse=True)
+        pts.extend(top[1:])
+    else:
+        pts.append((left, y_end))
+    return pts
 
 
 def build_cut_plan(
@@ -63,121 +351,137 @@ def build_cut_plan(
     width: float,
     gap: float,
     hole_radius: float,
-    include_end_cut: bool = True
+    include_end_cut: bool = True,
+    method: str = "auto",
 ) -> CutPlan:
+    """Build a CutPlan: pack by identity, arrange, then emit cuts.
+
+    Jig layout (unchanged): stick i has its left edge at
+    x = i * (width + gap); length runs along +Y; each cut is a
+    horizontal line of length (width + 2) starting 1 mm to the left
+    of the stick (1 mm overcut each side).
     """
-    Tạo CutPlan từ:
-    - stock_length: chiều dài 1 thanh gốc (d)
-    - parts: danh sách Part (mỗi Part là 1 miếng cần cắt)
-    - width: chiều rộng thanh (r)
-    - gap: khoảng cách giữa các thanh khi xếp (c)
-    - hole_radius: bán kính các lỗ (chung)
-    - include_end_cut: nếu True tạo cut tại y=0 và sau mỗi miếng (trừ khi pos >= stock_length)
+    if stock_length <= _TOL:
+        raise ValueError("Stock length must be positive")
+    if width <= _TOL:
+        raise ValueError("Width must be positive")
+    if gap < 0:
+        raise ValueError("Gap must be >= 0")
+    if hole_radius < 0:
+        raise ValueError("Hole radius must be >= 0")
 
-    Trả về CutPlan.
-    """
-
-    requested_lengths = [p.length for p in parts]
-
-    bins = cut_optimize(stock_length, requested_lengths)
-
-    remaining = []
-    for idx, p in enumerate(parts):
-        remaining.append((p.length, idx))
-    
-    tol = 1e-6
-
-    # helper to pop index matching length
-    def pop_part_index_by_length(target_length):
-        for i, (ln, idx) in enumerate(remaining):
-            if abs(ln - target_length) <= tol:
-                return remaining.pop(i)[1]
-        # if not found exact, try nearest (fallback)
-        for i, (ln, idx) in enumerate(remaining):
-            if abs(ln - target_length) < 1e-3:
-                return remaining.pop(i)[1]
-        # if still not found raise
-        raise ValueError(f"Cannot match part length {target_length} to any remaining part")
+    lengths = [p.length for p in parts]
+    bins, unplaced = pack_pieces(stock_length, lengths, method=method)
 
     cuts: List[Tuple[float, float, float]] = []
     holes_out: List[Tuple[float, float]] = []
     arches_out: List[Tuple[float, float, bool]] = []
+    sticks: List[StickLayout] = []
 
-    cut_extra_margin = 1.0
-    cut_length_overall = width + 2.0
+    cut_length_overall = width + 2.0 * CUT_EXTRA_MARGIN
 
-    for bin_index, bin_pieces in enumerate(bins):
-        start_x = bin_index * (width + gap) - cut_extra_margin
-        x_center = start_x + (width / 2.0) + cut_extra_margin
-        center_x_for_holes_and_arch = start_x + cut_extra_margin + (width / 2.0)
+    for bin_index, bin_items in enumerate(bins):
+        x_left = bin_index * (width + gap)
+        start_x = x_left - CUT_EXTRA_MARGIN
+        x_center = x_left + (width / 2.0)
 
-        y_cursor = 0.0
+        ordered, y0 = arrange_bin(bin_items, parts, stock_length)
+        layout = StickLayout(
+            index=bin_index,
+            x_left=x_left,
+            width=width,
+            length=stock_length,
+        )
 
+        # Cuts at every piece boundary, plus y=0 / final end when requested.
+        cut_ys = []
         if include_end_cut:
-            cuts.append((start_x, 0.0, cut_length_overall))
+            cut_ys.append(0.0)
 
-        for piece_length in bin_pieces:
-            part_index = pop_part_index_by_length(piece_length)
+        y_cursor = y0
+        if y0 > _TOL:
+            # Waste at the bottom: cut where the first piece starts
+            # (separates leftover from the first piece).
+            cut_ys.append(y0)
+
+        for part_index in ordered:
             part = parts[part_index]
+            y_start = y_cursor
+            y_end = y_cursor + part.length
+            layout.placements.append(Placement(
+                part_index=part_index,
+                stick_index=bin_index,
+                y_start=y_start,
+                y_end=y_end,
+                length=part.length,
+                is_cut_down=part.is_cut_down,
+                is_cut_up=part.is_cut_up,
+                hole_centers=list(part.hole_centers),
+            ))
+            cut_ys.append(y_end)
 
-            y_cursor += piece_length
-            cut_y = y_cursor
+            for hole_rel in part.hole_centers:
+                holes_out.append((x_center, y_start + hole_rel))
 
-            if cut_y < stock_length - 1e-9 or include_end_cut:
-                cuts.append((start_x, cut_y, cut_length_overall))
+            for arch in rounded_end_arches(
+                x_center, y_start, y_end, width,
+                part.is_cut_down, part.is_cut_up,
+            ):
+                arches_out.append(arch)
 
-            for hole_center_rel in part.hole_centers:
-                previous_y_before_piece = cut_y - piece_length
-                abs_hole_y = previous_y_before_piece + hole_center_rel
-                abs_hole_x = center_x_for_holes_and_arch
-                holes_out.append((abs_hole_x, abs_hole_y))
+            y_cursor = y_end
 
-            if part.is_cut_down:
-                previous_y_before_piece = cut_y - piece_length
-                arch_center_x = center_x_for_holes_and_arch
-                arch_center_y = previous_y_before_piece + (width / 2.0)
-                # lower arch points up -> is_up = True
-                arches_out.append((arch_center_x, arch_center_y, True))
+        if y_cursor < stock_length - _TOL:
+            layout.waste.append((y_cursor, stock_length))
+        if y0 > _TOL:
+            layout.waste.append((0.0, y0))
+        layout.waste.sort()
 
-            if part.is_cut_up:
-                arch_center_x = center_x_for_holes_and_arch
-                arch_center_y = cut_y - (width / 2.0)
-                # upper arch points down -> is_up = False
-                arches_out.append((arch_center_x, arch_center_y, False))
+        if include_end_cut and abs(y_cursor - stock_length) > _TOL:
+            # Last piece ended before L; y=L is not already queued unless
+            # some piece ended exactly at L. Keep previous behaviour: no
+            # extra tip cut at L when leftover sits at the top.
+            pass
 
+        # A convex cap's apex sits on the end Y. A straight cut there
+        # would nick or flatten the tip, so the arc replaces that cut
+        # when the end is interior. Factory tips (Y=0 and Y=L) keep the
+        # optional end cut: it only touches the existing rounded tip.
+        rounded_apex = set()
+        for pl in layout.placements:
+            if pl.is_cut_down:
+                rounded_apex.add(round(pl.y_start, 6))
+            if pl.is_cut_up:
+                rounded_apex.add(round(pl.y_end, 6))
 
-    cut_plan = CutPlan(
+        def _is_factory_tip(y: float) -> bool:
+            return abs(y) <= _TOL or abs(y - stock_length) <= _TOL
+
+        # Dedup cut Ys while preserving order.
+        seen = set()
+        for y in cut_ys:
+            key = round(y, 6)
+            if key in seen:
+                continue
+            if y < -_TOL or y > stock_length + _TOL:
+                continue
+            if key in rounded_apex and not _is_factory_tip(y):
+                continue
+            if (y < stock_length - _TOL) or include_end_cut:
+                seen.add(key)
+                cuts.append((start_x, float(y), cut_length_overall))
+
+        sticks.append(layout)
+
+    return CutPlan(
+        stick_width=width,
         cuts=cuts,
         holes=holes_out,
         radius=hole_radius,
         arches=arches_out,
-        stick_width=width
-    )
-    print(cut_plan)
-
-    return cut_plan
-
-if __name__ == "__main__":
-    # Example usage
-    parts = [
-        Part(length=50.0, is_cut_down=True, is_cut_up=False, hole_centers=[10.0, 30.0]),
-        Part(length=70.0, is_cut_down=False, is_cut_up=True, hole_centers=[20.0]),
-        Part(length=30.0, is_cut_down=True, is_cut_up=True, hole_centers=[]),
-        Part(length=90.0, is_cut_down=False, is_cut_up=False, hole_centers=[45.0]),
-    ]
-
-    stock_length = 100.0
-    width = 10.0
-    gap = 5.0
-    hole_radius = 1.5
-
-    cut_plan = build_cut_plan(
         stock_length=stock_length,
-        parts=parts,
-        width=width,
         gap=gap,
-        hole_radius=hole_radius,
-        include_end_cut=True
+        sticks=sticks,
+        unplaced=list(unplaced),
+        parts=list(parts),
     )
-    
-    print(cut_plan)

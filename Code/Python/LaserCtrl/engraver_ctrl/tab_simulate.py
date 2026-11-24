@@ -5,6 +5,7 @@ import math
 
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
 from common.ui import canvas_font
+from engraver_ctrl.gcode_arcs import interpolate_g2g3, word_value
 from engraver_ctrl.sim_time import (
     StepTimes, format_duration, RAPID_RATE_MM_MIN, DEFAULT_FEED_MM_MIN,
 )
@@ -222,7 +223,7 @@ class TabSimulate(ttk.Frame):
         self.time_note_label = ttk.Label(
             control,
             text=(f"Estimate: G0 at {RAPID_RATE_MM_MIN:g} mm/min, "
-                  f"G1 at its F (mm/min); no acceleration."),
+                  f"G1/G2/G3 at its F (mm/min); no acceleration."),
             wraplength=240,
         )
         self.time_note_label.pack(anchor="w")
@@ -321,7 +322,7 @@ class TabSimulate(ttk.Frame):
 
         ttk.Label(
             control,
-            text="━ Cutting (G1)",
+            text="━ Cutting (G1/G2/G3)",
             foreground="black"
         ).pack(anchor="w")
 
@@ -497,6 +498,49 @@ class TabSimulate(ttk.Frame):
 
                 current_x = x
                 current_y = y
+                continue
+
+            # ------------------------------------------------
+            # G2 / G3 (G17 XY plane, I/J centre or R radius)
+            # G0 / G1 handling above is unchanged.
+            # ------------------------------------------------
+            match = re.match(
+                r"^G0?([23])\s+(.*)$",
+                line,
+                re.IGNORECASE
+            )
+            if match:
+                clockwise = match.group(1) == "2"
+                params = match.group(2)
+                x = self.extract_axis(params, "X", current_x)
+                y = self.extract_axis(params, "Y", current_y)
+                i = word_value(params, "I")
+                j = word_value(params, "J")
+                r = word_value(params, "R")
+                try:
+                    pts = interpolate_g2g3(
+                        current_x, current_y, x, y,
+                        clockwise=clockwise, i=i, j=j, r=r,
+                    )
+                except ValueError:
+                    pts = []
+                px, py = current_x, current_y
+                if not pts and (abs(x - current_x) > 1e-12 or abs(y - current_y) > 1e-12):
+                    pts = [(x, y)]
+                for nx, ny in pts:
+                    steps.append({
+                        "type": "cut",
+                        "command": line,
+                        "line": line_number,
+                        "x1": px,
+                        "y1": py,
+                        "x2": nx,
+                        "y2": ny,
+                        "feed": current_f,
+                        "arc": True,
+                    })
+                    px, py = nx, ny
+                current_x, current_y = x, y
                 continue
 
         return steps
@@ -783,6 +827,8 @@ class TabSimulate(ttk.Frame):
     def is_circle_segment(self, step):
         if step["type"] != "cut":
             return False
+        if step.get("arc"):
+            return True
 
         length = math.hypot(
             step["x2"] - step["x1"],
@@ -1039,7 +1085,7 @@ class TabSimulate(ttk.Frame):
         self.step_time_label.config(
             text=f"Current step time: {format_duration(times.step_time(n))}")
         note = (f"Estimate: G0 at {RAPID_RATE_MM_MIN:g} mm/min, "
-                f"G1 at its F (mm/min); no acceleration.")
+                f"G1/G2/G3 at its F (mm/min); no acceleration.")
         if times.assumed_feed_steps:
             note += (f" {times.assumed_feed_steps} cut step(s) had no F yet, "
                      f"assumed {DEFAULT_FEED_MM_MIN:g} mm/min.")
