@@ -5,10 +5,10 @@ Each step is one straight segment from tab_simulate.parse_gcode:
 
 Estimate = path length / rate (no acceleration, no controller overhead).
 - "travel" (G0) uses RAPID_RATE_MM_MIN (F is ignored for G0, like GRBL).
-- "cut" (G1) uses the modal F (mm/min) in effect on that line; if no F
-  was seen yet, DEFAULT_FEED_MM_MIN is assumed and the step is flagged.
-G2/G3 arcs and G4 dwell are not steps in the simulator, so they are not
-counted here.
+- "cut" (G1, and G2/G3 after they are interpolated into chords) uses
+  the modal F (mm/min) in effect on that line; if no F was seen yet,
+  DEFAULT_FEED_MM_MIN is assumed and the step is flagged.
+G4 dwell is not a step, so it is not counted here.
 """
 
 from __future__ import annotations
