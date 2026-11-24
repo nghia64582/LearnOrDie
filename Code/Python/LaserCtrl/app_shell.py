@@ -1,7 +1,7 @@
 """
 Unified LaserCtrl application shell.
 
-Hosts Engraver / Frame Toolkit / DSL Library / DSL Nesting under one Tk root.
+Hosts Engraver / Box / Frame Toolkit / DSL Library / DSL Nesting under one Tk root.
 Tab builders are lazy-imported so a missing optional dependency (e.g. ortools)
 only disables that section.
 """
@@ -35,6 +35,9 @@ class LaserAppShell:
 
         self.engraver_host = EngraverHost(root, self.font)
         self.machine_tab = None
+        self.custom_tab = None
+        self.engraver_nb = None
+        self.box_tab = None
         self.nesting_panel = None
         self._busy_providers = []
 
@@ -46,6 +49,7 @@ class LaserAppShell:
         self.main_nb.pack(fill="both", expand=True)
 
         self._add_lazy_tab(self.main_nb, "Engraver", self._build_engraver)
+        self._add_lazy_tab(self.main_nb, "Box", self._build_box)
         self._add_lazy_tab(self.main_nb, "Frame Toolkit", self._build_frame)
         self._add_lazy_tab(self.main_nb, "DSL Library", self._build_library)
         self._add_lazy_tab(self.main_nb, "DSL Nesting", self._build_nesting)
@@ -123,10 +127,11 @@ class LaserAppShell:
             from engraver_ctrl.tab_simulate import TabSimulate
             return TabSimulate(nb_, host_)
 
+        self.engraver_nb = nb
         self.machine_tab = add_engraver_tab("Machine", make_machine)
         add_engraver_tab("Small parts", make_small)
         add_engraver_tab("Parallel", make_parallel)
-        add_engraver_tab("Custom", make_custom)
+        self.custom_tab = add_engraver_tab("Custom", make_custom)
         add_engraver_tab("Simulate", make_sim)
 
     def _build_frame(self, parent):
@@ -158,6 +163,25 @@ class LaserAppShell:
         self._add_subtab(nb, "Skeleton", skeleton)
         self._add_subtab(nb, "Rail cut-list", railcut)
         self._add_subtab(nb, "Box", box)
+
+    def _build_box(self, parent):
+        from box_maker.tab_box import BoxTab
+        self.box_tab = BoxTab(parent, self)
+        self.box_tab.pack(fill="both", expand=True)
+
+    def show_custom_tab(self):
+        """Switch the main UI to Engraver / Custom."""
+        for i in range(self.main_nb.index("end")):
+            if self.main_nb.tab(i, "text") == "Engraver":
+                self.main_nb.select(i)
+                break
+        nb = self.engraver_nb
+        if nb is None:
+            return
+        for i in range(nb.index("end")):
+            if nb.tab(i, "text") == "Custom":
+                nb.select(i)
+                break
 
     def _build_library(self, parent):
         from dsl_library_tool.gui import build_dsl_library_panel
