@@ -462,6 +462,99 @@ class TabModeSyncTests(unittest.TestCase):
         self.assertTrue(tab.canvas.find_all())
         tab.destroy()
 
+    def test_compact_cards_single_row(self):
+        import tkinter as tk
+        from engraver_ctrl.tab_small_parts import SmallPartsTab
+
+        class Host:
+            font = None
+            root = self.root
+
+        tab = SmallPartsTab(self.root, Host())
+        tab.pack(fill="both", expand=True)
+        sample = "50, 1, 0, 10, 30\n70, 0, 1, 20\n40, 1, 1\n"
+        tab.text_parts.delete("1.0", "end")
+        tab.text_parts.insert("1.0", sample)
+        tab.mode_var.set("cards")
+        tab.on_mode_change()
+        self.root.update_idletasks()
+
+        self.assertFalse(hasattr(tab, "help_label"))
+        self.assertEqual(len(tab._cards), 3)
+        self.assertEqual(tab._cards[0].title.cget("text"), "#1")
+        self.assertEqual(tab._cards[2].title.cget("text"), "#3")
+
+        card = tab._cards[0]
+        # Every field lives on one packed row.
+        self.assertEqual(len(card.frame.winfo_children()), 1)
+        labels = []
+        for w in card.row.winfo_children():
+            try:
+                labels.append(str(w.cget("text")))
+            except tk.TclError:
+                pass
+        self.assertIn("Len", labels)
+        self.assertIn("Bot", labels)
+        self.assertIn("Top", labels)
+        self.assertIn("Holes", labels)
+        self.assertIn("✕", labels)
+        self.assertNotIn("Length (mm)", labels)
+        self.assertNotIn("Round bottom", labels)
+        tab.destroy()
+
+    def test_help_popup(self):
+        from engraver_ctrl.tab_small_parts import (
+            HELP_TEXT, SmallPartsTab,
+        )
+
+        class Host:
+            font = None
+            root = self.root
+
+        tab = SmallPartsTab(self.root, Host())
+        tab.pack(fill="both", expand=True)
+        self.root.geometry("800x600+0+0")
+        self.root.deiconify()
+        self.root.update()
+        self.assertFalse(hasattr(tab, "help_label"))
+        self.assertIn("length, round_bottom, round_top", HELP_TEXT)
+        self.assertIn("Cards mode", HELP_TEXT)
+        self.assertIn("Stock Length", HELP_TEXT)
+        self.assertIn("Kerf is ignored", HELP_TEXT)
+
+        help_win = tab.show_help()
+        self.root.update()
+        self.root.update_idletasks()
+        self.assertTrue(help_win.winfo_exists())
+        self.assertEqual(help_win.title(), "Format Help")
+        body = help_win.help_text.get("1.0", "end")
+        self.assertIn("50, 1, 0, 10, 30", body)
+        self.assertIn("Bot / Top", body)
+        self.assertIn("Feedrate", body)
+        self.assertEqual(str(help_win.help_text.cget("state")), "disabled")
+        self.assertIn("yview", str(help_win.help_scroll.cget("command")))
+        first = help_win.help_text.yview()
+        help_win.help_text.configure(state="normal")
+        help_win.help_text.yview_moveto(1.0)
+        self.root.update_idletasks()
+        after = help_win.help_text.yview()
+        help_win.help_text.configure(state="disabled")
+        self.assertNotEqual(first, after)
+        geom = help_win.geometry()
+        self.assertTrue(geom.startswith("520x360"), geom)
+        self.assertTrue(help_win.resizable()[0] and help_win.resizable()[1])
+        self.assertEqual(str(help_win.close_btn.cget("text")), "Close")
+        again = tab.show_help()
+        self.assertEqual(again, help_win)
+        # Esc closes the popup
+        help_win.event_generate("<Escape>")
+        self.root.update_idletasks()
+        self.assertFalse(help_win.winfo_exists())
+        self.assertIsNone(tab._help_win)
+        tab.destroy()
+        self.root.withdraw()
+
+
 
 if __name__ == "__main__":
     unittest.main()

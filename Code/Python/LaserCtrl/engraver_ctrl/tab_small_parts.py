@@ -48,25 +48,49 @@ GRID_MAJOR = "#b8b8b8"
 STICK_OUTLINE = "#5a4030"
 HOLE_COLOR = "#7a1028"
 
-FORMAT_HELP = (
-    "One piece per line:\n"
-    "  length, round_bottom, round_top[, hole1, hole2, ...]\n"
-    "round_bottom / round_top are 0 or 1.\n"
-    "Holes are mm from the bottom of the piece.\n"
-    "Blank lines and # comments are ignored.\n"
-    "Example:  50, 1, 0, 10, 30"
-)
+HELP_POPUP_SIZE = "520x360"
 
-PACKING_HELP = (
-    "Packing uses First/Best Fit Decreasing (and an exact solver when "
-    "OR-Tools is available). Kerf is ignored — enter lengths already "
-    "adjusted if needed. Usable length is the full stock length L "
-    "(including both semicircles). Leftover waste is kept as one block; "
-    "a piece with a rounded end is placed at a stick tip when that does "
-    "not use an extra stick. A rounded end is a convex cap whose apex "
-    "sits on that end; the arc replaces the straight cut there, except "
-    "at the factory stick tips (Y=0 and Y=L)."
-)
+HELP_TEXT = """\
+Small parts — Help
+
+Stock and cut parameters
+  Stock Length (mm): total stick length, including both semicircular
+    factory ends (default 114).
+  Width (mm): stick width; also the diameter of those factory ends
+    (default 10).
+  Gap (mm): space between neighbouring sticks in the jig (default 5).
+  Hole Radius (mm): radius of holes cut on a piece (default 1.5).
+  Feedrate (mm/min): cutting feed (default 250).
+  Power (0-1000): laser power (default 1000).
+
+Text mode
+  One piece per line:
+    length, round_bottom, round_top[, hole1, hole2, ...]
+  round_bottom / round_top are 0 or 1.
+  Holes are millimetres from the bottom of the piece.
+  Blank lines and # comments are ignored.
+  Example:  50, 1, 0, 10, 30
+
+Cards mode
+  Each card is one piece, shown on a single row:
+    #n   Len   Bot   Top   Holes   ✕
+  Len is the piece length in mm.
+  Bot / Top tick a convex rounded cap at that end of the piece.
+  Holes are comma- or space-separated, measured from the bottom
+    of the piece.
+  Add piece appends a card; ✕ removes one.
+  Switching between Text and Cards keeps the same data.
+
+Packing
+  Packing uses First/Best Fit Decreasing (and an exact solver when
+  OR-Tools is available). Kerf is ignored — enter lengths already
+  adjusted if needed. Usable length is the full stock length L
+  (including both semicircles). Leftover waste is kept as one block;
+  a piece with a rounded end is placed at a stick tip when that does
+  not use an extra stick. A rounded end is a convex cap whose apex
+  sits on that end; the arc replaces the straight cut there, except
+  at the factory stick tips (Y=0 and Y=L).
+"""
 
 
 def stadium_slice_polygon(
@@ -135,30 +159,30 @@ class _Card:
         self.holes_var = tk.StringVar(value=holes)
         self._on_remove = on_remove
 
-        row1 = ttk.Frame(frame)
-        row1.pack(fill="x", padx=4, pady=(4, 0))
-        self.title = ttk.Label(row1, text="P1", font=ui_font(SIZE_SM, bold=True))
-        self.title.pack(side="left", padx=(0, 8))
-        ttk.Label(row1, text="Length (mm)").pack(side="left")
-        ttk.Entry(row1, textvariable=self.length_var, width=8).pack(
-            side="left", padx=(4, 8)
+        # One compact row: #n  Len [ ]  □Bot  □Top  Holes [ ]  ✕
+        # Pack the remove button first (side=right) so the expanding
+        # holes field cannot squeeze it off the row.
+        row = ttk.Frame(frame)
+        row.pack(fill="x", padx=2, pady=1)
+        self.row = row
+        sm = ui_font(SIZE_SM)
+        self.remove_btn = make_button(row, "✕", command=self._remove, width=2)
+        self.remove_btn.pack(side="right", padx=(2, 0))
+        self.title = ttk.Label(row, text="#1", font=ui_font(SIZE_SM, bold=True))
+        self.title.pack(side="left", padx=(0, 4))
+        ttk.Label(row, text="Len", font=sm).pack(side="left")
+        ttk.Entry(row, textvariable=self.length_var, width=6, font=sm).pack(
+            side="left", padx=(3, 6)
         )
-        make_button(row1, "Remove", command=self._remove).pack(side="right")
-
-        row2 = ttk.Frame(frame)
-        row2.pack(fill="x", padx=4, pady=(2, 0))
-        ttk.Checkbutton(row2, text="Round bottom", variable=self.down_var).pack(
-            side="left", padx=(0, 10)
+        ttk.Checkbutton(row, text="Bot", variable=self.down_var).pack(
+            side="left", padx=(0, 4)
         )
-        ttk.Checkbutton(row2, text="Round top", variable=self.up_var).pack(
-            side="left"
+        ttk.Checkbutton(row, text="Top", variable=self.up_var).pack(
+            side="left", padx=(0, 6)
         )
-
-        row3 = ttk.Frame(frame)
-        row3.pack(fill="x", padx=4, pady=(2, 4))
-        ttk.Label(row3, text="Holes (mm from bottom)").pack(side="left")
-        ttk.Entry(row3, textvariable=self.holes_var, width=18).pack(
-            side="left", padx=(4, 0), fill="x", expand=True
+        ttk.Label(row, text="Holes", font=sm).pack(side="left")
+        ttk.Entry(row, textvariable=self.holes_var, width=12, font=sm).pack(
+            side="left", padx=(3, 4), fill="x", expand=True
         )
 
     def _remove(self):
@@ -188,6 +212,7 @@ class SmallPartsTab(tk.Frame):
         self._y_max = 130.0
         self._margin = 36.0
         self._drag = None
+        self._help_win = None
         self.build_ui()
 
     # ------------------------------------------------------------------ UI
@@ -226,16 +251,13 @@ class SmallPartsTab(tk.Frame):
         ttk.Radiobutton(
             mode_row, text="Cards", value="cards",
             variable=self.mode_var, command=self.on_mode_change,
-        ).pack(side="left")
-
-        self.help_label = ttk.Label(
-            left, text=FORMAT_HELP, wraplength=400, justify="left",
-        )
-        self.help_label.grid(row=3, column=0, sticky="ew", pady=(2, 4))
+        ).pack(side="left", padx=(0, 10))
+        self.help_btn = make_button(mode_row, "Help", command=self.show_help)
+        self.help_btn.pack(side="left")
 
         editor = ttk.Frame(left)
-        editor.grid(row=4, column=0, sticky="nsew", pady=(0, 4))
-        left.rowconfigure(4, weight=1)
+        editor.grid(row=3, column=0, sticky="nsew", pady=(0, 4))
+        left.rowconfigure(3, weight=1)
         editor.columnconfigure(0, weight=1)
         editor.rowconfigure(0, weight=1)
 
@@ -270,7 +292,7 @@ class SmallPartsTab(tk.Frame):
         self.add_card_btn = make_button(left, "Add piece", command=self.add_card)
 
         btns = ttk.Frame(left)
-        btns.grid(row=6, column=0, sticky="ew", pady=(8, 4))
+        btns.grid(row=5, column=0, sticky="ew", pady=(8, 4))
         make_button(btns, "Preview", command=self.on_preview).pack(
             side="left", padx=(0, 6)
         )
@@ -282,11 +304,7 @@ class SmallPartsTab(tk.Frame):
         ttk.Label(
             left, textvariable=self.stats_var, wraplength=400, justify="left",
             font=ui_font(SIZE_SM, bold=True),
-        ).grid(row=7, column=0, sticky="ew", pady=(4, 2))
-
-        ttk.Label(
-            left, text=PACKING_HELP, wraplength=400, justify="left",
-        ).grid(row=8, column=0, sticky="ew", pady=(2, 0))
+        ).grid(row=6, column=0, sticky="ew", pady=(4, 0))
 
         # Right: preview
         right = ttk.Frame(self, padding=(4, 8, 8, 8))
@@ -361,16 +379,92 @@ class SmallPartsTab(tk.Frame):
             self.cards_wrap.grid_forget()
             self.add_card_btn.grid_forget()
             self.text_wrap.grid(row=0, column=0, sticky="nsew")
-            self.help_label.configure(text=FORMAT_HELP)
         else:
             self.text_wrap.grid_forget()
             self.cards_wrap.grid(row=0, column=0, sticky="nsew")
-            self.add_card_btn.grid(row=5, column=0, sticky="w", pady=(0, 2))
-            self.help_label.configure(
-                text="Each card is one piece. Length is in mm. "
-                "Holes are comma or space separated, measured from the "
-                "bottom of the piece. Switching back to Text keeps the same data."
-            )
+            self.add_card_btn.grid(row=4, column=0, sticky="w", pady=(0, 2))
+
+
+    def show_help(self):
+        """Open a modest, scrollable Format Help popup (reuse if already open)."""
+        existing = getattr(self, "_help_win", None)
+        if existing is not None:
+            try:
+                if existing.winfo_exists():
+                    existing.deiconify()
+                    existing.lift()
+                    existing.focus_set()
+                    return existing
+            except tk.TclError:
+                pass
+
+        parent = self.winfo_toplevel()
+        win = tk.Toplevel(parent)
+        self._help_win = win
+        win.title("Format Help")
+        win.geometry(HELP_POPUP_SIZE)
+        win.minsize(360, 240)
+        win.resizable(True, True)
+        try:
+            win.transient(parent)
+        except tk.TclError:
+            pass
+
+        body = ttk.Frame(win)
+        body.pack(fill="both", expand=True, padx=8, pady=(8, 4))
+        body.columnconfigure(0, weight=1)
+        body.rowconfigure(0, weight=1)
+
+        text = tk.Text(
+            body, wrap="word", font=ui_font(SIZE_SM),
+            width=48, height=16, relief="solid", borderwidth=1,
+        )
+        scroll = ttk.Scrollbar(body, orient="vertical", command=text.yview)
+        text.configure(yscrollcommand=scroll.set)
+        text.grid(row=0, column=0, sticky="nsew")
+        scroll.grid(row=0, column=1, sticky="ns")
+        text.insert("1.0", HELP_TEXT)
+        text.configure(state="disabled")
+
+        def on_wheel(event):
+            if getattr(event, "num", None) == 5 or getattr(event, "delta", 0) < 0:
+                text.yview_scroll(1, "units")
+            else:
+                text.yview_scroll(-1, "units")
+            return "break"
+
+        text.bind("<MouseWheel>", on_wheel)
+        text.bind("<Button-4>", on_wheel)
+        text.bind("<Button-5>", on_wheel)
+
+        btn_row = ttk.Frame(win)
+        btn_row.pack(fill="x", padx=8, pady=(0, 8))
+        close_btn = make_button(btn_row, "Close", command=win.destroy)
+        close_btn.pack(side="right")
+
+        win.help_text = text
+        win.help_scroll = scroll
+        win.close_btn = close_btn
+
+        def _on_close():
+            try:
+                if getattr(self, "_help_win", None) is win:
+                    self._help_win = None
+            except Exception:
+                pass
+            try:
+                win.destroy()
+            except tk.TclError:
+                pass
+
+        win.protocol("WM_DELETE_WINDOW", _on_close)
+        close_btn.configure(command=_on_close)
+        win.bind("<Escape>", lambda e: _on_close())
+        try:
+            win.focus_set()
+        except tk.TclError:
+            pass
+        return win
 
     def _read_parts(self, mode: str, allow_blank: bool = False) -> List[Part]:
         if mode == "text":
@@ -427,8 +521,8 @@ class SmallPartsTab(tk.Frame):
             self._renumber_cards()
 
     def add_card(self, length="", down=False, up=False, holes=""):
-        frame = ttk.LabelFrame(self.cards_inner, text="")
-        frame.pack(fill="x", padx=2, pady=3)
+        frame = ttk.Frame(self.cards_inner)
+        frame.pack(fill="x", padx=2, pady=0)
         card = _Card(
             frame, length, down, up, holes,
             on_remove=self._remove_card, font=self.font,
@@ -447,8 +541,7 @@ class SmallPartsTab(tk.Frame):
 
     def _renumber_cards(self):
         for i, card in enumerate(self._cards, start=1):
-            card.title.configure(text=f"P{i}")
-            card.frame.configure(text=f"Piece {i}")
+            card.title.configure(text=f"#{i}")
 
     def _on_cards_inner_configure(self, _event=None):
         self.cards_canvas.configure(scrollregion=self.cards_canvas.bbox("all"))
