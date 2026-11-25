@@ -6,6 +6,7 @@ Thư viện các mẫu hình dạng chi tiết dùng cho cắt laser (định d�
 
 - **box_1.txt**, **box_2.txt** — Hộp.
 - **battery_holder.txt** — Giá đỡ pin.
+- **comb_jig.dsl** — Khung đỡ que kem (lược 10 răng, 1 tấm, viền ngoài kín).
 - **hinge_1.txt** — Bản lề.
 - **gusset_1.txt** — Gusset / tấm gia cường.
 - **edge_bar.txt**, **el_shape_bar.txt** — Thanh cạnh / thanh chữ L.
