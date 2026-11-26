@@ -21,6 +21,8 @@ class EngraverHost:
         self.root = root
         self.font = font
         self.ser = None
+        self.small_parts_tab = None      # set by the shell (Truss -> Small parts)
+        self.show_engraver_tab = None    # callable(title) set by the shell
 
 
 class LaserAppShell:
@@ -119,6 +121,10 @@ class LaserAppShell:
             from engraver_ctrl.tab_parallel import ParallelTab
             return ParallelTab(nb_, host_)
 
+        def make_truss(nb_, host_):
+            from engraver_ctrl.tab_truss import TrussTab
+            return TrussTab(nb_, host_)
+
         def make_custom(nb_, host_):
             from engraver_ctrl.tab_designer import DesignerTab
             return DesignerTab(nb_, host_)
@@ -129,7 +135,9 @@ class LaserAppShell:
 
         self.engraver_nb = nb
         self.machine_tab = add_engraver_tab("Machine", make_machine)
-        add_engraver_tab("Small parts", make_small)
+        host.small_parts_tab = add_engraver_tab("Small parts", make_small)
+        host.show_engraver_tab = self.show_engraver_tab
+        add_engraver_tab("Truss", make_truss)
         add_engraver_tab("Parallel", make_parallel)
         self.custom_tab = add_engraver_tab("Custom", make_custom)
         add_engraver_tab("Simulate", make_sim)
@@ -168,6 +176,20 @@ class LaserAppShell:
         from box_maker.tab_box import BoxTab
         self.box_tab = BoxTab(parent, self)
         self.box_tab.pack(fill="both", expand=True)
+
+    def show_engraver_tab(self, title: str):
+        """Switch the main UI to Engraver / <title>."""
+        for i in range(self.main_nb.index("end")):
+            if self.main_nb.tab(i, "text") == "Engraver":
+                self.main_nb.select(i)
+                break
+        nb = self.engraver_nb
+        if nb is None:
+            return
+        for i in range(nb.index("end")):
+            if nb.tab(i, "text") == title:
+                nb.select(i)
+                break
 
     def show_custom_tab(self):
         """Switch the main UI to Engraver / Custom."""
