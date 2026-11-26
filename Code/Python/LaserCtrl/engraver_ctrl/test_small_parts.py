@@ -27,6 +27,9 @@ from engraver_ctrl.cut_plan_builder import (
     parse_parts_text,
     piece_polygon,
     rounded_end_arches,
+    stadium_slice_polygon,
+    stick_y_bounds,
+    usable_length,
 )
 from engraver_ctrl.extended_cut_export import export_gcode_extended
 
@@ -167,33 +170,42 @@ class ArrangeAndPlanTests(unittest.TestCase):
         plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
         self.assertEqual(len(plan.sticks), 1)
         stick = plan.sticks[0]
+        self.assertAlmostEqual(plan.usable_length, 95.0)
         self.assertAlmostEqual(stick.placements[0].y_start, 0.0)
         self.assertTrue(stick.placements[0].is_cut_down)
-        self.assertEqual(stick.waste, [(70.0, 100.0)])
+        # Bottom cap [-r, 0] is always waste; leftover sits at the
+        # top of the usable span [0, L-r] = [0, 95].
+        self.assertEqual(stick.waste, [(-5.0, 0.0), (70.0, 95.0)])
 
     def test_waste_at_bottom_when_only_round_top(self):
         parts = [P(40, down=False, up=True), P(30, False, False)]
         plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
         stick = plan.sticks[0]
-        # First piece starts at leftover 30; last piece ends at 100.
-        self.assertAlmostEqual(stick.placements[-1].y_end, 100.0)
+        # Usable = 95; leftover 25 sits at the bottom of the usable
+        # span so the last piece ends at the factory top y = L-r.
+        self.assertAlmostEqual(stick.placements[-1].y_end, 95.0)
         self.assertTrue(any(p.is_cut_up for p in stick.placements
-                            if abs(p.y_end - 100.0) < 1e-9))
-        self.assertEqual(stick.waste, [(0.0, 30.0)])
+                            if abs(p.y_end - 95.0) < 1e-9))
+        # Bottom cap merges with leftover in [0, 25].
+        self.assertEqual(stick.waste, [(-5.0, 25.0)])
 
-    def test_arrange_both_flags_waste_stays_top(self):
+    def test_arrange_round_top_reuses_factory_top(self):
+        # Even when a rounded-bottom piece is also present, leftover
+        # is placed at the bottom of the usable span so the rounded
+        # top can sit on the factory tip at y = usable.
         parts = [P(20, True, False), P(20, False, True)]
         ordered, y0 = arrange_bin([0, 1], parts, 60)
-        self.assertEqual(y0, 0.0)
-        self.assertEqual(ordered[0], 0)
+        self.assertAlmostEqual(y0, 20.0)
         self.assertEqual(ordered[-1], 1)
 
     def test_layout_and_end_cuts(self):
+        # Stock 105, width 10 => usable 100, two 50 mm pieces fill it.
         parts = [P(50), P(50)]
-        plan = build_cut_plan(100, parts, width=10, gap=5, hole_radius=1.5,
+        plan = build_cut_plan(105, parts, width=10, gap=5, hole_radius=1.5,
                               include_end_cut=True, method="heuristic")
         # One stick, left edge at 0, cuts start at -1, length 12.
         self.assertEqual(len(plan.sticks), 1)
+        self.assertAlmostEqual(plan.usable_length, 100.0)
         self.assertAlmostEqual(plan.sticks[0].x_left, 0.0)
         cut_ys = sorted(y for _x, y, _l in plan.cuts)
         self.assertTrue(any(abs(y - 0.0) < 1e-9 for y in cut_ys))
@@ -213,13 +225,17 @@ class ArrangeAndPlanTests(unittest.TestCase):
     def test_stats_waste(self):
         parts = [P(80)]
         plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
+        # Bottom cap 5 mm + leftover 15 mm in the 95 mm usable span.
         self.assertAlmostEqual(plan.waste_length(), 20.0)
         self.assertAlmostEqual(plan.waste_percent(), 20.0)
         self.assertAlmostEqual(plan.used_length(), 80.0)
+        self.assertEqual(plan.sticks[0].waste, [(-5.0, 0.0), (80.0, 95.0)])
 
     def test_arch_positions_and_convex_direction(self):
+        # Stock 55, width 10 => usable 50, so a 50 mm piece fills
+        # the usable span and reuses the factory top tip at y=50.
         parts = [P(50, down=True, up=True)]
-        plan = build_cut_plan(50, parts, width=10, gap=5, hole_radius=1.5,
+        plan = build_cut_plan(55, parts, width=10, gap=5, hole_radius=1.5,
                               method="heuristic")
         # Bottom cap centre at y0+W/2=5, bulge down; top centre at 45, bulge up.
         self.assertEqual(len(plan.arches), 2)
@@ -251,9 +267,10 @@ class ArrangeAndPlanTests(unittest.TestCase):
         self.assertTrue(all(pt[1] >= 35.0 - 1e-9 for pt in up))
 
     def test_interior_rounded_end_omits_straight_cut(self):
-        # Two rounded-bottom pieces: the first sits at the factory tip,
-        # the second has an interior rounded bottom at Y=30 whose arc
-        # must replace the straight cut (a line at 30 would clip the tip).
+        # Two rounded-bottom pieces: the first starts at y=0 (the
+        # mandatory cut that severs the factory cap), the second has
+        # an interior rounded bottom at Y=30 whose arc must replace
+        # the straight cut (a line at 30 would clip the tip).
         parts = [P(30, down=True), P(30, down=True), P(20)]
         plan = build_cut_plan(100, parts, width=10, gap=5, hole_radius=1.5,
                               include_end_cut=True, method="heuristic")
@@ -270,8 +287,9 @@ class ArrangeAndPlanTests(unittest.TestCase):
         self.assertFalse(interior[0][1])
         self.assertAlmostEqual(interior[0][0], 35.0)
 
-    def test_factory_tip_keeps_end_cut(self):
-        # Rounded bottom at the factory tip still gets the Y=0 straight cut.
+    def test_y0_cut_always_kept(self):
+        # The y=0 cut is mandatory even when a rounded-bottom apex
+        # sits on that line: it severs the factory bottom cap.
         parts = [P(50, down=True)]
         plan = build_cut_plan(114, parts, width=10, gap=5, hole_radius=1.5,
                               include_end_cut=True, method="heuristic")
@@ -282,6 +300,7 @@ class ArrangeAndPlanTests(unittest.TestCase):
         self.assertFalse(bulge_up)
         self.assertAlmostEqual(cy, 5.0)
         self.assertAlmostEqual(arch_apex_y(cy, bulge_up, 10), 0.0)
+        self.assertEqual(plan.sticks[0].waste[0], (-5.0, 0.0))
 
     def test_piece_polygon_has_convex_caps(self):
         poly = piece_polygon(0, 10, 20, 60, True, True, n=16)
@@ -297,6 +316,65 @@ class ArrangeAndPlanTests(unittest.TestCase):
     def test_rounded_end_helper_matches_plan(self):
         arches = rounded_end_arches(5, 20, 70, 10, True, True)
         self.assertEqual(arches, [(5, 25.0, False), (5, 65.0, True)])
+
+
+
+    def test_usable_length_and_capacity(self):
+        self.assertAlmostEqual(usable_length(114, 10), 109.0)
+        y_lo, y_hi = stick_y_bounds(114, 10)
+        self.assertAlmostEqual(y_lo, -5.0)
+        self.assertAlmostEqual(y_hi, 109.0)
+        # A 109 mm piece fills the usable span; 110 mm does not fit.
+        plan_ok = build_cut_plan(114, [P(109)], 10, 5, 1.5, method="heuristic")
+        self.assertEqual(len(plan_ok.sticks), 1)
+        self.assertEqual(plan_ok.unplaced, [])
+        self.assertAlmostEqual(plan_ok.waste_length(), 5.0)
+        self.assertAlmostEqual(plan_ok.waste_percent(), 100.0 * 5.0 / 114.0)
+        plan_long = build_cut_plan(114, [P(110)], 10, 5, 1.5, method="heuristic")
+        self.assertEqual(plan_long.unplaced, [0])
+        self.assertEqual(plan_long.sticks, [])
+
+    def test_two_57s_need_two_sticks_on_default_stock(self):
+        # Previously 57+57=114 filled one stick. After cutting off
+        # the 5 mm bottom cap, usable is 109, so two sticks are needed.
+        parts = [P(57), P(57)]
+        plan = build_cut_plan(114, parts, 10, 5, 1.5, method="heuristic")
+        self.assertEqual(len(plan.sticks), 2)
+        self.assertEqual(plan.unplaced, [])
+        # Each stick: bottom cap 5 + leftover 109-57=52 => 57 mm waste.
+        self.assertAlmostEqual(plan.waste_length(), 114.0)
+        self.assertAlmostEqual(plan.waste_percent(), 50.0)
+
+    def test_y0_cut_present_when_end_cuts_disabled(self):
+        parts = [P(40)]
+        plan = build_cut_plan(
+            114, parts, 10, 5, 1.5,
+            include_end_cut=False, method="heuristic",
+        )
+        cut_ys = [y for _x, y, _l in plan.cuts]
+        self.assertTrue(any(abs(y - 0.0) < 1e-9 for y in cut_ys), cut_ys)
+        # Leftover at the top of the usable span: no tip cut at L-r.
+        self.assertFalse(any(abs(y - 109.0) < 1e-9 for y in cut_ys), cut_ys)
+
+    def test_stadium_slice_extends_below_axis(self):
+        poly = stadium_slice_polygon(0, 10, 114, -5, 109)
+        ys = [y for x, y in poly]
+        xs = [x for x, y in poly]
+        self.assertAlmostEqual(min(ys), -5.0, places=5)
+        self.assertAlmostEqual(max(ys), 109.0, places=5)
+        # Apex of the bottom cap is on the centreline at y=-r.
+        bottom = min(poly, key=lambda p: p[1])
+        self.assertAlmostEqual(bottom[0], 5.0, places=5)
+        self.assertAlmostEqual(bottom[1], -5.0, places=5)
+        # At y=0 (cap diameter) the slice is full width.
+        at_axis = [x for x, y in poly if abs(y) < 1e-8]
+        self.assertTrue(any(abs(x - 0.0) < 1e-6 for x in at_axis))
+        self.assertTrue(any(abs(x - 10.0) < 1e-6 for x in at_axis))
+        # Waste slice of just the bottom cap stays below the axis.
+        cap = stadium_slice_polygon(0, 10, 114, -5, 0)
+        self.assertAlmostEqual(min(y for x, y in cap), -5.0, places=5)
+        self.assertAlmostEqual(max(y for x, y in cap), 0.0, places=5)
+        self.assertTrue(all(y <= 1e-9 for x, y in cap))
 
 
 class GcodeExportTests(unittest.TestCase):
@@ -387,6 +465,24 @@ class GcodeExportTests(unittest.TestCase):
         self.assertAlmostEqual(x1 - x0, 10.0)
         self.assertAlmostEqual(i, 5.0)
         self.assertAlmostEqual(j, 0.0)
+
+
+    def test_gcode_includes_y0_cut(self):
+        parts = [P(50)]
+        plan = build_cut_plan(114, parts, 10, 5, 1.5, method="heuristic")
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "cut_plan.gcode")
+            export_gcode_extended(plan, path, feedrate=250, power=1000)
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        self.assertIn("G0 X-1.000 Y0.000", text)
+        self.assertIn("G1 X11.000 Y0.000 F250", text)
+        # Toolpaths stay at y >= 0; the factory cap below the axis
+        # is severed by this cut rather than traced.
+        for ln in text.splitlines():
+            if " Y-" in ln.split(";", 1)[0]:
+                self.fail(f"unexpected negative Y in G-code: {ln}")
+
 
 
 class TabModeSyncTests(unittest.TestCase):
@@ -497,9 +593,51 @@ class TabModeSyncTests(unittest.TestCase):
         self.assertIn("Bot", labels)
         self.assertIn("Top", labels)
         self.assertIn("Holes", labels)
+        self.assertIn("Dup", labels)
         self.assertIn("✕", labels)
         self.assertNotIn("Length (mm)", labels)
         self.assertNotIn("Round bottom", labels)
+        tab.destroy()
+
+    def test_duplicate_card_inserts_copy_and_syncs_text(self):
+        from engraver_ctrl.tab_small_parts import SmallPartsTab
+
+        class Host:
+            font = None
+            root = self.root
+
+        tab = SmallPartsTab(self.root, Host())
+        sample = "50, 1, 0, 10, 30\n70, 0, 1, 20\n40, 1, 1\n"
+        tab.text_parts.delete("1.0", "end")
+        tab.text_parts.insert("1.0", sample)
+        tab.mode_var.set("cards")
+        tab.on_mode_change()
+        self.assertEqual(len(tab._cards), 3)
+
+        tab._duplicate_card(tab._cards[0])
+        self.assertEqual(len(tab._cards), 4)
+        self.assertEqual(tab._cards[0].title.cget("text"), "#1")
+        self.assertEqual(tab._cards[1].title.cget("text"), "#2")
+        self.assertEqual(tab._cards[2].title.cget("text"), "#3")
+        self.assertEqual(tab._cards[3].title.cget("text"), "#4")
+        # Copy sits directly below the source and matches Len/Bot/Top/Holes.
+        self.assertEqual(tab._cards[1].length_var.get(), "50")
+        self.assertTrue(tab._cards[1].down_var.get())
+        self.assertFalse(tab._cards[1].up_var.get())
+        self.assertEqual(tab._cards[1].holes_var.get(), "10, 30")
+        # Later cards shifted down and kept their values.
+        self.assertEqual(tab._cards[2].length_var.get(), "70")
+        self.assertEqual(tab._cards[3].length_var.get(), "40")
+        # Text buffer stays in sync while still in Cards mode.
+        again = parse_parts_text(tab.text_parts.get("1.0", "end"))
+        self.assertEqual([p.length for p in again], [50.0, 50.0, 70.0, 40.0])
+        self.assertTrue(again[1].is_cut_down and not again[1].is_cut_up)
+        self.assertEqual(again[1].hole_centers, [10.0, 30.0])
+
+        tab.mode_var.set("text")
+        tab.on_mode_change()
+        switched = parse_parts_text(tab.text_parts.get("1.0", "end"))
+        self.assertEqual([p.length for p in switched], [50.0, 50.0, 70.0, 40.0])
         tab.destroy()
 
     def test_help_popup(self):
@@ -554,6 +692,58 @@ class TabModeSyncTests(unittest.TestCase):
         tab.destroy()
         self.root.withdraw()
 
+
+
+class SimulateNegativeYTests(unittest.TestCase):
+    """Simulate/Machine preview must accept toolpaths with Y < 0."""
+
+    @classmethod
+    def setUpClass(cls):
+        import tkinter as tk
+        try:
+            cls.root = tk.Tk()
+            cls.root.withdraw()
+        except tk.TclError as e:
+            raise unittest.SkipTest(f"Tk not available: {e}")
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            cls.root.destroy()
+        except Exception:
+            pass
+
+    def test_bounds_and_transform_include_negative_y(self):
+        from engraver_ctrl.tab_simulate import TabSimulate
+        from engraver_ctrl.sim_time import StepTimes
+
+        class Host:
+            font = None
+            root = self.root
+
+        tab = TabSimulate(self.root, Host())
+        gcode = (
+            "G21\nG90\nG0 X0 Y0\n"
+            "G0 X0 Y-5\nM3 S1000\n"
+            "G1 X10 Y-5 F250\nM5\n"
+            "G0 X0 Y20\nM3 S1000\n"
+            "G1 X10 Y20 F250\nM5\n"
+            "G0 X0 Y0\n"
+        )
+        tab.steps = tab.parse_gcode(gcode)
+        self.assertTrue(tab.steps)
+        tab.calculate_bounds()
+        self.assertLess(tab.min_y, 0)
+        self.assertAlmostEqual(tab.min_y, -5.0)
+        self.assertAlmostEqual(tab.max_y, 20.0)
+        tab.recompute_transform()
+        # Higher machine Y must appear higher (smaller canvas y).
+        _sx0, sy_low = tab.transform(0, -5)
+        _sx1, sy_high = tab.transform(0, 20)
+        self.assertLess(sy_high, sy_low)
+        seconds = StepTimes(tab.steps).total
+        self.assertGreater(seconds, 0)
+        tab.destroy()
 
 
 if __name__ == "__main__":

@@ -19,6 +19,8 @@ from engraver_ctrl.cut_plan_builder import (
     Part,
     arch_polyline,
     piece_polygon,
+    stadium_slice_polygon,
+    stick_y_bounds,
     build_cut_plan,
     format_hole_field,
     format_parts_text,
@@ -55,9 +57,10 @@ Small parts — Help
 
 Stock and cut parameters
   Stock Length (mm): total stick length, including both semicircular
-    factory ends (default 114).
+    factory ends (default 114). Length is measured from y = -r, so
+    the stick occupies y = -r .. L-r.
   Width (mm): stick width; also the diameter of those factory ends
-    (default 10).
+    (default 10). r = width/2.
   Gap (mm): space between neighbouring sticks in the jig (default 5).
   Hole Radius (mm): radius of holes cut on a piece (default 1.5).
   Feedrate (mm/min): cutting feed (default 250).
@@ -73,101 +76,54 @@ Text mode
 
 Cards mode
   Each card is one piece, shown on a single row:
-    #n   Len   Bot   Top   Holes   ✕
+    #n   Len   Bot   Top   Holes   Dup   ✕
   Len is the piece length in mm.
   Bot / Top tick a convex rounded cap at that end of the piece.
   Holes are comma- or space-separated, measured from the bottom
     of the piece.
-  Add piece appends a card; ✕ removes one.
+  Add piece appends a card; Dup duplicates one (inserts a copy
+    directly below); ✕ removes one.
   Switching between Text and Cards keeps the same data.
 
 Packing
   Packing uses First/Best Fit Decreasing (and an exact solver when
   OR-Tools is available). Kerf is ignored — enter lengths already
-  adjusted if needed. Usable length is the full stock length L
-  (including both semicircles). Leftover waste is kept as one block;
-  a piece with a rounded end is placed at a stick tip when that does
-  not use an extra stick. A rounded end is a convex cap whose apex
-  sits on that end; the arc replaces the straight cut there, except
-  at the factory stick tips (Y=0 and Y=L).
+  adjusted if needed. The bottom factory semicircle lies below the
+  X axis (centre at y = 0, from y = -r to y = 0). Each used stick
+  is cut straight across at y = 0 (1 mm overcut each side) to
+  remove that cap as waste. Pieces are packed in the remaining
+  span y = 0 .. L-r (usable length L-r). The top factory
+  semicircle (centre at L-2r, from L-2r to L-r) can be reused by
+  a rounded-top piece that ends at y = L-r. Leftover waste in the
+  usable span is kept as one block. A rounded end is a convex cap
+  whose apex sits on that end; the arc replaces the straight cut
+  there, except that the mandatory y=0 cut is always kept and the
+  factory top tip (y = L-r) keeps its optional end cut.
 """
 
 
-def stadium_slice_polygon(
-    x_left: float,
-    width: float,
-    stock_length: float,
-    y0: float,
-    y1: float,
-    n: int = 20,
-) -> List[Tuple[float, float]]:
-    """World-coordinate polygon for a y-slice of a stadium stick."""
-    r = width / 2.0
-    cx = x_left + r
-    y0 = max(0.0, min(stock_length, y0))
-    y1 = max(0.0, min(stock_length, y1))
-    if y1 <= y0 + 1e-12:
-        return []
-
-    def half_w(y: float) -> float:
-        if y < r:
-            d = r * r - (y - r) ** 2
-            return math.sqrt(max(0.0, d))
-        if y > stock_length - r:
-            cy = stock_length - r
-            d = r * r - (y - cy) ** 2
-            return math.sqrt(max(0.0, d))
-        return r
-
-    def add_range(ys, a, b, steps):
-        if b <= a + 1e-12:
-            ys.append(a)
-            return
-        for i in range(steps + 1):
-            ys.append(a + (b - a) * i / steps)
-
-    ys: List[float] = []
-    # Sample rounded caps densely so the ends look like semicircles,
-    # not triangles, even when a piece is much longer than W.
-    cap1_a, cap1_b = 0.0, min(r, stock_length)
-    cap2_a, cap2_b = max(0.0, stock_length - r), stock_length
-    mid_a, mid_b = cap1_b, cap2_a
-
-    def overlap_add(a, b, steps):
-        lo, hi = max(y0, a), min(y1, b)
-        if hi > lo:
-            add_range(ys, lo, hi, steps)
-
-    overlap_add(cap1_a, cap1_b, 16)
-    if mid_b > mid_a:
-        span = min(y1, mid_b) - max(y0, mid_a)
-        overlap_add(mid_a, mid_b, max(2, int(span / 4) + 1))
-    overlap_add(cap2_a, cap2_b, 16)
-    ys.extend([y0, y1])
-    ys = sorted(set(round(y, 8) for y in ys))
-    right = [(cx + half_w(y), y) for y in ys]
-    left = [(cx - half_w(y), y) for y in reversed(ys)]
-    return right + left
-
-
 class _Card:
-    def __init__(self, frame, length, down, up, holes, on_remove, font):
+    def __init__(self, frame, length, down, up, holes, on_remove, font,
+                 on_duplicate=None):
         self.frame = frame
         self.length_var = tk.StringVar(value=length)
         self.down_var = tk.BooleanVar(value=down)
         self.up_var = tk.BooleanVar(value=up)
         self.holes_var = tk.StringVar(value=holes)
         self._on_remove = on_remove
+        self._on_duplicate = on_duplicate
 
-        # One compact row: #n  Len [ ]  □Bot  □Top  Holes [ ]  ✕
-        # Pack the remove button first (side=right) so the expanding
-        # holes field cannot squeeze it off the row.
+        # One compact row: #n  Len [ ]  □Bot  □Top  Holes [ ]  Dup  ✕
+        # Pack the remove and duplicate buttons first (side=right) so
+        # the expanding holes field cannot squeeze them off the row.
         row = ttk.Frame(frame)
         row.pack(fill="x", padx=2, pady=1)
         self.row = row
         sm = ui_font(SIZE_SM)
         self.remove_btn = make_button(row, "✕", command=self._remove, width=2)
         self.remove_btn.pack(side="right", padx=(2, 0))
+        self.dup_btn = make_button(row, "Dup", command=self._duplicate, width=3)
+        self.dup_btn.pack(side="right", padx=(2, 0))
         self.title = ttk.Label(row, text="#1", font=ui_font(SIZE_SM, bold=True))
         self.title.pack(side="left", padx=(0, 4))
         ttk.Label(row, text="Len", font=sm).pack(side="left")
@@ -187,6 +143,10 @@ class _Card:
 
     def _remove(self):
         self._on_remove(self)
+
+    def _duplicate(self):
+        if self._on_duplicate is not None:
+            self._on_duplicate(self)
 
     def is_blank(self) -> bool:
         return (
@@ -526,10 +486,44 @@ class SmallPartsTab(tk.Frame):
         card = _Card(
             frame, length, down, up, holes,
             on_remove=self._remove_card, font=self.font,
+            on_duplicate=self._duplicate_card,
         )
         self._cards.append(card)
         self._renumber_cards()
         return card
+
+    def _duplicate_card(self, card: _Card):
+        """Insert an identical copy directly below `card` and sync text."""
+        try:
+            idx = self._cards.index(card)
+        except ValueError:
+            return
+        frame = ttk.Frame(self.cards_inner)
+        frame.pack(fill="x", padx=2, pady=0, after=card.frame)
+        new_card = _Card(
+            frame,
+            card.length_var.get(),
+            bool(card.down_var.get()),
+            bool(card.up_var.get()),
+            card.holes_var.get(),
+            on_remove=self._remove_card,
+            font=self.font,
+            on_duplicate=self._duplicate_card,
+        )
+        self._cards.insert(idx + 1, new_card)
+        self._renumber_cards()
+        self._sync_text_from_cards()
+
+    def _sync_text_from_cards(self):
+        """Keep the Text-mode buffer in sync while staying in Cards mode."""
+        try:
+            parts = self._read_parts("cards", allow_blank=True)
+        except ValueError:
+            return
+        self.text_parts.delete("1.0", tk.END)
+        self.text_parts.insert("1.0", format_parts_text(parts))
+        if parts:
+            self.text_parts.insert(tk.END, "\n")
 
     def _remove_card(self, card: _Card):
         if card in self._cards:
@@ -580,7 +574,11 @@ class SmallPartsTab(tk.Frame):
         n = len(plan.sticks)
         waste = plan.waste_length()
         pct = plan.waste_percent()
-        text = f"Sticks used: {n}    Waste: {waste:g} mm ({pct:.1f}%)"
+        usable = plan.usable_length
+        text = (
+            f"Sticks used: {n}    Waste: {waste:g} mm ({pct:.1f}%)"
+            f"    Usable: {usable:g} mm"
+        )
         if plan.unplaced:
             bits = []
             for i in plan.unplaced:
@@ -603,7 +601,8 @@ class SmallPartsTab(tk.Frame):
         if plan.unplaced:
             messagebox.showwarning(
                 "Unplaced pieces",
-                "Some pieces are longer than the stock length and were not placed.",
+                "Some pieces are longer than the usable length "
+                "(stock length minus the bottom cap radius) and were not placed.",
             )
 
     def on_generate(self):
@@ -624,7 +623,7 @@ class SmallPartsTab(tk.Frame):
         self._update_stats(plan)
         extra = ""
         if plan.unplaced:
-            extra = "\nSome pieces were longer than the stock and were not placed."
+            extra = "\nSome pieces were longer than the usable length and were not placed."
         messagebox.showinfo(
             "OK",
             f"GCODE written to cut_plan.gcode.\n"
@@ -636,18 +635,28 @@ class SmallPartsTab(tk.Frame):
         plan = self._plan
         if plan is None or not plan.sticks:
             length = 114.0
+            width = 10.0
             try:
                 length = float(self.entry_stock_length.get())
             except ValueError:
                 pass
-            return -15.0, 40.0, -15.0, max(length, 20.0) + 15.0
+            try:
+                width = float(self.entry_width.get())
+            except ValueError:
+                pass
+            y_lo, y_hi = stick_y_bounds(length, width)
+            return -15.0, 40.0, y_lo - 15.0, y_hi + 15.0
+        y_lo, y_hi = stick_y_bounds(plan.stock_length, plan.stick_width)
         x_min = -10.0
         x_max = 20.0
-        y_min = -10.0
-        y_max = plan.stock_length + 10.0
+        y_min = y_lo - 10.0
+        y_max = y_hi + 10.0
         for stick in plan.sticks:
             x_min = min(x_min, stick.x_left - CUT_EXTRA_MARGIN - 5)
             x_max = max(x_max, stick.x_left + stick.width + CUT_EXTRA_MARGIN + 5)
+            for waste_a, waste_b in stick.waste:
+                y_min = min(y_min, waste_a - 5)
+                y_max = max(y_max, waste_b + 5)
         for sx, y, length in plan.cuts:
             x_min = min(x_min, sx)
             x_max = max(x_max, sx + length)
@@ -805,8 +814,9 @@ class SmallPartsTab(tk.Frame):
     def _draw_plan(self, plan: CutPlan):
         # Stick body + pieces + waste, then holes, arches, then red cut lines.
         for stick in plan.sticks:
+            y_lo, y_hi = stick_y_bounds(stick.length, stick.width)
             outline = stadium_slice_polygon(
-                stick.x_left, stick.width, stick.length, 0.0, stick.length,
+                stick.x_left, stick.width, stick.length, y_lo, y_hi,
             )
             coords = self._poly(outline)
             if coords:
@@ -851,7 +861,7 @@ class SmallPartsTab(tk.Frame):
             # Stick index just below the bottom cap, outside the stock.
             self._text(
                 stick.x_left + stick.width / 2.0,
-                -4.0,
+                y_lo - 4.0,
                 text=f"S{stick.index + 1}",
                 fill="#444444",
                 anchor="n",
