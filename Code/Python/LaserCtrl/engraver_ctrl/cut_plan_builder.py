@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass, field
 from typing import List, Sequence, Tuple
 
@@ -18,11 +19,15 @@ class Part:
     - is_cut_down: convex rounded cap at the bottom (low-Y) end
     - is_cut_up: convex rounded cap at the top (high-Y) end
     - hole_centers: hole positions (mm) measured from the bottom of the piece
+    - label: optional short name (e.g. "D1-D4"); shown in the preview
+    - qty: how many identical copies to cut (>= 1)
     """
     length: float
     is_cut_down: bool
     is_cut_up: bool
     hole_centers: List[float]
+    label: str = ""
+    qty: int = 1
 
 
 @dataclass
@@ -36,6 +41,7 @@ class Placement:
     is_cut_down: bool
     is_cut_up: bool
     hole_centers: List[float]
+    label: str = ""
 
 
 @dataclass
@@ -159,24 +165,72 @@ def merge_intervals(
     return out
 
 
+_QTY_RE = re.compile(r"^[xX\*]\s*(\d+)$")
+_LABEL_BAD = set(",:#")
+
+
+def clean_label(label: str) -> str:
+    """Strip a label and drop characters the text format reserves."""
+    text = "".join(ch for ch in str(label or "") if ch not in _LABEL_BAD)
+    return " ".join(text.split())
+
+
+def parse_qty_field(text: str) -> int:
+    """Parse a card / text quantity: blank means 1; 'x3', '*3', '3' ok."""
+    raw = str(text or "").strip()
+    if not raw:
+        return 1
+    m = _QTY_RE.match(raw)
+    value = m.group(1) if m else raw
+    try:
+        qty = int(value)
+    except ValueError as e:
+        raise ValueError(f"invalid quantity {raw!r}") from e
+    if qty < 1:
+        raise ValueError(f"quantity must be >= 1, got {qty}")
+    return qty
+
+
 def parse_parts_text(txt: str) -> List[Part]:
     """Parse the Small parts text format.
 
     One piece per line:
-        length, round_bottom, round_top[, hole1, hole2, ...]
+        [label:] length, round_bottom, round_top[, hole1, hole2, ...][, xN]
     round_bottom / round_top must be 0 or 1. Hole positions are mm
-    from the bottom of the piece. Blank lines and # comments are ignored.
+    from the bottom of the piece and must lie strictly inside it.
+    An optional ``label:`` prefix names the piece; an optional final
+    ``xN`` token cuts N identical copies (default 1). Lines without
+    either are the original format. Blank lines and # comments are
+    ignored.
     """
     parts: List[Part] = []
     for lineno, raw in enumerate(txt.splitlines(), start=1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
+        label = ""
+        head, sep, rest = line.partition(":")
+        if sep and "," not in head:
+            label = clean_label(head)
+            line = rest.strip()
         tokens = [t.strip() for t in line.split(",")]
+        qty = 1
+        if tokens:
+            last = tokens[-1]
+            # Allow "..., x3" and "... 30 x3" (space-separated qty).
+            bits = last.split()
+            if len(bits) >= 2 and _QTY_RE.match(bits[-1]):
+                qty = int(_QTY_RE.match(bits[-1]).group(1))
+                tokens[-1] = " ".join(bits[:-1])
+            elif _QTY_RE.match(last):
+                qty = int(_QTY_RE.match(last).group(1))
+                tokens.pop()
+        if qty < 1:
+            raise ValueError(f"Line {lineno}: quantity must be >= 1")
         if len(tokens) < 3:
             raise ValueError(
-                f"Line {lineno}: expected 'length, round_bottom, round_top[, holes...]', "
-                f"got {raw!r}"
+                f"Line {lineno}: expected '[label:] length, round_bottom, "
+                f"round_top[, holes...][, xN]', got {raw!r}"
             )
         try:
             length = float(tokens[0])
@@ -202,25 +256,91 @@ def parse_parts_text(txt: str) -> List[Part]:
                 hole_centers.append(float(h))
             except ValueError as e:
                 raise ValueError(f"Line {lineno}: invalid hole {h!r}") from e
+        for h in hole_centers:
+            if h <= _TOL or h >= length - _TOL:
+                raise ValueError(
+                    f"Line {lineno}: hole at {h:g} mm is outside the "
+                    f"piece (0 .. {length:g} mm)"
+                )
         parts.append(Part(
             length=length,
             is_cut_down=is_cut_down,
             is_cut_up=is_cut_up,
             hole_centers=hole_centers,
+            label=label,
+            qty=qty,
         ))
     return parts
 
 
+def format_part_line(p: Part) -> str:
+    """One text-format line for a part (label and qty only when set)."""
+    line = f"{p.length:g}, {int(bool(p.is_cut_down))}, {int(bool(p.is_cut_up))}"
+    if p.hole_centers:
+        holes = ", ".join(f"{h:g}" for h in p.hole_centers)
+        line = f"{line}, {holes}"
+    qty = int(getattr(p, "qty", 1) or 1)
+    if qty > 1:
+        line = f"{line}, x{qty}"
+    label = clean_label(getattr(p, "label", ""))
+    if label:
+        line = f"{label}: {line}"
+    return line
+
+
 def format_parts_text(parts: Sequence[Part]) -> str:
     """Serialize parts back to the text format (one piece per line)."""
-    lines = []
+    return "\n".join(format_part_line(p) for p in parts)
+
+
+def expand_parts(parts: Sequence[Part]) -> List[Part]:
+    """Expand qty into individual parts (qty=1 each), keeping labels."""
+    out: List[Part] = []
     for p in parts:
-        flags = f"{p.length:g}, {int(bool(p.is_cut_down))}, {int(bool(p.is_cut_up))}"
-        if p.hole_centers:
-            holes = ", ".join(f"{h:g}" for h in p.hole_centers)
-            flags = f"{flags}, {holes}"
-        lines.append(flags)
-    return "\n".join(lines)
+        qty = int(getattr(p, "qty", 1) or 1)
+        for _ in range(max(1, qty)):
+            out.append(Part(
+                length=p.length,
+                is_cut_down=p.is_cut_down,
+                is_cut_up=p.is_cut_up,
+                hole_centers=list(p.hole_centers),
+                label=getattr(p, "label", ""),
+                qty=1,
+            ))
+    return out
+
+
+def validate_holes(
+    parts: Sequence[Part],
+    hole_radius: float,
+    min_web: float = 0.0,
+) -> None:
+    """Raise ValueError if a hole would cut through a piece end or overlap.
+
+    Every hole must sit fully inside its piece (centre at least
+    hole_radius + min_web from each end) and holes on the same piece
+    must not overlap (centres at least 2*hole_radius apart).
+    """
+    r = float(hole_radius)
+    edge = r + float(min_web)
+    for idx, p in enumerate(parts, start=1):
+        name = f"Piece {idx}"
+        label = clean_label(getattr(p, "label", ""))
+        if label:
+            name += f" ({label})"
+        holes = sorted(float(h) for h in p.hole_centers)
+        for h in holes:
+            if h < edge - 1e-6 or h > p.length - edge + 1e-6:
+                raise ValueError(
+                    f"{name}: hole at {h:g} mm needs {edge:g} mm to each end "
+                    f"(allowed {edge:g} .. {p.length - edge:g} mm)"
+                )
+        for a, b in zip(holes, holes[1:]):
+            if b - a < 2.0 * r - 1e-6:
+                raise ValueError(
+                    f"{name}: holes at {a:g} and {b:g} mm overlap "
+                    f"(need {2.0 * r:g} mm between centres)"
+                )
 
 
 def parse_hole_field(text: str) -> List[float]:
@@ -534,6 +654,9 @@ def build_cut_plan(
     if hole_radius < 0:
         raise ValueError("Hole radius must be >= 0")
 
+    parts = expand_parts(parts)
+    validate_holes(parts, hole_radius)
+
     usable = usable_length(stock_length, width)
     if usable <= _TOL:
         raise ValueError(
@@ -587,6 +710,7 @@ def build_cut_plan(
                 is_cut_down=part.is_cut_down,
                 is_cut_up=part.is_cut_up,
                 hole_centers=list(part.hole_centers),
+                label=getattr(part, "label", ""),
             ))
             cut_ys.append(y_end)
 

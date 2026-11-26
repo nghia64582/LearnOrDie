@@ -119,7 +119,7 @@ class TkSmokeTests(unittest.TestCase):
         sub = [nested[0].tab(i, "text") for i in range(nested[0].index("end"))]
         self.assertEqual(
             sub,
-            ["Machine", "Small parts", "Parallel", "Custom", "Simulate"],
+            ["Machine", "Small parts", "Truss", "Parallel", "Custom", "Simulate"],
         )
         frame_frame = shell.main_nb.nametowidget(shell.main_nb.tabs()[2])
         nested_f = [c for c in frame_frame.winfo_children() if isinstance(c, ttk.Notebook)]
@@ -408,8 +408,9 @@ class TkSmokeTests(unittest.TestCase):
                 nested = [c for c in engraver_frame.winfo_children()
                           if isinstance(c, ttk.Notebook)]
                 self.assertTrue(nested)
-                nested[0].select(3)
-                custom = nested[0].nametowidget(nested[0].tabs()[3])
+                idx = [nested[0].tab(i, "text") for i in range(nested[0].index("end"))].index("Custom")
+                nested[0].select(idx)
+                custom = nested[0].nametowidget(nested[0].tabs()[idx])
                 win.update()
                 win.update_idletasks()
                 texts = self._button_texts(custom)
@@ -705,9 +706,10 @@ def save_screenshots():
         from tkinter import ttk as _ttk
         nested = [c for c in engraver_frame.winfo_children() if isinstance(c, _ttk.Notebook)]
         if nested and shell.machine_tab is not None:
-            # Custom is index 3
-            nested[0].select(3)
-            custom = nested[0].nametowidget(nested[0].tabs()[3])
+            names = [nested[0].tab(i, "text") for i in range(nested[0].index("end"))]
+            ci = names.index("Custom")
+            nested[0].select(ci)
+            custom = nested[0].nametowidget(nested[0].tabs()[ci])
             if hasattr(custom, "text_input"):
                 sample = "\n".join(
                     ["# sample Custom DSL", "ADD 0 0 Demo"]
@@ -730,8 +732,10 @@ def save_screenshots():
 
         # Engraver/Simulate with a loaded program and a selected step
         if nested:
-            nested[0].select(4)
-            sim = nested[0].nametowidget(nested[0].tabs()[4])
+            names = [nested[0].tab(i, "text") for i in range(nested[0].index("end"))]
+            si = names.index("Simulate")
+            nested[0].select(si)
+            sim = nested[0].nametowidget(nested[0].tabs()[si])
             if hasattr(sim, "load_gcode"):
                 gpath = os.path.join(tempfile.mkdtemp(), "demo.gcode")
                 with open(gpath, "w") as f:

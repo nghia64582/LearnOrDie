@@ -24,10 +24,13 @@ from engraver_ctrl.cut_plan_builder import (
     stadium_slice_polygon,
     stick_y_bounds,
     build_cut_plan,
+    clean_label,
+    expand_parts,
     format_hole_field,
     format_parts_text,
     parse_hole_field,
     parse_parts_text,
+    parse_qty_field,
 )
 from engraver_ctrl.extended_cut_export import export_gcode_extended
 from engraver_ctrl.paths import CUT_PLAN_GCODE_PATH
@@ -75,14 +78,23 @@ Text mode
   Holes are millimetres from the bottom of the piece.
   Blank lines and # comments are ignored.
   Example:  50, 1, 0, 10, 30
+  Optional label and quantity (old lines still work):
+    label: length, round_bottom, round_top[, holes...][, xN]
+  Example:  D1-D4: 92, 1, 1, 6, 86, x4
+  The label (no commas, colons or #) is shown on the preview;
+  xN cuts N identical copies.
+  Each hole must fit inside its piece: its centre needs at least
+  the hole radius to each end, and holes must not overlap.
 
 Cards mode
   Each card is one piece, shown on a single row:
-    #n   Len   Bot   Top   Holes   Dup   ✕
+    #n   Lb   Len   Bot   Top   Holes   Qty   Dup   ✕
+  Lb is an optional short label (e.g. D1-D4).
   Len is the piece length in mm.
   Bot / Top tick a convex rounded cap at that end of the piece.
   Holes are comma- or space-separated, measured from the bottom
     of the piece.
+  Qty is the number of identical copies (blank = 1).
   Add piece appends a card; Dup duplicates one (inserts a copy
     directly below); ✕ removes one.
   Switching between Text and Cards keeps the same data.
@@ -113,16 +125,19 @@ Packing
 
 class _Card:
     def __init__(self, frame, length, down, up, holes, on_remove, font,
-                 on_duplicate=None):
+                 on_duplicate=None, label="", qty=""):
         self.frame = frame
+        self.label_var = tk.StringVar(value=label)
         self.length_var = tk.StringVar(value=length)
         self.down_var = tk.BooleanVar(value=down)
         self.up_var = tk.BooleanVar(value=up)
         self.holes_var = tk.StringVar(value=holes)
+        self.qty_var = tk.StringVar(value=qty)
         self._on_remove = on_remove
         self._on_duplicate = on_duplicate
 
-        # One compact row: #n  Len [ ]  □Bot  □Top  Holes [ ]  Dup  ✕
+        # One compact row:
+        # #n  Lb [ ]  Len [ ]  □Bot  □Top  Holes [ ]  Qty [ ]  Dup  ✕
         # Pack the remove and duplicate buttons first (side=right) so
         # the expanding holes field cannot squeeze them off the row.
         row = ttk.Frame(frame)
@@ -135,19 +150,29 @@ class _Card:
         self.dup_btn.pack(side="right", padx=(2, 0))
         self.title = ttk.Label(row, text="#1", font=ui_font(SIZE_SM, bold=True))
         self.title.pack(side="left", padx=(0, 4))
+        ttk.Label(row, text="Lb", font=sm).pack(side="left")
+        ttk.Entry(row, textvariable=self.label_var, width=4, font=sm).pack(
+            side="left", padx=(2, 4)
+        )
         ttk.Label(row, text="Len", font=sm).pack(side="left")
-        ttk.Entry(row, textvariable=self.length_var, width=6, font=sm).pack(
-            side="left", padx=(3, 6)
+        ttk.Entry(row, textvariable=self.length_var, width=4, font=sm).pack(
+            side="left", padx=(2, 4)
         )
         ttk.Checkbutton(row, text="Bot", variable=self.down_var).pack(
-            side="left", padx=(0, 4)
+            side="left", padx=(0, 2)
         )
         ttk.Checkbutton(row, text="Top", variable=self.up_var).pack(
-            side="left", padx=(0, 6)
+            side="left", padx=(0, 4)
         )
+        # Qty sits at the right end, packed before the expanding holes
+        # entry so it always stays visible.
+        ttk.Entry(row, textvariable=self.qty_var, width=3, font=sm).pack(
+            side="right", padx=(2, 2)
+        )
+        ttk.Label(row, text="Qty", font=sm).pack(side="right")
         ttk.Label(row, text="Holes", font=sm).pack(side="left")
-        ttk.Entry(row, textvariable=self.holes_var, width=12, font=sm).pack(
-            side="left", padx=(3, 4), fill="x", expand=True
+        ttk.Entry(row, textvariable=self.holes_var, width=6, font=sm).pack(
+            side="left", padx=(2, 4), fill="x", expand=True
         )
 
     def _remove(self):
@@ -161,6 +186,8 @@ class _Card:
         return (
             not self.length_var.get().strip()
             and not self.holes_var.get().strip()
+            and not self.label_var.get().strip()
+            and not self.qty_var.get().strip()
             and not self.down_var.get()
             and not self.up_var.get()
         )
@@ -186,7 +213,7 @@ class SmallPartsTab(tk.Frame):
 
     # ------------------------------------------------------------------ UI
     def build_ui(self):
-        self.columnconfigure(0, weight=0, minsize=420)
+        self.columnconfigure(0, weight=0, minsize=510)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
 
@@ -457,11 +484,23 @@ class SmallPartsTab(tk.Frame):
                 holes = parse_hole_field(card.holes_var.get())
             except ValueError as e:
                 raise ValueError(f"Card {n}: invalid hole list") from e
+            for h in holes:
+                if h <= 0 or h >= length:
+                    raise ValueError(
+                        f"Card {n}: hole at {h:g} mm is outside the piece "
+                        f"(0 .. {length:g} mm)"
+                    )
+            try:
+                qty = parse_qty_field(card.qty_var.get())
+            except ValueError as e:
+                raise ValueError(f"Card {n}: {e}") from e
             parts.append(Part(
                 length=length,
                 is_cut_down=bool(card.down_var.get()),
                 is_cut_up=bool(card.up_var.get()),
                 hole_centers=holes,
+                label=clean_label(card.label_var.get()),
+                qty=qty,
             ))
         if not parts and not allow_blank:
             raise ValueError("Enter at least one piece.")
@@ -481,21 +520,63 @@ class SmallPartsTab(tk.Frame):
                 self.add_card()
             else:
                 for p in parts:
+                    qty = int(getattr(p, "qty", 1) or 1)
                     self.add_card(
                         length=f"{p.length:g}",
                         down=p.is_cut_down,
                         up=p.is_cut_up,
                         holes=format_hole_field(p.hole_centers),
+                        label=getattr(p, "label", ""),
+                        qty=str(qty) if qty > 1 else "",
                     )
             self._renumber_cards()
 
-    def add_card(self, length="", down=False, up=False, holes=""):
+    def load_parts(self, parts: Sequence[Part], preview: bool = True,
+                   stock_length=None, width=None, hole_radius=None):
+        """Replace the piece list (both Text and Cards) and preview it.
+
+        Used by other tabs (e.g. Truss -> Send to Small parts); the
+        optional stick size and hole radius overwrite the form fields.
+        """
+        parts = list(parts)
+        for entry, value in (
+            (self.entry_stock_length, stock_length),
+            (self.entry_width, width),
+            (self.entry_hole_radius, hole_radius),
+        ):
+            if value is not None:
+                entry.delete(0, tk.END)
+                entry.insert(0, f"{float(value):g}")
+        self._write_parts("text", parts)
+        if self._mode == "cards":
+            self._write_parts("cards", parts)
+        if preview and parts:
+            try:
+                self._plan = self._build_plan()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+                return
+            self._fit_view()
+            self._update_stats(self._plan)
+            # Refit once the (possibly just shown) canvas has its size.
+            self.after_idle(self._fit_view)
+
+    def piece_count(self) -> int:
+        """Total pieces to cut (qty expanded) in the current list."""
+        try:
+            return len(expand_parts(self._read_parts(self._mode, allow_blank=True)))
+        except ValueError:
+            return 0
+
+    def add_card(self, length="", down=False, up=False, holes="",
+                 label="", qty=""):
         frame = ttk.Frame(self.cards_inner)
         frame.pack(fill="x", padx=2, pady=0)
         card = _Card(
             frame, length, down, up, holes,
             on_remove=self._remove_card, font=self.font,
             on_duplicate=self._duplicate_card,
+            label=label, qty=qty,
         )
         self._cards.append(card)
         self._renumber_cards()
@@ -518,6 +599,8 @@ class SmallPartsTab(tk.Frame):
             on_remove=self._remove_card,
             font=self.font,
             on_duplicate=self._duplicate_card,
+            label=card.label_var.get(),
+            qty=card.qty_var.get(),
         )
         self._cards.insert(idx + 1, new_card)
         self._renumber_cards()
@@ -585,14 +668,16 @@ class SmallPartsTab(tk.Frame):
         pct = plan.waste_percent()
         usable = plan.usable_length
         text = (
-            f"Sticks used: {n}    Waste: {waste:g} mm ({pct:.1f}%)"
+            f"Pieces: {len(plan.parts)}    Sticks used: {n}"
+            f"    Waste: {waste:g} mm ({pct:.1f}%)"
             f"    Usable: {usable:g} mm"
         )
         if plan.unplaced:
             bits = []
             for i in plan.unplaced:
                 if 0 <= i < len(plan.parts):
-                    bits.append(f"P{i + 1} ({plan.parts[i].length:g} mm)")
+                    name = plan.parts[i].label or f"P{i + 1}"
+                    bits.append(f"{name} ({plan.parts[i].length:g} mm)")
                 else:
                     bits.append(f"#{i + 1}")
             text += f"\nUnplaced: {len(plan.unplaced)}  ({', '.join(bits)})"
@@ -888,7 +973,7 @@ class SmallPartsTab(tk.Frame):
                 mid = (p.y_start + p.y_end) / 2.0
                 self._text(
                     cx, mid,
-                    text=f"P{p.part_index + 1}  {p.length:g}",
+                    text=f"{p.label or f'P{p.part_index + 1}'}  {p.length:g}",
                     fill="#222222",
                 )
 
