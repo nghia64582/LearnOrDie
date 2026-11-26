@@ -64,11 +64,14 @@ class CutPlan:
     - cuts: (start_x, y, length_of_cut) horizontal G-code cuts
     - holes: (center_x, center_y)
     - arches: (center_x, center_y, bulge_up)
-        A convex stadium cap of radius width/2.
-        bulge_up False => rounded bottom: centre at y0 + W/2, arc
-            spans y0 .. y0+W/2 and bulges down (apex on the y0 cut).
-        bulge_up True  => rounded top: centre at y1 - W/2, arc
-            spans y1-W/2 .. y1 and bulges up (apex on the y1 cut).
+        A convex cap of radius cap_radius = width/2 + CUT_EXTRA_MARGIN.
+        The apex stays on the piece end (the cut line); the centre
+        sits that radius into the piece, and the arc runs 1 mm past
+        each stick edge (same overcut as the straight cuts).
+        bulge_up False => rounded bottom: centre at y0 + R, G3
+            bulges down (apex on the y0 cut).
+        bulge_up True  => rounded top: centre at y1 - R, G2
+            bulges up (apex on the y1 cut).
     """
     stick_width: float
     cuts: List[Tuple[float, float, float]]
@@ -77,6 +80,7 @@ class CutPlan:
     arches: List[Tuple[float, float, bool]]
     stock_length: float = 0.0
     usable_length: float = 0.0
+    cap_radius: float = 0.0
     gap: float = 0.0
     sticks: List[StickLayout] = field(default_factory=list)
     unplaced: List[int] = field(default_factory=list)
@@ -281,6 +285,24 @@ def arrange_bin(
     return ordered, y0
 
 
+def cap_radius(width: float, margin: float = CUT_EXTRA_MARGIN) -> float:
+    """Cut radius of a rounded piece cap: half the stick width plus overcut."""
+    return float(width) / 2.0 + float(margin)
+
+
+def cap_edge_offset(width: float, margin: float = CUT_EXTRA_MARGIN) -> float:
+    """Distance from the apex line to where the cap arc crosses the stick edges.
+
+    For a circle of radius R = W/2 + margin whose apex sits on the
+    end cut, the intersections at x = x_c ± W/2 are
+    R - sqrt(R^2 - (W/2)^2) away from the tip (closer than W/2,
+    because the larger circle is flatter than a true W/2 semicircle).
+    """
+    half = float(width) / 2.0
+    r = cap_radius(width, margin)
+    return r - math.sqrt(max(0.0, r * r - half * half))
+
+
 def rounded_end_arches(
     x_center: float,
     y_start: float,
@@ -291,11 +313,13 @@ def rounded_end_arches(
 ) -> List[Tuple[float, float, bool]]:
     """Return (center_x, center_y, bulge_up) caps for one piece.
 
-    The cap is convex (stadium-like): the semicircle's apex sits on the
-    nearest end (y_start or y_end) and bulges toward that end, not into
-    a concave notch in the piece.
+    The cap is convex: the apex sits on the nearest end (y_start or
+    y_end) and bulges toward that end. The cut radius is half the
+    stick width plus CUT_EXTRA_MARGIN, so the arc runs past each
+    stick edge by that overcut even if the stick is placed slightly
+    off. The centre is R into the piece from the apex, not W/2.
     """
-    r = width / 2.0
+    r = cap_radius(width)
     out: List[Tuple[float, float, bool]] = []
     if is_cut_down:
         # Centre in the piece, apex at y_start, bulge toward -Y.
@@ -306,7 +330,7 @@ def rounded_end_arches(
 
 
 def arch_apex_y(center_y: float, bulge_up: bool, width: float) -> float:
-    r = width / 2.0
+    r = cap_radius(width)
     return center_y + r if bulge_up else center_y - r
 
 
@@ -332,6 +356,57 @@ def arch_polyline(
     return pts
 
 
+def clipped_cap_polyline(
+    cx: float,
+    cy: float,
+    width: float,
+    bulge_up: bool,
+    n: int = 16,
+    margin: float = CUT_EXTRA_MARGIN,
+) -> List[Tuple[float, float]]:
+    """Arc of a rounded cap, clipped to the stick edges (for piece fill).
+
+    Samples the R = W/2+margin circle only between x = cx ± W/2, on
+    the bulge side. The full overcut path (used in G-code / red preview)
+    is arch_polyline(..., cap_radius(width)).
+    """
+    r = cap_radius(width, margin)
+    half = float(width) / 2.0
+    if r <= 0:
+        return []
+    alpha = math.acos(max(-1.0, min(1.0, half / r)))
+    if bulge_up:
+        a0 = math.pi - alpha
+        a1 = alpha
+    else:
+        a0 = math.pi + alpha
+        a1 = 2.0 * math.pi - alpha
+    pts: List[Tuple[float, float]] = []
+    for i in range(n + 1):
+        a = a0 + (a1 - a0) * i / n
+        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    return pts
+
+
+def cap_ear_polygon(
+    x_left: float,
+    width: float,
+    y_apex: float,
+    bulge_up: bool,
+    n: int = 16,
+) -> List[Tuple[float, float]]:
+    """Waste region between the apex line and the cap arc, inside the stick."""
+    cx = x_left + float(width) / 2.0
+    r = cap_radius(width)
+    cy = y_apex - r if bulge_up else y_apex + r
+    arc = clipped_cap_polyline(cx, cy, width, bulge_up, n=n)
+    if len(arc) < 2:
+        return []
+    right = x_left + float(width)
+    # Close along the apex line, right to left.
+    return list(arc) + [(right, float(y_apex)), (x_left, float(y_apex))]
+
+
 def piece_polygon(
     x_left: float,
     width: float,
@@ -344,24 +419,29 @@ def piece_polygon(
     """Outline of a finished piece, with convex caps when flagged.
 
     Walks left side (top to bottom), bottom end, right side (bottom to
-    top), then the top end, so the fill matches the cut shape.
+    top), then the top end, so the fill matches the cut shape. Cap
+    fills are clipped to the stick width; the overcut itself is only
+    in the red cut path / G-code.
     """
-    r = width / 2.0
-    cx = x_left + r
+    half = width / 2.0
+    cx = x_left + half
     left, right = x_left, x_left + width
     y_start = float(y_start)
     y_end = float(y_end)
     if y_end <= y_start + 1e-12:
         return []
+    edge = cap_edge_offset(width)
+    r = cap_radius(width)
 
     def cap(cy: float, bulge_up: bool, reverse: bool = False):
-        pts = arch_polyline(cx, cy, r, bulge_up, n=n)
+        pts = clipped_cap_polyline(cx, cy, width, bulge_up, n=n)
         return list(reversed(pts)) if reverse else pts
 
     pts: List[Tuple[float, float]] = []
-    # Left side, top toward bottom.
-    left_top = y_end - r if round_top else y_end
-    left_bot = y_start + r if round_bottom else y_start
+    # Left side, top toward bottom. Sides stop where the cap arc
+    # meets the stick edge, not at the (outside) diameter.
+    left_top = y_end - edge if round_top else y_end
+    left_bot = y_start + edge if round_bottom else y_start
     pts.append((left, left_top))
     if left_bot < left_top:
         pts.append((left, left_bot))
@@ -371,12 +451,11 @@ def piece_polygon(
     else:
         pts.append((right, y_start))
     # Right side, bottom toward top.
-    right_top = y_end - r if round_top else y_end
-    if right_top > (y_start + r if round_bottom else y_start):
+    right_top = y_end - edge if round_top else y_end
+    if right_top > (y_start + edge if round_bottom else y_start):
         pts.append((right, right_top))
     # Top end: straight, or convex cap bulging up, right to left.
     if round_top:
-        # arch_polyline is left->right through +Y; reverse for right->left.
         top = cap(y_end - r, bulge_up=True, reverse=True)
         pts.extend(top[1:])
     else:
@@ -593,6 +672,7 @@ def build_cut_plan(
         arches=arches_out,
         stock_length=stock_length,
         usable_length=usable,
+        cap_radius=cap_radius(width),
         gap=gap,
         sticks=sticks,
         unplaced=list(unplaced),

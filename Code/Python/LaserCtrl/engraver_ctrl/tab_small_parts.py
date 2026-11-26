@@ -18,6 +18,8 @@ from engraver_ctrl.cut_plan_builder import (
     CutPlan,
     Part,
     arch_polyline,
+    cap_ear_polygon,
+    cap_radius,
     piece_polygon,
     stadium_slice_polygon,
     stick_y_bounds,
@@ -96,9 +98,12 @@ Packing
   semicircle (centre at L-2r, from L-2r to L-r) can be reused by
   a rounded-top piece that ends at y = L-r. Leftover waste in the
   usable span is kept as one block. A rounded end is a convex cap
-  whose apex sits on that end; the arc replaces the straight cut
-  there, except that the mandatory y=0 cut is always kept and the
-  factory top tip (y = L-r) keeps its optional end cut.
+  whose apex sits on that end. The cut radius is half the stick
+  width plus the same 1 mm overcut used on straight cuts, so the
+  arc runs 1 mm past each stick edge even if the stick is placed
+  slightly off. The arc replaces the straight cut there, except
+  that the mandatory y=0 cut is always kept and the factory top
+  tip (y = L-r) keeps its optional end cut.
 """
 
 
@@ -839,6 +844,31 @@ class SmallPartsTab(tk.Frame):
                     if waste_b - waste_a >= 4:
                         self._text(cx, mid, text="waste", fill="#666666")
 
+            # Ears between a rounded cap and its apex line are waste
+            # (cut off by the overcut arc) even when no leftover block
+            # sits there.
+            for p in stick.placements:
+                if p.is_cut_down:
+                    ear = cap_ear_polygon(
+                        stick.x_left, stick.width, p.y_start, False,
+                    )
+                    coords = self._poly(ear)
+                    if coords:
+                        self.canvas.create_polygon(
+                            *coords, fill=WASTE_FILL, outline="#888888",
+                            width=1, stipple="gray25",
+                        )
+                if p.is_cut_up:
+                    ear = cap_ear_polygon(
+                        stick.x_left, stick.width, p.y_end, True,
+                    )
+                    coords = self._poly(ear)
+                    if coords:
+                        self.canvas.create_polygon(
+                            *coords, fill=WASTE_FILL, outline="#888888",
+                            width=1, stipple="gray25",
+                        )
+
             for p in stick.placements:
                 poly = piece_polygon(
                     stick.x_left, stick.width, p.y_start, p.y_end,
@@ -876,10 +906,10 @@ class SmallPartsTab(tk.Frame):
                 x0, y0, x1, y1, outline=HOLE_COLOR, width=2, fill="",
             )
 
-        half = plan.stick_width / 2.0
+        cap_r = plan.cap_radius or cap_radius(plan.stick_width)
         for cx, cy, bulge_up in plan.arches:
-            # Convex cap, same path as the G2/G3 export (apex on the end cut).
-            points = arch_polyline(cx, cy, half, bulge_up, n=18)
+            # Full overcut cap path, same as the G2/G3 export.
+            points = arch_polyline(cx, cy, cap_r, bulge_up, n=18)
             coords = self._poly(points)
             if len(coords) >= 4:
                 self.canvas.create_line(

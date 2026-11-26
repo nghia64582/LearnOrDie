@@ -49,19 +49,22 @@ def export_gcode_extended(
             )
             f.write("M5\n\n")
 
-        # Rounded caps: start at the left of the diameter (cx - W/2, cy),
-        # end at the right (cx + W/2, cy), I=W/2 J=0. In G17 (Y up):
-        # G2 CW bulges +Y (rounded top), G3 CCW bulges -Y (rounded bottom).
+        # Rounded caps: radius R = W/2 + CUT_EXTRA_MARGIN, start at
+        # (cx - R, cy), end at (cx + R, cy), I=R J=0. The apex stays
+        # on the piece end; the arc overcuts 1 mm past each stick edge.
+        # In G17 (Y up): G2 CW bulges +Y (rounded top), G3 CCW bulges
+        # -Y (rounded bottom).
+        cap_r = getattr(plan, "cap_radius", None) or cap_radius(plan.stick_width)
         for (center_x, center_y, bulge_up) in plan.arches:
-            start_x = center_x - plan.stick_width / 2
-            end_x = center_x + plan.stick_width / 2
+            start_x = center_x - cap_r
+            end_x = center_x + cap_r
             y = center_y
             cmd = "G2" if bulge_up else "G3"
             f.write(f"G0 X{start_x:.3f} Y{y:.3f}\n")
             f.write(f"M3 S{pwr}\n")
             f.write(
                 f"{cmd} X{end_x:.3f} Y{y:.3f} "
-                f"I{plan.stick_width / 2:.3f} J0.000 F{feed}\n"
+                f"I{cap_r:.3f} J0.000 F{feed}\n"
             )
             f.write("M5\n\n")
 

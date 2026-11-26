@@ -22,6 +22,10 @@ from engraver_ctrl.cut_plan_builder import (
     arch_polyline,
     arrange_bin,
     build_cut_plan,
+    cap_ear_polygon,
+    cap_edge_offset,
+    cap_radius,
+    clipped_cap_polyline,
     format_parts_text,
     parse_hole_field,
     parse_parts_text,
@@ -237,12 +241,13 @@ class ArrangeAndPlanTests(unittest.TestCase):
         parts = [P(50, down=True, up=True)]
         plan = build_cut_plan(55, parts, width=10, gap=5, hole_radius=1.5,
                               method="heuristic")
-        # Bottom cap centre at y0+W/2=5, bulge down; top centre at 45, bulge up.
+        # Bottom cap centre at y0+R=6, bulge down; top centre at 44, bulge up.
         self.assertEqual(len(plan.arches), 2)
+        self.assertAlmostEqual(plan.cap_radius, 6.0)
         arches = {(round(x, 5), round(y, 5), b) for x, y, b in plan.arches}
-        self.assertIn((5.0, 5.0, False), arches)
-        self.assertIn((5.0, 45.0, True), arches)
-        # Apex of each cap sits on the nearest end cut.
+        self.assertIn((5.0, 6.0, False), arches)
+        self.assertIn((5.0, 44.0, True), arches)
+        # Apex of each cap still sits on the nearest end cut.
         by_flag = {b: (cx, cy) for cx, cy, b in plan.arches}
         self.assertAlmostEqual(arch_apex_y(by_flag[False][1], False, 10), 0.0)
         self.assertAlmostEqual(arch_apex_y(by_flag[True][1], True, 10), 50.0)
@@ -285,7 +290,7 @@ class ArrangeAndPlanTests(unittest.TestCase):
         ]
         self.assertEqual(len(interior), 1)
         self.assertFalse(interior[0][1])
-        self.assertAlmostEqual(interior[0][0], 35.0)
+        self.assertAlmostEqual(interior[0][0], 36.0)
 
     def test_y0_cut_always_kept(self):
         # The y=0 cut is mandatory even when a rounded-bottom apex
@@ -298,24 +303,52 @@ class ArrangeAndPlanTests(unittest.TestCase):
         self.assertTrue(any(abs(y - 50.0) < 1e-9 for y in cut_ys))
         cx, cy, bulge_up = plan.arches[0]
         self.assertFalse(bulge_up)
-        self.assertAlmostEqual(cy, 5.0)
+        self.assertAlmostEqual(cy, 6.0)
         self.assertAlmostEqual(arch_apex_y(cy, bulge_up, 10), 0.0)
         self.assertEqual(plan.sticks[0].waste[0], (-5.0, 0.0))
 
     def test_piece_polygon_has_convex_caps(self):
         poly = piece_polygon(0, 10, 20, 60, True, True, n=16)
         ys = [y for x, y in poly]
+        xs = [x for x, y in poly]
         self.assertAlmostEqual(min(ys), 20.0, places=5)
         self.assertAlmostEqual(max(ys), 60.0, places=5)
+        # Fill stays inside the stick; overcut is only on the cut path.
+        self.assertGreaterEqual(min(xs) + 1e-9, 0.0)
+        self.assertLessEqual(max(xs) - 1e-9, 10.0)
         # Apex of each cap is on the centreline, not a square corner.
         bottom = min(poly, key=lambda p: p[1])
         top = max(poly, key=lambda p: p[1])
         self.assertAlmostEqual(bottom[0], 5.0, places=5)
         self.assertAlmostEqual(top[0], 5.0, places=5)
+        # At the stick edges the flatter R=6 arc meets closer to the tip
+        # than a true W/2 semicircle would (edge_offset ≈ 2.683, not 5).
+        edge = cap_edge_offset(10)
+        self.assertAlmostEqual(edge, 6.0 - (11.0 ** 0.5), places=6)
+        at_left = [y for x, y in poly if abs(x - 0.0) < 1e-6]
+        self.assertTrue(any(abs(y - (20.0 + edge)) < 1e-5 for y in at_left), at_left)
+        self.assertTrue(any(abs(y - (60.0 - edge)) < 1e-5 for y in at_left), at_left)
 
     def test_rounded_end_helper_matches_plan(self):
         arches = rounded_end_arches(5, 20, 70, 10, True, True)
-        self.assertEqual(arches, [(5, 25.0, False), (5, 65.0, True)])
+        self.assertEqual(arches, [(5, 26.0, False), (5, 64.0, True)])
+
+    def test_cap_radius_and_edge_offset(self):
+        self.assertAlmostEqual(cap_radius(10), 5.0 + CUT_EXTRA_MARGIN)
+        self.assertAlmostEqual(cap_radius(10, margin=CUT_EXTRA_MARGIN), 6.0)
+        # y-offset from the tip to the stick-edge crossing of the R circle.
+        off = cap_edge_offset(10)
+        self.assertAlmostEqual(off, 6.0 - (11.0 ** 0.5), places=9)
+        # A true W/2 semicircle would meet the edges 5 mm from the tip;
+        # the overcut cap meets them about 2.317 mm closer to the tip.
+        self.assertAlmostEqual(5.0 - off, 5.0 - (6.0 - (11.0 ** 0.5)), places=9)
+
+        # Ear waste sits between the apex line and the clipped arc.
+        ear = cap_ear_polygon(0, 10, 20, False)
+        ys = [y for x, y in ear]
+        self.assertAlmostEqual(min(ys), 20.0, places=5)
+        self.assertAlmostEqual(max(ys), 20.0 + off, places=5)
+        self.assertTrue(all(0.0 - 1e-9 <= x <= 10.0 + 1e-9 for x, y in ear))
 
 
 
@@ -404,7 +437,7 @@ class GcodeExportTests(unittest.TestCase):
                 lines.append(ln)
         out = []
         last_xy = (None, None)
-        half = width / 2.0
+        r = cap_radius(width)
         for ln in lines:
             parts = ln.replace("G0+", "G0 ").split()
             cmd = parts[0].upper()
@@ -413,7 +446,7 @@ class GcodeExportTests(unittest.TestCase):
                 coords[tok[0].upper()] = float(tok[1:])
             if cmd in ("G0", "G00") and "X" in coords:
                 last_xy = (coords.get("X", last_xy[0]), coords.get("Y", last_xy[1]))
-            if cmd in ("G2", "G3", "G02", "G03") and abs(coords.get("I", 0) - half) < 1e-6:
+            if cmd in ("G2", "G3", "G02", "G03") and abs(coords.get("I", 0) - r) < 1e-6:
                 x1, y1 = coords["X"], coords["Y"]
                 out.append((cmd[:2], last_xy[0], last_xy[1], x1, y1,
                             coords.get("I", 0.0), coords.get("J", 0.0)))
@@ -437,13 +470,14 @@ class GcodeExportTests(unittest.TestCase):
         self.assertEqual(len(moves), 1)
         cmd, x0, y0c, x1, y1, i, j = moves[0]
         self.assertEqual(cmd, "G3")
-        self.assertAlmostEqual(y0c, y0 + 5.0)
-        self.assertAlmostEqual(y1, y0 + 5.0)
-        self.assertAlmostEqual(x1 - x0, 10.0)
-        self.assertAlmostEqual(i, 5.0)
+        self.assertAlmostEqual(y0c, y0 + 6.0)
+        self.assertAlmostEqual(y1, y0 + 6.0)
+        self.assertAlmostEqual(x1 - x0, 12.0)
+        self.assertAlmostEqual(x0, 5.0 - 6.0)
+        self.assertAlmostEqual(i, 6.0)
         self.assertAlmostEqual(j, 0.0)
         # CCW from left to right, Y up, bulges toward y0 (down).
-        self.assertAlmostEqual(y0c - 5.0, y0)
+        self.assertAlmostEqual(y0c - 6.0, y0)
 
     def test_gcode_top_arc_bulges_up(self):
         parts = [P(40, up=True), P(40)]
@@ -460,12 +494,54 @@ class GcodeExportTests(unittest.TestCase):
         self.assertEqual(len(moves), 1)
         cmd, x0, yc, x1, y1, i, j = moves[0]
         self.assertEqual(cmd, "G2")
-        self.assertAlmostEqual(yc, y1p - 5.0)
-        self.assertAlmostEqual(y1, y1p - 5.0)
-        self.assertAlmostEqual(x1 - x0, 10.0)
-        self.assertAlmostEqual(i, 5.0)
+        self.assertAlmostEqual(yc, y1p - 6.0)
+        self.assertAlmostEqual(y1, y1p - 6.0)
+        self.assertAlmostEqual(x1 - x0, 12.0)
+        self.assertAlmostEqual(x0, 5.0 - 6.0)
+        self.assertAlmostEqual(i, 6.0)
         self.assertAlmostEqual(j, 0.0)
 
+
+    def test_gcode_cap_overcut_on_default_stick(self):
+        # Default 114x10: R = W/2+1 = 6, first stick centre x=5.
+        # A rounded-bottom piece starts at y=0 (waste stays at the top).
+        plan_bot = build_cut_plan(
+            114, [P(50, down=True)], 10, 5, 1.5, method="heuristic",
+        )
+        self.assertAlmostEqual(plan_bot.sticks[0].placements[0].y_start, 0.0)
+        # A rounded-top piece is shifted so it ends at the factory top
+        # y = L-r = 109; centre is 109-6 = 103.
+        plan_top = build_cut_plan(
+            114, [P(50, up=True)], 10, 5, 1.5, method="heuristic",
+        )
+        self.assertAlmostEqual(plan_top.sticks[0].placements[0].y_end, 109.0)
+        with tempfile.TemporaryDirectory() as td:
+            bot_path = os.path.join(td, "bot.gcode")
+            top_path = os.path.join(td, "top.gcode")
+            export_gcode_extended(plan_bot, bot_path, feedrate=250, power=1000)
+            export_gcode_extended(plan_top, top_path, feedrate=250, power=1000)
+            with open(bot_path, encoding="utf-8") as fh:
+                bot = fh.read()
+            with open(top_path, encoding="utf-8") as fh:
+                top = fh.read()
+        self.assertIn("G0 X-1.000 Y6.000", bot)
+        self.assertIn("G3 X11.000 Y6.000 I6.000 J0.000 F250", bot)
+        self.assertIn("G0 X-1.000 Y103.000", top)
+        self.assertIn("G2 X11.000 Y103.000 I6.000 J0.000 F250", top)
+
+    def test_holes_unchanged_by_cap_overcut(self):
+        parts = [P(50, down=True, holes=[10])]
+        plan = build_cut_plan(114, parts, 10, 5, 1.5, method="heuristic")
+        self.assertEqual(plan.radius, 1.5)
+        self.assertAlmostEqual(plan.holes[0][1], 10.0)
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "cut_plan.gcode")
+            export_gcode_extended(plan, path, feedrate=250, power=1000)
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        self.assertIn("G0 X6.500 Y10.000", text)
+        self.assertIn("G2 X3.500 Y10.000 I-1.500 J0.000 F250", text)
+        self.assertIn("G2 X6.500 Y10.000 I1.500 J0.000 F250", text)
 
     def test_gcode_includes_y0_cut(self):
         parts = [P(50)]
