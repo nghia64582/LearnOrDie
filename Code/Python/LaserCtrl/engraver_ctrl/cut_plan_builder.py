@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Sequence, Tuple
 
 from engraver_ctrl.cut_handler import pack_pieces
 
@@ -57,9 +57,12 @@ class CutPlan:
     the physical stick occupies y in [-r, L-r]. The bottom factory
     semicircle has its centre on y=0 and fills [-r, 0]; the top
     factory semicircle has its centre at L-2r and fills [L-2r, L-r].
-    A straight cut at y=0 (1 mm overcut each side) always severs
-    the bottom cap, so packing uses the remaining span [0, L-r]
-    (usable_length = L-r).
+    Both factory caps are always waste (they are not reused,
+    because a slightly offset stick would change the intended
+    lengths). A straight cut at y=0 always severs the bottom cap.
+    Packing uses the rectangular body [0, L-2r] (usable_length
+    = L - width) and always lays pieces from y=0 upward, with
+    leftover at the top of that span.
 
     - cuts: (start_x, y, length_of_cut) horizontal G-code cuts
     - holes: (center_x, center_y)
@@ -121,16 +124,14 @@ class CutPlan:
 
 
 def usable_length(stock_length: float, width: float) -> float:
-    """Packing capacity after the y=0 cut removes the bottom cap.
+    """Packing capacity: the rectangular body, excluding both factory caps.
 
     The physical stick occupies y in [-r, L-r] with r = width/2.
-    The bottom factory semicircle (centre y=0, y in [-r, 0]) is
-    always cut off, so pieces are packed in [0, L-r] and the
-    capacity is L-r. The top factory semicircle (centre L-2r)
-    remains in that usable span and can be reused by a piece that
-    ends at y = L-r.
+    Both factory semicircles are always waste — bottom [-r, 0],
+    top [L-2r, L-r] — so pieces are packed in [0, L-2r] and the
+    capacity is L - width. Pieces are always laid from y=0 upward.
     """
-    return float(stock_length) - float(width) / 2.0
+    return float(stock_length) - float(width)
 
 
 def stick_y_bounds(stock_length: float, width: float) -> Tuple[float, float]:
@@ -240,49 +241,22 @@ def arrange_bin(
     parts: Sequence[Part],
     usable: float,
 ) -> Tuple[List[int], float]:
-    """Order pieces on one stick and choose where leftover waste goes.
+    """Place pieces on one stick from y=0 upward.
 
-    Usable span is [0, usable] with usable = L-r. Leftover is a
-    single block in that span. The factory bottom cap below y=0
-    is always waste and is not part of this arrangement.
+    Usable span is [0, usable] with usable = L-2r = L-width.
+    Factory caps are never reused, so leftover always sits at the
+    top of that span. Pieces stay in pack order (already FFD/BFD).
 
-    - If any piece wants a rounded top and leftover > 0, put waste
-      at the bottom of the usable span so the last piece ends at
-      y = L-r and can reuse the factory top semicircle.
-    - Otherwise put waste at the top (first piece starts at Y=0).
-    - Prefer a round-top piece at the factory top when the used
-      span reaches y = L-r.
-
-    Returns (ordered_indices, y_start_of_first_piece).
+    Returns (ordered_indices, y_start_of_first_piece) — the start
+    is always 0.
     """
     items = list(indices)
     if not items:
         return [], 0.0
-    used = sum(float(parts[i].length) for i in items)
-    leftover = max(0.0, float(usable) - used)
-    has_up = any(parts[i].is_cut_up for i in items)
-    waste_at_bottom = leftover > _TOL and has_up
-    y0 = leftover if waste_at_bottom else 0.0
-
-    def take(pred) -> Optional[int]:
-        for pos, idx in enumerate(items):
-            if pred(parts[idx]):
-                return items.pop(pos)
-        return None
-
-    ordered: List[int] = []
-    last = None
-    end_reaches_stock = abs((y0 + used) - float(usable)) <= _TOL
-    if end_reaches_stock:
-        last = take(lambda p: p.is_cut_up and not p.is_cut_down)
-        if last is None:
-            last = take(lambda p: p.is_cut_up)
-
-    # Keep remaining pieces in pack order (stable, already by FFD/BFD).
-    ordered.extend(items)
-    if last is not None:
-        ordered.append(last)
-    return ordered, y0
+    # `parts` and `usable` are kept in the signature for call-site
+    # compatibility; packing already rejected pieces longer than
+    # `usable`, and leftover is not placed at the bottom.
+    return items, 0.0
 
 
 def cap_radius(width: float, margin: float = CUT_EXTRA_MARGIN) -> float:
@@ -536,14 +510,20 @@ def build_cut_plan(
 ) -> CutPlan:
     """Build a CutPlan: pack by identity, arrange, then emit cuts.
 
+    `include_end_cut` is kept for call-site compatibility; the y=0
+    cut and the cut at the end of the last piece (straight, or a
+    rounded-top arc) are always emitted, and leftover at the top
+    never adds an extra cut at L-2r.
+
     Jig layout (unchanged): stick i has its left edge at
     x = i * (width + gap); length runs along +Y; each cut is a
     horizontal line of length (width + 2) starting 1 mm to the left
     of the stick (1 mm overcut each side).
 
-    The physical stick occupies y in [-r, L-r]. A straight cut at
-    y=0 always severs the bottom factory cap; packing capacity is
-    the remaining length L-r. Pieces are placed in [0, L-r].
+    The physical stick occupies y in [-r, L-r]. Both factory caps
+    are always waste. A straight cut at y=0 always severs the
+    bottom cap. Packing capacity is L-2r (the rectangular body);
+    pieces are always placed from y=0 upward, leftover at the top.
     """
     if stock_length <= _TOL:
         raise ValueError("Stock length must be positive")
@@ -557,7 +537,8 @@ def build_cut_plan(
     usable = usable_length(stock_length, width)
     if usable <= _TOL:
         raise ValueError(
-            "Stock length must be greater than the end radius (width/2)"
+            "Stock length must be greater than the stick width "
+            "(both factory end caps are excluded from packing)"
         )
 
     lengths = [p.length for p in parts]
@@ -586,12 +567,11 @@ def build_cut_plan(
         )
 
         # Always cut at y=0 to sever the factory bottom cap.
+        # Pieces always start at y=0; leftover sits at the top.
         cut_ys = [0.0]
 
         y_cursor = y0
         if y0 > _TOL:
-            # Waste at the bottom of the usable span: cut where the
-            # first piece starts (separates leftover from the piece).
             cut_ys.append(y0)
 
         for part_index in ordered:
@@ -621,33 +601,32 @@ def build_cut_plan(
 
             y_cursor = y_end
 
-        # Bottom factory cap is always waste; leftover in [0, L-r]
-        # is additional offcut (merged when it touches y=0).
+        # Both factory caps are always waste. Leftover in the
+        # usable span [0, L-2r] sits at the top and merges with
+        # the top cap when it touches L-2r.
         layout.waste.append((y_lo, 0.0))
         if y0 > _TOL:
             layout.waste.append((0.0, y0))
+        layout.waste.append((usable, y_hi))
         if y_cursor < usable - _TOL:
-            layout.waste.append((y_cursor, y_hi))
+            layout.waste.append((y_cursor, usable))
         layout.waste = merge_intervals(layout.waste)
 
-        # A convex cap's apex sits on the end Y. A straight cut there
-        # would nick or flatten the tip, so the arc replaces that cut
-        # when the end is interior. The mandatory y=0 cut is always
-        # kept (it severs the factory bottom cap). The factory top
-        # tip (y = L-r) keeps the optional end cut: it only touches
-        # the existing rounded tip. No extra tip cut at L-r when
-        # leftover sits at the top of the usable span.
+        # Always cut at the end of the last piece, and at every
+        # other piece boundary: a straight cut, except a rounded
+        # cap's arc replaces the straight cut at that apex (a line
+        # there would flatten the tip). The mandatory y=0 cut is
+        # always kept — it severs the bottom factory cap — even
+        # when a rounded-bottom apex sits on that line. No extra
+        # cut at L-2r when leftover already separates the last
+        # piece from the top cap, and never a cut at the factory
+        # tip y = L-r (caps are not reused).
         rounded_apex = set()
         for pl in layout.placements:
             if pl.is_cut_down:
                 rounded_apex.add(round(pl.y_start, 6))
             if pl.is_cut_up:
                 rounded_apex.add(round(pl.y_end, 6))
-
-        def _keep_despite_apex(y: float) -> bool:
-            if abs(y) <= _TOL:
-                return True
-            return abs(y - usable) <= _TOL
 
         seen = set()
         for y in cut_ys:
@@ -656,11 +635,13 @@ def build_cut_plan(
                 continue
             if y < -_TOL or y > usable + _TOL:
                 continue
-            if key in rounded_apex and not _keep_despite_apex(y):
+            # y=0 is never omitted; other rounded apices drop the
+            # straight cut (including a rounded top that ends at
+            # L-2r — the overcut arc severs the top cap).
+            if key in rounded_apex and abs(y) > _TOL:
                 continue
-            if (y < usable - _TOL) or include_end_cut:
-                seen.add(key)
-                cuts.append((start_x, float(y), cut_length_overall))
+            seen.add(key)
+            cuts.append((start_x, float(y), cut_length_overall))
 
         sticks.append(layout)
 

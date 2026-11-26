@@ -91,19 +91,23 @@ Packing
   Packing uses First/Best Fit Decreasing (and an exact solver when
   OR-Tools is available). Kerf is ignored — enter lengths already
   adjusted if needed. The bottom factory semicircle lies below the
-  X axis (centre at y = 0, from y = -r to y = 0). Each used stick
+  X axis (centre at y = 0, from y = -r to y = 0). The top factory
+  semicircle runs from y = L-2r to L-r (centre at L-2r). Both
+  caps are always waste — they are not reused, because a slightly
+  offset stick would change the intended lengths. Each used stick
   is cut straight across at y = 0 (1 mm overcut each side) to
-  remove that cap as waste. Pieces are packed in the remaining
-  span y = 0 .. L-r (usable length L-r). The top factory
-  semicircle (centre at L-2r, from L-2r to L-r) can be reused by
-  a rounded-top piece that ends at y = L-r. Leftover waste in the
-  usable span is kept as one block. A rounded end is a convex cap
-  whose apex sits on that end. The cut radius is half the stick
-  width plus the same 1 mm overcut used on straight cuts, so the
-  arc runs 1 mm past each stick edge even if the stick is placed
-  slightly off. The arc replaces the straight cut there, except
-  that the mandatory y=0 cut is always kept and the factory top
-  tip (y = L-r) keeps its optional end cut.
+  remove the bottom cap. Pieces are packed from y = 0 upward in
+  the rectangular body y = 0 .. L-2r (usable length L minus the
+  width; 104 mm on a default 114x10 stick). Leftover waste sits
+  at the top of that span and merges with the top cap. A rounded
+  end is a convex cap whose apex sits on that end. The cut radius
+  is half the stick width plus the same 1 mm overcut used on
+  straight cuts, so the arc runs 1 mm past each stick edge even
+  if the stick is placed slightly off. The arc replaces the
+  straight cut there, except that the mandatory y=0 cut is always
+  kept. The end of the last piece is always cut — a straight line,
+  or its rounded-top arc if it has one. There is no extra cut at
+  L-2r when leftover already separates that piece from the top cap.
 """
 
 
@@ -607,7 +611,7 @@ class SmallPartsTab(tk.Frame):
             messagebox.showwarning(
                 "Unplaced pieces",
                 "Some pieces are longer than the usable length "
-                "(stock length minus the bottom cap radius) and were not placed.",
+                "(stock length minus both factory end caps) and were not placed.",
             )
 
     def on_generate(self):

@@ -174,47 +174,45 @@ class ArrangeAndPlanTests(unittest.TestCase):
         plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
         self.assertEqual(len(plan.sticks), 1)
         stick = plan.sticks[0]
-        self.assertAlmostEqual(plan.usable_length, 95.0)
+        self.assertAlmostEqual(plan.usable_length, 90.0)
         self.assertAlmostEqual(stick.placements[0].y_start, 0.0)
         self.assertTrue(stick.placements[0].is_cut_down)
-        # Bottom cap [-r, 0] is always waste; leftover sits at the
-        # top of the usable span [0, L-r] = [0, 95].
+        # Both factory caps are waste; leftover in [0, 90] merges
+        # with the top cap [90, 95].
         self.assertEqual(stick.waste, [(-5.0, 0.0), (70.0, 95.0)])
 
-    def test_waste_at_bottom_when_only_round_top(self):
+    def test_round_top_still_packs_from_y0(self):
+        # Factory tops are not reused: even a rounded-top piece is
+        # packed from y=0, leftover + top cap stay at the top.
         parts = [P(40, down=False, up=True), P(30, False, False)]
         plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
         stick = plan.sticks[0]
-        # Usable = 95; leftover 25 sits at the bottom of the usable
-        # span so the last piece ends at the factory top y = L-r.
-        self.assertAlmostEqual(stick.placements[-1].y_end, 95.0)
-        self.assertTrue(any(p.is_cut_up for p in stick.placements
-                            if abs(p.y_end - 95.0) < 1e-9))
-        # Bottom cap merges with leftover in [0, 25].
-        self.assertEqual(stick.waste, [(-5.0, 25.0)])
+        self.assertAlmostEqual(plan.usable_length, 90.0)
+        self.assertAlmostEqual(stick.placements[0].y_start, 0.0)
+        self.assertAlmostEqual(stick.placements[-1].y_end, 70.0)
+        self.assertEqual(stick.waste, [(-5.0, 0.0), (70.0, 95.0)])
 
-    def test_arrange_round_top_reuses_factory_top(self):
-        # Even when a rounded-bottom piece is also present, leftover
-        # is placed at the bottom of the usable span so the rounded
-        # top can sit on the factory tip at y = usable.
+    def test_arrange_always_starts_at_y0(self):
         parts = [P(20, True, False), P(20, False, True)]
         ordered, y0 = arrange_bin([0, 1], parts, 60)
-        self.assertAlmostEqual(y0, 20.0)
-        self.assertEqual(ordered[-1], 1)
+        self.assertEqual(y0, 0.0)
+        self.assertEqual(ordered, [0, 1])
 
     def test_layout_and_end_cuts(self):
-        # Stock 105, width 10 => usable 100, two 50 mm pieces fill it.
-        parts = [P(50), P(50)]
-        plan = build_cut_plan(105, parts, width=10, gap=5, hole_radius=1.5,
+        # Default 114x10 => usable 104; two 52 mm pieces fill it.
+        parts = [P(52), P(52)]
+        plan = build_cut_plan(114, parts, width=10, gap=5, hole_radius=1.5,
                               include_end_cut=True, method="heuristic")
         # One stick, left edge at 0, cuts start at -1, length 12.
         self.assertEqual(len(plan.sticks), 1)
-        self.assertAlmostEqual(plan.usable_length, 100.0)
+        self.assertAlmostEqual(plan.usable_length, 104.0)
         self.assertAlmostEqual(plan.sticks[0].x_left, 0.0)
         cut_ys = sorted(y for _x, y, _l in plan.cuts)
         self.assertTrue(any(abs(y - 0.0) < 1e-9 for y in cut_ys))
-        self.assertTrue(any(abs(y - 50.0) < 1e-9 for y in cut_ys))
-        self.assertTrue(any(abs(y - 100.0) < 1e-9 for y in cut_ys))
+        self.assertTrue(any(abs(y - 52.0) < 1e-9 for y in cut_ys))
+        # Last piece ends at L-2r: straight cut separates it from the top cap.
+        self.assertTrue(any(abs(y - 104.0) < 1e-9 for y in cut_ys))
+        self.assertFalse(any(abs(y - 109.0) < 1e-9 for y in cut_ys))
         for sx, _y, length in plan.cuts:
             self.assertAlmostEqual(sx, -CUT_EXTRA_MARGIN)
             self.assertAlmostEqual(length, 10 + 2 * CUT_EXTRA_MARGIN)
@@ -229,28 +227,35 @@ class ArrangeAndPlanTests(unittest.TestCase):
     def test_stats_waste(self):
         parts = [P(80)]
         plan = build_cut_plan(100, parts, 10, 5, 1.5, method="heuristic")
-        # Bottom cap 5 mm + leftover 15 mm in the 95 mm usable span.
+        # Stock 100, width 10 => usable 90. Bottom cap 5 + leftover
+        # 10 + top cap 5, merged to [(-5, 0), (80, 95)].
+        self.assertAlmostEqual(plan.usable_length, 90.0)
         self.assertAlmostEqual(plan.waste_length(), 20.0)
         self.assertAlmostEqual(plan.waste_percent(), 20.0)
         self.assertAlmostEqual(plan.used_length(), 80.0)
         self.assertEqual(plan.sticks[0].waste, [(-5.0, 0.0), (80.0, 95.0)])
 
     def test_arch_positions_and_convex_direction(self):
-        # Stock 55, width 10 => usable 50, so a 50 mm piece fills
-        # the usable span and reuses the factory top tip at y=50.
-        parts = [P(50, down=True, up=True)]
-        plan = build_cut_plan(55, parts, width=10, gap=5, hole_radius=1.5,
+        # Default 114x10 => usable 104; a 104 mm piece fills the
+        # rectangular body. The top apex sits at L-2r=104, not on
+        # the factory tip at 109.
+        parts = [P(104, down=True, up=True)]
+        plan = build_cut_plan(114, parts, width=10, gap=5, hole_radius=1.5,
                               method="heuristic")
-        # Bottom cap centre at y0+R=6, bulge down; top centre at 44, bulge up.
+        self.assertAlmostEqual(plan.usable_length, 104.0)
+        # Bottom cap centre at y0+R=6; top centre at 104-6=98.
         self.assertEqual(len(plan.arches), 2)
         self.assertAlmostEqual(plan.cap_radius, 6.0)
         arches = {(round(x, 5), round(y, 5), b) for x, y, b in plan.arches}
         self.assertIn((5.0, 6.0, False), arches)
-        self.assertIn((5.0, 44.0, True), arches)
-        # Apex of each cap still sits on the nearest end cut.
+        self.assertIn((5.0, 98.0, True), arches)
         by_flag = {b: (cx, cy) for cx, cy, b in plan.arches}
         self.assertAlmostEqual(arch_apex_y(by_flag[False][1], False, 10), 0.0)
-        self.assertAlmostEqual(arch_apex_y(by_flag[True][1], True, 10), 50.0)
+        self.assertAlmostEqual(arch_apex_y(by_flag[True][1], True, 10), 104.0)
+        # Rounded top at L-2r replaces the straight cut there.
+        cut_ys = [y for _x, y, _l in plan.cuts]
+        self.assertTrue(any(abs(y - 0.0) < 1e-9 for y in cut_ys))
+        self.assertFalse(any(abs(y - 104.0) < 1e-9 for y in cut_ys), cut_ys)
 
     def test_arch_polyline_bulges_toward_the_cut(self):
         # Midpoint of the polyline is the apex.
@@ -305,7 +310,7 @@ class ArrangeAndPlanTests(unittest.TestCase):
         self.assertFalse(bulge_up)
         self.assertAlmostEqual(cy, 6.0)
         self.assertAlmostEqual(arch_apex_y(cy, bulge_up, 10), 0.0)
-        self.assertEqual(plan.sticks[0].waste[0], (-5.0, 0.0))
+        self.assertEqual(plan.sticks[0].waste, [(-5.0, 0.0), (50.0, 109.0)])
 
     def test_piece_polygon_has_convex_caps(self):
         poly = piece_polygon(0, 10, 20, 60, True, True, n=16)
@@ -353,28 +358,43 @@ class ArrangeAndPlanTests(unittest.TestCase):
 
 
     def test_usable_length_and_capacity(self):
-        self.assertAlmostEqual(usable_length(114, 10), 109.0)
+        self.assertAlmostEqual(usable_length(114, 10), 104.0)
         y_lo, y_hi = stick_y_bounds(114, 10)
         self.assertAlmostEqual(y_lo, -5.0)
         self.assertAlmostEqual(y_hi, 109.0)
-        # A 109 mm piece fills the usable span; 110 mm does not fit.
-        plan_ok = build_cut_plan(114, [P(109)], 10, 5, 1.5, method="heuristic")
+        # A 104 mm piece fills the rectangular body; both caps are waste.
+        plan_ok = build_cut_plan(114, [P(104)], 10, 5, 1.5, method="heuristic")
         self.assertEqual(len(plan_ok.sticks), 1)
         self.assertEqual(plan_ok.unplaced, [])
-        self.assertAlmostEqual(plan_ok.waste_length(), 5.0)
-        self.assertAlmostEqual(plan_ok.waste_percent(), 100.0 * 5.0 / 114.0)
-        plan_long = build_cut_plan(114, [P(110)], 10, 5, 1.5, method="heuristic")
-        self.assertEqual(plan_long.unplaced, [0])
-        self.assertEqual(plan_long.sticks, [])
+        self.assertEqual(plan_ok.sticks[0].waste, [(-5.0, 0.0), (104.0, 109.0)])
+        self.assertAlmostEqual(plan_ok.waste_length(), 10.0)
+        self.assertAlmostEqual(plan_ok.waste_percent(), 100.0 * 10.0 / 114.0)
+        # 105 mm (and the old 109 mm "including the top cap") do not fit.
+        for length in (105, 109, 110):
+            plan_long = build_cut_plan(114, [P(length)], 10, 5, 1.5, method="heuristic")
+            self.assertEqual(plan_long.unplaced, [0], length)
+            self.assertEqual(plan_long.sticks, [], length)
+
+    def test_default_stock_waste_examples(self):
+        # 114x10, usable 104 mm. Waste always includes both 5 mm caps.
+        plan80 = build_cut_plan(114, [P(80)], 10, 5, 1.5, method="heuristic")
+        self.assertEqual(len(plan80.sticks), 1)
+        self.assertEqual(plan80.sticks[0].waste, [(-5.0, 0.0), (80.0, 109.0)])
+        self.assertAlmostEqual(plan80.waste_length(), 34.0)
+        self.assertAlmostEqual(plan80.waste_percent(), 100.0 * 34.0 / 114.0)
+
+        plan52 = build_cut_plan(114, [P(52), P(52)], 10, 5, 1.5, method="heuristic")
+        self.assertEqual(len(plan52.sticks), 1)
+        self.assertEqual(plan52.sticks[0].waste, [(-5.0, 0.0), (104.0, 109.0)])
+        self.assertAlmostEqual(plan52.waste_length(), 10.0)
 
     def test_two_57s_need_two_sticks_on_default_stock(self):
-        # Previously 57+57=114 filled one stick. After cutting off
-        # the 5 mm bottom cap, usable is 109, so two sticks are needed.
+        # 57+57=114 > usable 104, so two sticks are needed.
         parts = [P(57), P(57)]
         plan = build_cut_plan(114, parts, 10, 5, 1.5, method="heuristic")
         self.assertEqual(len(plan.sticks), 2)
         self.assertEqual(plan.unplaced, [])
-        # Each stick: bottom cap 5 + leftover 109-57=52 => 57 mm waste.
+        # Each stick: both caps 5+5 plus leftover 104-57=47 => 57 mm.
         self.assertAlmostEqual(plan.waste_length(), 114.0)
         self.assertAlmostEqual(plan.waste_percent(), 50.0)
 
@@ -386,7 +406,10 @@ class ArrangeAndPlanTests(unittest.TestCase):
         )
         cut_ys = [y for _x, y, _l in plan.cuts]
         self.assertTrue(any(abs(y - 0.0) < 1e-9 for y in cut_ys), cut_ys)
-        # Leftover at the top of the usable span: no tip cut at L-r.
+        # Last piece end is still cut; leftover means no cut at L-2r
+        # or at the factory tip L-r.
+        self.assertTrue(any(abs(y - 40.0) < 1e-9 for y in cut_ys), cut_ys)
+        self.assertFalse(any(abs(y - 104.0) < 1e-9 for y in cut_ys), cut_ys)
         self.assertFalse(any(abs(y - 109.0) < 1e-9 for y in cut_ys), cut_ys)
 
     def test_stadium_slice_extends_below_axis(self):
@@ -509,12 +532,13 @@ class GcodeExportTests(unittest.TestCase):
             114, [P(50, down=True)], 10, 5, 1.5, method="heuristic",
         )
         self.assertAlmostEqual(plan_bot.sticks[0].placements[0].y_start, 0.0)
-        # A rounded-top piece is shifted so it ends at the factory top
-        # y = L-r = 109; centre is 109-6 = 103.
+        # A rounded-top piece is packed from y=0 and ends at 50;
+        # centre is 50-6 = 44 (factory top is not reused).
         plan_top = build_cut_plan(
             114, [P(50, up=True)], 10, 5, 1.5, method="heuristic",
         )
-        self.assertAlmostEqual(plan_top.sticks[0].placements[0].y_end, 109.0)
+        self.assertAlmostEqual(plan_top.sticks[0].placements[0].y_start, 0.0)
+        self.assertAlmostEqual(plan_top.sticks[0].placements[0].y_end, 50.0)
         with tempfile.TemporaryDirectory() as td:
             bot_path = os.path.join(td, "bot.gcode")
             top_path = os.path.join(td, "top.gcode")
@@ -526,8 +550,8 @@ class GcodeExportTests(unittest.TestCase):
                 top = fh.read()
         self.assertIn("G0 X-1.000 Y6.000", bot)
         self.assertIn("G3 X11.000 Y6.000 I6.000 J0.000 F250", bot)
-        self.assertIn("G0 X-1.000 Y103.000", top)
-        self.assertIn("G2 X11.000 Y103.000 I6.000 J0.000 F250", top)
+        self.assertIn("G0 X-1.000 Y44.000", top)
+        self.assertIn("G2 X11.000 Y44.000 I6.000 J0.000 F250", top)
 
     def test_holes_unchanged_by_cap_overcut(self):
         parts = [P(50, down=True, holes=[10])]
