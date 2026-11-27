@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for Engraver/Machine serial connect, disconnect, STOP recovery, and jog."""
+"""Tests for Engraver/Machine serial connect, disconnect, STOP recovery, jog, and Set Zero."""
 
 from __future__ import annotations
 
@@ -43,6 +43,8 @@ class FakeSerial:
         self.exc_on_write = None
         self.exc_on_read = None
         self.state = "Idle"
+        self.mpos = [0.0, 0.0, 0.0]
+        self.wco = [0.0, 0.0, 0.0]
         self._lock = threading.Lock()
 
     def write(self, data):
@@ -68,7 +70,11 @@ class FakeSerial:
                 self._responses.append(b"[MSG:Reset to continue]\n")
             return
         if data == b"?":
-            self._responses.append(f"<{self.state}|MPos:0.000,0.000,0.000|FS:0,0>\n".encode())
+            mpos = ",".join(f"{v:.3f}" for v in self.mpos)
+            wco = ",".join(f"{v:.3f}" for v in self.wco)
+            self._responses.append(
+                f"<{self.state}|MPos:{mpos}|WCO:{wco}|FS:0,0>\n".encode()
+            )
             return
         text = data.decode(errors="ignore").strip()
         if text == "$X":
@@ -76,9 +82,15 @@ class FakeSerial:
             self._responses.append(b"[MSG:Caution: Unlocked]\n")
             self._responses.append(b"ok\n")
             return
+        if text.startswith("G10"):
+            # G10 L20 Pn X.. Y.. : current position becomes the given work coords.
+            self._apply_g10_l20(text)
+            self._responses.append(b"ok\n")
+            return
         if text.startswith("M5") or text.startswith("$J=") or text.startswith("G"):
             self._responses.append(b"ok\n")
             if text.startswith("$J="):
+                self._apply_jog(text)
                 self.state = "Idle"
             return
 
@@ -115,6 +127,20 @@ class FakeSerial:
         if isinstance(fragment, str):
             fragment = fragment.encode()
         return any(fragment in w for w in self.writes)
+
+    def _apply_jog(self, text):
+        import re
+        for axis, value in re.findall(r"([XYZ])(-?\d+\.?\d*)", text):
+            idx = "XYZ".index(axis)
+            self.mpos[idx] += float(value)
+
+    def _apply_g10_l20(self, text):
+        import re
+        # WCO = MPos - target WPos (missing axes stay 0).
+        target = [0.0, 0.0, 0.0]
+        for axis, value in re.findall(r"([XYZ])(-?\d+\.?\d*)", text):
+            target["XYZ".index(axis)] = float(value)
+        self.wco = [m - t for m, t in zip(self.mpos, target)]
 
 
 class Host:
@@ -191,6 +217,7 @@ class MachineConnectionTests(unittest.TestCase):
         self.assertTrue(_is_enabled(self.tab.btn_connect))
         self.assertTrue(_is_disabled(self.tab.btn_disconnect))
         self.assertTrue(_is_disabled(self.tab.btn_unlock))
+        self.assertTrue(_is_disabled(self.tab.btn_set_zero))
 
     def test_connect_success_updates_status_and_buttons(self):
         from engraver_ctrl.tab_machine import BAUD_RATE, STATUS_CONNECTED_FG
@@ -211,6 +238,7 @@ class MachineConnectionTests(unittest.TestCase):
         self.assertTrue(_is_disabled(self.tab.btn_connect))
         self.assertTrue(_is_enabled(self.tab.btn_disconnect))
         self.assertTrue(_is_enabled(self.tab.btn_unlock))
+        self.assertTrue(_is_enabled(self.tab.btn_set_zero))
 
     def test_connect_error_shows_red_status(self):
         from engraver_ctrl.tab_machine import STATUS_DISCONNECTED_FG
@@ -255,6 +283,7 @@ class MachineConnectionTests(unittest.TestCase):
         self.assertEqual(str(self.tab.connection_status.cget("fg")), STATUS_DISCONNECTED_FG)
         self.assertTrue(_is_enabled(self.tab.btn_connect))
         self.assertTrue(_is_disabled(self.tab.btn_disconnect))
+        self.assertTrue(_is_disabled(self.tab.btn_set_zero))
 
     def test_shutdown_connection_closes_fake_serial(self):
         fake = FakeSerial()
@@ -398,6 +427,137 @@ class MachineConnectionTests(unittest.TestCase):
         cmd = self.tab.build_jog_command("Y", -1, 1)
         self.assertTrue(cmd.startswith("$J=G91 Y-1.000 F"))
         self.assertTrue(cmd.endswith("\n"))
+
+    def test_set_zero_command_is_g10_not_g92(self):
+        from engraver_ctrl.tab_machine import SET_ZERO_CMD
+
+        self.assertIn("G10 L20 P1 X0 Y0", SET_ZERO_CMD)
+        self.assertNotIn("G92", SET_ZERO_CMD)
+        self.assertTrue(SET_ZERO_CMD.endswith("\n"))
+
+    def test_parse_grbl_wpos(self):
+        from engraver_ctrl.tab_machine import MachineTab
+
+        self.assertEqual(
+            MachineTab._parse_grbl_wpos("<Idle|WPos:1.500,-2.000,0.000|FS:0,0>"),
+            (1.5, -2.0, 0.0),
+        )
+        self.assertEqual(
+            MachineTab._parse_grbl_wpos(
+                "<Idle|MPos:10.000,5.000,0.000|WCO:10.000,5.000,0.000|FS:0,0>"
+            ),
+            (0.0, 0.0, 0.0),
+        )
+        self.assertEqual(
+            MachineTab._parse_grbl_wpos(
+                "<Idle|MPos:12.000,8.000,1.000|WCO:10.000,5.000,0.000|FS:0,0>"
+            ),
+            (2.0, 3.0, 1.0),
+        )
+        self.assertIsNone(MachineTab._parse_grbl_wpos("<Idle|MPos:1,2,3|FS:0,0>"))
+        self.assertIsNone(MachineTab._parse_grbl_wpos("ok"))
+
+    def test_set_zero_disabled_in_alarm_and_hold(self):
+        fake = FakeSerial()
+        self.host.ser = fake
+        self.tab._connected_port = "COM3"
+        self.tab._connected_baud = 115200
+        self.tab._apply_machine_state("Alarm")
+        self.assertTrue(_is_disabled(self.tab.btn_set_zero))
+        self.tab._apply_machine_state("Hold")
+        self.assertTrue(_is_disabled(self.tab.btn_set_zero))
+        self.tab._apply_machine_state("Idle")
+        self.assertTrue(_is_enabled(self.tab.btn_set_zero))
+
+    def test_set_zero_disabled_while_running(self):
+        fake = FakeSerial()
+        self.host.ser = fake
+        self.tab._connected_port = "COM3"
+        self.tab._connected_baud = 115200
+        self.tab._set_connection_status("Connected (COM3 @ 115200)", connected=True)
+        self.assertTrue(_is_enabled(self.tab.btn_set_zero))
+        self.tab.is_running = True
+        self.tab._sync_set_zero_button()
+        self.assertTrue(_is_disabled(self.tab.btn_set_zero))
+
+    def test_set_zero_requires_connection(self):
+        self.tab.set_work_zero()
+        from engraver_ctrl.tab_machine import messagebox
+        messagebox.showerror.assert_called()
+        self.assertIsNone(self.host.ser)
+
+    def test_set_zero_ignored_when_not_idle(self):
+        fake = FakeSerial()
+        self.host.ser = fake
+        self.tab._connected_port = "COM3"
+        self.tab._connected_baud = 115200
+        self.tab._apply_machine_state("Alarm")
+        writes_before = list(fake.writes)
+        self.tab.set_work_zero()
+        self.assertEqual(fake.writes, writes_before)
+        self.assertFalse(fake.wrote_bytes(b"G10"))
+
+    def test_set_zero_sends_g10_and_logs_wpos(self):
+        from engraver_ctrl.tab_machine import SET_ZERO_CMD
+
+        fake = FakeSerial()
+        fake.mpos = [12.0, 4.0, 0.0]
+        self.host.ser = fake
+        self.tab._connected_port = "COM3"
+        self.tab._connected_baud = 115200
+        self.tab._set_connection_status("Connected (COM3 @ 115200)", connected=True)
+        self.tab._machine_state = "Idle"
+
+        logged = []
+        self.tab.log = lambda msg: logged.append(msg)
+
+        self.tab.set_work_zero()
+
+        self.assertTrue(
+            any(w.strip() == SET_ZERO_CMD.strip().encode() or SET_ZERO_CMD.encode() == w
+                for w in fake.writes),
+            f"G10 L20 was not sent; writes={fake.writes!r}",
+        )
+        self.assertTrue(fake.wrote_bytes(b"G10 L20 P1 X0 Y0"))
+        self.assertFalse(fake.wrote_bytes(b"G92"))
+        self.assertTrue(fake.wrote_bytes(b"?"))
+        # Current machine position is now work (0, 0).
+        self.assertEqual(fake.wco, [12.0, 4.0, 0.0])
+        self.assertTrue(
+            any("Set Zero" in m and "G10 L20 P1" in m for m in logged),
+            f"missing Set Zero log: {logged!r}",
+        )
+        self.assertTrue(
+            any(m.startswith("WPos:") and "0.000, 0.000" in m for m in logged),
+            f"missing WPos log: {logged!r}",
+        )
+        self.assertTrue(_is_enabled(self.tab.btn_set_zero))
+
+    def test_set_zero_after_jog_then_survives_stop_reset(self):
+        """Jog then Set Zero; STOP soft-reset must not send G92.1 or G92."""
+        fake = FakeSerial(reset_alarm=True)
+        self.host.ser = fake
+        self.tab._connected_port = "COM3"
+        self.tab._connected_baud = 115200
+        self.tab._set_connection_status("Connected (COM3 @ 115200)", connected=True)
+        self.tab._machine_state = "Idle"
+
+        self._do_jog("X", 1)
+        self._do_jog("Y", 1)
+        self.assertAlmostEqual(fake.mpos[0], 1.0)
+        self.assertAlmostEqual(fake.mpos[1], 1.0)
+
+        self.tab.set_work_zero()
+        self.assertEqual(fake.wco[:2], [1.0, 1.0])
+
+        self.tab.is_running = True
+        self.tab.stop_gcode()
+
+        # Soft reset happened, but work offset was not cleared (no G92/G92.1).
+        self.assertTrue(fake.wrote_bytes(b"\x18"))
+        self.assertFalse(any(b"G92" in w for w in fake.writes))
+        self.assertEqual(fake.wco[:2], [1.0, 1.0])
+        self.assertTrue(_is_enabled(self.tab.btn_set_zero))
 
 
 if __name__ == "__main__":

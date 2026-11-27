@@ -50,6 +50,11 @@ JOG_KEYS = {
     "d": ("X", 1),
 }
 
+# Set the current position as G54 work origin (0, 0). G10 L20 writes a
+# persistent offset that survives a soft reset (0x18 / STOP). G92 is
+# cleared on some GRBL 1.1 builds, so it would be lost after STOP.
+SET_ZERO_CMD = "G10 L20 P1 X0 Y0\n"
+
 
 def estimate_gcode_times(lines):
     """
@@ -258,6 +263,11 @@ class MachineTab(tk.Frame):
         make_button(jog_frame, "Left (A)", command=lambda: self.jog("X", -1), width=8).grid(row=2, column=0)
         make_button(jog_frame, "Right (D)", command=lambda: self.jog("X", 1), width=8).grid(row=2, column=2)
         make_button(jog_frame, "Down (S)", command=lambda: self.jog("Y", -1), width=8).grid(row=3, column=1)
+        self.btn_set_zero = make_button(
+            jog_frame, "Set Zero", command=self.set_work_zero,
+            width=10, state="disabled",
+        )
+        self.btn_set_zero.grid(row=4, column=0, columnspan=3, pady=(6, 2))
         row += 1
 
         # ---- Log box, thay cho print() ----
@@ -376,6 +386,9 @@ class MachineTab(tk.Frame):
                     self.btn_disconnect.config(state="disabled")
                 if getattr(self, "btn_unlock", None) is not None:
                     self.btn_unlock.config(state=unlock)
+                self._sync_set_zero_button(
+                    connected=connected, connecting=connecting
+                )
             except Exception:
                 pass
 
@@ -397,6 +410,7 @@ class MachineTab(tk.Frame):
                     return
                 self.btn_run.config(state="normal")
                 self.btn_stop.config(state="disabled")
+                self._sync_set_zero_button()
             except Exception:
                 pass
 
@@ -410,6 +424,29 @@ class MachineTab(tk.Frame):
                 self.after(0, apply)
             except Exception:
                 pass
+
+    def _set_zero_allowed(self, connected=None, connecting=False):
+        """True when Set Zero is safe: connected, Idle, and not running."""
+        if connecting:
+            return False
+        if connected is None:
+            connected = self._is_connected()
+        if not connected or self.is_running:
+            return False
+        key = (self._machine_state or "Idle").split(":")[0].strip().lower()
+        return key in ("", "idle")
+
+    def _sync_set_zero_button(self, connected=None, connecting=False):
+        btn = getattr(self, "btn_set_zero", None)
+        if btn is None:
+            return
+        try:
+            allowed = self._set_zero_allowed(
+                connected=connected, connecting=connecting
+            )
+            btn.config(state="normal" if allowed else "disabled")
+        except Exception:
+            pass
 
     def _close_serial_port(self):
         """Close app.ser if present and clear the reference. Caller holds serial_lock if needed."""
@@ -630,6 +667,7 @@ class MachineTab(tk.Frame):
         self.is_running = True
         self.btn_run.config(state="disabled")
         self.btn_stop.config(state="normal")
+        self._sync_set_zero_button()
 
         try:
             with self.serial_lock:
@@ -688,6 +726,32 @@ class MachineTab(tk.Frame):
         if not match:
             return None
         return match.group(1).split(":")[0].strip()
+
+    @staticmethod
+    def _parse_xyz_field(line, tag):
+        """Parse tag:x,y,z from a GRBL status report. Returns a 3-tuple or None."""
+        match = re.search(
+            rf"{tag}:(-?\d+\.?\d*),(-?\d+\.?\d*),(-?\d+\.?\d*)",
+            line or "",
+        )
+        if not match:
+            return None
+        return tuple(float(v) for v in match.groups())
+
+    @staticmethod
+    def _parse_grbl_wpos(line):
+        """Work position (x, y, z) from a GRBL status report, or None.
+
+        Uses WPos when present; otherwise MPos minus WCO.
+        """
+        wpos = MachineTab._parse_xyz_field(line, "WPos")
+        if wpos is not None:
+            return wpos
+        mpos = MachineTab._parse_xyz_field(line, "MPos")
+        wco = MachineTab._parse_xyz_field(line, "WCO")
+        if mpos is not None and wco is not None:
+            return tuple(a - b for a, b in zip(mpos, wco))
+        return None
 
     def _apply_machine_state(self, state):
         """Reflect Idle / Alarm / Hold (etc.) on the connection status label."""
@@ -754,23 +818,28 @@ class MachineTab(tk.Frame):
                 break
         return got_banner, alarm, alarm_text
 
-    def _query_grbl_state(self, timeout=1.5):
-        """Send '?' and parse the '<' status report. None if unknown."""
+    def _query_grbl_status(self, timeout=1.5):
+        """Send '?' and return (state, report_line). (None, None) if unknown."""
         if not self._is_connected():
-            return None
+            return None, None
         try:
             self._drain_input()
             self._write_realtime(b"?")
         except self._serial_exc_types() as e:
             self._handle_connection_lost(e, "Connection lost")
-            return None
+            return None, None
         except RuntimeError:
-            return None
+            return None, None
         for line in self._incoming_lines(timeout):
             state = self._parse_grbl_state(line)
             if state:
-                return state
-        return None
+                return state, line
+        return None, None
+
+    def _query_grbl_state(self, timeout=1.5):
+        """Send '?' and parse the '<' status report. None if unknown."""
+        state, _line = self._query_grbl_status(timeout)
+        return state
 
     def _unlock_grbl(self, timeout=5):
         """Send $X and wait for ok. Harmless if already Idle. Returns True on ok."""
@@ -802,6 +871,39 @@ class MachineTab(tk.Frame):
                 )
         except self._serial_exc_types() as e:
             self._handle_connection_lost(e, "Unlock error")
+
+    def set_work_zero(self):
+        """Set the current position as G54 work origin (0, 0)."""
+        if not self._is_connected():
+            messagebox.showerror("Error", "Not connected.")
+            return
+        if self.is_running:
+            self.log("Set Zero ignored: GCODE is running.")
+            return
+        key = (self._machine_state or "Idle").split(":")[0].strip().lower()
+        if key not in ("", "idle"):
+            self.log(f"Set Zero ignored: machine is in {self._machine_state}.")
+            return
+        try:
+            if not self._send_line_and_wait_ok(SET_ZERO_CMD, timeout=5):
+                self.log("Set Zero (G10 L20 P1 X0 Y0) failed")
+                messagebox.showerror(
+                    "Error",
+                    "Set Zero failed. Machine may be in Alarm; try Unlock.",
+                )
+                return
+            self.log(
+                "Set Zero: current position is now work origin (0, 0) "
+                "[G10 L20 P1]"
+            )
+            state, report = self._query_grbl_status()
+            if state:
+                self._apply_machine_state(state)
+            wpos = self._parse_grbl_wpos(report) if report else None
+            if wpos is not None:
+                self.log(f"WPos: {wpos[0]:.3f}, {wpos[1]:.3f}")
+        except self._serial_exc_types() as e:
+            self._handle_connection_lost(e, "Set Zero error")
 
     def _recover_after_reset(self):
         """After 0x18: read banner, $X if Alarm (or always $X), M5, refresh state.
@@ -923,6 +1025,7 @@ class MachineTab(tk.Frame):
             self.btn_run.config(state="normal")
         except Exception:
             pass
+        self._sync_set_zero_button()
 
     def _run_gcode_worker(self, lines):
         elapsed_time = 0.0
@@ -964,6 +1067,7 @@ class MachineTab(tk.Frame):
         self.is_running = False
         self.btn_run.config(state="normal")
         self.btn_stop.config(state="disabled")
+        self._sync_set_zero_button()
         # Disconnect / unexpected drop already reported the outcome.
         if already_idle:
             return
